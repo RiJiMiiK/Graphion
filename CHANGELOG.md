@@ -19,3 +19,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - ISA specification document (`docs/ISA.md`).
 - Benchmark regression comparison script and baseline.
 - Maintainers and roadmap files.
+- Explicit compiler CI matrix (`gcc`, `clang`, `msvc`).
+- `clang-tidy` CI job and local runner script.
+- Nightly long fuzz workflow.
+- Optional local VM vs Rust benchmark comparison script.

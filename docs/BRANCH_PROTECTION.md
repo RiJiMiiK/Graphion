@@ -9,6 +9,7 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 - `build-and-check (windows-latest, Debug)`
 - `build-and-check (windows-latest, Release)`
 - `sanitize-linux`
+- `clang-tidy`
 - `docker-build`
 - `coverage-linux`
 - `Analyze C/C++`

@@ -1,0 +1,25 @@
+name: fuzz-nightly
+
+on:
+  schedule:
+    - cron: "17 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz-long:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Clang + Ninja
+        run: sudo apt-get update && sudo apt-get install -y clang ninja-build
+      - name: Configure fuzz build
+        run: cmake -S . -B build-fuzz -G Ninja -DGRAPHION_ENABLE_FUZZING=ON -DCMAKE_C_COMPILER=clang
+      - name: Build fuzz targets
+        run: cmake --build build-fuzz
+      - name: Run VM fuzz (long)
+        run: ./build-fuzz/fuzz_vm -max_total_time=300
+      - name: Run parser fuzz (long)
+        run: ./build-fuzz/fuzz_parser -max_total_time=300

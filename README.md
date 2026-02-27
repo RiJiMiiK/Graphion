@@ -110,6 +110,7 @@ See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported version
 For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
 For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
 Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
+Nightly long fuzzing is scheduled in GitHub Actions.
 
 ## Contributing
 
