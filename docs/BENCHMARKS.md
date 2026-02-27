@@ -19,6 +19,13 @@ Run and store JSON:
 python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
+Run hypergraph sum benches directly:
+
+```bash
+./build-bench/graphion_bench_hypergraph_incident_sum 500000
+./build-bench/graphion_bench_hypergraph_hyperedge_node_sum 500000
+```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash

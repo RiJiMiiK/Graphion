@@ -93,3 +93,79 @@ const uint32_t *graphion_hypergraph_hyperedge_nodes(const graphion_hypergraph *g
   }
   return &graph->hyperedge_nodes[graph->hyperedge_offsets[hyperedge]];
 }
+
+uint64_t graphion_hypergraph_incident_sum(const graphion_hypergraph *graph, uint32_t node) {
+  uint64_t total = 0U;
+  size_t count;
+  const uint32_t *values;
+  size_t i = 0U;
+  size_t n4;
+
+  if (!valid_node(graph, node)) {
+    return 0U;
+  }
+  values = &graph->node_hyperedges[graph->node_offsets[node]];
+  count = (size_t)(graph->node_offsets[node + 1U] - graph->node_offsets[node]);
+  if (count <= 3U) {
+    if (count >= 1U) {
+      total += (uint64_t)values[0];
+    }
+    if (count >= 2U) {
+      total += (uint64_t)values[1];
+    }
+    if (count == 3U) {
+      total += (uint64_t)values[2];
+    }
+    return total;
+  }
+
+  n4 = count & ~(size_t)3U;
+  while (i < n4) {
+    total += (uint64_t)values[i] + (uint64_t)values[i + 1U] + (uint64_t)values[i + 2U] +
+             (uint64_t)values[i + 3U];
+    i += 4U;
+  }
+  while (i < count) {
+    total += (uint64_t)values[i];
+    i++;
+  }
+  return total;
+}
+
+uint64_t graphion_hypergraph_hyperedge_node_sum(const graphion_hypergraph *graph, uint32_t hyperedge) {
+  uint64_t total = 0U;
+  size_t count;
+  const uint32_t *values;
+  size_t i = 0U;
+  size_t n4;
+
+  if (!valid_hyperedge(graph, hyperedge)) {
+    return 0U;
+  }
+  values = &graph->hyperedge_nodes[graph->hyperedge_offsets[hyperedge]];
+  count = (size_t)(graph->hyperedge_offsets[hyperedge + 1U] - graph->hyperedge_offsets[hyperedge]);
+  if (count <= 3U) {
+    if (count >= 1U) {
+      total += (uint64_t)values[0];
+    }
+    if (count >= 2U) {
+      total += (uint64_t)values[1];
+    }
+    if (count == 3U) {
+      total += (uint64_t)values[2];
+    }
+    return total;
+  }
+
+  n4 = count & ~(size_t)3U;
+  while (i < n4) {
+    total += (uint64_t)values[i] + (uint64_t)values[i + 1U] + (uint64_t)values[i + 2U] +
+             (uint64_t)values[i + 3U];
+    i += 4U;
+  }
+  while (i < count) {
+    total += (uint64_t)values[i];
+    i++;
+  }
+  return total;
+}

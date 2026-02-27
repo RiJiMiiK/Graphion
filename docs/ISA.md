@@ -23,6 +23,8 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
+- `GVM_OP_INCIDENT_SUM (19)`: node id in `r[a]`, sum of incident hyperedge ids to `r[b]`
+- `GVM_OP_HYPEREDGE_NODE_SUM (20)`: hyperedge id in `r[a]`, sum of node ids to `r[b]`
 
 ## Error behavior
 

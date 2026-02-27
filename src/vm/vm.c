@@ -276,6 +276,42 @@ int graphion_vm_run(graphion_vm *vm) {
                             vm->hypergraph->hyperedge_offsets[hyperedge]);
         break;
       }
+      case GVM_OP_INCIDENT_SUM: {
+        uint32_t node;
+        if (!is_valid_reg(a) || !is_valid_reg(b)) {
+          return -3;
+        }
+        if (vm->hypergraph == NULL) {
+          return -8;
+        }
+        if (regs[a] < 0) {
+          return -9;
+        }
+        node = (uint32_t)regs[a];
+        if ((size_t)node >= vm->hypergraph->node_count) {
+          return -9;
+        }
+        regs[b] = (int64_t)graphion_hypergraph_incident_sum(vm->hypergraph, node);
+        break;
+      }
+      case GVM_OP_HYPEREDGE_NODE_SUM: {
+        uint32_t hyperedge;
+        if (!is_valid_reg(a) || !is_valid_reg(b)) {
+          return -3;
+        }
+        if (vm->hypergraph == NULL) {
+          return -8;
+        }
+        if (regs[a] < 0) {
+          return -10;
+        }
+        hyperedge = (uint32_t)regs[a];
+        if ((size_t)hyperedge >= vm->hypergraph->hyperedge_count) {
+          return -10;
+        }
+        regs[b] = (int64_t)graphion_hypergraph_hyperedge_node_sum(vm->hypergraph, hyperedge);
+        break;
+      }
       default:
         return -4;
     }

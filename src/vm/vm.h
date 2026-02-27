@@ -17,7 +17,9 @@ typedef enum {
   GVM_OP_ADD = 3,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
-  GVM_OP_HYPEREDGE_SIZE = 18
+  GVM_OP_HYPEREDGE_SIZE = 18,
+  GVM_OP_INCIDENT_SUM = 19,
+  GVM_OP_HYPEREDGE_NODE_SUM = 20
 } graphion_opcode;
 
 typedef struct {

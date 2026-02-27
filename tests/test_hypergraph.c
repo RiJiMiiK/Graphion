@@ -31,5 +31,11 @@ int test_hypergraph_init_and_queries(void) {
   if (graphion_hypergraph_hyperedge_nodes(&g, 1U)[1] != 3U) {
     return 5;
   }
+  if (graphion_hypergraph_incident_sum(&g, 1U) != 1U) {
+    return 6;
+  }
+  if (graphion_hypergraph_hyperedge_node_sum(&g, 0U) != 3U) {
+    return 7;
+  }
   return 0;
 }

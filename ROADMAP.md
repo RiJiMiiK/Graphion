@@ -8,10 +8,11 @@
 
 ## Milestone 0.2 (Graph Primitives) [in progress]
 
+- [x] Runtime CSR/BFS core (`csr_graph` + `graphion_bfs_levels`) with tests.
 - [x] Graph-centric opcodes and kernels (`BFS_LEVELS`, incidence/size ops).
 - [ ] Parser front-end skeleton and IR bridge.
 - [x] Benchmark scenarios for graph/hypergraph kernels.
-- [ ] Initial hypergraph traversal opcode set (beyond count/size).
+- [x] Initial hypergraph traversal opcode set (beyond count/size).
 
 ## Milestone 0.3 (Optimization Pass) [in progress]
 

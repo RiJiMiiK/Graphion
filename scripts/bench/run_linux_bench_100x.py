@@ -12,6 +12,8 @@ def main() -> int:
       ("vm_dispatch", "./build-linux/graphion_bench", "mips"),
       ("bfs_levels", "./build-linux/graphion_bench_bfs", "mteps"),
       ("hypergraph_incidence", "./build-linux/graphion_bench_hypergraph", "mips"),
+      ("hypergraph_incident_sum", "./build-linux/graphion_bench_hypergraph_incident_sum", "mips"),
+      ("hypergraph_hyperedge_node_sum", "./build-linux/graphion_bench_hypergraph_hyperedge_node_sum", "mips"),
       ("vm_graph_ops", "./build-linux/graphion_bench_vm_graph", "mips"),
   ]
 

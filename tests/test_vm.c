@@ -98,6 +98,8 @@ int test_vm_hypergraph_opcodes(void) {
       {GVM_OP_INCIDENT_COUNT, 0, 1, 0},
       {GVM_OP_MOV_IMM, 2, 0, 0},
       {GVM_OP_HYPEREDGE_SIZE, 2, 3, 0},
+      {GVM_OP_INCIDENT_SUM, 0, 4, 0},
+      {GVM_OP_HYPEREDGE_NODE_SUM, 2, 5, 0},
       {GVM_OP_HALT, 0, 0, 0},
   };
   int rc;
@@ -117,7 +119,7 @@ int test_vm_hypergraph_opcodes(void) {
   if (rc != 0) {
     return 3;
   }
-  if (vm.regs[1] != 2 || vm.regs[3] != 3) {
+  if (vm.regs[1] != 2 || vm.regs[3] != 3 || vm.regs[4] != 1 || vm.regs[5] != 3) {
     return 4;
   }
   return 0;

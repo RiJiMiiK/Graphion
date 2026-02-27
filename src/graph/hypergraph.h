@@ -30,5 +30,7 @@ const uint32_t *graphion_hypergraph_incident(const graphion_hypergraph *graph, u
 
 size_t graphion_hypergraph_hyperedge_size(const graphion_hypergraph *graph, uint32_t hyperedge);
 const uint32_t *graphion_hypergraph_hyperedge_nodes(const graphion_hypergraph *graph, uint32_t hyperedge);
+uint64_t graphion_hypergraph_incident_sum(const graphion_hypergraph *graph, uint32_t node);
+uint64_t graphion_hypergraph_hyperedge_node_sum(const graphion_hypergraph *graph, uint32_t hyperedge);
 
 #endif

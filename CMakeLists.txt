@@ -148,6 +148,26 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
+  add_executable(graphion_bench_hypergraph_incident_sum
+    benchmarks/bench_hypergraph_incident_sum.c
+  )
+  target_link_libraries(graphion_bench_hypergraph_incident_sum PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_hypergraph_hyperedge_node_sum
+    benchmarks/bench_hypergraph_hyperedge_node_sum.c
+  )
+  target_link_libraries(graphion_bench_hypergraph_hyperedge_node_sum PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
   add_executable(graphion_bench_vm_graph
     benchmarks/bench_vm_graph.c
   )

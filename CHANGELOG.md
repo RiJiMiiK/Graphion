@@ -54,7 +54,12 @@ The format follows Keep a Changelog and Semantic Versioning.
   - `GVM_OP_BFS_LEVELS`
   - `GVM_OP_INCIDENT_COUNT`
   - `GVM_OP_HYPEREDGE_SIZE`
+  - `GVM_OP_INCIDENT_SUM`
+  - `GVM_OP_HYPEREDGE_NODE_SUM`
 - Dedicated graph and hypergraph benchmark binaries.
+- Dedicated hypergraph sum benchmark binaries:
+  - `graphion_bench_hypergraph_incident_sum`
+  - `graphion_bench_hypergraph_hyperedge_node_sum`
 - Linux benchmark helper scripts (`scripts/bench/run_linux_bench_*.py`).
 - Assembly ABI/register reference doc (`docs/ASM_REGISTERS.md`).
 - Performance snapshot doc with x100 benchmark runs (`docs/PERFORMANCE_RESULTS.md`).
