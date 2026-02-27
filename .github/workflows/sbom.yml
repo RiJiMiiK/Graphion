@@ -32,7 +32,7 @@ jobs:
           retention-days: 30
 
       - name: Vulnerability scan (SARIF)
-        uses: anchore/scan-action@v6
+        uses: anchore/scan-action@v7
         with:
           path: "."
           fail-build: false
