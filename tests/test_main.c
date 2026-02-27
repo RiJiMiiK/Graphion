@@ -18,6 +18,7 @@ int test_parser_decode_valid_program(void);
 int test_parser_rejects_truncated_input(void);
 int test_graph_init_and_neighbors(void);
 int test_graph_bfs_levels(void);
+int test_hypergraph_init_and_queries(void);
 
 int main(void) {
   const test_case tests[] = {
@@ -29,6 +30,7 @@ int main(void) {
       {"parser_rejects_truncated_input", test_parser_rejects_truncated_input},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},
       {"graph_bfs_levels", test_graph_bfs_levels},
+      {"hypergraph_init_and_queries", test_hypergraph_init_and_queries},
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;

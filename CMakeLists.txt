@@ -47,6 +47,7 @@ add_library(graphion_vm
   src/runtime/arena.c
   src/parser/bytecode.c
   src/graph/csr_graph.c
+  src/graph/hypergraph.c
 )
 
 if(GRAPHION_ENABLE_ASM)
@@ -79,6 +80,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/test_arena.c
     tests/test_parser.c
     tests/test_graph.c
+    tests/test_hypergraph.c
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
   add_test(NAME graphion_tests COMMAND graphion_tests)
@@ -94,6 +96,11 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     benchmarks/bench_bfs.c
   )
   target_link_libraries(graphion_bench_bfs PRIVATE graphion_vm)
+
+  add_executable(graphion_bench_hypergraph
+    benchmarks/bench_hypergraph.c
+  )
+  target_link_libraries(graphion_bench_hypergraph PRIVATE graphion_vm)
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)

@@ -113,6 +113,12 @@ Additional graph-core benchmark:
 ./build-bench/graphion_bench_bfs 200000
 ```
 
+Additional hypergraph-core benchmark:
+
+```bash
+./build-bench/graphion_bench_hypergraph 500000
+```
+
 ## Developer Hooks
 
 Enable local pre-commit checks:
