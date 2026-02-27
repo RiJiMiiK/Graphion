@@ -154,3 +154,39 @@ int test_vm_superinstruction_add_pair_semantics(void) {
   }
   return 0;
 }
+
+int test_vm_superinstruction_movimm_add_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},   {GVM_OP_ADD, 1, 0, 0},      {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 2, 2, 0},       {GVM_OP_MOV_IMM, 3, 0, -2}, {GVM_OP_ADD, 1, 3, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 7) {
+    return 4;
+  }
+  if (vm.regs[1] != 5) {
+    return 5;
+  }
+  if (vm.regs[2] != 6) {
+    return 6;
+  }
+  if (vm.regs[3] != -2) {
+    return 7;
+  }
+  return 0;
+}

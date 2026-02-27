@@ -46,14 +46,6 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
 
   for (;;) {
     const graphion_insn in = *p++;
-    if (in.op == GVM_OP_ADD && p < end) {
-      const graphion_insn next = *p;
-      if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-        regs[in.a] += regs[in.b] + regs[next.b];
-        p++;
-        continue;
-      }
-    }
     switch (in.op) {
       case GVM_OP_NOP:
         break;
@@ -63,8 +55,23 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
         return;
       case GVM_OP_MOV_IMM:
         regs[in.a] = (int64_t)in.imm;
+        if (p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_ADD && next.b == in.a) {
+            regs[next.a] += regs[in.a];
+            p++;
+          }
+        }
         break;
       case GVM_OP_ADD:
+        if (p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
+            regs[in.a] += regs[in.b] + regs[next.b];
+            p++;
+            break;
+          }
+        }
         regs[in.a] += regs[in.b];
         break;
       default:
@@ -82,14 +89,6 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
 
   while (p < end) {
     const graphion_insn in = *p++;
-    if (in.op == GVM_OP_ADD && p < end) {
-      const graphion_insn next = *p;
-      if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-        regs[in.a] += regs[in.b] + regs[next.b];
-        p++;
-        continue;
-      }
-    }
     switch (in.op) {
       case GVM_OP_NOP:
         break;
@@ -99,8 +98,23 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
         return;
       case GVM_OP_MOV_IMM:
         regs[in.a] = (int64_t)in.imm;
+        if (p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_ADD && next.b == in.a) {
+            regs[next.a] += regs[in.a];
+            p++;
+          }
+        }
         break;
       case GVM_OP_ADD:
+        if (p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
+            regs[in.a] += regs[in.b] + regs[next.b];
+            p++;
+            break;
+          }
+        }
         regs[in.a] += regs[in.b];
         break;
       default:

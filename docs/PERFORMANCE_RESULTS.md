@@ -9,9 +9,10 @@ Format requested: `s | mteps | mips | ns_per_X`.
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.007837 | - | 1159.835 | 0.871 |
-| Graphion Linux | 0.006325 | - | 1434.415 | 0.703 |
-| Rust | 0.006592 | - | 1379.886 | 0.732 |
+| Graphion Windows | 0.006540 | - | 1377.279 | 0.727 |
+| Graphion Linux | 0.006585 | - | 1371.265 | 0.732 |
+| Rust Windows | 0.006275 | - | 1435.327 | 0.697 |
+| Rust Linux | 0.006425 | - | 1403.331 | 0.714 |
 
 ## bfs_levels (`ns_per_edge`)
 
@@ -33,9 +34,9 @@ Format requested: `s | mteps | mips | ns_per_X`.
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.014010 | - | 357.266 | 2.802 |
-| Graphion Linux | 0.017920 | - | 280.128 | 3.584 |
-| Rust | 0.041512 | - | 143.850 | 8.302 |
+| Graphion Windows | 0.008430 | - | 356.186 | 2.810 |
+| Graphion Linux | 0.018138 | - | 276.201 | 3.628 |
+| Rust | 0.049152 | - | 76.209 | 16.384 |
 
 Notes:
 
