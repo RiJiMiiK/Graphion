@@ -8,16 +8,32 @@ set(CMAKE_C_EXTENSIONS OFF)
 option(GRAPHION_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
 option(GRAPHION_ENABLE_WERROR "Treat warnings as errors" ON)
 option(GRAPHION_ENABLE_ASM "Enable architecture-specific assembly hot paths" OFF)
+option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" ON)
+option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
+option(GRAPHION_ENABLE_BENCHMARKS "Build benchmark binaries" ON)
+option(GRAPHION_ENABLE_FUZZING "Build fuzzing target (Clang only)" OFF)
 
 if(MSVC)
   add_compile_options(/W4)
   if(GRAPHION_ENABLE_WERROR)
     add_compile_options(/WX)
   endif()
+  if(GRAPHION_ENABLE_HARDENING)
+    add_compile_options("$<$<CONFIG:Release>:/guard:cf>")
+    add_compile_options("$<$<CONFIG:Release>:/sdl>")
+    add_link_options("$<$<CONFIG:Release>:/guard:cf>")
+  endif()
 else()
   add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wstrict-prototypes)
   if(GRAPHION_ENABLE_WERROR)
     add_compile_options(-Werror)
+  endif()
+  if(GRAPHION_ENABLE_HARDENING)
+    add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-fstack-protector-strong>")
+    add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>")
+    add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-fPIE>")
+    add_link_options("$<$<NOT:$<CONFIG:Debug>>:-Wl,-z,relro,-z,now>")
+    add_link_options("$<$<NOT:$<CONFIG:Debug>>:-pie>")
   endif()
 endif()
 
@@ -51,3 +67,38 @@ add_executable(graphion
 )
 
 target_link_libraries(graphion PRIVATE graphion_vm)
+
+if(GRAPHION_ENABLE_TESTS)
+  enable_testing()
+
+  add_executable(graphion_tests
+    tests/test_main.c
+    tests/test_vm.c
+    tests/test_arena.c
+  )
+  target_link_libraries(graphion_tests PRIVATE graphion_vm)
+  add_test(NAME graphion_tests COMMAND graphion_tests)
+endif()
+
+if(GRAPHION_ENABLE_BENCHMARKS)
+  add_executable(graphion_bench
+    benchmarks/bench_vm.c
+  )
+  target_link_libraries(graphion_bench PRIVATE graphion_vm)
+endif()
+
+if(GRAPHION_ENABLE_FUZZING)
+  if(MSVC)
+    message(FATAL_ERROR "Fuzzing target is not supported with MSVC.")
+  endif()
+  if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "Fuzzing requires Clang compiler.")
+  endif()
+
+  add_executable(fuzz_vm
+    fuzz/fuzz_vm.c
+  )
+  target_compile_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+  target_link_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_libraries(fuzz_vm PRIVATE graphion_vm)
+endif()

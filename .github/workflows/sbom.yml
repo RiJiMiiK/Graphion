@@ -1,0 +1,44 @@
+name: sbom-and-vuln-scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "33 2 * * 3"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  sbom-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM (SPDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-spdx-json
+          path: sbom.spdx.json
+
+      - name: Vulnerability scan (SARIF)
+        uses: anchore/scan-action@v6
+        with:
+          path: "."
+          fail-build: false
+          output-format: sarif
+          output-file: grype.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: grype.sarif

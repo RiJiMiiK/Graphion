@@ -1,0 +1,24 @@
+name: fuzz-smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz-vm-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Clang + Ninja
+        run: sudo apt-get update && sudo apt-get install -y clang ninja-build
+      - name: Configure fuzz build
+        run: cmake -S . -B build-fuzz -G Ninja -DGRAPHION_ENABLE_FUZZING=ON -DCMAKE_C_COMPILER=clang
+      - name: Build fuzz target
+        run: cmake --build build-fuzz
+      - name: Run fuzz smoke
+        run: ./build-fuzz/fuzz_vm -runs=1000

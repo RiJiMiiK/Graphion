@@ -39,3 +39,8 @@ Thumbs.db
 
 # Python/tooling cache
 __pycache__/
+
+# Benchmark and fuzz local outputs
+benchmarks/results/
+fuzz/corpus/
+fuzz/crashers/

@@ -18,6 +18,17 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->halted = false;
 }
 
+int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len) {
+  if (vm == NULL || program == NULL || program_len == 0U) {
+    return -1;
+  }
+  vm->program = program;
+  vm->program_len = program_len;
+  vm->pc = 0U;
+  vm->halted = false;
+  return 0;
+}
+
 int graphion_vm_run(graphion_vm *vm) {
   if (vm == NULL || vm->program == NULL) {
     return -1;

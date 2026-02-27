@@ -1,0 +1,28 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate source archives
+        run: |
+          git archive --format=tar.gz --output=graphion-${GITHUB_REF_NAME}.tar.gz HEAD
+          git archive --format=zip --output=graphion-${GITHUB_REF_NAME}.zip HEAD
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            graphion-${{ github.ref_name }}.tar.gz
+            graphion-${{ github.ref_name }}.zip
+          generate_release_notes: true

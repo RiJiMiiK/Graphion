@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-commit] running assembly safety check"
+python3 scripts/check_asm_safety.py
+
+echo "[pre-commit] running lightweight C style/static check (cppcheck if available)"
+if command -v cppcheck >/dev/null 2>&1; then
+  cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr src
+else
+  echo "cppcheck not found; skipping"
+fi

@@ -28,6 +28,7 @@ typedef struct {
 } graphion_vm;
 
 void graphion_vm_init(graphion_vm *vm);
+int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len);
 int graphion_vm_run(graphion_vm *vm);
 
 #endif

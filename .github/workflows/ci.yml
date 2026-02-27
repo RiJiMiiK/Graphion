@@ -28,6 +28,9 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -C ${{ matrix.build_type }}
+
       - name: Assembly safety policy
         run: python scripts/check_asm_safety.py
 
@@ -48,6 +51,9 @@ jobs:
       - name: Build
         run: cmake --build build-sanitize --config Debug
 
+      - name: Test
+        run: ctest --test-dir build-sanitize --output-on-failure -C Debug
+
       - name: Cppcheck
         run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr src
 
@@ -60,3 +66,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build dev container image
         run: docker build -t graphion-dev:ci .
+
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Configure
+        run: cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
+      - name: Build
+        run: cmake --build build-bench
+      - name: Run benchmark smoke
+        run: python scripts/run_bench.py --build-dir build-bench --iterations 10000
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-latest
+          path: benchmarks/results/latest.json

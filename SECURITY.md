@@ -23,3 +23,10 @@ Security issues include:
 - Memory safety bugs leading to crash or code execution.
 - Unsafe parsing behavior for untrusted input.
 - Supply-chain risks in CI/dependencies.
+
+## Security automation
+
+The repository runs:
+- CodeQL analysis for C/C++.
+- Secret scanning.
+- SBOM generation and vulnerability scanning.
