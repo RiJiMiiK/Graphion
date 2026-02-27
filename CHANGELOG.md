@@ -7,6 +7,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Merge workflow validation note (test branch `test/merge-flow`).
 - Unit test suite (`ctest`) for VM and arena.
 - Benchmark scaffold with JSON output.
 - Fuzzing target scaffold (`fuzz_vm`) for Clang/libFuzzer.
