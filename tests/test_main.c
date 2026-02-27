@@ -12,6 +12,8 @@ typedef struct {
 
 int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
+int test_vm_bfs_levels_opcode(void);
+int test_vm_hypergraph_opcodes(void);
 int test_arena_alignment_and_reset(void);
 int test_arena_invalid_alignment_fails(void);
 int test_parser_decode_valid_program(void);
@@ -24,6 +26,8 @@ int main(void) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
+      {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
+      {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
       {"arena_alignment_and_reset", test_arena_alignment_and_reset},
       {"arena_invalid_alignment_fails", test_arena_invalid_alignment_fails},
       {"parser_decode_valid_program", test_parser_decode_valid_program},

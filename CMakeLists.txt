@@ -101,6 +101,11 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     benchmarks/bench_hypergraph.c
   )
   target_link_libraries(graphion_bench_hypergraph PRIVATE graphion_vm)
+
+  add_executable(graphion_bench_vm_graph
+    benchmarks/bench_vm_graph.c
+  )
+  target_link_libraries(graphion_bench_vm_graph PRIVATE graphion_vm)
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)

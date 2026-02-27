@@ -119,6 +119,12 @@ Additional hypergraph-core benchmark:
 ./build-bench/graphion_bench_hypergraph 500000
 ```
 
+VM graph-opcode benchmark:
+
+```bash
+./build-bench/graphion_bench_vm_graph 300000
+```
+
 ## Developer Hooks
 
 Enable local pre-commit checks:
