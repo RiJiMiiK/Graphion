@@ -18,7 +18,7 @@ jobs:
   dry-run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Validate tag pattern examples in docs
         run: |
           grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/RELEASE.md
