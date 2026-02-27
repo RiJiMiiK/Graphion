@@ -10,6 +10,8 @@ Please report vulnerabilities privately through GitHub Security Advisories:
 - `Security` tab
 - `Report a vulnerability`
 
+Security contact details and response targets are in `SECURITY_CONTACTS.md`.
+
 If unavailable, open a private issue with:
 - Impact summary
 - Reproduction steps

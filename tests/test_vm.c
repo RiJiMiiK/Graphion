@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "vm/vm.h"
 
 int test_vm_addition_program(void) {

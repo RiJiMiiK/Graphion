@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "runtime/arena.h"
 
 #include <stdint.h>

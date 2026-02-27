@@ -1,0 +1,31 @@
+name: contributors-sync
+
+on:
+  schedule:
+    - cron: "11 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Update CONTRIBUTORS.md
+        run: python scripts/update_contributors.py
+      - name: Create pull request if changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "docs: update CONTRIBUTORS.md"
+          title: "docs: update contributors list"
+          body: "Automated update of CONTRIBUTORS.md."
+          branch: "chore/update-contributors"
+          labels: documentation

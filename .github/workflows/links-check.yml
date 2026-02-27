@@ -1,0 +1,21 @@
+name: links-check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          args: --no-progress --verbose README.md docs/**/*.md SUPPORT.md CONTRIBUTING.md SECURITY.md

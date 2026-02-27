@@ -12,6 +12,11 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 - `build-and-check (windows-latest, msvc, Release)`
 - `sanitize-linux`
 - `clang-tidy`
+- `actionlint`
+- `links-check`
+- `spellcheck`
+- `license-headers`
+- `repo-health`
 - `docker-build`
 - `coverage-linux`
 - `Analyze C/C++`

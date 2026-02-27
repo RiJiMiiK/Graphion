@@ -1,1 +1,10 @@
 * @RiJiMiiK
+
+/src/vm/ @RiJiMiiK
+/src/parser/ @RiJiMiiK
+/src/runtime/ @RiJiMiiK
+/tests/ @RiJiMiiK
+/fuzz/ @RiJiMiiK
+/benchmarks/ @RiJiMiiK
+/docs/ @RiJiMiiK
+/.github/workflows/ @RiJiMiiK

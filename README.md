@@ -38,6 +38,18 @@ PowerShell:
 ./scripts/dev_build.ps1
 ```
 
+Repository bootstrap:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+PowerShell:
+
+```powershell
+./scripts/bootstrap.ps1
+```
+
 Enable assembly hot paths (x86_64 only):
 
 ```bash
@@ -111,6 +123,7 @@ For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](doc
 For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
 Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
 Nightly long fuzzing is scheduled in GitHub Actions.
+Security contacts and response targets are documented in [SECURITY_CONTACTS.md](SECURITY_CONTACTS.md).
 
 ## Contributing
 

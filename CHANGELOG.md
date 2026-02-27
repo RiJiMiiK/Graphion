@@ -28,3 +28,12 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Semantic PR title enforcement workflow.
 - Support/discussion templates and support policy file.
 - Git workflow policy documentation (branches, titles, merge rules).
+- Action workflow linting (`actionlint`) in CI.
+- Markdown link checking workflow.
+- Spellcheck workflow for docs.
+- License header verification workflow and SPDX header checker script.
+- Repository health check workflow and script.
+- Contributors auto-sync workflow and generator script.
+- Bootstrap scripts for local setup.
+- Security contacts + SLA document.
+- Maintainer release checklist document.

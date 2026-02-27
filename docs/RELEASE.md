@@ -9,14 +9,15 @@
 
 1. Update `CHANGELOG.md` and move relevant entries from `[Unreleased]`.
 2. Ensure CI checks are green.
-3. Create and push tag:
+3. Follow `docs/RELEASE_CHECKLIST.md`.
+4. Create and push tag:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-4. GitHub Actions `release.yml` creates a release with source archives.
+5. GitHub Actions `release.yml` creates a release with source archives.
 
 ## Policy
 

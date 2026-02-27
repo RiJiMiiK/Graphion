@@ -1,0 +1,30 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Graphion",
+    "hypergraph",
+    "hypergraphs",
+    "hotpath",
+    "hotpaths",
+    "cppcheck",
+    "CodeQL",
+    "lcov",
+    "lychee",
+    "ctest",
+    "cmake",
+    "clang",
+    "msvc",
+    "Ninja",
+    "fuzzer",
+    "fuzzing",
+    "SPDX"
+  ],
+  "ignorePaths": [
+    "build/**",
+    "build-*/**",
+    "graphion_rust/**",
+    "benchmarks/results/**",
+    "coverage-html/**"
+  ]
+}

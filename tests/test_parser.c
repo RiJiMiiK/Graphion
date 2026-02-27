@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "parser/bytecode.h"
 
 #include <stddef.h>

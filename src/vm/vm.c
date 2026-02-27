@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "vm/vm.h"
 
 #include <stddef.h>

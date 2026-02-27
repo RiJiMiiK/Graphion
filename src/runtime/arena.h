@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #ifndef GRAPHION_RUNTIME_ARENA_H
 #define GRAPHION_RUNTIME_ARENA_H
 

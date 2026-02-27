@@ -24,6 +24,12 @@ Inside container:
 ./scripts/dev_build.sh
 ```
 
+Project bootstrap:
+
+```bash
+./scripts/bootstrap.sh
+```
+
 Enable local git hooks:
 
 ```bash
@@ -59,6 +65,7 @@ Use concise imperative messages, for example:
 ## Release and architecture docs
 
 - Release process: `docs/RELEASE.md`
+- Release checklist: `docs/RELEASE_CHECKLIST.md`
 - Architecture overview: `docs/ARCHITECTURE.md`
 - ISA spec: `docs/ISA.md`
 - Git signing guidance: `docs/GIT_SIGNING.md`

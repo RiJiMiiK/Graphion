@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #ifndef GRAPHION_PARSER_BYTECODE_H
 #define GRAPHION_PARSER_BYTECODE_H
 

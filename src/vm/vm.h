@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #ifndef GRAPHION_VM_VM_H
 #define GRAPHION_VM_VM_H
 
