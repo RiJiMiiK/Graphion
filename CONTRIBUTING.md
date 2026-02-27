@@ -70,3 +70,5 @@ Use concise imperative messages, for example:
 - ISA spec: `docs/ISA.md`
 - Git signing guidance: `docs/GIT_SIGNING.md`
 - Git workflow policy: `docs/GIT_WORKFLOW.md`
+- Actions security policy: `docs/ACTIONS_SECURITY.md`
+- Support policy: `docs/SUPPORT_POLICY.md`

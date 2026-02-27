@@ -37,3 +37,13 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Bootstrap scripts for local setup.
 - Security contacts + SLA document.
 - Maintainer release checklist document.
+- README status badges for core workflows.
+- Release dry-run workflow for archive simulation on release-related PRs.
+- Monthly audit issue workflow and template.
+- Action pinning audit script/workflow (report mode) and actions security policy doc.
+- Explicit artifact retention windows on uploaded CI artifacts.
+- `.mailmap` for contributor identity normalization.
+- Ownership policy document.
+- Incident postmortem template.
+- Support policy document.
+- Security email contact added to security docs.

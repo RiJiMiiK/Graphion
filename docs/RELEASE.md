@@ -23,3 +23,4 @@ git push origin v0.1.0
 
 - No direct release from unreviewed commits.
 - Security fixes can ship as patch releases.
+- Prefer signed tags for releases.

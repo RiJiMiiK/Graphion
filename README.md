@@ -1,4 +1,9 @@
 # Graphion
+[![CI](https://github.com/RiJiMiiK/Graphion/actions/workflows/ci.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/RiJiMiiK/Graphion/actions/workflows/codeql.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/codeql.yml)
+[![Coverage](https://github.com/RiJiMiiK/Graphion/actions/workflows/coverage.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/coverage.yml)
+[![Fuzz Nightly](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Graphion is a domain-specific language project focused on graph and hypergraph workloads.
 
@@ -121,6 +126,7 @@ PowerShell:
 See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
 For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
 For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
+For GitHub Actions security posture, see [docs/ACTIONS_SECURITY.md](docs/ACTIONS_SECURITY.md).
 Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
 Nightly long fuzzing is scheduled in GitHub Actions.
 Security contacts and response targets are documented in [SECURITY_CONTACTS.md](SECURITY_CONTACTS.md).
@@ -134,6 +140,7 @@ Git workflow policy is documented in [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md
 ## Support
 
 See [SUPPORT.md](SUPPORT.md) for support and security reporting channels.
+Support policy is described in [docs/SUPPORT_POLICY.md](docs/SUPPORT_POLICY.md).
 
 ## License
 

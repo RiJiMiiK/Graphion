@@ -29,6 +29,7 @@ jobs:
         with:
           name: sbom-spdx-json
           path: sbom.spdx.json
+          retention-days: 30
 
       - name: Vulnerability scan (SARIF)
         uses: anchore/scan-action@v6

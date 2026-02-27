@@ -1,0 +1,22 @@
+name: monthly-audit
+
+on:
+  schedule:
+    - cron: "7 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-audit-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create monthly audit issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "Monthly repository audit"
+          content-filepath: .github/monthly-audit-template.md
+          labels: triage,security,ci

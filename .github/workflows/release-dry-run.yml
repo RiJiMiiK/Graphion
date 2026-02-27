@@ -1,0 +1,37 @@
+name: release-dry-run
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "CHANGELOG.md"
+      - "docs/RELEASE.md"
+      - "docs/RELEASE_CHECKLIST.md"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/release-dry-run.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate tag pattern examples in docs
+        run: |
+          grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/RELEASE.md
+          grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/RELEASE_CHECKLIST.md
+      - name: Simulate source archive generation
+        run: |
+          git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD
+          git archive --format=zip --output=graphion-dry-run.zip HEAD
+      - name: Upload dry-run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dry-run
+          path: |
+            graphion-dry-run.tar.gz
+            graphion-dry-run.zip
+          retention-days: 14
