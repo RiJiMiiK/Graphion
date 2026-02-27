@@ -116,6 +116,11 @@ Nightly long fuzzing is scheduled in GitHub Actions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 VM instruction encoding and compatibility are documented in [docs/ISA.md](docs/ISA.md).
+Git workflow policy is documented in [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md).
+
+## Support
+
+See [SUPPORT.md](SUPPORT.md) for support and security reporting channels.
 
 ## License
 

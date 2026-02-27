@@ -1,0 +1,25 @@
+title: "Performance: "
+labels:
+  - performance
+body:
+  - type: textarea
+    id: workload
+    attributes:
+      label: Workload
+      description: Describe the benchmark/workload characteristics.
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Baseline
+      description: Current numbers, machine profile, compiler and flags.
+    validations:
+      required: true
+  - type: textarea
+    id: target
+    attributes:
+      label: Target
+      description: Expected improvement and acceptance criteria.
+    validations:
+      required: true

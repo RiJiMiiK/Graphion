@@ -47,6 +47,8 @@ Enable local git hooks:
 - Include rationale and benchmark notes for performance-sensitive changes.
 - Add or update tests when behavior changes.
 - For VM hot paths, include before/after performance evidence.
+- Use branch naming and PR title rules from `docs/GIT_WORKFLOW.md`.
+- Prefer squash merge and keep linear history.
 
 ## Commit message style
 
@@ -60,3 +62,4 @@ Use concise imperative messages, for example:
 - Architecture overview: `docs/ARCHITECTURE.md`
 - ISA spec: `docs/ISA.md`
 - Git signing guidance: `docs/GIT_SIGNING.md`
+- Git workflow policy: `docs/GIT_WORKFLOW.md`

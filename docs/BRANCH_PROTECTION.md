@@ -4,10 +4,12 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 
 ## Recommended required checks
 
-- `build-and-check (ubuntu-latest, Debug)`
-- `build-and-check (ubuntu-latest, Release)`
-- `build-and-check (windows-latest, Debug)`
-- `build-and-check (windows-latest, Release)`
+- `build-and-check (ubuntu-latest, gcc, Debug)`
+- `build-and-check (ubuntu-latest, gcc, Release)`
+- `build-and-check (ubuntu-latest, clang, Debug)`
+- `build-and-check (ubuntu-latest, clang, Release)`
+- `build-and-check (windows-latest, msvc, Debug)`
+- `build-and-check (windows-latest, msvc, Release)`
 - `sanitize-linux`
 - `clang-tidy`
 - `docker-build`
@@ -16,6 +18,7 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 - `gitleaks`
 - `sbom-scan`
 - `fuzz-vm-smoke`
+- `semantic-pr-title`
 
 ## Recommended policy
 
@@ -26,3 +29,5 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 - Require linear history.
 - Dismiss stale approvals on new commits.
 - Restrict force pushes and deletions.
+- Require signed commits.
+- Allow squash merge only.

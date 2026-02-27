@@ -1,0 +1,23 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.md", "docs/**"]
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/workflows/**", ".github/dependabot.yml"]
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ["tests/**", "fuzz/**"]
+
+security:
+  - changed-files:
+      - any-glob-to-any-file: ["SECURITY.md", "scripts/check_asm_safety.py", ".github/workflows/secrets.yml", ".github/workflows/sbom.yml"]
+
+performance:
+  - changed-files:
+      - any-glob-to-any-file: ["benchmarks/**", "scripts/run_bench.py", "scripts/compare_bench.py", "scripts/bench_compare_with_rust.py"]
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ["Dockerfile", "docker-compose.yml"]

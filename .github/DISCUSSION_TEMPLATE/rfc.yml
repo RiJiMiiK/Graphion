@@ -1,0 +1,25 @@
+title: "RFC: "
+labels:
+  - triage
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What problem are you solving?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the design proposal.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Tradeoffs
+      description: List risks and alternatives considered.
+    validations:
+      required: true

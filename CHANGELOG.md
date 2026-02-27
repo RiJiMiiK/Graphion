@@ -23,3 +23,8 @@ The format follows Keep a Changelog and Semantic Versioning.
 - `clang-tidy` CI job and local runner script.
 - Nightly long fuzz workflow.
 - Optional local VM vs Rust benchmark comparison script.
+- Label sync automation and path-based PR auto-labeling.
+- Stale issue/PR automation workflow.
+- Semantic PR title enforcement workflow.
+- Support/discussion templates and support policy file.
+- Git workflow policy documentation (branches, titles, merge rules).
