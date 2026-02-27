@@ -10,7 +10,7 @@
 
 - [x] Runtime CSR/BFS core (`csr_graph` + `graphion_bfs_levels`) with tests.
 - [x] Graph-centric opcodes and kernels (`BFS_LEVELS`, incidence/size ops).
-- [ ] Parser front-end skeleton and IR bridge.
+- [x] Parser front-end skeleton and IR bridge.
 - [x] Benchmark scenarios for graph/hypergraph kernels.
 - [x] Initial hypergraph traversal opcode set (beyond count/size).
 
