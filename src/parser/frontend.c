@@ -50,8 +50,7 @@ static const op_spec *find_op_spec(const char *mnemonic) {
       {"incident_sum", GIR_OP_INCIDENT_SUM, OP_KIND_REG_REG},
       {"hyperedge_node_sum", GIR_OP_HYPEREDGE_NODE_SUM, OP_KIND_REG_REG},
   };
-  size_t i;
-  for (i = 0U; i < (sizeof(specs) / sizeof(specs[0])); ++i) {
+  for (size_t i = 0U; i < (sizeof(specs) / sizeof(specs[0])); ++i) {
     if (streq_icase(specs[i].mnemonic, mnemonic)) {
       return &specs[i];
     }
@@ -62,12 +61,11 @@ static const op_spec *find_op_spec(const char *mnemonic) {
 static void trim_in_place(char *s) {
   size_t start = 0U;
   size_t end;
-  size_t i;
   while (s[start] != '\0' && isspace((unsigned char)s[start]) != 0) {
     ++start;
   }
   if (start > 0U) {
-    i = 0U;
+    size_t i = 0U;
     while (s[start + i] != '\0') {
       s[i] = s[start + i];
       ++i;
