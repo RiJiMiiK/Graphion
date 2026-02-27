@@ -4,8 +4,8 @@
 
 - GitHub Security Advisories:
   - https://github.com/RiJiMiiK/Graphion/security/advisories/new
-- Security email:
-  - security@graphion.dev
+- Discord:
+  - https://discord.gg/SfyCjapBEt
 
 ## Response targets (SLA)
 

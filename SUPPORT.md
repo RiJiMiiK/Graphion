@@ -15,7 +15,7 @@ Use GitHub Issues with the provided templates.
 Report vulnerabilities privately:
 
 - https://github.com/RiJiMiiK/Graphion/security/advisories/new
-- security@graphion.dev
+- https://discord.gg/SfyCjapBEt
 
 ## Support policy
 

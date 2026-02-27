@@ -9,7 +9,7 @@ This project is pre-1.0. Security fixes are applied to `main`.
 Please report vulnerabilities privately through GitHub Security Advisories:
 - `Security` tab
 - `Report a vulnerability`
-- Security email: `security@graphion.dev` (replace if needed)
+- Discord (fallback): `https://discord.gg/SfyCjapBEt`
 
 Security contact details and response targets are in `SECURITY_CONTACTS.md`.
 
