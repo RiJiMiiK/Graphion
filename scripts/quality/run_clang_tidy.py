@@ -12,7 +12,7 @@ def main() -> int:
   parser.add_argument("--build-dir", default="build", help="CMake build directory containing compile_commands.json")
   args = parser.parse_args()
 
-  root = pathlib.Path(__file__).resolve().parents[1]
+  root = pathlib.Path(__file__).resolve().parents[2]
   build_dir = root / args.build_dir
   if not (build_dir / "compile_commands.json").exists():
     print(f"missing compile_commands.json in {build_dir}", file=sys.stderr)
