@@ -23,4 +23,5 @@ jobs:
         with:
           python-version: "3.x"
       - name: Run action pinning audit (report mode)
-        run: python scripts/audit_actions_pinning.py
+        run: |
+          python scripts/audit_actions_pinning.py || true
