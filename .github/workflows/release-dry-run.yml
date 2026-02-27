@@ -28,7 +28,7 @@ jobs:
           git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD
           git archive --format=zip --output=graphion-dry-run.zip HEAD
       - name: Upload dry-run artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-dry-run
           path: |

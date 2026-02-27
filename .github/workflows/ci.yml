@@ -125,7 +125,7 @@ jobs:
       - name: Compare benchmark vs baseline
         run: python scripts/compare_bench.py --baseline benchmarks/baselines/vm_dispatch.json --current benchmarks/results/latest.json --max-regression 0.50
       - name: Upload benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bench-latest
           path: benchmarks/results/latest.json
