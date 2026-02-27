@@ -64,6 +64,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Assembly ABI/register reference doc (`docs/ASM_REGISTERS.md`).
 - Performance snapshot doc with x100 benchmark runs (`docs/PERFORMANCE_RESULTS.md`).
 - Scripts index and categorized scripts layout (`scripts/README.md`).
+- Parser front-end skeleton (`source -> IR`) and IR lowering bridge (`IR -> VM bytecode`) with tests.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
