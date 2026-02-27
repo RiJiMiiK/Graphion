@@ -18,6 +18,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -25,10 +28,16 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
+      - name: Assembly safety policy
+        run: python scripts/check_asm_safety.py
+
   sanitize-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y cppcheck
@@ -41,3 +50,6 @@ jobs:
 
       - name: Cppcheck
         run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr src
+
+      - name: Assembly safety policy
+        run: python scripts/check_asm_safety.py

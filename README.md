@@ -22,6 +22,13 @@ cmake -S . -B build
 cmake --build build --config Release
 ```
 
+Enable assembly hot paths (x86_64 only):
+
+```bash
+cmake -S . -B build-asm -DGRAPHION_ENABLE_ASM=ON
+cmake --build build-asm --config Release
+```
+
 Sanitizer build (Linux/macOS with Clang/GCC):
 
 ```bash
@@ -32,6 +39,7 @@ cmake --build build-sanitize
 ## Security
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
+For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
 
 ## Contributing
 

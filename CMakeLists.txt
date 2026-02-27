@@ -7,6 +7,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 option(GRAPHION_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
 option(GRAPHION_ENABLE_WERROR "Treat warnings as errors" ON)
+option(GRAPHION_ENABLE_ASM "Enable architecture-specific assembly hot paths" OFF)
 
 if(MSVC)
   add_compile_options(/W4)
@@ -29,6 +30,16 @@ add_library(graphion_vm
   src/vm/vm.c
   src/runtime/arena.c
 )
+
+if(GRAPHION_ENABLE_ASM)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|x64")
+    enable_language(ASM)
+    target_sources(graphion_vm PRIVATE src/vm/hotpaths.s)
+    target_compile_definitions(graphion_vm PRIVATE GRAPHION_ENABLE_ASM=1)
+  else()
+    message(FATAL_ERROR "GRAPHION_ENABLE_ASM is only supported on x86_64/AMD64 for now.")
+  endif()
+endif()
 
 target_include_directories(graphion_vm
   PUBLIC
