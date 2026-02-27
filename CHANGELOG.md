@@ -48,3 +48,26 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Incident postmortem template.
 - Support policy document.
 - Security email contact added to security docs.
+- CSR graph core runtime and BFS kernel with tests.
+- Hypergraph incidence runtime with tests.
+- VM graph/hypergraph opcodes:
+  - `GVM_OP_BFS_LEVELS`
+  - `GVM_OP_INCIDENT_COUNT`
+  - `GVM_OP_HYPEREDGE_SIZE`
+- Dedicated graph and hypergraph benchmark binaries.
+- Linux benchmark helper scripts (`scripts/bench/run_linux_bench_*.py`).
+- Assembly ABI/register reference doc (`docs/ASM_REGISTERS.md`).
+- Performance snapshot doc with x100 benchmark runs (`docs/PERFORMANCE_RESULTS.md`).
+- Scripts index and categorized scripts layout (`scripts/README.md`).
+
+### Changed
+- VM arithmetic fastpath refined with halt-terminated specialization.
+- VM dispatch performance improved and benchmark outputs extended with latency metrics (`ns_per_*`).
+- Hypergraph benchmark hot loop optimized for lower overhead.
+- Repository scripts reorganized into purpose-based folders:
+  - `scripts/bench`
+  - `scripts/dev`
+  - `scripts/quality`
+  - `scripts/repo`
+- CI/workflows/docs updated to new script paths.
+- Assembly source now marks non-executable stack section (`.note.GNU-stack`).

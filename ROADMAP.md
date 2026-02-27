@@ -8,15 +8,15 @@
 
 ## Milestone 0.2 (Graph Primitives)
 
-- Add graph-centric opcodes (frontier ops, neighbor iteration primitives).
-- Add parser front-end skeleton and IR bridge.
-- Add benchmark scenarios for graph kernels.
+- [x] Add graph-centric opcodes and core kernels (`BFS_LEVELS`, incidence/size ops).
+- [ ] Add parser front-end skeleton and IR bridge.
+- [x] Add benchmark scenarios for graph/hypergraph kernels.
 
 ## Milestone 0.3 (Optimization Pass)
 
-- Hotpath profiling pipeline.
-- Super-instruction experiments.
-- Assembly integration behind measured gates.
+- [x] Hotpath profiling pipeline (repeatable x100 benchmark snapshots).
+- [ ] Super-instruction experiments.
+- [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
 
 ## Milestone 1.0 (Language MVP)
 
