@@ -37,3 +37,5 @@ Output example:
 - Keep benchmark input deterministic.
 - Run on a stable machine profile when comparing commits.
 - Record compiler, flags, and CPU model in benchmark reports.
+- Compare against baseline with `scripts/compare_bench.py` in CI.
+- Keep allowed regression threshold explicit in workflow config.

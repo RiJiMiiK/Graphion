@@ -80,6 +80,8 @@ jobs:
         run: cmake --build build-bench
       - name: Run benchmark smoke
         run: python scripts/run_bench.py --build-dir build-bench --iterations 10000
+      - name: Compare benchmark vs baseline
+        run: python scripts/compare_bench.py --baseline benchmarks/baselines/vm_dispatch.json --current benchmarks/results/latest.json --max-regression 0.50
       - name: Upload benchmark artifact
         uses: actions/upload-artifact@v4
         with:

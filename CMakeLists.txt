@@ -45,6 +45,7 @@ endif()
 add_library(graphion_vm
   src/vm/vm.c
   src/runtime/arena.c
+  src/parser/bytecode.c
 )
 
 if(GRAPHION_ENABLE_ASM)
@@ -75,6 +76,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/test_main.c
     tests/test_vm.c
     tests/test_arena.c
+    tests/test_parser.c
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
   add_test(NAME graphion_tests COMMAND graphion_tests)
@@ -101,4 +103,11 @@ if(GRAPHION_ENABLE_FUZZING)
   target_compile_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
   target_link_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined)
   target_link_libraries(fuzz_vm PRIVATE graphion_vm)
+
+  add_executable(fuzz_parser
+    fuzz/fuzz_parser.c
+  )
+  target_compile_options(fuzz_parser PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+  target_link_options(fuzz_parser PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_libraries(fuzz_parser PRIVATE graphion_vm)
 endif()

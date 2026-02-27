@@ -58,3 +58,5 @@ Use concise imperative messages, for example:
 
 - Release process: `docs/RELEASE.md`
 - Architecture overview: `docs/ARCHITECTURE.md`
+- ISA spec: `docs/ISA.md`
+- Git signing guidance: `docs/GIT_SIGNING.md`

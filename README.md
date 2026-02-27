@@ -16,6 +16,7 @@ Early stage repository. The current baseline provides:
 - CI, static checks, and security workflows.
 - Unit tests (`ctest`) and benchmark scaffold.
 - Fuzzing scaffold for parser/VM robustness.
+- Bytecode parser scaffold with fixed-width ISA encoding.
 
 ## Build
 
@@ -108,10 +109,12 @@ PowerShell:
 See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
 For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
 For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
+Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+VM instruction encoding and compatibility are documented in [docs/ISA.md](docs/ISA.md).
 
 ## License
 

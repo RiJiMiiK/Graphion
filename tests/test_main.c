@@ -12,6 +12,8 @@ int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
 int test_arena_alignment_and_reset(void);
 int test_arena_invalid_alignment_fails(void);
+int test_parser_decode_valid_program(void);
+int test_parser_rejects_truncated_input(void);
 
 int main(void) {
   const test_case tests[] = {
@@ -19,6 +21,8 @@ int main(void) {
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
       {"arena_alignment_and_reset", test_arena_alignment_and_reset},
       {"arena_invalid_alignment_fails", test_arena_invalid_alignment_fails},
+      {"parser_decode_valid_program", test_parser_decode_valid_program},
+      {"parser_rejects_truncated_input", test_parser_rejects_truncated_input},
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;

@@ -44,3 +44,5 @@ __pycache__/
 benchmarks/results/
 fuzz/corpus/
 fuzz/crashers/
+coverage-html/
+coverage*.info

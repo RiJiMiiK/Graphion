@@ -22,6 +22,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `GVM_OP_HALT`
   - `GVM_OP_MOV_IMM`
   - `GVM_OP_ADD`
+- Bytecode parser:
+  - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
 
 ## Safety constraints
 

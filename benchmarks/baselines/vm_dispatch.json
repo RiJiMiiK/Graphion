@@ -1,0 +1,7 @@
+{
+  "benchmark": "vm_dispatch",
+  "iterations": 10000,
+  "instructions_per_iteration": 18,
+  "seconds": 0.0025,
+  "mips": 72.0
+}

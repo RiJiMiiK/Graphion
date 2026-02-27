@@ -14,3 +14,8 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Supply-chain workflow (SBOM + vulnerability scan).
 - Release workflow for semantic version tags.
 - Architecture, release, benchmark, and branch-protection docs.
+- Coverage workflow producing HTML artifacts.
+- Parser scaffold for bytecode decoding (`src/parser/bytecode.*`).
+- ISA specification document (`docs/ISA.md`).
+- Benchmark regression comparison script and baseline.
+- Maintainers and roadmap files.

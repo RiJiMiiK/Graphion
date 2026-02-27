@@ -10,9 +10,11 @@ Configure in: `Settings -> Branches -> Add rule -> main`
 - `build-and-check (windows-latest, Release)`
 - `sanitize-linux`
 - `docker-build`
+- `coverage-linux`
 - `Analyze C/C++`
 - `gitleaks`
 - `sbom-scan`
+- `fuzz-vm-smoke`
 
 ## Recommended policy
 
