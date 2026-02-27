@@ -21,8 +21,8 @@ compile_commands.json
 CTestTestfile.cmake
 _deps/
 
-# Rust temporary project
-graphion_rust/target/
+# Rust comparison sandbox (local only)
+graphion_rust/
 
 # IDE/editor
 .vscode/
