@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 REQUIRED_FILES = [
     "README.md",

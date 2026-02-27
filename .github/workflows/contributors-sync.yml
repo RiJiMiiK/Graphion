@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.x"
       - name: Update CONTRIBUTORS.md
-        run: python scripts/update_contributors.py
+        run: python scripts/repo/update_contributors.py
       - name: Create pull request if changed
         uses: peter-evans/create-pull-request@v6
         with:
@@ -29,3 +29,4 @@ jobs:
           body: "Automated update of CONTRIBUTORS.md."
           branch: "chore/update-contributors"
           labels: documentation
+

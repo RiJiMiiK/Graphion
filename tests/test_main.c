@@ -12,19 +12,29 @@ typedef struct {
 
 int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
+int test_vm_bfs_levels_opcode(void);
+int test_vm_hypergraph_opcodes(void);
 int test_arena_alignment_and_reset(void);
 int test_arena_invalid_alignment_fails(void);
 int test_parser_decode_valid_program(void);
 int test_parser_rejects_truncated_input(void);
+int test_graph_init_and_neighbors(void);
+int test_graph_bfs_levels(void);
+int test_hypergraph_init_and_queries(void);
 
 int main(void) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
+      {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
+      {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
       {"arena_alignment_and_reset", test_arena_alignment_and_reset},
       {"arena_invalid_alignment_fails", test_arena_invalid_alignment_fails},
       {"parser_decode_valid_program", test_parser_decode_valid_program},
       {"parser_rejects_truncated_input", test_parser_rejects_truncated_input},
+      {"graph_init_and_neighbors", test_graph_init_and_neighbors},
+      {"graph_bfs_levels", test_graph_bfs_levels},
+      {"hypergraph_init_and_queries", test_hypergraph_init_and_queries},
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;

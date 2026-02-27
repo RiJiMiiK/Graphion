@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "graph/csr_graph.h"
+#include "graph/hypergraph.h"
 #include "vm/vm.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 static double now_seconds(void) {
@@ -18,24 +22,33 @@ static double now_seconds(void) {
 
 int main(int argc, char **argv) {
   graphion_vm vm;
+  graphion_csr_graph csr;
+  graphion_hypergraph hg;
+  const uint32_t csr_offsets[] = {0, 2, 3, 5, 6};
+  const uint32_t csr_neighbors[] = {1, 2, 3, 0, 3, 1};
+  const uint32_t node_offsets[] = {0, 1, 3, 5, 7};
+  const uint32_t node_hyperedges[] = {0, 0, 1, 0, 2, 1, 2};
+  const uint32_t hyperedge_offsets[] = {0, 3, 5, 7};
+  const uint32_t hyperedge_nodes[] = {0, 1, 2, 1, 3, 2, 3};
+  int32_t levels[4];
+  uint32_t queue[4];
   const graphion_insn program[] = {
-      {GVM_OP_MOV_IMM, 0, 0, 1},   {GVM_OP_MOV_IMM, 1, 0, 2}, {GVM_OP_ADD, 0, 1, 0},
-      {GVM_OP_MOV_IMM, 2, 0, 10},  {GVM_OP_ADD, 0, 2, 0},      {GVM_OP_MOV_IMM, 3, 0, 4},
-      {GVM_OP_ADD, 0, 3, 0},       {GVM_OP_MOV_IMM, 4, 0, 5},  {GVM_OP_ADD, 0, 4, 0},
-      {GVM_OP_MOV_IMM, 5, 0, 20},  {GVM_OP_ADD, 0, 5, 0},      {GVM_OP_MOV_IMM, 6, 0, 1},
-      {GVM_OP_ADD, 0, 6, 0},       {GVM_OP_MOV_IMM, 7, 0, 8},  {GVM_OP_ADD, 0, 7, 0},
-      {GVM_OP_MOV_IMM, 8, 0, 100}, {GVM_OP_ADD, 0, 8, 0},      {GVM_OP_HALT, 0, 0, 0},
+      {GVM_OP_MOV_IMM, 0, 0, 0},          {GVM_OP_BFS_LEVELS, 0, 1, 0},
+      {GVM_OP_MOV_IMM, 2, 0, 1},          {GVM_OP_INCIDENT_COUNT, 2, 3, 0},
+      {GVM_OP_MOV_IMM, 4, 0, 0},          {GVM_OP_HYPEREDGE_SIZE, 4, 5, 0},
+      {GVM_OP_ADD, 6, 1, 0},              {GVM_OP_ADD, 6, 3, 0},
+      {GVM_OP_ADD, 6, 5, 0},              {GVM_OP_HALT, 0, 0, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
-  long iterations = 500000;
+  long iterations = 300000;
   long i;
+  uint64_t checksum = 0U;
   double start;
   double end;
   double seconds;
   double mips;
   double ns_per_instruction;
   int rc;
-  uint64_t checksum = 0U;
 
   if (argc > 1) {
     iterations = strtol(argv[1], NULL, 10);
@@ -45,23 +58,34 @@ int main(int argc, char **argv) {
     }
   }
 
+  rc = graphion_csr_graph_init(&csr, 4U, 6U, csr_offsets, csr_neighbors);
+  if (rc != 0) {
+    return 3;
+  }
+  rc = graphion_hypergraph_init(&hg, 4U, 3U, 7U, node_offsets, node_hyperedges, hyperedge_offsets,
+                                hyperedge_nodes);
+  if (rc != 0) {
+    return 4;
+  }
+
   graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &csr, levels, queue, 4U);
+  graphion_vm_bind_hypergraph(&vm, &hg);
   rc = graphion_vm_load(&vm, program, instruction_count);
   if (rc != 0) {
-    fprintf(stderr, "load failed rc=%d\n", rc);
-    return 3;
+    return 5;
   }
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
+    memset(vm.regs, 0, sizeof(vm.regs));
     vm.pc = 0U;
     vm.halted = false;
     rc = graphion_vm_run(&vm);
     if (rc != 0) {
-      fprintf(stderr, "run failed rc=%d\n", rc);
-      return 4;
+      return 6;
     }
-    checksum += (uint64_t)vm.regs[0];
+    checksum += (uint64_t)vm.regs[6];
   }
   end = now_seconds();
 
@@ -72,7 +96,7 @@ int main(int argc, char **argv) {
   mips = ((double)(iterations * (long)instruction_count) / seconds) / 1000000.0;
   ns_per_instruction = (seconds * 1000000000.0) / ((double)iterations * (double)instruction_count);
 
-  printf("{\"benchmark\":\"vm_dispatch\",\"iterations\":%ld,\"instructions_per_iteration\":%zu,"
+  printf("{\"benchmark\":\"vm_graph_ops\",\"iterations\":%ld,\"instructions_per_iteration\":%zu,"
          "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,\"checksum\":%llu}\n",
          iterations, instruction_count, seconds, mips, ns_per_instruction, (unsigned long long)checksum);
   return 0;

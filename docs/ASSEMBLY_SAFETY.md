@@ -36,7 +36,7 @@ cmake -S . -B build-sanitize -DGRAPHION_ENABLE_SANITIZERS=ON
 cmake --build build-sanitize
 ```
 
-With assembly (x86_64 only for now):
+With assembly (x86_64, GCC/Clang toolchains):
 
 ```bash
 cmake -S . -B build-asm -DGRAPHION_ENABLE_ASM=ON
@@ -46,5 +46,7 @@ cmake --build build-asm --config Release
 ## Assembly policy
 
 - Forbidden by default: privileged/control-register/system-entry instructions.
-- Enforced by `scripts/check_asm_safety.py` in CI.
+- Enforced by `scripts/quality/check_asm_safety.py` in CI.
 - Exception process: add `ALLOW_UNSAFE_ASM` on the same line and justify in PR.
+- ABI/register mapping for current hotpath: `docs/ASM_REGISTERS.md`.
+

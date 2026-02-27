@@ -22,8 +22,20 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `GVM_OP_HALT`
   - `GVM_OP_MOV_IMM`
   - `GVM_OP_ADD`
+  - `GVM_OP_BFS_LEVELS`
+  - `GVM_OP_INCIDENT_COUNT`
+  - `GVM_OP_HYPEREDGE_SIZE`
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
+
+## Hotpath acceleration
+
+- `graphion_vm_run` selects a fast arithmetic path when the loaded program only contains:
+  - `NOP`, `HALT`, `MOV_IMM`, `ADD`
+- Fast path backends:
+  - Portable C fallback (always available).
+  - x86_64 assembly backend (`src/vm/hotpaths.s`) when `GRAPHION_ENABLE_ASM=ON` with GCC/Clang.
+- Register/ABI details for assembly are documented in `docs/ASM_REGISTERS.md`.
 
 ## Safety constraints
 

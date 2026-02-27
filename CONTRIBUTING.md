@@ -21,19 +21,19 @@ docker compose run --rm graphion-dev
 Inside container:
 
 ```bash
-./scripts/dev_build.sh
+./scripts/dev/dev_build.sh
 ```
 
 Project bootstrap:
 
 ```bash
-./scripts/bootstrap.sh
+./scripts/dev/bootstrap.sh
 ```
 
 Enable local git hooks:
 
 ```bash
-./scripts/setup_hooks.sh
+./scripts/dev/setup_hooks.sh
 ```
 
 ## Coding rules
@@ -42,7 +42,7 @@ Enable local git hooks:
 - Run formatting (`clang-format`) before opening a PR.
 - Keep warnings at zero on supported toolchains.
 - Avoid introducing UB; prefer explicit bounds checks.
-- Run `python scripts/check_asm_safety.py` before pushing asm changes.
+- Run `python scripts/quality/check_asm_safety.py` before pushing asm changes.
 - Run tests with `ctest --test-dir <build-dir>`.
 - Run tests with `ctest --test-dir <build-dir> -C Debug`.
 - Include benchmark note for performance-sensitive PRs.
@@ -72,3 +72,4 @@ Use concise imperative messages, for example:
 - Git workflow policy: `docs/GIT_WORKFLOW.md`
 - Actions security policy: `docs/ACTIONS_SECURITY.md`
 - Support policy: `docs/SUPPORT_POLICY.md`
+
