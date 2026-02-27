@@ -14,6 +14,11 @@
 - [x] Benchmark scenarios for graph/hypergraph kernels.
 - [x] Initial hypergraph traversal opcode set (beyond count/size).
 
+## Milestone 0.2.1 (Stabilization) [done]
+
+- [x] End-to-end parser integration test (`source -> IR -> bytecode -> VM run`).
+- [x] IR v0 bridge contract document (`docs/IR.md`).
+
 ## Milestone 0.3 (Optimization Pass) [in progress]
 
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).

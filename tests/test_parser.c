@@ -88,3 +88,39 @@ int test_frontend_rejects_invalid_source(void) {
   }
   return 0;
 }
+
+int test_frontend_source_to_vm_execution(void) {
+  const char *source = "mov r0, 7\n"
+                       "mov r1, 35\n"
+                       "add r0, r1\n"
+                       "halt\n";
+  graphion_ir_insn ir[8];
+  graphion_insn program[8];
+  size_t ir_count = 0U;
+  size_t program_count = 0U;
+  graphion_vm vm;
+  int rc;
+
+  rc = graphion_parse_source_to_ir(source, ir, 8U, &ir_count);
+  if (rc != GFE_OK) {
+    return 1;
+  }
+  rc = graphion_ir_lower_to_bytecode(ir, ir_count, program, 8U, &program_count);
+  if (rc != GIR_OK) {
+    return 2;
+  }
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, program_count);
+  if (rc != 0) {
+    return 3;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 4;
+  }
+  if (!vm.halted || vm.regs[0] != 42) {
+    return 5;
+  }
+  return 0;
+}
