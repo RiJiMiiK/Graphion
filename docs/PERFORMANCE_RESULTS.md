@@ -14,6 +14,17 @@ Format requested: `s | mteps | mips | ns_per_X`.
 | Rust Windows | 0.006275 | - | 1435.327 | 0.697 |
 | Rust Linux | 0.006425 | - | 1403.331 | 0.714 |
 
+## vm_dispatch dispatch variants (`ns_per_instruction`, x100)
+
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows (switch) | 0.007001 | - | 1286.439 | 0.778 |
+| Graphion Windows (jumptable) | 0.007407 | - | 1216.154 | 0.823 |
+| Graphion Linux (switch) | 0.007306 | - | 1235.826 | 0.812 |
+| Graphion Linux (jumptable) | 0.006093 | - | 1480.431 | 0.677 |
+| Graphion Linux (computed-goto) | 0.005980 | - | 1510.238 | 0.665 |
+| Rust Windows (baseline) | 0.006469 | - | 1396.877 | 0.719 |
+
 ## bfs_levels (`ns_per_edge`)
 
 | Platform | s | mteps | mips | ns_per_X |

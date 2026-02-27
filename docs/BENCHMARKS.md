@@ -26,6 +26,12 @@ Run hypergraph sum benches directly:
 ./build-bench/graphion_bench_hypergraph_hyperedge_node_sum 500000
 ```
 
+Dispatch variant study (switch vs jumptable vs computed-goto when supported):
+
+```bash
+python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs 20
+```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
