@@ -46,6 +46,7 @@ add_library(graphion_vm
   src/vm/vm.c
   src/runtime/arena.c
   src/parser/bytecode.c
+  src/graph/csr_graph.c
 )
 
 if(GRAPHION_ENABLE_ASM)
@@ -77,6 +78,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/test_vm.c
     tests/test_arena.c
     tests/test_parser.c
+    tests/test_graph.c
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
   add_test(NAME graphion_tests COMMAND graphion_tests)
@@ -87,6 +89,11 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     benchmarks/bench_vm.c
   )
   target_link_libraries(graphion_bench PRIVATE graphion_vm)
+
+  add_executable(graphion_bench_bfs
+    benchmarks/bench_bfs.c
+  )
+  target_link_libraries(graphion_bench_bfs PRIVATE graphion_vm)
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)

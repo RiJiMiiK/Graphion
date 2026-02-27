@@ -107,6 +107,12 @@ python3 scripts/run_bench.py --build-dir build-bench --iterations 500000
 
 See [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
+Additional graph-core benchmark:
+
+```bash
+./build-bench/graphion_bench_bfs 200000
+```
+
 ## Developer Hooks
 
 Enable local pre-commit checks:

@@ -16,6 +16,8 @@ int test_arena_alignment_and_reset(void);
 int test_arena_invalid_alignment_fails(void);
 int test_parser_decode_valid_program(void);
 int test_parser_rejects_truncated_input(void);
+int test_graph_init_and_neighbors(void);
+int test_graph_bfs_levels(void);
 
 int main(void) {
   const test_case tests[] = {
@@ -25,6 +27,8 @@ int main(void) {
       {"arena_invalid_alignment_fails", test_arena_invalid_alignment_fails},
       {"parser_decode_valid_program", test_parser_decode_valid_program},
       {"parser_rejects_truncated_input", test_parser_rejects_truncated_input},
+      {"graph_init_and_neighbors", test_graph_init_and_neighbors},
+      {"graph_bfs_levels", test_graph_bfs_levels},
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;
