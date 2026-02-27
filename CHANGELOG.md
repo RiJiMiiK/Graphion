@@ -69,6 +69,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
+- VM arithmetic fastpath now includes an initial super-instruction fusion (`ADD` + `ADD` on same destination).
 - VM dispatch performance improved and benchmark outputs extended with latency metrics (`ns_per_*`).
 - Hypergraph benchmark hot loop optimized for lower overhead.
 - Repository scripts reorganized into purpose-based folders:

@@ -21,7 +21,7 @@
 
 ## Milestone 0.3 (Optimization Pass) [in progress]
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).
-- [ ] Super-instruction experiments.
+- [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
 - [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
 - [ ] PGO pipeline (MSVC + GCC/Clang).
 - [ ] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study).

@@ -124,3 +124,33 @@ int test_vm_hypergraph_opcodes(void) {
   }
   return 0;
 }
+
+int test_vm_superinstruction_add_pair_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 1},  {GVM_OP_MOV_IMM, 1, 0, 2}, {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 0, 1, 0},      {GVM_OP_ADD, 0, 2, 0},     {GVM_OP_MOV_IMM, 3, 0, 5},
+      {GVM_OP_ADD, 3, 3, 0},      {GVM_OP_ADD, 3, 1, 0},     {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 6) {
+    return 4;
+  }
+  if (vm.regs[3] != 12) {
+    return 5;
+  }
+  return 0;
+}

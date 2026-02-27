@@ -41,10 +41,19 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
 
 static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
   const graphion_insn *p = vm->program + vm->pc;
+  const graphion_insn *const end = vm->program + vm->program_len;
   int64_t *const regs = vm->regs;
 
   for (;;) {
     const graphion_insn in = *p++;
+    if (in.op == GVM_OP_ADD && p < end) {
+      const graphion_insn next = *p;
+      if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
+        regs[in.a] += regs[in.b] + regs[next.b];
+        p++;
+        continue;
+      }
+    }
     switch (in.op) {
       case GVM_OP_NOP:
         break;
@@ -73,6 +82,14 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
 
   while (p < end) {
     const graphion_insn in = *p++;
+    if (in.op == GVM_OP_ADD && p < end) {
+      const graphion_insn next = *p;
+      if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
+        regs[in.a] += regs[in.b] + regs[next.b];
+        p++;
+        continue;
+      }
+    }
     switch (in.op) {
       case GVM_OP_NOP:
         break;
