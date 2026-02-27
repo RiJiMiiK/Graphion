@@ -23,16 +23,18 @@ enum {
 };
 
 static int streq_icase(const char *a, const char *b) {
-  size_t i = 0U;
-  while (a[i] != '\0' && b[i] != '\0') {
-    const unsigned char ca = (unsigned char)a[i];
-    const unsigned char cb = (unsigned char)b[i];
+  const char *pa = a;
+  const char *pb = b;
+  while (*pa != '\0' && *pb != '\0') {
+    const unsigned char ca = (unsigned char)(*pa);
+    const unsigned char cb = (unsigned char)(*pb);
     if (tolower(ca) != tolower(cb)) {
       return 0;
     }
-    ++i;
+    ++pa;
+    ++pb;
   }
-  return a[i] == '\0' && b[i] == '\0';
+  return *pa == '\0' && *pb == '\0';
 }
 
 static const op_spec *find_op_spec(const char *mnemonic) {
