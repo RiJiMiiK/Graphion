@@ -65,6 +65,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Performance snapshot doc with x100 benchmark runs (`docs/PERFORMANCE_RESULTS.md`).
 - Scripts index and categorized scripts layout (`scripts/README.md`).
 - Parser front-end skeleton (`source -> IR`) and IR lowering bridge (`IR -> VM bytecode`) with tests.
+- End-to-end parser bridge execution test (`source -> IR -> bytecode -> VM`) and IR v0 contract doc (`docs/IR.md`).
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
