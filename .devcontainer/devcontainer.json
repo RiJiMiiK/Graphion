@@ -1,0 +1,16 @@
+{
+  "name": "Graphion Dev",
+  "dockerFile": "../Dockerfile",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake"
+      ]
+    }
+  },
+  "postCreateCommand": "cmake -S . -B build-dev -G Ninja && cmake --build build-dev && python3 scripts/check_asm_safety.py"
+}

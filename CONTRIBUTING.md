@@ -10,12 +10,26 @@ cmake -S . -B build
 cmake --build build
 ```
 
+Optional reproducible setup with Docker:
+
+```bash
+docker compose build
+docker compose run --rm graphion-dev
+```
+
+Inside container:
+
+```bash
+./scripts/dev_build.sh
+```
+
 ## Coding rules
 
 - Keep C code C11 compatible.
 - Run formatting (`clang-format`) before opening a PR.
 - Keep warnings at zero on supported toolchains.
 - Avoid introducing UB; prefer explicit bounds checks.
+- Run `python scripts/check_asm_safety.py` before pushing asm changes.
 
 ## Pull requests
 

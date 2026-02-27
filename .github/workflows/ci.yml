@@ -53,3 +53,10 @@ jobs:
 
       - name: Assembly safety policy
         run: python scripts/check_asm_safety.py
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build dev container image
+        run: docker build -t graphion-dev:ci .

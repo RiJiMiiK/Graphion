@@ -1,5 +1,8 @@
 # Build outputs
 /build/
+/build-dev/
+/build-asm/
+/build-sanitize/
 /out/
 /dist/
 *.o
@@ -33,3 +36,6 @@ graphion_rust/
 # OS
 .DS_Store
 Thumbs.db
+
+# Python/tooling cache
+__pycache__/

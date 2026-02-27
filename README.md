@@ -22,6 +22,18 @@ cmake -S . -B build
 cmake --build build --config Release
 ```
 
+Quick local dev build (Ninja):
+
+```bash
+./scripts/dev_build.sh
+```
+
+PowerShell:
+
+```powershell
+./scripts/dev_build.ps1
+```
+
 Enable assembly hot paths (x86_64 only):
 
 ```bash
@@ -35,6 +47,23 @@ Sanitizer build (Linux/macOS with Clang/GCC):
 cmake -S . -B build-sanitize -DGRAPHION_ENABLE_SANITIZERS=ON
 cmake --build build-sanitize
 ```
+
+## Reproducible Dev Environment (Docker)
+
+Build and open a shell:
+
+```bash
+docker compose build
+docker compose run --rm graphion-dev
+```
+
+Inside the container:
+
+```bash
+./scripts/dev_build.sh
+```
+
+VS Code users can also use the included devcontainer configuration.
 
 ## Security
 
