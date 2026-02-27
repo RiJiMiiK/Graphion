@@ -60,7 +60,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure -C ${{ matrix.build_type }}
 
       - name: Assembly safety policy
-        run: python scripts/check_asm_safety.py
+        run: python scripts/quality/check_asm_safety.py
 
   clang-tidy:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build-tidy -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run clang-tidy
-        run: python scripts/run_clang_tidy.py --build-dir build-tidy
+        run: python scripts/quality/run_clang_tidy.py --build-dir build-tidy
 
   sanitize-linux:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
         run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr src
 
       - name: Assembly safety policy
-        run: python scripts/check_asm_safety.py
+        run: python scripts/quality/check_asm_safety.py
 
   docker-build:
     runs-on: ubuntu-latest
@@ -121,12 +121,13 @@ jobs:
       - name: Build
         run: cmake --build build-bench
       - name: Run benchmark smoke
-        run: python scripts/run_bench.py --build-dir build-bench --iterations 10000
+        run: python scripts/bench/run_bench.py --build-dir build-bench --iterations 10000
       - name: Compare benchmark vs baseline
-        run: python scripts/compare_bench.py --baseline benchmarks/baselines/vm_dispatch.json --current benchmarks/results/latest.json --max-regression 0.50
+        run: python scripts/bench/compare_bench.py --baseline benchmarks/baselines/vm_dispatch.json --current benchmarks/results/latest.json --max-regression 0.50
       - name: Upload benchmark artifact
         uses: actions/upload-artifact@v7
         with:
           name: bench-latest
           path: benchmarks/results/latest.json
           retention-days: 30
+

@@ -1,5 +1,6 @@
 # Build outputs
 /build/
+/build-*/
 /build-dev/
 /build-asm/
 /build-sanitize/
@@ -46,3 +47,5 @@ fuzz/corpus/
 fuzz/crashers/
 coverage-html/
 coverage*.info
+out*.txt
+err*.txt

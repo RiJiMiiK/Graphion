@@ -6,8 +6,14 @@
 #include <stdlib.h>
 #include <time.h>
 
-static double elapsed_seconds(clock_t start, clock_t end) {
-  return (double)(end - start) / (double)CLOCKS_PER_SEC;
+static double now_seconds(void) {
+#if defined(TIME_UTC)
+  struct timespec ts;
+  (void)timespec_get(&ts, TIME_UTC);
+  return (double)ts.tv_sec + ((double)ts.tv_nsec / 1000000000.0);
+#else
+  return (double)clock() / (double)CLOCKS_PER_SEC;
+#endif
 }
 
 int main(int argc, char **argv) {
@@ -23,11 +29,13 @@ int main(int argc, char **argv) {
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
   long iterations = 500000;
   long i;
-  clock_t start;
-  clock_t end;
+  double start;
+  double end;
   double seconds;
   double mips;
+  double ns_per_instruction;
   int rc;
+  uint64_t checksum = 0U;
 
   if (argc > 1) {
     iterations = strtol(argv[1], NULL, 10);
@@ -37,30 +45,35 @@ int main(int argc, char **argv) {
     }
   }
 
-  start = clock();
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, instruction_count);
+  if (rc != 0) {
+    fprintf(stderr, "load failed rc=%d\n", rc);
+    return 3;
+  }
+
+  start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    graphion_vm_init(&vm);
-    rc = graphion_vm_load(&vm, program, instruction_count);
-    if (rc != 0) {
-      fprintf(stderr, "load failed rc=%d\n", rc);
-      return 3;
-    }
+    vm.pc = 0U;
+    vm.halted = false;
     rc = graphion_vm_run(&vm);
     if (rc != 0) {
       fprintf(stderr, "run failed rc=%d\n", rc);
       return 4;
     }
+    checksum += (uint64_t)vm.regs[0];
   }
-  end = clock();
+  end = now_seconds();
 
-  seconds = elapsed_seconds(start, end);
+  seconds = end - start;
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
   mips = ((double)(iterations * (long)instruction_count) / seconds) / 1000000.0;
+  ns_per_instruction = (seconds * 1000000000.0) / ((double)iterations * (double)instruction_count);
 
   printf("{\"benchmark\":\"vm_dispatch\",\"iterations\":%ld,\"instructions_per_iteration\":%zu,"
-         "\"seconds\":%.6f,\"mips\":%.3f}\n",
-         iterations, instruction_count, seconds, mips);
+         "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,\"checksum\":%llu}\n",
+         iterations, instruction_count, seconds, mips, ns_per_instruction, (unsigned long long)checksum);
   return 0;
 }

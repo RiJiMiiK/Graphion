@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(Graphion VERSION 0.1.0 LANGUAGES C)
 
+include(CheckIPOSupported)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -9,6 +11,7 @@ option(GRAPHION_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
 option(GRAPHION_ENABLE_WERROR "Treat warnings as errors" ON)
 option(GRAPHION_ENABLE_ASM "Enable architecture-specific assembly hot paths" OFF)
 option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" ON)
+option(GRAPHION_ENABLE_IPO "Enable IPO/LTO in release-like builds when supported" ON)
 option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
 option(GRAPHION_ENABLE_BENCHMARKS "Build benchmark binaries" ON)
 option(GRAPHION_ENABLE_FUZZING "Build fuzzing target (Clang only)" OFF)
@@ -31,9 +34,11 @@ else()
   if(GRAPHION_ENABLE_HARDENING)
     add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-fstack-protector-strong>")
     add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>")
-    add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-fPIE>")
-    add_link_options("$<$<NOT:$<CONFIG:Debug>>:-Wl,-z,relro,-z,now>")
-    add_link_options("$<$<NOT:$<CONFIG:Debug>>:-pie>")
+    if(NOT WIN32)
+      add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-fPIE>")
+      add_link_options("$<$<NOT:$<CONFIG:Debug>>:-Wl,-z,relro,-z,now>")
+      add_link_options("$<$<NOT:$<CONFIG:Debug>>:-pie>")
+    endif()
   endif()
 endif()
 
@@ -50,8 +55,23 @@ add_library(graphion_vm
   src/graph/hypergraph.c
 )
 
+if(GRAPHION_ENABLE_IPO)
+  check_ipo_supported(RESULT graphion_ipo_supported OUTPUT graphion_ipo_error)
+  if(graphion_ipo_supported)
+    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  else()
+    message(WARNING "IPO requested but not supported: ${graphion_ipo_error}")
+  endif()
+endif()
+
 if(GRAPHION_ENABLE_ASM)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|x64")
+  if(MSVC)
+    message(FATAL_ERROR "GRAPHION_ENABLE_ASM currently requires GCC/Clang toolchains (GNU-style .s file).")
+  elseif(WIN32)
+    message(FATAL_ERROR "GRAPHION_ENABLE_ASM currently requires a SysV x86_64 ABI environment (Linux/macOS).")
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|x64")
     enable_language(ASM)
     target_sources(graphion_vm PRIVATE src/vm/hotpaths.s)
     target_compile_definitions(graphion_vm PRIVATE GRAPHION_ENABLE_ASM=1)
@@ -71,6 +91,12 @@ add_executable(graphion
 
 target_link_libraries(graphion PRIVATE graphion_vm)
 
+if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+endif()
+
 if(GRAPHION_ENABLE_TESTS)
   enable_testing()
 
@@ -83,6 +109,11 @@ if(GRAPHION_ENABLE_TESTS)
     tests/test_hypergraph.c
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
   add_test(NAME graphion_tests COMMAND graphion_tests)
 endif()
 
@@ -91,21 +122,41 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     benchmarks/bench_vm.c
   )
   target_link_libraries(graphion_bench PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
 
   add_executable(graphion_bench_bfs
     benchmarks/bench_bfs.c
   )
   target_link_libraries(graphion_bench_bfs PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
 
   add_executable(graphion_bench_hypergraph
     benchmarks/bench_hypergraph.c
   )
   target_link_libraries(graphion_bench_hypergraph PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
 
   add_executable(graphion_bench_vm_graph
     benchmarks/bench_vm_graph.c
   )
   target_link_libraries(graphion_bench_vm_graph PRIVATE graphion_vm)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)

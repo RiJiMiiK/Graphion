@@ -33,6 +33,8 @@ typedef struct {
   size_t program_len;
   size_t pc;
   bool halted;
+  bool arith_only_fastpath;
+  bool arith_only_halt_terminated;
   const graphion_csr_graph *csr_graph;
   int32_t *bfs_levels;
   uint32_t *bfs_queue;

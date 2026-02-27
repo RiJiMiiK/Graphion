@@ -18,4 +18,5 @@ jobs:
         with:
           python-version: "3.x"
       - name: Verify SPDX headers
-        run: python scripts/check_license_headers.py
+        run: python scripts/quality/check_license_headers.py
+

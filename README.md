@@ -34,25 +34,25 @@ ctest --test-dir build --output-on-failure -C Release
 Quick local dev build (Ninja):
 
 ```bash
-./scripts/dev_build.sh
+./scripts/dev/dev_build.sh
 ```
 
 PowerShell:
 
 ```powershell
-./scripts/dev_build.ps1
+./scripts/dev/dev_build.ps1
 ```
 
 Repository bootstrap:
 
 ```bash
-./scripts/bootstrap.sh
+./scripts/dev/bootstrap.sh
 ```
 
 PowerShell:
 
 ```powershell
-./scripts/bootstrap.ps1
+./scripts/dev/bootstrap.ps1
 ```
 
 Enable assembly hot paths (x86_64 only):
@@ -90,7 +90,7 @@ docker compose run --rm graphion-dev
 Inside the container:
 
 ```bash
-./scripts/dev_build.sh
+./scripts/dev/dev_build.sh
 ```
 
 VS Code users can also use the included devcontainer configuration.
@@ -102,10 +102,11 @@ Run benchmark smoke and produce JSON:
 ```bash
 cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
 cmake --build build-bench
-python3 scripts/run_bench.py --build-dir build-bench --iterations 500000
+python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
 See [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+Latest comparative snapshot: [docs/PERFORMANCE_RESULTS.md](docs/PERFORMANCE_RESULTS.md).
 
 Additional graph-core benchmark:
 
@@ -130,19 +131,20 @@ VM graph-opcode benchmark:
 Enable local pre-commit checks:
 
 ```bash
-./scripts/setup_hooks.sh
+./scripts/dev/setup_hooks.sh
 ```
 
 PowerShell:
 
 ```powershell
-./scripts/setup_hooks.ps1
+./scripts/dev/setup_hooks.ps1
 ```
 
 ## Security
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
 For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
+For assembly ABI/register mapping, see [docs/ASM_REGISTERS.md](docs/ASM_REGISTERS.md).
 For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
 For GitHub Actions security posture, see [docs/ACTIONS_SECURITY.md](docs/ACTIONS_SECURITY.md).
 Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
@@ -163,3 +165,4 @@ Support policy is described in [docs/SUPPORT_POLICY.md](docs/SUPPORT_POLICY.md).
 ## License
 
 MIT (see [LICENSE](LICENSE)).
+

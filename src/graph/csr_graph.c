@@ -32,6 +32,11 @@ int graphion_csr_graph_init(graphion_csr_graph *graph,
   if ((size_t)offsets[node_count] != edge_count) {
     return -5;
   }
+  for (i = 0; i < edge_count; ++i) {
+    if ((size_t)neighbors[i] >= node_count) {
+      return -6;
+    }
+  }
 
   graph->node_count = node_count;
   graph->edge_count = edge_count;
@@ -83,15 +88,12 @@ int graphion_bfs_levels(const graphion_csr_graph *graph,
   while (q_head < q_tail) {
     const uint32_t u = queue[q_head++];
     const int32_t next_level = levels[u] + 1;
-    const uint32_t *nbrs = graphion_csr_graph_neighbors(graph, u);
-    const size_t nbr_count = graphion_csr_graph_neighbor_count(graph, u);
+    const size_t begin = (size_t)graph->offsets[u];
+    const size_t end = (size_t)graph->offsets[u + 1U];
     size_t j;
 
-    for (j = 0; j < nbr_count; ++j) {
-      const uint32_t v = nbrs[j];
-      if (!is_valid_node(graph, v)) {
-        return -4;
-      }
+    for (j = begin; j < end; ++j) {
+      const uint32_t v = graph->neighbors[j];
       if (levels[v] == -1) {
         levels[v] = next_level;
         queue[q_tail++] = v;
