@@ -43,11 +43,23 @@ jobs:
             --variant-runs 1 \
             --iterations-scale 0.01 \
             -- -G Ninja -DCMAKE_C_COMPILER=clang
+      - name: Resolve PGO alert mode
+        id: pgo-alert-mode
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "mode=release-candidate" >> "$GITHUB_OUTPUT"
+            echo "reason=manual candidate validation" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=advisory" >> "$GITHUB_OUTPUT"
+            echo "reason=release-related pull request smoke" >> "$GITHUB_OUTPUT"
+          fi
       - name: Evaluate PGO release-candidate alert policy
         run: |
+          echo "PGO alert mode: ${{ steps.pgo-alert-mode.outputs.mode }} (${{ steps.pgo-alert-mode.outputs.reason }})"
           python3 scripts/bench/check_pgo_alerts.py \
             --report-json benchmarks/results/release_candidate_pgo.json \
-            --mode release-candidate
+            --mode "${{ steps.pgo-alert-mode.outputs.mode }}"
       - name: Simulate source archive generation
         run: |
           git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD

@@ -118,6 +118,11 @@ Release-candidate review uses a small clang-based PGO smoke report and applies t
 - hard failure if three or more benchmark families fall below their minimum thresholds
 - advisory warning for any single workload that is below minimum but does not trigger a hard failure
 
+Workflow usage:
+
+- release-related pull requests run the checker in `advisory` mode
+- manual candidate validation runs the checker in `release-candidate` mode
+
 This policy is intentionally conservative:
 
 - `vm_dispatch` is the interpreter canary and must not quietly regress into a release

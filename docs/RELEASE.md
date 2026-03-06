@@ -25,4 +25,5 @@ git push origin v0.1.0
 - No direct release from unreviewed commits.
 - Security fixes can ship as patch releases.
 - Prefer signed tags for releases.
-- Release candidates must surface a PGO/non-PGO alert summary before tagging.
+- Release-related PRs must surface a PGO/non-PGO alert summary before tagging.
+- Manual candidate validation must pass the blocking PGO/non-PGO alert mode before tagging.

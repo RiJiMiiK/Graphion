@@ -103,6 +103,7 @@ use `scripts/bench/refresh_optimization_reports.py`.
 
 Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
 the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
+On pull requests this is advisory-only; the blocking mode is reserved for manual candidate validation.
 
 ## Notes
 
