@@ -18,6 +18,7 @@
     "unreviewed",
     "hotpath",
     "hotpaths",
+    "jumptable",
     "cppcheck",
     "CodeQL",
     "lcov",
