@@ -12,6 +12,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
+
 
 BENCH_SPECS = [
     {
@@ -51,16 +53,6 @@ BENCH_SPECS = [
         "throughput_key": "mips",
     },
 ]
-
-TRAINING_TARGETS = [
-    ("graphion_bench", 200000),
-    ("graphion_bench_bfs", 200000),
-    ("graphion_bench_hypergraph", 200000),
-    ("graphion_bench_hypergraph_incident_sum", 200000),
-    ("graphion_bench_hypergraph_hyperedge_node_sum", 200000),
-    ("graphion_bench_vm_graph", 100000),
-]
-
 
 def run(cmd: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd))
@@ -146,15 +138,16 @@ def train_workload(
     profile_dir: pathlib.Path,
     iterations_scale: float,
     compiler_kind: str,
+    corpus_profile: str,
 ) -> None:
+    training_rows = expanded_workloads(corpus_profile, iterations_scale)
     env = os.environ.copy()
     if compiler_kind == "clang":
         env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
 
     run([str(exe_path(build_dir, "graphion", config))], env=env)
-    for target, iterations in TRAINING_TARGETS:
-        scaled = max(1000, int(iterations * iterations_scale))
-        run([str(exe_path(build_dir, target, config)), str(scaled)], env=env)
+    for row in training_rows:
+        run([str(exe_path(build_dir, str(row["target"]), config)), str(row["iterations"])], env=env)
     run([str(exe_path(build_dir, "graphion_tests", config))], env=env)
 
 
@@ -224,6 +217,7 @@ def run_dispatch_variants(
     llvm_profdata: str,
     extra_args: list[str],
     variants: list[str],
+    corpus_profile: str,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
 
@@ -251,7 +245,7 @@ def run_dispatch_variants(
             cleanup_msvc_profile_artifacts(pgo_build_dir, config)
         configure(pgo_build_dir, build_type, "GENERATE", pgo_profile_dir, variant, extra_args)
         build(pgo_build_dir, config)
-        train_workload(pgo_build_dir, config, pgo_profile_dir, iterations_scale, compiler_kind)
+        train_workload(pgo_build_dir, config, pgo_profile_dir, iterations_scale, compiler_kind, corpus_profile)
         if compiler_kind == "clang":
             merge_clang_profiles(pgo_profile_dir, llvm_profdata)
         configure(pgo_build_dir, build_type, "USE", pgo_profile_dir, variant, extra_args)
@@ -383,6 +377,9 @@ def render_markdown(payload: dict[str, object]) -> str:
         f"- Iterations per benchmark run: {meta['iterations']}",
         f"- Averaging runs: {meta['runs']}",
         f"- PGO training scale: {meta['iterations_scale']}",
+        f"- PGO corpus profile: {meta['corpus_profile']}",
+        f"- PGO corpus coverage classes: {', '.join(meta['corpus_coverage_classes'])}",
+        f"- PGO training targets: {', '.join(meta['corpus_targets'])}",
         f"- Main suite dispatch: {meta['dispatch']}",
         f"- Dispatch variants checked: {', '.join(meta['dispatch_variants'])}",
         "",
@@ -403,7 +400,7 @@ def render_markdown(payload: dict[str, object]) -> str:
         "",
         "- Latency columns (`ns_per_X`) are the primary comparison metric; lower is better.",
         "- Throughput columns (`mips` / `mteps`) are secondary confirmation metrics; higher is better.",
-        "- PGO training uses the committed Graphion benchmark set before rebuilding in `USE` mode.",
+        "- PGO training uses the committed Graphion representative-workload policy before rebuilding in `USE` mode.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -424,6 +421,8 @@ def main() -> int:
     parser.add_argument("--variant-iterations", type=int, default=500000, help="Iterations per vm_dispatch variant run")
     parser.add_argument("--variant-runs", type=int, default=100, help="Averaging runs for dispatch-variant vm_dispatch")
     parser.add_argument("--iterations-scale", type=float, default=1.0, help="Scale applied to PGO training iterations")
+    parser.add_argument("--corpus-profile", choices=corpus_profile_names(), default="representative",
+                        help="Named PGO training corpus")
     parser.add_argument("--llvm-profdata", default="llvm-profdata", help="Clang profile merge tool")
     parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=clang")
     args = parser.parse_args()
@@ -454,7 +453,7 @@ def main() -> int:
 
     configure(pgo_build_dir, args.build_type, "GENERATE", pgo_profile_dir, args.dispatch, args.cmake_args)
     build(pgo_build_dir, args.config)
-    train_workload(pgo_build_dir, args.config, pgo_profile_dir, args.iterations_scale, compiler_kind)
+    train_workload(pgo_build_dir, args.config, pgo_profile_dir, args.iterations_scale, compiler_kind, args.corpus_profile)
     if compiler_kind == "clang":
         merge_clang_profiles(pgo_profile_dir, args.llvm_profdata)
     configure(pgo_build_dir, args.build_type, "USE", pgo_profile_dir, args.dispatch, args.cmake_args)
@@ -474,6 +473,7 @@ def main() -> int:
         args.llvm_profdata,
         args.cmake_args,
         dispatch_variants,
+        args.corpus_profile,
     )
 
     payload = {
@@ -487,6 +487,9 @@ def main() -> int:
             "iterations": args.iterations,
             "runs": args.runs,
             "iterations_scale": args.iterations_scale,
+            "corpus_profile": args.corpus_profile,
+            "corpus_coverage_classes": coverage_classes(args.corpus_profile),
+            "corpus_targets": [str(row["target"]) for row in expanded_workloads(args.corpus_profile, 1.0)],
             "dispatch": args.dispatch,
             "dispatch_variants": dispatch_variants,
         },

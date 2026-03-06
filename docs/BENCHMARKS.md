@@ -62,6 +62,12 @@ MSVC:
 python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
+The default PGO corpus is `representative`. For CI-style smoke runs:
+
+```bash
+python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
 Official baseline vs PGO report:
 
 ```bash

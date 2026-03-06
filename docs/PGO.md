@@ -10,6 +10,7 @@ The build is controlled with:
 
 - `GRAPHION_PGO_MODE=OFF|GENERATE|USE`
 - `GRAPHION_PGO_PROFILE_DIR=<dir>`
+- `--corpus-profile representative|ci`
 
 ## Local Run
 
@@ -31,6 +32,8 @@ MSVC:
 python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
+The default corpus profile is `representative`.
+
 The script does:
 
 1. Configure with `GRAPHION_PGO_MODE=GENERATE`
@@ -40,21 +43,19 @@ The script does:
 5. Reconfigure with `GRAPHION_PGO_MODE=USE`
 6. Rebuild and run `ctest`
 
-## Training Set
+## Training Corpus
 
-The current training workload uses:
+Graphion now uses named corpus profiles instead of an implicit hardcoded list.
 
-- `graphion_bench`
-- `graphion_bench_bfs`
-- `graphion_bench_hypergraph`
-- `graphion_bench_vm_graph`
-
-This is intentionally small enough for CI and broad enough to cover:
+The default `representative` profile covers:
 
 - arithmetic dispatch
 - CSR/BFS graph traversal
 - hypergraph incidence traversal
+- hypergraph reducer paths
 - graph-specific VM opcodes
+
+The detailed policy is documented in [PGO_CORPUS_POLICY.md](./PGO_CORPUS_POLICY.md).
 
 ## CI
 
@@ -67,6 +68,8 @@ It runs on demand via `workflow_dispatch` and covers:
 - `ubuntu-latest` with `gcc`
 - `ubuntu-latest` with `clang`
 - `windows-latest` with `msvc`
+
+The workflow uses the `ci` corpus profile with reduced iteration scale.
 
 For a unified engineering report that merges local Windows and Docker Linux optimization results,
 use `scripts/bench/refresh_optimization_reports.py`.

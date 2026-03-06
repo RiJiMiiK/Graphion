@@ -32,7 +32,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build gcc clang llvm
       - name: Run PGO pipeline
         shell: bash
-        run: python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --iterations-scale 0.10 -- ${{ matrix.cmake_args }}
+        run: python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- ${{ matrix.cmake_args }}
       - name: Upload PGO artifacts
         uses: actions/upload-artifact@v7
         with:
