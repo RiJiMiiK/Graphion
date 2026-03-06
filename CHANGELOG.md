@@ -77,6 +77,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Release-candidate PGO/non-PGO alert policy and dry-run workflow integration.
 - Release dry-run now surfaces PGO alerts in advisory mode on PRs and reserves blocking mode for manual candidate validation.
 - PGO profile artifact manifests and explicit cache invalidation rules.
+- Assembly-vs-C fallback parity and performance reporting policy with dedicated comparison runner.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

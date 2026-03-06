@@ -40,7 +40,7 @@
 - [ ] Cross-compiler optimization comparison policy (`MSVC` vs `GCC` vs `Clang`).
 - [ ] Benchmark environment metadata enforcement in generated reports.
 - [x] PGO / non-PGO regression alert policy for release candidates.
-- [ ] Assembly-vs-C fallback parity and performance reporting policy.
+- [x] Assembly-vs-C fallback parity and performance reporting policy.
 - [x] Profile artifact hygiene and cache invalidation rules.
 
 ## Milestone 0.4 (VM + ISA Hardening)
