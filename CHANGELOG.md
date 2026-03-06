@@ -74,6 +74,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Named PGO corpus profiles and representative-workload policy documentation.
 - Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.
+- Release-candidate PGO/non-PGO alert policy and dry-run workflow integration.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

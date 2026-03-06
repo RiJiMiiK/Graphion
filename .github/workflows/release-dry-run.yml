@@ -19,10 +19,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install benchmark tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build clang llvm
       - name: Validate tag pattern examples in docs
         run: |
           grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/RELEASE.md
           grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/RELEASE_CHECKLIST.md
+      - name: Generate release-candidate PGO smoke report
+        run: |
+          python3 scripts/bench/generate_optimization_report.py \
+            --build-root build-release-pgo \
+            --output-json benchmarks/results/release_candidate_pgo.json \
+            --output-md docs/OPTIMIZATION_REPORTS.md \
+            --platform-label "release-dry-run ubuntu clang" \
+            --compiler-kind clang \
+            --corpus-profile ci \
+            --iterations 2000 \
+            --runs 1 \
+            --variant-iterations 2000 \
+            --variant-runs 1 \
+            --iterations-scale 0.01 \
+            -- -G Ninja -DCMAKE_C_COMPILER=clang
+      - name: Evaluate PGO release-candidate alert policy
+        run: |
+          python3 scripts/bench/check_pgo_alerts.py \
+            --report-json benchmarks/results/release_candidate_pgo.json \
+            --mode release-candidate
       - name: Simulate source archive generation
         run: |
           git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD
@@ -34,4 +59,6 @@ jobs:
           path: |
             graphion-dry-run.tar.gz
             graphion-dry-run.zip
+            benchmarks/results/release_candidate_pgo.json
+            docs/OPTIMIZATION_REPORTS.md
           retention-days: 14

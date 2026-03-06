@@ -108,3 +108,18 @@ This policy exists to balance three constraints:
 - keep a recurring signal that the PGO pipeline still works
 - keep release-sensitive evidence around long enough for review
 - avoid paying full representative-corpus cost on every unrelated pull request
+
+## Release-Candidate Alert Policy
+
+Release-candidate review uses a small clang-based PGO smoke report and applies these alert rules:
+
+- hard failure if `vm_dispatch` falls below its minimum threshold
+- hard failure if any workload falls below `0.95x`
+- hard failure if three or more benchmark families fall below their minimum thresholds
+- advisory warning for any single workload that is below minimum but does not trigger a hard failure
+
+This policy is intentionally conservative:
+
+- `vm_dispatch` is the interpreter canary and must not quietly regress into a release
+- severe regressions should stop a candidate even if one family is noisy
+- isolated misses are reported for human review without turning every release PR into noise

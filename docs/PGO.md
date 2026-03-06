@@ -98,6 +98,9 @@ The `pull_request` gate is intentionally path-scoped to release and PGO workflow
 For a unified engineering report that merges local Windows and Docker Linux optimization results,
 use `scripts/bench/refresh_optimization_reports.py`.
 
+Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
+the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
+
 ## Notes
 
 - Clang uses source-based profiling and requires `llvm-profdata`.
