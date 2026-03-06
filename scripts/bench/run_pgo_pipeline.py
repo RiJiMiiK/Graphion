@@ -7,6 +7,8 @@ import pathlib
 import subprocess
 import sys
 
+from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads, get_corpus_profile
+
 
 def run(cmd: list[str], *, env: dict[str, str] | None = None) -> None:
   print("+", " ".join(cmd))
@@ -58,30 +60,92 @@ def cleanup_msvc_profile_artifacts(build_dir: pathlib.Path, config: str) -> None
       path.unlink()
 
 
+def msvc_runtime_dirs() -> list[str]:
+  candidates: list[pathlib.Path] = []
+  program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+  vswhere = pathlib.Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+  if vswhere.exists():
+    try:
+      result = subprocess.run(
+          [
+              str(vswhere),
+              "-latest",
+              "-products",
+              "*",
+              "-requires",
+              "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+              "-property",
+              "installationPath",
+          ],
+          check=True,
+          capture_output=True,
+          text=True,
+      )
+      install_path = result.stdout.strip()
+      if install_path:
+        root = pathlib.Path(install_path)
+        candidates.extend(root.glob(r"VC\Tools\MSVC\*\bin\Hostx64\x64"))
+        candidates.extend(root.glob(r"VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT"))
+    except subprocess.CalledProcessError:
+      pass
+
+  found: list[str] = []
+  for directory in candidates:
+    if directory.is_dir() and any(directory.glob("pgort*.dll")):
+      path_text = str(directory)
+      if path_text not in found:
+        found.append(path_text)
+  return found
+
+
+def training_env(profile_dir: pathlib.Path, compiler_kind: str) -> dict[str, str]:
+  env = os.environ.copy()
+  if compiler_kind == "clang":
+    env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+  if compiler_kind == "msvc":
+    runtime_dirs = msvc_runtime_dirs()
+    if runtime_dirs:
+      env["PATH"] = os.pathsep.join(runtime_dirs + [env.get("PATH", "")])
+      print("msvc pgo runtime dirs:")
+      for path in runtime_dirs:
+        print(f"  - {path}")
+    else:
+      print("warning: no MSVC PGO runtime directory with pgort*.dll was found")
+  return env
+
+
 def train_workload(build_dir: pathlib.Path,
                    config: str,
                    profile_dir: pathlib.Path,
                    iterations_scale: float,
-                   compiler_kind: str) -> None:
-  bench_specs = [
-      ("graphion_bench", 200000),
-      ("graphion_bench_bfs", 200000),
-      ("graphion_bench_hypergraph", 200000),
-      ("graphion_bench_hypergraph_incident_sum", 200000),
-      ("graphion_bench_hypergraph_hyperedge_node_sum", 200000),
-      ("graphion_bench_vm_graph", 100000),
-  ]
-  env = os.environ.copy()
-  if compiler_kind == "clang":
-    env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+                   compiler_kind: str,
+                   corpus_profile: str) -> None:
+  profile = get_corpus_profile(corpus_profile)
+  bench_specs = expanded_workloads(corpus_profile, iterations_scale)
+  env = training_env(profile_dir, compiler_kind)
 
-  run([str(exe_path(build_dir, "graphion", config))], env=env)
+  print(f"pgo corpus profile: {corpus_profile}")
+  print(f"coverage classes: {', '.join(coverage_classes(corpus_profile))}")
+  for spec in bench_specs:
+    print(
+        "  - {name}: {target} [{family}] iterations={iterations} (base={base}) coverage={coverage}".format(
+            name=spec["name"],
+            target=spec["target"],
+            family=spec["family"],
+            iterations=spec["iterations"],
+            base=spec["base_iterations"],
+            coverage=spec["coverage"],
+        )
+    )
 
-  for target, iterations in bench_specs:
-    scaled = max(1000, int(iterations * iterations_scale))
-    run([str(exe_path(build_dir, target, config)), str(scaled)], env=env)
+  if profile["run_graphion_binary"]:
+    run([str(exe_path(build_dir, "graphion", config))], env=env)
 
-  run([str(exe_path(build_dir, "graphion_tests", config))], env=env)
+  for spec in bench_specs:
+    run([str(exe_path(build_dir, str(spec["target"]), config)), str(spec["iterations"])], env=env)
+
+  if profile["run_tests"]:
+    run([str(exe_path(build_dir, "graphion_tests", config))], env=env)
 
 
 def merge_clang_profiles(profile_dir: pathlib.Path, llvm_profdata: str) -> None:
@@ -111,6 +175,8 @@ def main() -> int:
   parser.add_argument("--compiler-kind", choices=["auto", "msvc", "gcc", "clang"], default="auto")
   parser.add_argument("--llvm-profdata", default="llvm-profdata", help="Clang profile merge tool")
   parser.add_argument("--iterations-scale", type=float, default=1.0, help="Scale training iterations")
+  parser.add_argument("--corpus-profile", choices=corpus_profile_names(), default="representative",
+                      help="Named PGO training corpus")
   parser.add_argument("--skip-tests", action="store_true", help="Do not run ctest after optimized rebuild")
   parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=clang")
   args = parser.parse_args()
@@ -131,7 +197,7 @@ def main() -> int:
 
   configure(build_dir, args.build_type, "GENERATE", profile_dir, args.cmake_args)
   build(build_dir, args.config)
-  train_workload(build_dir, args.config, profile_dir, args.iterations_scale, compiler_kind)
+  train_workload(build_dir, args.config, profile_dir, args.iterations_scale, compiler_kind, args.corpus_profile)
 
   if compiler_kind == "clang":
     merge_clang_profiles(profile_dir, args.llvm_profdata)
@@ -141,7 +207,14 @@ def main() -> int:
   if not args.skip_tests:
     ctest(build_dir, args.config)
 
-  print(f"pgo pipeline complete: compiler={compiler_kind}, build_dir={build_dir}, profile_dir={profile_dir}")
+  print(
+      "pgo pipeline complete: compiler={compiler}, corpus={corpus}, build_dir={build_dir}, profile_dir={profile_dir}".format(
+          compiler=compiler_kind,
+          corpus=args.corpus_profile,
+          build_dir=build_dir,
+          profile_dir=profile_dir,
+      )
+  )
   return 0
 
 

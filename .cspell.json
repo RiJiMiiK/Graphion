@@ -36,6 +36,8 @@
     "fuzzer",
     "fuzzing",
     "SPDX"
+    ,
+    "microbenchmark"
   ],
   "ignorePaths": [
     "build/**",
