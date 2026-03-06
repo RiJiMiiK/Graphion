@@ -12,7 +12,9 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from pgo_artifacts import profile_manifest, reset_profile_dir
 from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
+from pgo_thresholds import evaluate_speedup, threshold_for, threshold_rows
 
 
 BENCH_SPECS = [
@@ -292,7 +294,20 @@ def run_dispatch_variants(
         baseline_payloads = [run_benchmark(base_build_dir, config, "graphion_bench", iterations) for _ in range(runs)]
         baseline = average_payloads(baseline_payloads, "ns_per_instruction", "mips")
 
-        cleanup_profile_dir(pgo_profile_dir)
+        dispatch_manifest = profile_manifest(
+            compiler_kind=compiler_kind,
+            corpus_profile=corpus_profile,
+            iterations_scale=iterations_scale,
+            config=config,
+            build_type=build_type,
+            dispatch=variant,
+            extra_args=extra_args,
+            producer="generate_optimization_report.py:dispatch",
+        )
+        reasons = reset_profile_dir(pgo_profile_dir, dispatch_manifest)
+        print(f"pgo profile invalidation ({variant}):")
+        for reason in reasons:
+            print(f"  - {reason}")
         if compiler_kind == "msvc":
             cleanup_msvc_profile_artifacts(pgo_build_dir, config)
         configure(pgo_build_dir, build_type, "GENERATE", pgo_profile_dir, variant, extra_args)
@@ -337,11 +352,15 @@ def build_report_rows(baseline_rows: list[dict[str, object]], pgo_rows: list[dic
         pgo_throughput = float(pgo[throughput_key])
         report_rows.append({
             "benchmark": name,
+            "threshold_family": threshold_for(name)["family"],
+            "minimum_speedup_x": threshold_for(name)["minimum_speedup_x"],
+            "target_speedup_x": threshold_for(name)["target_speedup_x"],
             "latency_metric": spec["latency_key"],
             "throughput_metric": spec["throughput_key"],
             "baseline": baseline,
             "pgo": pgo,
             "speedup_x": round(baseline_latency / pgo_latency, 3),
+            "threshold_status": evaluate_speedup(name, baseline_latency / pgo_latency),
             "latency_delta_pct": round(((pgo_latency - baseline_latency) / baseline_latency) * 100.0, 2),
             "throughput_gain_pct": round(((pgo_throughput - baseline_throughput) / baseline_throughput) * 100.0, 2),
         })
@@ -362,17 +381,23 @@ def fmt_metric(value: object) -> str:
 
 def markdown_table(report_rows: list[dict[str, object]]) -> str:
     lines = [
-        "| Benchmark | Baseline s | PGO s | Baseline ns_per_X | PGO ns_per_X | Baseline thr | PGO thr | Speedup x |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Benchmark | Family | Baseline s | PGO s | Baseline ns_per_X | PGO ns_per_X | Baseline thr | PGO thr | Speedup x | Min x | Target x | Status |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in report_rows:
         baseline = row["baseline"]
         pgo = row["pgo"]
         latency_key = row["latency_metric"] + "_avg"
         throughput_key = row["throughput_metric"] + "_avg"
+        status_map = {
+            "target": "meets-target",
+            "minimum": "meets-minimum",
+            "below": "below-minimum",
+        }
         lines.append(
-            "| {benchmark} | {bs} | {ps} | {bl} | {pl} | {bt} | {pt} | {sx} |".format(
+            "| {benchmark} | {family} | {bs} | {ps} | {bl} | {pl} | {bt} | {pt} | {sx} | {mn} | {tg} | {st} |".format(
                 benchmark=row["benchmark"],
+                family=row["threshold_family"],
                 bs=fmt_seconds(baseline["seconds_avg"]),
                 ps=fmt_seconds(pgo["seconds_avg"]),
                 bl=fmt_metric(baseline[latency_key]),
@@ -380,6 +405,27 @@ def markdown_table(report_rows: list[dict[str, object]]) -> str:
                 bt=fmt_metric(baseline[throughput_key]),
                 pt=fmt_metric(pgo[throughput_key]),
                 sx=fmt_metric(row["speedup_x"]),
+                mn=fmt_metric(row["minimum_speedup_x"]),
+                tg=fmt_metric(row["target_speedup_x"]),
+                st=status_map[str(row["threshold_status"])],
+            )
+        )
+    return "\n".join(lines)
+
+
+def markdown_threshold_table() -> str:
+    lines = [
+        "| Benchmark | Family | Minimum x | Target x | Rationale |",
+        "|---|---|---:|---:|---|",
+    ]
+    for row in threshold_rows():
+        lines.append(
+            "| {benchmark} | {family} | {minimum} | {target} | {rationale} |".format(
+                benchmark=row["benchmark"],
+                family=row["family"],
+                minimum=fmt_metric(row["minimum_speedup_x"]),
+                target=fmt_metric(row["target_speedup_x"]),
+                rationale=row["rationale"],
             )
         )
     return "\n".join(lines)
@@ -415,6 +461,8 @@ def render_markdown(payload: dict[str, object]) -> str:
     meta = payload["metadata"]
     improved = sum(1 for row in payload["report_rows"] if float(row["speedup_x"]) > 1.0)
     total = len(payload["report_rows"])
+    meets_minimum = sum(1 for row in payload["report_rows"] if str(row["threshold_status"]) != "below")
+    meets_target = sum(1 for row in payload["report_rows"] if str(row["threshold_status"]) == "target")
     lines = [
         "# Official Optimization Report",
         "",
@@ -438,7 +486,12 @@ def render_markdown(payload: dict[str, object]) -> str:
         "## Summary",
         "",
         f"- PGO improved {improved}/{total} benchmark families on this snapshot.",
+        f"- Threshold coverage: {meets_minimum}/{total} met minimum and {meets_target}/{total} met target.",
         f"- The comparison set covers `vm_dispatch`, `bfs_levels`, `vm_graph_ops`, and all current `hypergraph_*` benches.",
+        "",
+        "## PGO Effectiveness Thresholds",
+        "",
+        markdown_threshold_table(),
         "",
         "## Baseline vs PGO",
         "",
@@ -453,6 +506,7 @@ def render_markdown(payload: dict[str, object]) -> str:
         "- Latency columns (`ns_per_X`) are the primary comparison metric; lower is better.",
         "- Throughput columns (`mips` / `mteps`) are secondary confirmation metrics; higher is better.",
         "- PGO training uses the committed Graphion representative-workload policy before rebuilding in `USE` mode.",
+        "- Threshold status is advisory governance for optimization review; it is not yet a release blocker by itself.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -494,7 +548,20 @@ def main() -> int:
     platform_label = args.platform_label if args.platform_label else platform.platform()
 
     cleanup_profile_dir(baseline_profile_dir)
-    cleanup_profile_dir(pgo_profile_dir)
+    report_manifest = profile_manifest(
+        compiler_kind=compiler_kind,
+        corpus_profile=args.corpus_profile,
+        iterations_scale=args.iterations_scale,
+        config=args.config,
+        build_type=args.build_type,
+        dispatch=args.dispatch,
+        extra_args=args.cmake_args,
+        producer="generate_optimization_report.py:main-suite",
+    )
+    reasons = reset_profile_dir(pgo_profile_dir, report_manifest)
+    print("pgo profile invalidation (main suite):")
+    for reason in reasons:
+        print(f"  - {reason}")
     if compiler_kind == "msvc":
         cleanup_msvc_profile_artifacts(pgo_build_dir, args.config)
 
