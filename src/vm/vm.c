@@ -26,7 +26,6 @@ static size_t shape_cache_fingerprint(const graphion_insn *program, size_t progr
   }
   return hash;
 }
-
 static size_t shape_cache_slot(const graphion_insn *program, size_t program_len) {
   uintptr_t p = (uintptr_t)program;
   return (size_t)((p ^ (p >> 7U) ^ (uintptr_t)(program_len * 1315423911U)) &
