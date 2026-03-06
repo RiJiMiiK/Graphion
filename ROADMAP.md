@@ -19,13 +19,20 @@
 - [x] End-to-end parser integration test (`source -> IR -> bytecode -> VM run`).
 - [x] IR v0 bridge contract document (`docs/IR.md`).
 
-## Milestone 0.3 (Optimization Pass) [in progress]
+## Milestone 0.3 (Optimization Pass) [done]
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).
 - [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
 - [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
 - [x] PGO pipeline (MSVC + GCC/Clang).
 - [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
 - [x] Fastpath specialization cache by bytecode shape.
+
+## Milestone 0.3.1 (Optimization Stabilization) [in progress]
+
+- [ ] PGO training corpus review and representative-workload policy.
+- [ ] Official before/after optimization reports (`baseline` vs `PGO`, per dispatch strategy where applicable).
+- [ ] Optimization parity tests for dispatch variants and fastpath cache edge cases.
+- [ ] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
 
 ## Milestone 0.4 (VM + ISA Hardening)
 
