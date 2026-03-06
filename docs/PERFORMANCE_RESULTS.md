@@ -34,6 +34,8 @@ should stay performance-neutral on `vm_dispatch`.
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
 | Graphion Windows (shape cache enabled) | 0.006172 | - | 1460.188 | 0.686 |
+| Graphion Linux (shape cache-neutral reference) | 0.006585 | - | 1371.265 | 0.732 |
+| Rust Windows (reference) | 0.006592 | - | 1379.886 | 0.733 |
 
 ## bfs_levels (`ns_per_edge`)
 
