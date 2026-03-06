@@ -90,6 +90,16 @@ Refresh the unified optimization report with local Windows plus Docker Linux:
 python scripts/bench/refresh_optimization_reports.py --runs 100
 ```
 
+Compare the asm hotpath against the C fallback (Linux / Docker):
+
+```bash
+python3 scripts/bench/compare_asm_fallback.py \
+  --build-root build-asm-fallback \
+  --runs 20 \
+  --iterations 500000 \
+  -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
