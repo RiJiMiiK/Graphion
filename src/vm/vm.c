@@ -7,6 +7,7 @@
 typedef struct {
   const graphion_insn *program;
   size_t program_len;
+  size_t program_fingerprint;
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
 } graphion_vm_shape_cache_entry;
@@ -15,6 +16,16 @@ enum { GRAPHION_VM_SHAPE_CACHE_SIZE = 64 };
 
 static graphion_vm_shape_cache_entry g_shape_cache[GRAPHION_VM_SHAPE_CACHE_SIZE];
 
+static size_t shape_cache_fingerprint(const graphion_insn *program, size_t program_len) {
+  const unsigned char *bytes = (const unsigned char *)program;
+  size_t hash = (size_t)1469598103934665603ULL;
+  size_t i;
+  for (i = 0U; i < program_len * sizeof(graphion_insn); ++i) {
+    hash ^= (size_t)bytes[i];
+    hash *= (size_t)1099511628211ULL;
+  }
+  return hash;
+}
 static size_t shape_cache_slot(const graphion_insn *program, size_t program_len) {
   uintptr_t p = (uintptr_t)program;
   return (size_t)((p ^ (p >> 7U) ^ (uintptr_t)(program_len * 1315423911U)) &
@@ -27,7 +38,8 @@ static int shape_cache_lookup(const graphion_insn *program,
                               bool *arith_only_halt_terminated) {
   const size_t slot = shape_cache_slot(program, program_len);
   const graphion_vm_shape_cache_entry e = g_shape_cache[slot];
-  if (e.program != program || e.program_len != program_len) {
+  const size_t fingerprint = shape_cache_fingerprint(program, program_len);
+  if (e.program != program || e.program_len != program_len || e.program_fingerprint != fingerprint) {
     return 0;
   }
   *arith_only_fastpath = e.arith_only_fastpath;
@@ -42,6 +54,7 @@ static void shape_cache_store(const graphion_insn *program,
   const size_t slot = shape_cache_slot(program, program_len);
   g_shape_cache[slot].program = program;
   g_shape_cache[slot].program_len = program_len;
+  g_shape_cache[slot].program_fingerprint = shape_cache_fingerprint(program, program_len);
   g_shape_cache[slot].arith_only_fastpath = arith_only_fastpath;
   g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
 }

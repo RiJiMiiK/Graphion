@@ -229,14 +229,14 @@ int test_vm_fastpath_shape_cache_load_flags(void) {
   if (graphion_vm_load(&vm3, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
     return 5;
   }
-  if (vm3.arith_only_fastpath || !vm3.arith_only_halt_terminated) {
+  if (vm3.arith_only_fastpath || vm3.arith_only_halt_terminated) {
     return 6;
   }
 
   if (graphion_vm_load(&vm4, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
     return 7;
   }
-  if (vm4.arith_only_fastpath || !vm4.arith_only_halt_terminated) {
+  if (vm4.arith_only_fastpath || vm4.arith_only_halt_terminated) {
     return 8;
   }
 
