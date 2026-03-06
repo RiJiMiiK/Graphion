@@ -1,0 +1,45 @@
+name: pgo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pgo-pipeline:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cmake_args: "-G Ninja -DCMAKE_C_COMPILER=gcc"
+          - os: ubuntu-latest
+            compiler: clang
+            cmake_args: "-G Ninja -DCMAKE_C_COMPILER=clang"
+          - os: windows-latest
+            compiler: msvc
+            cmake_args: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install Linux tools
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build gcc clang llvm
+      - name: Run PGO pipeline
+        shell: bash
+        run: python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --iterations-scale 0.10 -- ${{ matrix.cmake_args }}
+      - name: Upload PGO artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: pgo-${{ matrix.os }}-${{ matrix.compiler }}
+          if-no-files-found: ignore
+          path: |
+            build-pgo/pgo-data
+            build-pgo/Release/*.pgd
+            build-pgo/Release/*.pgc
+          retention-days: 14

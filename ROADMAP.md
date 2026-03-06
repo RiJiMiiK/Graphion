@@ -23,7 +23,7 @@
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).
 - [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
 - [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
-- [ ] PGO pipeline (MSVC + GCC/Clang).
+- [x] PGO pipeline (MSVC + GCC/Clang).
 - [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
 - [x] Fastpath specialization cache by bytecode shape.
 

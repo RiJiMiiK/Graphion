@@ -32,6 +32,18 @@ Dispatch variant study (switch vs jumptable vs computed-goto when supported):
 python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs 20
 ```
 
+PGO training + optimized rebuild:
+
+```bash
+python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
+MSVC:
+
+```powershell
+python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
