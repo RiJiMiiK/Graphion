@@ -25,6 +25,16 @@ Format requested: `s | mteps | mips | ns_per_X`.
 | Graphion Linux (computed-goto) | 0.005980 | - | 1510.238 | 0.665 |
 | Rust Windows (baseline) | 0.006469 | - | 1396.877 | 0.719 |
 
+## fastpath shape cache checkpoint (`vm_dispatch`, x100)
+
+The bytecode-shape cache targets `graphion_vm_load`, not the steady-state dispatch loop in
+`graphion_vm_run`. The benchmark below is therefore used as a regression check: the optimization
+should stay performance-neutral on `vm_dispatch`.
+
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows (shape cache enabled) | 0.006172 | - | 1460.188 | 0.686 |
+
 ## bfs_levels (`ns_per_edge`)
 
 | Platform | s | mteps | mips | ns_per_X |

@@ -4,6 +4,48 @@
 
 #include <stddef.h>
 
+typedef struct {
+  const graphion_insn *program;
+  size_t program_len;
+  bool arith_only_fastpath;
+  bool arith_only_halt_terminated;
+} graphion_vm_shape_cache_entry;
+
+enum { GRAPHION_VM_SHAPE_CACHE_SIZE = 64 };
+
+static graphion_vm_shape_cache_entry g_shape_cache[GRAPHION_VM_SHAPE_CACHE_SIZE];
+
+static size_t shape_cache_slot(const graphion_insn *program, size_t program_len) {
+  uintptr_t p = (uintptr_t)program;
+  return (size_t)((p ^ (p >> 7U) ^ (uintptr_t)(program_len * 1315423911U)) &
+                  (GRAPHION_VM_SHAPE_CACHE_SIZE - 1U));
+}
+
+static int shape_cache_lookup(const graphion_insn *program,
+                              size_t program_len,
+                              bool *arith_only_fastpath,
+                              bool *arith_only_halt_terminated) {
+  const size_t slot = shape_cache_slot(program, program_len);
+  const graphion_vm_shape_cache_entry e = g_shape_cache[slot];
+  if (e.program != program || e.program_len != program_len) {
+    return 0;
+  }
+  *arith_only_fastpath = e.arith_only_fastpath;
+  *arith_only_halt_terminated = e.arith_only_halt_terminated;
+  return 1;
+}
+
+static void shape_cache_store(const graphion_insn *program,
+                              size_t program_len,
+                              bool arith_only_fastpath,
+                              bool arith_only_halt_terminated) {
+  const size_t slot = shape_cache_slot(program, program_len);
+  g_shape_cache[slot].program = program;
+  g_shape_cache[slot].program_len = program_len;
+  g_shape_cache[slot].arith_only_fastpath = arith_only_fastpath;
+  g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
+}
+
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
 
 static int is_arith_only_fastpath_candidate(const graphion_insn *program,
@@ -166,6 +208,8 @@ void graphion_vm_init(graphion_vm *vm) {
 }
 
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len) {
+  bool halt_terminated = false;
+  bool arith_only_fastpath = false;
   if (vm == NULL || program == NULL || program_len == 0U) {
     return -1;
   }
@@ -173,8 +217,13 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->program_len = program_len;
   vm->pc = 0U;
   vm->halted = false;
-  vm->arith_only_fastpath =
-      is_arith_only_fastpath_candidate(program, program_len, &vm->arith_only_halt_terminated) != 0;
+
+  if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated)) {
+    arith_only_fastpath = is_arith_only_fastpath_candidate(program, program_len, &halt_terminated) != 0;
+    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated);
+  }
+  vm->arith_only_fastpath = arith_only_fastpath;
+  vm->arith_only_halt_terminated = halt_terminated;
   return 0;
 }
 
