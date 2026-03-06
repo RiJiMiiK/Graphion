@@ -60,6 +60,60 @@ def cleanup_msvc_profile_artifacts(build_dir: pathlib.Path, config: str) -> None
       path.unlink()
 
 
+def msvc_runtime_dirs() -> list[str]:
+  candidates: list[pathlib.Path] = []
+  program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+  vswhere = pathlib.Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+  if vswhere.exists():
+    try:
+      result = subprocess.run(
+          [
+              str(vswhere),
+              "-latest",
+              "-products",
+              "*",
+              "-requires",
+              "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+              "-property",
+              "installationPath",
+          ],
+          check=True,
+          capture_output=True,
+          text=True,
+      )
+      install_path = result.stdout.strip()
+      if install_path:
+        root = pathlib.Path(install_path)
+        candidates.extend(root.glob(r"VC\Tools\MSVC\*\bin\Hostx64\x64"))
+        candidates.extend(root.glob(r"VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT"))
+    except subprocess.CalledProcessError:
+      pass
+
+  found: list[str] = []
+  for directory in candidates:
+    if directory.is_dir() and any(directory.glob("pgort*.dll")):
+      path_text = str(directory)
+      if path_text not in found:
+        found.append(path_text)
+  return found
+
+
+def training_env(profile_dir: pathlib.Path, compiler_kind: str) -> dict[str, str]:
+  env = os.environ.copy()
+  if compiler_kind == "clang":
+    env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+  if compiler_kind == "msvc":
+    runtime_dirs = msvc_runtime_dirs()
+    if runtime_dirs:
+      env["PATH"] = os.pathsep.join(runtime_dirs + [env.get("PATH", "")])
+      print("msvc pgo runtime dirs:")
+      for path in runtime_dirs:
+        print(f"  - {path}")
+    else:
+      print("warning: no MSVC PGO runtime directory with pgort*.dll was found")
+  return env
+
+
 def train_workload(build_dir: pathlib.Path,
                    config: str,
                    profile_dir: pathlib.Path,
@@ -68,9 +122,7 @@ def train_workload(build_dir: pathlib.Path,
                    corpus_profile: str) -> None:
   profile = get_corpus_profile(corpus_profile)
   bench_specs = expanded_workloads(corpus_profile, iterations_scale)
-  env = os.environ.copy()
-  if compiler_kind == "clang":
-    env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+  env = training_env(profile_dir, compiler_kind)
 
   print(f"pgo corpus profile: {corpus_profile}")
   print(f"coverage classes: {', '.join(coverage_classes(corpus_profile))}")
