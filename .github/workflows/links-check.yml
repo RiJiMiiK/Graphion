@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check markdown links
-        uses: lycheeverse/lychee-action@v2.0.2
+        uses: lycheeverse/lychee-action@v2.8.0
         with:
           fail: true
           args: --no-progress --verbose README.md docs/**/*.md SUPPORT.md CONTRIBUTING.md SECURITY.md
