@@ -62,6 +62,12 @@ MSVC:
 python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
+The default PGO corpus is `representative`. For CI-style smoke runs:
+
+```bash
+python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
 Official baseline vs PGO report:
 
 ```bash
@@ -83,6 +89,7 @@ Refresh the unified optimization report with local Windows plus Docker Linux:
 ```powershell
 python scripts/bench/refresh_optimization_reports.py --runs 100
 ```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash

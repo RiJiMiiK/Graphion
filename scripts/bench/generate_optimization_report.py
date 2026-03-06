@@ -12,6 +12,10 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from pgo_artifacts import profile_manifest, reset_profile_dir
+from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
+from pgo_thresholds import evaluate_speedup, threshold_for, threshold_rows
+
 
 BENCH_SPECS = [
     {
@@ -51,16 +55,6 @@ BENCH_SPECS = [
         "throughput_key": "mips",
     },
 ]
-
-TRAINING_TARGETS = [
-    ("graphion_bench", 200000),
-    ("graphion_bench_bfs", 200000),
-    ("graphion_bench_hypergraph", 200000),
-    ("graphion_bench_hypergraph_incident_sum", 200000),
-    ("graphion_bench_hypergraph_hyperedge_node_sum", 200000),
-    ("graphion_bench_vm_graph", 100000),
-]
-
 
 def run(cmd: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd))
@@ -140,21 +134,74 @@ def cleanup_msvc_profile_artifacts(build_dir: pathlib.Path, config: str) -> None
             path.unlink()
 
 
+def msvc_runtime_dirs() -> list[str]:
+    candidates: list[pathlib.Path] = []
+    program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    vswhere = pathlib.Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    if vswhere.exists():
+        try:
+            result = subprocess.run(
+                [
+                    str(vswhere),
+                    "-latest",
+                    "-products",
+                    "*",
+                    "-requires",
+                    "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                    "-property",
+                    "installationPath",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            install_path = result.stdout.strip()
+            if install_path:
+                root = pathlib.Path(install_path)
+                candidates.extend(root.glob(r"VC\Tools\MSVC\*\bin\Hostx64\x64"))
+                candidates.extend(root.glob(r"VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT"))
+        except subprocess.CalledProcessError:
+            pass
+
+    found: list[str] = []
+    for directory in candidates:
+        if directory.is_dir() and any(directory.glob("pgort*.dll")):
+            path_text = str(directory)
+            if path_text not in found:
+                found.append(path_text)
+    return found
+
+
+def training_env(profile_dir: pathlib.Path, compiler_kind: str) -> dict[str, str]:
+    env = os.environ.copy()
+    if compiler_kind == "clang":
+        env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+    if compiler_kind == "msvc":
+        runtime_dirs = msvc_runtime_dirs()
+        if runtime_dirs:
+            env["PATH"] = os.pathsep.join(runtime_dirs + [env.get("PATH", "")])
+            print("msvc pgo runtime dirs:")
+            for path in runtime_dirs:
+                print(f"  - {path}")
+        else:
+            print("warning: no MSVC PGO runtime directory with pgort*.dll was found")
+    return env
+
+
 def train_workload(
     build_dir: pathlib.Path,
     config: str,
     profile_dir: pathlib.Path,
     iterations_scale: float,
     compiler_kind: str,
+    corpus_profile: str,
 ) -> None:
-    env = os.environ.copy()
-    if compiler_kind == "clang":
-        env["LLVM_PROFILE_FILE"] = str(profile_dir / "graphion-%p-%m.profraw")
+    training_rows = expanded_workloads(corpus_profile, iterations_scale)
+    env = training_env(profile_dir, compiler_kind)
 
     run([str(exe_path(build_dir, "graphion", config))], env=env)
-    for target, iterations in TRAINING_TARGETS:
-        scaled = max(1000, int(iterations * iterations_scale))
-        run([str(exe_path(build_dir, target, config)), str(scaled)], env=env)
+    for row in training_rows:
+        run([str(exe_path(build_dir, str(row["target"]), config)), str(row["iterations"])], env=env)
     run([str(exe_path(build_dir, "graphion_tests", config))], env=env)
 
 
@@ -224,6 +271,7 @@ def run_dispatch_variants(
     llvm_profdata: str,
     extra_args: list[str],
     variants: list[str],
+    corpus_profile: str,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
 
@@ -246,12 +294,25 @@ def run_dispatch_variants(
         baseline_payloads = [run_benchmark(base_build_dir, config, "graphion_bench", iterations) for _ in range(runs)]
         baseline = average_payloads(baseline_payloads, "ns_per_instruction", "mips")
 
-        cleanup_profile_dir(pgo_profile_dir)
+        dispatch_manifest = profile_manifest(
+            compiler_kind=compiler_kind,
+            corpus_profile=corpus_profile,
+            iterations_scale=iterations_scale,
+            config=config,
+            build_type=build_type,
+            dispatch=variant,
+            extra_args=extra_args,
+            producer="generate_optimization_report.py:dispatch",
+        )
+        reasons = reset_profile_dir(pgo_profile_dir, dispatch_manifest)
+        print(f"pgo profile invalidation ({variant}):")
+        for reason in reasons:
+            print(f"  - {reason}")
         if compiler_kind == "msvc":
             cleanup_msvc_profile_artifacts(pgo_build_dir, config)
         configure(pgo_build_dir, build_type, "GENERATE", pgo_profile_dir, variant, extra_args)
         build(pgo_build_dir, config)
-        train_workload(pgo_build_dir, config, pgo_profile_dir, iterations_scale, compiler_kind)
+        train_workload(pgo_build_dir, config, pgo_profile_dir, iterations_scale, compiler_kind, corpus_profile)
         if compiler_kind == "clang":
             merge_clang_profiles(pgo_profile_dir, llvm_profdata)
         configure(pgo_build_dir, build_type, "USE", pgo_profile_dir, variant, extra_args)
@@ -291,11 +352,15 @@ def build_report_rows(baseline_rows: list[dict[str, object]], pgo_rows: list[dic
         pgo_throughput = float(pgo[throughput_key])
         report_rows.append({
             "benchmark": name,
+            "threshold_family": threshold_for(name)["family"],
+            "minimum_speedup_x": threshold_for(name)["minimum_speedup_x"],
+            "target_speedup_x": threshold_for(name)["target_speedup_x"],
             "latency_metric": spec["latency_key"],
             "throughput_metric": spec["throughput_key"],
             "baseline": baseline,
             "pgo": pgo,
             "speedup_x": round(baseline_latency / pgo_latency, 3),
+            "threshold_status": evaluate_speedup(name, baseline_latency / pgo_latency),
             "latency_delta_pct": round(((pgo_latency - baseline_latency) / baseline_latency) * 100.0, 2),
             "throughput_gain_pct": round(((pgo_throughput - baseline_throughput) / baseline_throughput) * 100.0, 2),
         })
@@ -316,17 +381,23 @@ def fmt_metric(value: object) -> str:
 
 def markdown_table(report_rows: list[dict[str, object]]) -> str:
     lines = [
-        "| Benchmark | Baseline s | PGO s | Baseline ns_per_X | PGO ns_per_X | Baseline thr | PGO thr | Speedup x |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Benchmark | Family | Baseline s | PGO s | Baseline ns_per_X | PGO ns_per_X | Baseline thr | PGO thr | Speedup x | Min x | Target x | Status |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in report_rows:
         baseline = row["baseline"]
         pgo = row["pgo"]
         latency_key = row["latency_metric"] + "_avg"
         throughput_key = row["throughput_metric"] + "_avg"
+        status_map = {
+            "target": "meets-target",
+            "minimum": "meets-minimum",
+            "below": "below-minimum",
+        }
         lines.append(
-            "| {benchmark} | {bs} | {ps} | {bl} | {pl} | {bt} | {pt} | {sx} |".format(
+            "| {benchmark} | {family} | {bs} | {ps} | {bl} | {pl} | {bt} | {pt} | {sx} | {mn} | {tg} | {st} |".format(
                 benchmark=row["benchmark"],
+                family=row["threshold_family"],
                 bs=fmt_seconds(baseline["seconds_avg"]),
                 ps=fmt_seconds(pgo["seconds_avg"]),
                 bl=fmt_metric(baseline[latency_key]),
@@ -334,6 +405,27 @@ def markdown_table(report_rows: list[dict[str, object]]) -> str:
                 bt=fmt_metric(baseline[throughput_key]),
                 pt=fmt_metric(pgo[throughput_key]),
                 sx=fmt_metric(row["speedup_x"]),
+                mn=fmt_metric(row["minimum_speedup_x"]),
+                tg=fmt_metric(row["target_speedup_x"]),
+                st=status_map[str(row["threshold_status"])],
+            )
+        )
+    return "\n".join(lines)
+
+
+def markdown_threshold_table() -> str:
+    lines = [
+        "| Benchmark | Family | Minimum x | Target x | Rationale |",
+        "|---|---|---:|---:|---|",
+    ]
+    for row in threshold_rows():
+        lines.append(
+            "| {benchmark} | {family} | {minimum} | {target} | {rationale} |".format(
+                benchmark=row["benchmark"],
+                family=row["family"],
+                minimum=fmt_metric(row["minimum_speedup_x"]),
+                target=fmt_metric(row["target_speedup_x"]),
+                rationale=row["rationale"],
             )
         )
     return "\n".join(lines)
@@ -369,6 +461,8 @@ def render_markdown(payload: dict[str, object]) -> str:
     meta = payload["metadata"]
     improved = sum(1 for row in payload["report_rows"] if float(row["speedup_x"]) > 1.0)
     total = len(payload["report_rows"])
+    meets_minimum = sum(1 for row in payload["report_rows"] if str(row["threshold_status"]) != "below")
+    meets_target = sum(1 for row in payload["report_rows"] if str(row["threshold_status"]) == "target")
     lines = [
         "# Official Optimization Report",
         "",
@@ -383,13 +477,21 @@ def render_markdown(payload: dict[str, object]) -> str:
         f"- Iterations per benchmark run: {meta['iterations']}",
         f"- Averaging runs: {meta['runs']}",
         f"- PGO training scale: {meta['iterations_scale']}",
+        f"- PGO corpus profile: {meta['corpus_profile']}",
+        f"- PGO corpus coverage classes: {', '.join(meta['corpus_coverage_classes'])}",
+        f"- PGO training targets: {', '.join(meta['corpus_targets'])}",
         f"- Main suite dispatch: {meta['dispatch']}",
         f"- Dispatch variants checked: {', '.join(meta['dispatch_variants'])}",
         "",
         "## Summary",
         "",
         f"- PGO improved {improved}/{total} benchmark families on this snapshot.",
+        f"- Threshold coverage: {meets_minimum}/{total} met minimum and {meets_target}/{total} met target.",
         f"- The comparison set covers `vm_dispatch`, `bfs_levels`, `vm_graph_ops`, and all current `hypergraph_*` benches.",
+        "",
+        "## PGO Effectiveness Thresholds",
+        "",
+        markdown_threshold_table(),
         "",
         "## Baseline vs PGO",
         "",
@@ -403,7 +505,8 @@ def render_markdown(payload: dict[str, object]) -> str:
         "",
         "- Latency columns (`ns_per_X`) are the primary comparison metric; lower is better.",
         "- Throughput columns (`mips` / `mteps`) are secondary confirmation metrics; higher is better.",
-        "- PGO training uses the committed Graphion benchmark set before rebuilding in `USE` mode.",
+        "- PGO training uses the committed Graphion representative-workload policy before rebuilding in `USE` mode.",
+        "- Threshold status is advisory governance for optimization review; it is not yet a release blocker by itself.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -424,6 +527,8 @@ def main() -> int:
     parser.add_argument("--variant-iterations", type=int, default=500000, help="Iterations per vm_dispatch variant run")
     parser.add_argument("--variant-runs", type=int, default=100, help="Averaging runs for dispatch-variant vm_dispatch")
     parser.add_argument("--iterations-scale", type=float, default=1.0, help="Scale applied to PGO training iterations")
+    parser.add_argument("--corpus-profile", choices=corpus_profile_names(), default="representative",
+                        help="Named PGO training corpus")
     parser.add_argument("--llvm-profdata", default="llvm-profdata", help="Clang profile merge tool")
     parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=clang")
     args = parser.parse_args()
@@ -443,7 +548,20 @@ def main() -> int:
     platform_label = args.platform_label if args.platform_label else platform.platform()
 
     cleanup_profile_dir(baseline_profile_dir)
-    cleanup_profile_dir(pgo_profile_dir)
+    report_manifest = profile_manifest(
+        compiler_kind=compiler_kind,
+        corpus_profile=args.corpus_profile,
+        iterations_scale=args.iterations_scale,
+        config=args.config,
+        build_type=args.build_type,
+        dispatch=args.dispatch,
+        extra_args=args.cmake_args,
+        producer="generate_optimization_report.py:main-suite",
+    )
+    reasons = reset_profile_dir(pgo_profile_dir, report_manifest)
+    print("pgo profile invalidation (main suite):")
+    for reason in reasons:
+        print(f"  - {reason}")
     if compiler_kind == "msvc":
         cleanup_msvc_profile_artifacts(pgo_build_dir, args.config)
 
@@ -454,7 +572,7 @@ def main() -> int:
 
     configure(pgo_build_dir, args.build_type, "GENERATE", pgo_profile_dir, args.dispatch, args.cmake_args)
     build(pgo_build_dir, args.config)
-    train_workload(pgo_build_dir, args.config, pgo_profile_dir, args.iterations_scale, compiler_kind)
+    train_workload(pgo_build_dir, args.config, pgo_profile_dir, args.iterations_scale, compiler_kind, args.corpus_profile)
     if compiler_kind == "clang":
         merge_clang_profiles(pgo_profile_dir, args.llvm_profdata)
     configure(pgo_build_dir, args.build_type, "USE", pgo_profile_dir, args.dispatch, args.cmake_args)
@@ -474,6 +592,7 @@ def main() -> int:
         args.llvm_profdata,
         args.cmake_args,
         dispatch_variants,
+        args.corpus_profile,
     )
 
     payload = {
@@ -487,6 +606,9 @@ def main() -> int:
             "iterations": args.iterations,
             "runs": args.runs,
             "iterations_scale": args.iterations_scale,
+            "corpus_profile": args.corpus_profile,
+            "corpus_coverage_classes": coverage_classes(args.corpus_profile),
+            "corpus_targets": [str(row["target"]) for row in expanded_workloads(args.corpus_profile, 1.0)],
             "dispatch": args.dispatch,
             "dispatch_variants": dispatch_variants,
         },
