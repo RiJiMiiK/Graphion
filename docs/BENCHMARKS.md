@@ -77,6 +77,12 @@ MSVC:
 ```powershell
 python scripts/bench/generate_optimization_report.py --build-root build-opt-report
 ```
+
+Refresh the unified optimization report with local Windows plus Docker Linux:
+
+```powershell
+python scripts/bench/refresh_optimization_reports.py --runs 100
+```
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash

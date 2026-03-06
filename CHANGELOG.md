@@ -70,6 +70,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Dispatch-variant parity runner and extra VM edge-case tests for shape-cache / dispatch semantics.
 - Official optimization report generator and report doc for `baseline` vs `PGO`, including per-variant `vm_dispatch` sections.
 - Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.
+- Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

@@ -64,7 +64,14 @@ TRAINING_TARGETS = [
 
 def run(cmd: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd))
-    return subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)
+    try:
+        return subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)
+    except subprocess.CalledProcessError as exc:
+        if exc.stdout:
+            print(exc.stdout)
+        if exc.stderr:
+            print(exc.stderr, file=sys.stderr)
+        raise
 
 
 def exe_path(build_dir: pathlib.Path, target: str, config: str) -> pathlib.Path:
@@ -369,6 +376,7 @@ def render_markdown(payload: dict[str, object]) -> str:
         "",
         "## Metadata",
         "",
+        f"- Platform label: {meta['platform_label']}",
         f"- Platform: {meta['platform']}",
         f"- Compiler: {meta['compiler_kind']}",
         f"- Config: {meta['config']}",
@@ -405,6 +413,7 @@ def main() -> int:
     parser.add_argument("--build-root", default="build-optimization-report", help="Directory root used for report builds")
     parser.add_argument("--output-json", default="benchmarks/results/optimization_report_latest.json", help="JSON report output path")
     parser.add_argument("--output-md", default="docs/OPTIMIZATION_REPORTS.md", help="Markdown report output path")
+    parser.add_argument("--platform-label", default="", help="Human-readable platform label used in the report metadata")
     parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--build-type", default="Release", help="CMAKE_BUILD_TYPE for single-config generators")
     parser.add_argument("--compiler-kind", choices=["auto", "msvc", "gcc", "clang"], default="auto")
@@ -431,6 +440,7 @@ def main() -> int:
         compiler_kind = detect_compiler_kind(args.cmake_args)
 
     dispatch_variants = [item.strip() for item in args.dispatch_variants.split(",") if item.strip()]
+    platform_label = args.platform_label if args.platform_label else platform.platform()
 
     cleanup_profile_dir(baseline_profile_dir)
     cleanup_profile_dir(pgo_profile_dir)
@@ -469,6 +479,7 @@ def main() -> int:
     payload = {
         "metadata": {
             "generated_utc": datetime.now(timezone.utc).isoformat(),
+            "platform_label": platform_label,
             "platform": platform.platform(),
             "compiler_kind": compiler_kind,
             "config": args.config,
