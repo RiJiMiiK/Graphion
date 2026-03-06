@@ -73,6 +73,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
 - Named PGO corpus profiles and representative-workload policy documentation.
 - Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
+- Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

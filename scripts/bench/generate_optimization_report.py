@@ -117,6 +117,16 @@ def detect_compiler_kind(extra_args: list[str]) -> str:
     return "gcc"
 
 
+def detect_asm_enabled(extra_args: list[str]) -> bool:
+    for arg in extra_args:
+        text = arg.strip().upper()
+        if text == "-DGRAPHION_ENABLE_ASM=OFF":
+            return False
+        if text == "-DGRAPHION_ENABLE_ASM=ON":
+            return True
+    return True
+
+
 def cleanup_profile_dir(profile_dir: pathlib.Path) -> None:
     if profile_dir.exists():
         shutil.rmtree(profile_dir)
@@ -534,6 +544,7 @@ def main() -> int:
             "platform_label": platform_label,
             "platform": platform.platform(),
             "compiler_kind": compiler_kind,
+            "asm_enabled": detect_asm_enabled(args.cmake_args),
             "config": args.config,
             "build_type": args.build_type,
             "iterations": args.iterations,
@@ -544,6 +555,7 @@ def main() -> int:
             "corpus_targets": [str(row["target"]) for row in expanded_workloads(args.corpus_profile, 1.0)],
             "dispatch": args.dispatch,
             "dispatch_variants": dispatch_variants,
+            "cmake_args": args.cmake_args,
         },
         "baseline_rows": baseline_rows,
         "pgo_rows": pgo_rows,

@@ -95,6 +95,9 @@ The `pull_request` gate is intentionally path-scoped to release and PGO workflow
 For a unified engineering report that merges local Windows and Docker Linux optimization results,
 use `scripts/bench/refresh_optimization_reports.py`.
 
+For portable cross-compiler governance (`MSVC` vs `GCC` vs `Clang`), use
+`scripts/bench/refresh_cross_compiler_report.py` and `docs/CROSS_COMPILER_POLICY.md`.
+
 ## Notes
 
 - Clang uses source-based profiling and requires `llvm-profdata`.

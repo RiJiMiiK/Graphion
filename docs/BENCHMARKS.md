@@ -90,6 +90,12 @@ Refresh the unified optimization report with local Windows plus Docker Linux:
 python scripts/bench/refresh_optimization_reports.py --runs 100
 ```
 
+Refresh the portable cross-compiler governance report:
+
+```powershell
+python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500000
+```
+
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
@@ -135,3 +141,4 @@ Interpretation order:
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
 - Keep periodic summarized snapshots in `docs/PERFORMANCE_RESULTS.md`.
 - Keep official `baseline` vs `PGO` reports in `docs/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/`.
+- Keep cross-compiler governance snapshots in `docs/CROSS_COMPILER_REPORT.md` using the portable lane only.
