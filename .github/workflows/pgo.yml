@@ -1,13 +1,29 @@
 name: pgo
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "CMakeLists.txt"
+      - ".github/workflows/pgo.yml"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/release-dry-run.yml"
+      - "docs/PGO.md"
+      - "docs/PGO_CORPUS_POLICY.md"
+      - "scripts/bench/run_pgo_pipeline.py"
+      - "scripts/bench/pgo_corpus.py"
   workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
 
 permissions:
   contents: read
 
 jobs:
   pgo-pipeline:
+    concurrency:
+      group: pgo-${{ github.event_name }}-${{ matrix.os }}-${{ matrix.compiler }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -27,19 +43,45 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
+      - name: Resolve PGO policy
+        id: policy
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "corpus=ci" >> "$GITHUB_OUTPUT"
+            echo "iterations_scale=0.10" >> "$GITHUB_OUTPUT"
+            echo "retention_days=7" >> "$GITHUB_OUTPUT"
+            echo "reason=scheduled weekly smoke" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "corpus=ci" >> "$GITHUB_OUTPUT"
+            echo "iterations_scale=0.10" >> "$GITHUB_OUTPUT"
+            echo "retention_days=21" >> "$GITHUB_OUTPUT"
+            echo "reason=release-gated or pgo-policy pull request" >> "$GITHUB_OUTPUT"
+          else
+            echo "corpus=representative" >> "$GITHUB_OUTPUT"
+            echo "iterations_scale=0.25" >> "$GITHUB_OUTPUT"
+            echo "retention_days=14" >> "$GITHUB_OUTPUT"
+            echo "reason=manual dispatch" >> "$GITHUB_OUTPUT"
+          fi
       - name: Install Linux tools
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y ninja-build gcc clang llvm
       - name: Run PGO pipeline
         shell: bash
-        run: python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- ${{ matrix.cmake_args }}
+        run: |
+          echo "PGO policy: ${{ steps.policy.outputs.reason }}"
+          python scripts/bench/run_pgo_pipeline.py \
+            --build-dir build-pgo \
+            --corpus-profile "${{ steps.policy.outputs.corpus }}" \
+            --iterations-scale "${{ steps.policy.outputs.iterations_scale }}" \
+            -- ${{ matrix.cmake_args }}
       - name: Upload PGO artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: pgo-${{ matrix.os }}-${{ matrix.compiler }}
+          name: pgo-${{ github.event_name }}-${{ matrix.os }}-${{ matrix.compiler }}
           if-no-files-found: ignore
           path: |
             build-pgo/pgo-data
             build-pgo/Release/*.pgd
             build-pgo/Release/*.pgc
-          retention-days: 14
+          retention-days: ${{ steps.policy.outputs.retention_days }}

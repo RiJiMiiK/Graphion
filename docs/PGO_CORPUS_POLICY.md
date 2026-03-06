@@ -66,3 +66,17 @@ These are not acceptable as the only PGO training basis:
 - use `representative` for local optimization work and official reports
 - use `ci` with reduced iteration scale for workflow smoke validation
 - if a new major workload family is introduced, extend the representative corpus before relying on new PGO numbers
+
+## CI Scheduling And Retention
+
+PGO smoke execution is governed separately from the local corpus choice:
+
+- weekly scheduled smoke runs use the `ci` corpus and keep artifacts for `7 days`
+- release-gated or PGO-policy pull requests use the `ci` corpus and keep artifacts for `21 days`
+- manual `workflow_dispatch` runs use the `representative` corpus at a moderate scale and keep artifacts for `14 days`
+
+This policy exists to balance three constraints:
+
+- keep a recurring signal that the PGO pipeline still works
+- keep release-sensitive evidence around long enough for review
+- avoid paying full representative-corpus cost on every unrelated pull request

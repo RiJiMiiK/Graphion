@@ -72,6 +72,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.
 - Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
 - Named PGO corpus profiles and representative-workload policy documentation.
+- Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

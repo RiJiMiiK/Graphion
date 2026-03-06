@@ -63,13 +63,34 @@ GitHub Actions workflow:
 
 - [`.github/workflows/pgo.yml`](../.github/workflows/pgo.yml)
 
-It runs on demand via `workflow_dispatch` and covers:
+It runs in three modes:
+
+- `workflow_dispatch`
+- scheduled weekly smoke
+- pull requests to `main` that touch release-gating or PGO-policy files
+
+It covers:
 
 - `ubuntu-latest` with `gcc`
 - `ubuntu-latest` with `clang`
 - `windows-latest` with `msvc`
 
-The workflow uses the `ci` corpus profile with reduced iteration scale.
+Policy by trigger:
+
+- scheduled weekly smoke
+  - corpus: `ci`
+  - iteration scale: `0.10`
+  - artifact retention: `7 days`
+- release-gated or PGO-policy pull request
+  - corpus: `ci`
+  - iteration scale: `0.10`
+  - artifact retention: `21 days`
+- manual dispatch
+  - corpus: `representative`
+  - iteration scale: `0.25`
+  - artifact retention: `14 days`
+
+The `pull_request` gate is intentionally path-scoped to release and PGO workflow files so the smoke job is not attached to unrelated feature work.
 
 For a unified engineering report that merges local Windows and Docker Linux optimization results,
 use `scripts/bench/refresh_optimization_reports.py`.

@@ -27,12 +27,12 @@
 - [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
 - [x] Fastpath specialization cache by bytecode shape.
 
-## Milestone 0.3.1 (Optimization Stabilization) [in progress]
+## Milestone 0.3.1 (Optimization Stabilization) [done]
 
 - [x] PGO training corpus review and representative-workload policy.
 - [x] Official before/after optimization reports (`baseline` vs `PGO`, per dispatch strategy where applicable).
 - [x] Optimization parity tests for dispatch variants and fastpath cache edge cases.
-- [ ] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
+- [x] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
 
 ## Milestone 0.4 (VM + ISA Hardening)
 
