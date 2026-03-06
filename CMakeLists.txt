@@ -10,6 +10,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 option(GRAPHION_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
 option(GRAPHION_ENABLE_WERROR "Treat warnings as errors" ON)
 option(GRAPHION_ENABLE_ASM "Enable architecture-specific assembly hot paths" OFF)
+set(GRAPHION_VM_DISPATCH "switch" CACHE STRING "VM dispatch strategy: switch, jumptable, computed-goto")
+set_property(CACHE GRAPHION_VM_DISPATCH PROPERTY STRINGS switch jumptable computed-goto)
 option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" ON)
 option(GRAPHION_ENABLE_IPO "Enable IPO/LTO in release-like builds when supported" ON)
 option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
@@ -56,6 +58,19 @@ add_library(graphion_vm
   src/graph/csr_graph.c
   src/graph/hypergraph.c
 )
+
+if(GRAPHION_VM_DISPATCH STREQUAL "switch")
+  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
+elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
+  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_JUMPTABLE=1)
+elseif(GRAPHION_VM_DISPATCH STREQUAL "computed-goto")
+  if(MSVC)
+    message(FATAL_ERROR "GRAPHION_VM_DISPATCH=computed-goto is not supported with MSVC.")
+  endif()
+  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_COMPUTED_GOTO=1)
+else()
+  message(FATAL_ERROR "Invalid GRAPHION_VM_DISPATCH='${GRAPHION_VM_DISPATCH}'. Use switch, jumptable, or computed-goto.")
+endif()
 
 if(GRAPHION_ENABLE_IPO)
   check_ipo_supported(RESULT graphion_ipo_supported OUTPUT graphion_ipo_error)

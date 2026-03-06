@@ -124,3 +124,121 @@ int test_vm_hypergraph_opcodes(void) {
   }
   return 0;
 }
+
+int test_vm_superinstruction_add_pair_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 1},  {GVM_OP_MOV_IMM, 1, 0, 2}, {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 0, 1, 0},      {GVM_OP_ADD, 0, 2, 0},     {GVM_OP_MOV_IMM, 3, 0, 5},
+      {GVM_OP_ADD, 3, 3, 0},      {GVM_OP_ADD, 3, 1, 0},     {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 6) {
+    return 4;
+  }
+  if (vm.regs[3] != 12) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_vm_superinstruction_movimm_add_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},   {GVM_OP_ADD, 1, 0, 0},      {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 2, 2, 0},       {GVM_OP_MOV_IMM, 3, 0, -2}, {GVM_OP_ADD, 1, 3, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 7) {
+    return 4;
+  }
+  if (vm.regs[1] != 5) {
+    return 5;
+  }
+  if (vm.regs[2] != 6) {
+    return 6;
+  }
+  if (vm.regs[3] != -2) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_vm_fastpath_shape_cache_load_flags(void) {
+  graphion_vm vm1;
+  graphion_vm vm2;
+  graphion_vm vm3;
+  graphion_vm vm4;
+  const graphion_insn program_fast[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_ADD, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  const graphion_insn program_generic[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 0},
+      {GVM_OP_BFS_LEVELS, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+
+  graphion_vm_init(&vm1);
+  graphion_vm_init(&vm2);
+  graphion_vm_init(&vm3);
+  graphion_vm_init(&vm4);
+
+  if (graphion_vm_load(&vm1, program_fast, sizeof(program_fast) / sizeof(program_fast[0])) != 0) {
+    return 1;
+  }
+  if (!vm1.arith_only_fastpath || !vm1.arith_only_halt_terminated) {
+    return 2;
+  }
+
+  if (graphion_vm_load(&vm2, program_fast, sizeof(program_fast) / sizeof(program_fast[0])) != 0) {
+    return 3;
+  }
+  if (!vm2.arith_only_fastpath || !vm2.arith_only_halt_terminated) {
+    return 4;
+  }
+
+  if (graphion_vm_load(&vm3, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
+    return 5;
+  }
+  if (vm3.arith_only_fastpath || vm3.arith_only_halt_terminated) {
+    return 6;
+  }
+
+  if (graphion_vm_load(&vm4, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
+    return 7;
+  }
+  if (vm4.arith_only_fastpath || vm4.arith_only_halt_terminated) {
+    return 8;
+  }
+
+  return 0;
+}

@@ -9,9 +9,33 @@ Format requested: `s | mteps | mips | ns_per_X`.
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.007837 | - | 1159.835 | 0.871 |
-| Graphion Linux | 0.006325 | - | 1434.415 | 0.703 |
-| Rust | 0.006592 | - | 1379.886 | 0.732 |
+| Graphion Windows | 0.006540 | - | 1377.279 | 0.727 |
+| Graphion Linux | 0.006585 | - | 1371.265 | 0.732 |
+| Rust Windows | 0.006275 | - | 1435.327 | 0.697 |
+| Rust Linux | 0.006425 | - | 1403.331 | 0.714 |
+
+## vm_dispatch dispatch variants (`ns_per_instruction`, x100)
+
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows (switch) | 0.007001 | - | 1286.439 | 0.778 |
+| Graphion Windows (jumptable) | 0.007407 | - | 1216.154 | 0.823 |
+| Graphion Linux (switch) | 0.007306 | - | 1235.826 | 0.812 |
+| Graphion Linux (jumptable) | 0.006093 | - | 1480.431 | 0.677 |
+| Graphion Linux (computed-goto) | 0.005980 | - | 1510.238 | 0.665 |
+| Rust Windows (baseline) | 0.006469 | - | 1396.877 | 0.719 |
+
+## fastpath shape cache checkpoint (`vm_dispatch`, x100)
+
+The bytecode-shape cache targets `graphion_vm_load`, not the steady-state dispatch loop in
+`graphion_vm_run`. The benchmark below is therefore used as a regression check: the optimization
+should stay performance-neutral on `vm_dispatch`.
+
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows (shape cache enabled) | 0.006172 | - | 1460.188 | 0.686 |
+| Graphion Linux (shape cache-neutral reference) | 0.006585 | - | 1371.265 | 0.732 |
+| Rust Windows (reference) | 0.006592 | - | 1379.886 | 0.733 |
 
 ## bfs_levels (`ns_per_edge`)
 
@@ -33,9 +57,9 @@ Format requested: `s | mteps | mips | ns_per_X`.
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.014010 | - | 357.266 | 2.802 |
-| Graphion Linux | 0.017920 | - | 280.128 | 3.584 |
-| Rust | 0.041512 | - | 143.850 | 8.302 |
+| Graphion Windows | 0.008430 | - | 356.186 | 2.810 |
+| Graphion Linux | 0.018138 | - | 276.201 | 3.628 |
+| Rust | 0.049152 | - | 76.209 | 16.384 |
 
 Notes:
 

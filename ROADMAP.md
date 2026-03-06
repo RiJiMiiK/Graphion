@@ -6,7 +6,7 @@
 - [x] Deterministic benchmark harness.
 - [x] Baseline safety/security CI.
 
-## Milestone 0.2 (Graph Primitives) [in progress]
+## Milestone 0.2 (Graph Primitives) [done]
 
 - [x] Runtime CSR/BFS core (`csr_graph` + `graphion_bfs_levels`) with tests.
 - [x] Graph-centric opcodes and kernels (`BFS_LEVELS`, incidence/size ops).
@@ -20,13 +20,12 @@
 - [x] IR v0 bridge contract document (`docs/IR.md`).
 
 ## Milestone 0.3 (Optimization Pass) [in progress]
-
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).
-- [ ] Super-instruction experiments.
+- [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
 - [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
 - [ ] PGO pipeline (MSVC + GCC/Clang).
-- [ ] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study).
-- [ ] Fastpath specialization cache by bytecode shape.
+- [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
+- [x] Fastpath specialization cache by bytecode shape.
 
 ## Milestone 0.4 (VM + ISA Hardening)
 
