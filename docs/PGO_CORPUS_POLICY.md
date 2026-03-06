@@ -123,3 +123,28 @@ This policy is intentionally conservative:
 - `vm_dispatch` is the interpreter canary and must not quietly regress into a release
 - severe regressions should stop a candidate even if one family is noisy
 - isolated misses are reported for human review without turning every release PR into noise
+
+## Profile Hygiene And Cache Invalidation
+
+Graphion treats generated PGO profiles as single-run artifacts, not as reusable long-lived cache entries.
+
+Current hygiene rules:
+
+- every `GENERATE` phase starts from a freshly reset profile directory
+- every profile directory gets a `profile_manifest.json`
+- profiles are invalidated when any of these change:
+  - git revision
+  - compiler family
+  - corpus profile
+  - iteration scale
+  - build config or build type
+  - dispatch mode
+  - extra CMake arguments
+  - producing script
+- stale MSVC `.pgc` / `.pgd` files are deleted before a new generate phase
+
+This policy exists because silent profile reuse is worse than no profile at all:
+
+- it can make benchmark comparisons non-defensible
+- it can hide dispatch-specific regressions
+- it can mix release-candidate evidence with unrelated local experiments

@@ -13,6 +13,7 @@ Quick pointers:
 - Perf snapshot: `python scripts/bench/refresh_performance_results.py`
 - PGO run: `python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo`
 - PGO corpus policy: `docs/PGO_CORPUS_POLICY.md`
+- PGO artifact manifest: `<build-dir>/pgo-data/profile_manifest.json`
 - PGO thresholds: `scripts/bench/pgo_thresholds.py`
 - PGO release alerts: `python scripts/bench/check_pgo_alerts.py --report-json <path>`
 - Optimization report: `python scripts/bench/generate_optimization_report.py --build-root build-opt-report`

@@ -12,6 +12,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from pgo_artifacts import profile_manifest, reset_profile_dir
 from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
 from pgo_thresholds import evaluate_speedup, threshold_for, threshold_rows
 
@@ -293,7 +294,20 @@ def run_dispatch_variants(
         baseline_payloads = [run_benchmark(base_build_dir, config, "graphion_bench", iterations) for _ in range(runs)]
         baseline = average_payloads(baseline_payloads, "ns_per_instruction", "mips")
 
-        cleanup_profile_dir(pgo_profile_dir)
+        dispatch_manifest = profile_manifest(
+            compiler_kind=compiler_kind,
+            corpus_profile=corpus_profile,
+            iterations_scale=iterations_scale,
+            config=config,
+            build_type=build_type,
+            dispatch=variant,
+            extra_args=extra_args,
+            producer="generate_optimization_report.py:dispatch",
+        )
+        reasons = reset_profile_dir(pgo_profile_dir, dispatch_manifest)
+        print(f"pgo profile invalidation ({variant}):")
+        for reason in reasons:
+            print(f"  - {reason}")
         if compiler_kind == "msvc":
             cleanup_msvc_profile_artifacts(pgo_build_dir, config)
         configure(pgo_build_dir, build_type, "GENERATE", pgo_profile_dir, variant, extra_args)
@@ -534,7 +548,20 @@ def main() -> int:
     platform_label = args.platform_label if args.platform_label else platform.platform()
 
     cleanup_profile_dir(baseline_profile_dir)
-    cleanup_profile_dir(pgo_profile_dir)
+    report_manifest = profile_manifest(
+        compiler_kind=compiler_kind,
+        corpus_profile=args.corpus_profile,
+        iterations_scale=args.iterations_scale,
+        config=args.config,
+        build_type=args.build_type,
+        dispatch=args.dispatch,
+        extra_args=args.cmake_args,
+        producer="generate_optimization_report.py:main-suite",
+    )
+    reasons = reset_profile_dir(pgo_profile_dir, report_manifest)
+    print("pgo profile invalidation (main suite):")
+    for reason in reasons:
+        print(f"  - {reason}")
     if compiler_kind == "msvc":
         cleanup_msvc_profile_artifacts(pgo_build_dir, args.config)
 

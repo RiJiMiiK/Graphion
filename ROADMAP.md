@@ -41,7 +41,7 @@
 - [ ] Benchmark environment metadata enforcement in generated reports.
 - [x] PGO / non-PGO regression alert policy for release candidates.
 - [ ] Assembly-vs-C fallback parity and performance reporting policy.
-- [ ] Profile artifact hygiene and cache invalidation rules.
+- [x] Profile artifact hygiene and cache invalidation rules.
 
 ## Milestone 0.4 (VM + ISA Hardening)
 

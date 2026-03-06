@@ -60,6 +60,9 @@ The detailed policy is documented in [PGO_CORPUS_POLICY.md](./PGO_CORPUS_POLICY.
 PGO effectiveness thresholds are reported per workload family in the generated optimization report.
 They are review guidance for optimization quality, not a standalone release gate.
 
+Generated PGO profiles are treated as single-run artifacts and are reset before each new `GENERATE` phase.
+The profile directory records a `profile_manifest.json` so invalidation reasons are explicit.
+
 ## CI
 
 GitHub Actions workflow:
