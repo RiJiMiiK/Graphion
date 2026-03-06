@@ -57,6 +57,9 @@ The default `representative` profile covers:
 
 The detailed policy is documented in [PGO_CORPUS_POLICY.md](./PGO_CORPUS_POLICY.md).
 
+PGO effectiveness thresholds are reported per workload family in the generated optimization report.
+They are review guidance for optimization quality, not a standalone release gate.
+
 ## CI
 
 GitHub Actions workflow:

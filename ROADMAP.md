@@ -36,7 +36,7 @@
 
 ## Milestone 0.3.2 (Optimization Governance)
 
-- [ ] Official PGO effectiveness thresholds per workload family.
+- [x] Official PGO effectiveness thresholds per workload family.
 - [ ] Cross-compiler optimization comparison policy (`MSVC` vs `GCC` vs `Clang`).
 - [ ] Benchmark environment metadata enforcement in generated reports.
 - [ ] PGO / non-PGO regression alert policy for release candidates.

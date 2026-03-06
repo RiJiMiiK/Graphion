@@ -67,6 +67,34 @@ These are not acceptable as the only PGO training basis:
 - use `ci` with reduced iteration scale for workflow smoke validation
 - if a new major workload family is introduced, extend the representative corpus before relying on new PGO numbers
 
+## Effectiveness Thresholds
+
+The official optimization report tracks advisory PGO effectiveness thresholds per workload family.
+
+Current thresholds:
+
+- VM arithmetic dispatch
+  - minimum: `1.05x`
+  - target: `1.15x`
+- CSR/BFS traversal
+  - minimum: `0.98x`
+  - target: `1.05x`
+- Hypergraph incidence traversal
+  - minimum: `1.03x`
+  - target: `1.10x`
+- Hypergraph reducers
+  - minimum: `1.05x`
+  - target: `1.15x`
+- Graph-oriented VM opcodes
+  - minimum: `1.00x`
+  - target: `1.08x`
+
+These thresholds are intentionally asymmetric:
+
+- dispatch and reducer-heavy loops are expected to benefit clearly from PGO
+- CSR/BFS kernels are allowed to be near break-even because control-flow and memory behavior dominate more of the runtime
+- graph-oriented VM opcodes must at least not regress
+
 ## CI Scheduling And Retention
 
 PGO smoke execution is governed separately from the local corpus choice:
