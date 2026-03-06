@@ -19,6 +19,13 @@ Run and store JSON:
 python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
+Refresh the rolling performance snapshot doc from local Windows, optional Rust sandbox,
+and Docker Linux measurements:
+
+```powershell
+python scripts/bench/refresh_performance_results.py
+```
+
 Run hypergraph sum benches directly:
 
 ```bash
@@ -32,6 +39,17 @@ Dispatch variant study (switch vs jumptable vs computed-goto when supported):
 python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs 20
 ```
 
+Render `docs/PERFORMANCE_RESULTS.md` from collected JSON artifacts only:
+
+```bash
+python3 scripts/bench/render_performance_results.py \
+  --windows-json benchmarks/results/windows_100x_latest.json \
+  --linux-json benchmarks/results/linux_100x_latest.json \
+  --rust-json benchmarks/results/rust_100x_latest.json \
+  --dispatch-windows-json benchmarks/results/dispatch_variants_windows.json \
+  --dispatch-linux-json benchmarks/results/dispatch_variants.json
+```
+
 PGO training + optimized rebuild:
 
 ```bash
@@ -42,6 +60,22 @@ MSVC:
 
 ```powershell
 python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+```
+
+Official baseline vs PGO report:
+
+```bash
+python3 scripts/bench/generate_optimization_report.py \
+  --build-root build-opt-report \
+  --output-json benchmarks/results/optimization_report_latest.json \
+  --output-md docs/OPTIMIZATION_REPORTS.md \
+  -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
+MSVC:
+
+```powershell
+python scripts/bench/generate_optimization_report.py --build-root build-opt-report
 ```
 Optional local Rust comparison (for private/local sandbox projects):
 
@@ -87,3 +121,4 @@ Interpretation order:
 - Keep allowed regression threshold explicit in workflow config.
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
 - Keep periodic summarized snapshots in `docs/PERFORMANCE_RESULTS.md`.
+- Keep official `baseline` vs `PGO` reports in `docs/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/`.

@@ -68,6 +68,8 @@ The format follows Keep a Changelog and Semantic Versioning.
 - End-to-end parser bridge execution test (`source -> IR -> bytecode -> VM`) and IR v0 contract doc (`docs/IR.md`).
 - Cross-toolchain PGO pipeline doc, workflow, and local runner script (`docs/PGO.md`, `scripts/bench/run_pgo_pipeline.py`).
 - Dispatch-variant parity runner and extra VM edge-case tests for shape-cache / dispatch semantics.
+- Official optimization report generator and report doc for `baseline` vs `PGO`, including per-variant `vm_dispatch` sections.
+- Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
