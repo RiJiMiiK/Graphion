@@ -68,6 +68,9 @@ It runs on demand via `workflow_dispatch` and covers:
 - `ubuntu-latest` with `clang`
 - `windows-latest` with `msvc`
 
+For a unified engineering report that merges local Windows and Docker Linux optimization results,
+use `scripts/bench/refresh_optimization_reports.py`.
+
 ## Notes
 
 - Clang uses source-based profiling and requires `llvm-profdata`.

@@ -26,14 +26,22 @@ def main() -> int:
   parser.add_argument("--iterations", type=int, default=500000)
   parser.add_argument("--runs", type=int, default=10)
   parser.add_argument("--output", default="benchmarks/results/dispatch_variants.json")
+  parser.add_argument(
+      "--cmake-arg",
+      action="append",
+      default=[],
+      help="Extra CMake argument forwarded on each configure step (repeatable).",
+  )
+  parser.add_argument("--build-root", default="", help="Optional build root prefix for generated build dirs")
   args = parser.parse_args()
 
   variants = ["switch", "jumptable", "computed-goto"]
   rows: list[dict[str, object]] = []
   platform_tag = "win" if sys.platform.startswith("win") else "linux"
+  build_root = pathlib.Path(args.build_root) if args.build_root else pathlib.Path(".")
 
   for variant in variants:
-    build_dir = pathlib.Path(f"build-disp-{platform_tag}-{variant}")
+    build_dir = build_root / f"build-disp-{platform_tag}-{variant}"
     cfg = run(
         [
             "cmake",
@@ -43,6 +51,7 @@ def main() -> int:
             str(build_dir),
             "-DGRAPHION_VM_DISPATCH=" + variant,
             "-DCMAKE_BUILD_TYPE=Release",
+            *args.cmake_arg,
         ]
     )
     if cfg.returncode != 0:
