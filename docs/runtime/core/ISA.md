@@ -32,6 +32,12 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_HALT (1)`: stop execution
 - `GVM_OP_MOV_IMM (2)`: `r[a] = imm`
 - `GVM_OP_ADD (3)`: `r[a] += r[b]` with two's-complement wraparound semantics
+- `GVM_OP_FRONTIER_CLEAR (32)`: clear the frontier output buffer, write output length to `r[a]`
+- `GVM_OP_FRONTIER_PUSH (33)`: append `r[a]` to the frontier output buffer, write output length to `r[b]`
+- `GVM_OP_FRONTIER_FILTER_LT_IMM (34)`: filter input frontier values `< imm`, write output length to `r[a]`
+- `GVM_OP_FRONTIER_MAP_ADD_IMM (35)`: map input frontier values with `value + imm`, write output length to `r[a]`
+- `GVM_OP_FRONTIER_REDUCE_SUM (36)`: sum input frontier values into `r[a]`
+- `GVM_OP_FRONTIER_SWAP (37)`: swap frontier input/output roles, write new input length to `r[a]`
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
@@ -79,6 +85,60 @@ Instruction binary encoding is fixed to 7 bytes:
 Notes:
 
 - arithmetic uses explicit two's-complement wraparound semantics
+
+### `GVM_OP_FRONTIER_CLEAR (32)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a` |
+| Outputs | clears the frontier output buffer, writes resulting output length (`0`) to `r[a]` |
+| State changes | `frontier_output_len = 0` |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound |
+
+### `GVM_OP_FRONTIER_PUSH (33)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | source value in `r[a]`, destination register `b` |
+| Outputs | appends the value to the frontier output buffer, writes new output length to `r[b]` |
+| State changes | `frontier_output[frontier_output_len++] = (uint32_t)r[a]` |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound, `-12` frontier capacity exceeded, `-13` negative or out-of-range frontier value |
+
+### `GVM_OP_FRONTIER_FILTER_LT_IMM (34)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a`, signed threshold `imm` |
+| Outputs | writes filtered output length to `r[a]` |
+| State changes | output frontier becomes all input values where `(int64_t)value < imm`, preserving input order |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
+
+### `GVM_OP_FRONTIER_MAP_ADD_IMM (35)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a`, signed delta `imm` |
+| Outputs | writes mapped output length to `r[a]` |
+| State changes | output frontier becomes `input[i] + imm` for every input item |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound, `-12` frontier capacity exceeded, `-13` mapped value outside `[0, UINT32_MAX]` |
+
+### `GVM_OP_FRONTIER_REDUCE_SUM (36)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a` |
+| Outputs | writes the sum of input frontier values to `r[a]` |
+| State changes | no frontier buffers modified |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound, `-13` reduction result exceeds `INT64_MAX` |
+
+### `GVM_OP_FRONTIER_SWAP (37)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a` |
+| Outputs | writes the new input frontier length to `r[a]` |
+| State changes | previous output frontier becomes the next input frontier; new output length resets to `0` |
+| Failure cases | `-3` invalid register, `-11` frontier buffers not bound |
 
 ### `GVM_OP_BFS_LEVELS (16)`
 
@@ -131,6 +191,9 @@ Notes:
 - `GVM_ERR_INVALID_MOV_IMM_REG (-2)`: invalid register in `MOV_IMM`
 - `GVM_ERR_INVALID_REG (-3)`: invalid register in register-based VM opcodes
 - `GVM_ERR_UNKNOWN_OPCODE (-4)`: unknown opcode
+- `GVM_ERR_FRONTIER_UNBOUND (-11)`: frontier buffers are not bound
+- `GVM_ERR_FRONTIER_OVERFLOW (-12)`: frontier operation exceeded configured capacity
+- `GVM_ERR_INVALID_FRONTIER_VALUE (-13)`: frontier value or reduction result violated the documented range contract
 - Full layer-scoped error model and subsystem interpretation rules are defined in
   `docs/runtime/debugging/VM_ERRORS.md`.
 
@@ -168,6 +231,7 @@ Current fixture coverage includes:
 - arithmetic execution semantics
 - unknown-opcode rejection
 - graph and hypergraph execution fixtures for currently documented opcodes
+- frontier execution fixtures for the current `push/filter/map/reduce/swap` pipeline
 
 ## Overflow policy
 
@@ -183,3 +247,9 @@ Current fixture coverage includes:
   inputs, then stored in `int64`.
 - `GVM_OP_HYPEREDGE_NODE_SUM`: exact result for current `uint32_t`-bounded
   hypergraph inputs, then stored in `int64`.
+- `GVM_OP_FRONTIER_CLEAR`: exact reset of the output frontier length.
+- `GVM_OP_FRONTIER_PUSH`: exact append semantics for `uint32_t`-bounded frontier values.
+- `GVM_OP_FRONTIER_FILTER_LT_IMM`: stable input-order filter into the output frontier.
+- `GVM_OP_FRONTIER_MAP_ADD_IMM`: exact signed-delta map when the result stays inside `[0, UINT32_MAX]`.
+- `GVM_OP_FRONTIER_REDUCE_SUM`: exact `int64` reduction while the result stays within the documented bound.
+- `GVM_OP_FRONTIER_SWAP`: exact input/output role swap without dynamic allocation.

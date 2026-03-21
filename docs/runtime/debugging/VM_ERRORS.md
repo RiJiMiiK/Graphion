@@ -146,6 +146,14 @@ Arithmetic overflow currently does not raise a dedicated VM error:
 | `-9` | `GVM_ERR_INVALID_NODE_ID` | Invalid node id for node-to-hyperedge operations |
 | `-10` | `GVM_ERR_INVALID_HYPEREDGE_ID` | Invalid hyperedge id for hyperedge-to-node operations |
 
+### Frontier VM codes
+
+| Code | Symbol | Current meaning |
+| --- | --- |
+| `-11` | `GVM_ERR_FRONTIER_UNBOUND` | Frontier input/output buffers are not bound |
+| `-12` | `GVM_ERR_FRONTIER_OVERFLOW` | Frontier output would exceed the configured capacity |
+| `-13` | `GVM_ERR_INVALID_FRONTIER_VALUE` | Frontier value, mapped result, or reduction result violated the documented range contract |
+
 ## Interpretation rule
 
 Callers must interpret VM runtime codes by both:

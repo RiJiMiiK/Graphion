@@ -342,6 +342,95 @@ int test_vm_add_wraparound_semantics(void) {
   return 0;
 }
 
+int test_vm_frontier_primitives(void) {
+  graphion_vm vm;
+  uint32_t frontier_a[8] = {1U, 4U, 7U, 10U, 0U, 0U, 0U, 0U};
+  uint32_t frontier_b[8] = {0U};
+  const graphion_insn program[] = {
+      {GVM_OP_FRONTIER_CLEAR, 0U, 0U, 0},
+      {GVM_OP_FRONTIER_FILTER_LT_IMM, 1U, 0U, 7},
+      {GVM_OP_FRONTIER_SWAP, 2U, 0U, 0},
+      {GVM_OP_FRONTIER_MAP_ADD_IMM, 3U, 0U, 1},
+      {GVM_OP_FRONTIER_SWAP, 4U, 0U, 0},
+      {GVM_OP_FRONTIER_REDUCE_SUM, 5U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_frontier(&vm, frontier_a, 4U, frontier_b, 8U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 3;
+  }
+  if (vm.regs[0] != 0 || vm.regs[1] != 2 || vm.regs[2] != 2 || vm.regs[3] != 2 || vm.regs[4] != 2 ||
+      vm.regs[5] != 7) {
+    return 4;
+  }
+  if (vm.frontier_input_len != 2U || vm.frontier_output_len != 0U) {
+    return 5;
+  }
+  if (vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_vm_frontier_errors(void) {
+  graphion_vm vm;
+  uint32_t frontier_a[2] = {0U, 0U};
+  uint32_t frontier_b[2] = {0U, 0U};
+  const graphion_insn overflow_program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 1},
+      {GVM_OP_FRONTIER_PUSH, 0U, 1U, 0},
+      {GVM_OP_MOV_IMM, 0U, 0U, 2},
+      {GVM_OP_FRONTIER_PUSH, 0U, 1U, 0},
+      {GVM_OP_MOV_IMM, 0U, 0U, 3},
+      {GVM_OP_FRONTIER_PUSH, 0U, 1U, 0},
+  };
+  const graphion_insn invalid_map_program[] = {
+      {GVM_OP_FRONTIER_MAP_ADD_IMM, 0U, 0U, -1},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_frontier(&vm, frontier_a, 0U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, overflow_program, sizeof(overflow_program) / sizeof(overflow_program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_FRONTIER_OVERFLOW) {
+    return 2;
+  }
+  if (vm.frontier_output_len != 2U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 2U) {
+    return 3;
+  }
+
+  frontier_a[0] = 0U;
+  graphion_vm_init(&vm);
+  graphion_vm_bind_frontier(&vm, frontier_a, 1U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, invalid_map_program, sizeof(invalid_map_program) / sizeof(invalid_map_program[0]));
+  if (rc != 0) {
+    return 4;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_FRONTIER_VALUE) {
+    return 5;
+  }
+  if (vm.frontier_output_len != 0U) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_vm_snapshot_format(void) {
   graphion_vm vm;
   char snapshot[512];
@@ -365,6 +454,10 @@ int test_vm_snapshot_format(void) {
       "arith_only_halt_terminated=1\n"
       "csr_bound=0\n"
       "hypergraph_bound=0\n"
+      "frontier_bound=0\n"
+      "frontier_input_len=0\n"
+      "frontier_output_len=0\n"
+      "frontier_capacity=0\n"
       "regs=[42,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\n";
   int rc;
 

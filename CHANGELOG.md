@@ -73,6 +73,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
 - Named PGO corpus profiles and representative-workload policy documentation.
 - Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
+- Frontier VM primitives with bounded host-bound buffers: `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

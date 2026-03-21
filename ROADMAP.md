@@ -69,7 +69,7 @@
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)
 
-- [ ] Frontier operations (`push/filter/map/reduce` style primitives).
+- [x] Frontier operations (`push/filter/map/reduce` style primitives).
 - [ ] Neighbor iteration opcodes with bounded memory contracts.
 - [ ] Hyperedge traversal primitives (node->edge and edge->node).
 - [ ] Optional weighted graph support and edge attributes.

@@ -30,6 +30,7 @@ typedef struct {
   int64_t expected_regs[16];
   int bind_csr;
   int bind_hypergraph;
+  int bind_frontier;
 } isa_execute_fixture;
 
 static int regs_match(const int64_t *lhs, const int64_t *rhs, size_t count) {
@@ -63,6 +64,11 @@ int test_isa_decode_golden_fixtures(void) {
   static const uint8_t truncated_program[] = {
       GVM_OP_HALT, 0U, 0U, 0U, 0U, 0U,
   };
+  static const uint8_t frontier_program[] = {
+      GVM_OP_FRONTIER_CLEAR, 0U, 0U, 0U, 0U, 0U, 0U,
+      GVM_OP_FRONTIER_PUSH,  1U, 2U, 0U, 0U, 0U, 0U,
+      GVM_OP_HALT,           0U, 0U, 0U, 0U, 0U, 0U,
+  };
   static const isa_decode_fixture fixtures[] = {
       {
           "decode_valid_program",
@@ -95,6 +101,19 @@ int test_isa_decode_golden_fixtures(void) {
           2U,
           0U,
           {{0U, 0U, 0U, 0}},
+      },
+      {
+          "decode_frontier_push_program",
+          frontier_program,
+          sizeof(frontier_program),
+          GBC_OK,
+          8U,
+          3U,
+          {
+              {GVM_OP_FRONTIER_CLEAR, 0U, 0U, 0},
+              {GVM_OP_FRONTIER_PUSH, 1U, 2U, 0},
+              {GVM_OP_HALT, 0U, 0U, 0},
+          },
       },
   };
   size_t i;
@@ -148,6 +167,15 @@ int test_isa_execute_golden_fixtures(void) {
   static const graphion_insn program_hypergraph_sum[] = {
       {GVM_OP_MOV_IMM, 0U, 0U, 1},
       {GVM_OP_INCIDENT_SUM, 0U, 1U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  static const graphion_insn program_frontier[] = {
+      {GVM_OP_FRONTIER_CLEAR, 0U, 0U, 0},
+      {GVM_OP_FRONTIER_FILTER_LT_IMM, 1U, 0U, 7},
+      {GVM_OP_FRONTIER_SWAP, 2U, 0U, 0},
+      {GVM_OP_FRONTIER_MAP_ADD_IMM, 3U, 0U, 1},
+      {GVM_OP_FRONTIER_SWAP, 4U, 0U, 0},
+      {GVM_OP_FRONTIER_REDUCE_SUM, 5U, 0U, 0},
       {GVM_OP_HALT, 0U, 0U, 0},
   };
   static const isa_execute_fixture fixtures[] = {
@@ -210,6 +238,20 @@ int test_isa_execute_golden_fixtures(void) {
           {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           0,
           1,
+          0,
+      },
+      {
+          "exec_frontier_pipeline",
+          program_frontier,
+          sizeof(program_frontier) / sizeof(program_frontier[0]),
+          0,
+          0,
+          1,
+          7U,
+          {0, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          0,
+          0,
+          1,
       },
   };
   const uint32_t csr_offsets[] = {0U, 2U, 3U, 5U, 6U};
@@ -222,6 +264,8 @@ int test_isa_execute_golden_fixtures(void) {
   graphion_hypergraph hypergraph;
   int32_t levels[4];
   uint32_t queue[4];
+  uint32_t frontier_a[8] = {1U, 4U, 7U, 10U, 0U, 0U, 0U, 0U};
+  uint32_t frontier_b[8] = {0U};
   size_t i;
   int rc;
 
@@ -252,6 +296,18 @@ int test_isa_execute_golden_fixtures(void) {
     if (fixtures[i].bind_hypergraph) {
       graphion_vm_bind_hypergraph(&vm, &hypergraph);
     }
+    if (fixtures[i].bind_frontier) {
+      memset(frontier_b, 0, sizeof(frontier_b));
+      frontier_a[0] = 1U;
+      frontier_a[1] = 4U;
+      frontier_a[2] = 7U;
+      frontier_a[3] = 10U;
+      frontier_a[4] = 0U;
+      frontier_a[5] = 0U;
+      frontier_a[6] = 0U;
+      frontier_a[7] = 0U;
+      graphion_vm_bind_frontier(&vm, frontier_a, 4U, frontier_b, 8U);
+    }
 
     rc = graphion_vm_load(&vm, fixtures[i].program, fixtures[i].program_len);
     if (rc != fixtures[i].expected_load_rc) {
@@ -270,6 +326,11 @@ int test_isa_execute_golden_fixtures(void) {
       }
       if (!regs_match(vm.regs, fixtures[i].expected_regs, 16U)) {
         return (int)(150 + i);
+      }
+      if (fixtures[i].bind_frontier) {
+        if (vm.frontier_input_len != 2U || vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
+          return (int)(160 + i);
+        }
       }
     }
   }

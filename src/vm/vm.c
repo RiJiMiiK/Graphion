@@ -93,6 +93,18 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
           return 0;
         }
         break;
+      case GVM_OP_FRONTIER_CLEAR:
+      case GVM_OP_FRONTIER_FILTER_LT_IMM:
+      case GVM_OP_FRONTIER_MAP_ADD_IMM:
+      case GVM_OP_FRONTIER_REDUCE_SUM:
+      case GVM_OP_FRONTIER_SWAP:
+      case GVM_OP_BFS_LEVELS:
+      case GVM_OP_INCIDENT_COUNT:
+      case GVM_OP_HYPEREDGE_SIZE:
+      case GVM_OP_INCIDENT_SUM:
+      case GVM_OP_HYPEREDGE_NODE_SUM:
+      case GVM_OP_FRONTIER_PUSH:
+        return 0;
       default:
         return 0;
     }
@@ -249,6 +261,11 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->bfs_queue = NULL;
   vm->bfs_capacity = 0U;
   vm->hypergraph = NULL;
+  vm->frontier_input = NULL;
+  vm->frontier_input_len = 0U;
+  vm->frontier_output = NULL;
+  vm->frontier_output_len = 0U;
+  vm->frontier_capacity = 0U;
 }
 
 void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled) {
@@ -297,6 +314,152 @@ void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *gra
     return;
   }
   vm->hypergraph = graph;
+}
+
+void graphion_vm_bind_frontier(graphion_vm *vm,
+                               uint32_t *input,
+                               size_t input_len,
+                               uint32_t *output,
+                               size_t capacity) {
+  if (vm == NULL) {
+    return;
+  }
+  if (input == NULL || output == NULL || input_len > capacity) {
+    vm->frontier_input = NULL;
+    vm->frontier_input_len = 0U;
+    vm->frontier_output = NULL;
+    vm->frontier_output_len = 0U;
+    vm->frontier_capacity = 0U;
+    return;
+  }
+  vm->frontier_input = input;
+  vm->frontier_input_len = input_len;
+  vm->frontier_output = output;
+  vm->frontier_output_len = 0U;
+  vm->frontier_capacity = capacity;
+}
+
+static int frontier_is_bound(const graphion_vm *vm) {
+  return vm->frontier_input != NULL && vm->frontier_output != NULL && vm->frontier_input_len <= vm->frontier_capacity;
+}
+
+static int op_frontier_clear(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  vm->frontier_output_len = 0U;
+  vm->regs[in->a] = 0;
+  return GVM_OK;
+}
+
+static int op_frontier_push(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0 || (uint64_t)vm->regs[in->a] > UINT32_MAX) {
+    return GVM_ERR_INVALID_FRONTIER_VALUE;
+  }
+  if (vm->frontier_output_len >= vm->frontier_capacity) {
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  vm->frontier_output[vm->frontier_output_len++] = (uint32_t)vm->regs[in->a];
+  vm->regs[in->b] = (int64_t)vm->frontier_output_len;
+  return GVM_OK;
+}
+
+static int op_frontier_filter_lt_imm(graphion_vm *vm, const graphion_insn *in) {
+  size_t i;
+  int64_t threshold;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  threshold = (int64_t)in->imm;
+  vm->frontier_output_len = 0U;
+  for (i = 0U; i < vm->frontier_input_len; ++i) {
+    const uint32_t value = vm->frontier_input[i];
+    if ((int64_t)value < threshold) {
+      if (vm->frontier_output_len >= vm->frontier_capacity) {
+        vm->frontier_output_len = 0U;
+        return GVM_ERR_FRONTIER_OVERFLOW;
+      }
+      vm->frontier_output[vm->frontier_output_len++] = value;
+    }
+  }
+  vm->regs[in->a] = (int64_t)vm->frontier_output_len;
+  return GVM_OK;
+}
+
+static int op_frontier_map_add_imm(graphion_vm *vm, const graphion_insn *in) {
+  size_t i;
+  int64_t delta;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->frontier_input_len > vm->frontier_capacity) {
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  delta = (int64_t)in->imm;
+  for (i = 0U; i < vm->frontier_input_len; ++i) {
+    const int64_t mapped = (int64_t)vm->frontier_input[i] + delta;
+    if (mapped < 0 || (uint64_t)mapped > UINT32_MAX) {
+      vm->frontier_output_len = 0U;
+      return GVM_ERR_INVALID_FRONTIER_VALUE;
+    }
+  }
+  vm->frontier_output_len = vm->frontier_input_len;
+  for (i = 0U; i < vm->frontier_input_len; ++i) {
+    vm->frontier_output[i] = (uint32_t)((int64_t)vm->frontier_input[i] + delta);
+  }
+  vm->regs[in->a] = (int64_t)vm->frontier_output_len;
+  return GVM_OK;
+}
+
+static int op_frontier_reduce_sum(graphion_vm *vm, const graphion_insn *in) {
+  size_t i;
+  uint64_t sum = 0U;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  for (i = 0U; i < vm->frontier_input_len; ++i) {
+    sum += (uint64_t)vm->frontier_input[i];
+    if (sum > (uint64_t)INT64_MAX) {
+      return GVM_ERR_INVALID_FRONTIER_VALUE;
+    }
+  }
+  vm->regs[in->a] = (int64_t)sum;
+  return GVM_OK;
+}
+
+static int op_frontier_swap(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t *tmp_values;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  tmp_values = vm->frontier_input;
+  vm->frontier_input = vm->frontier_output;
+  vm->frontier_input_len = vm->frontier_output_len;
+  vm->frontier_output = tmp_values;
+  vm->frontier_output_len = 0U;
+  vm->regs[in->a] = (int64_t)vm->frontier_input_len;
+  return GVM_OK;
 }
 
 static int op_nop(graphion_vm *vm, const graphion_insn *in) {
@@ -445,6 +608,24 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ADD:
         rc = op_add(vm, &in);
         break;
+      case GVM_OP_FRONTIER_CLEAR:
+        rc = op_frontier_clear(vm, &in);
+        break;
+      case GVM_OP_FRONTIER_PUSH:
+        rc = op_frontier_push(vm, &in);
+        break;
+      case GVM_OP_FRONTIER_FILTER_LT_IMM:
+        rc = op_frontier_filter_lt_imm(vm, &in);
+        break;
+      case GVM_OP_FRONTIER_MAP_ADD_IMM:
+        rc = op_frontier_map_add_imm(vm, &in);
+        break;
+      case GVM_OP_FRONTIER_REDUCE_SUM:
+        rc = op_frontier_reduce_sum(vm, &in);
+        break;
+      case GVM_OP_FRONTIER_SWAP:
+        rc = op_frontier_swap(vm, &in);
+        break;
       case GVM_OP_BFS_LEVELS:
         rc = op_bfs_levels(vm, &in);
         break;
@@ -478,6 +659,12 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_HALT] = op_halt,
       [GVM_OP_MOV_IMM] = op_mov_imm,
       [GVM_OP_ADD] = op_add,
+      [GVM_OP_FRONTIER_CLEAR] = op_frontier_clear,
+      [GVM_OP_FRONTIER_PUSH] = op_frontier_push,
+      [GVM_OP_FRONTIER_FILTER_LT_IMM] = op_frontier_filter_lt_imm,
+      [GVM_OP_FRONTIER_MAP_ADD_IMM] = op_frontier_map_add_imm,
+      [GVM_OP_FRONTIER_REDUCE_SUM] = op_frontier_reduce_sum,
+      [GVM_OP_FRONTIER_SWAP] = op_frontier_swap,
       [GVM_OP_BFS_LEVELS] = op_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = op_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = op_hyperedge_size,
@@ -512,6 +699,12 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_HALT] = &&L_halt,
       [GVM_OP_MOV_IMM] = &&L_mov_imm,
       [GVM_OP_ADD] = &&L_add,
+      [GVM_OP_FRONTIER_CLEAR] = &&L_frontier_clear,
+      [GVM_OP_FRONTIER_PUSH] = &&L_frontier_push,
+      [GVM_OP_FRONTIER_FILTER_LT_IMM] = &&L_frontier_filter_lt_imm,
+      [GVM_OP_FRONTIER_MAP_ADD_IMM] = &&L_frontier_map_add_imm,
+      [GVM_OP_FRONTIER_REDUCE_SUM] = &&L_frontier_reduce_sum,
+      [GVM_OP_FRONTIER_SWAP] = &&L_frontier_swap,
       [GVM_OP_BFS_LEVELS] = &&L_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = &&L_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = &&L_hyperedge_size,
@@ -546,6 +739,42 @@ L_mov_imm:
     continue;
 L_add:
     rc = op_add(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_clear:
+    rc = op_frontier_clear(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_push:
+    rc = op_frontier_push(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_filter_lt_imm:
+    rc = op_frontier_filter_lt_imm(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_map_add_imm:
+    rc = op_frontier_map_add_imm(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_reduce_sum:
+    rc = op_frontier_reduce_sum(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_frontier_swap:
+    rc = op_frontier_swap(vm, &in);
     if (rc != 0) {
       return rc;
     }
@@ -644,6 +873,10 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
                    vm->arith_only_halt_terminated ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "csr_bound=%d\n", vm->csr_graph != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "hypergraph_bound=%d\n", vm->hypergraph != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "frontier_bound=%d\n", frontier_is_bound(vm) ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "frontier_input_len=%zu\n", vm->frontier_input_len);
+  offset = appendf(buffer, buffer_size, offset, "frontier_output_len=%zu\n", vm->frontier_output_len);
+  offset = appendf(buffer, buffer_size, offset, "frontier_capacity=%zu\n", vm->frontier_capacity);
   offset = appendf(buffer, buffer_size, offset, "regs=[");
   for (i = 0U; i < 16U; ++i) {
     offset = appendf(buffer, buffer_size, offset, "%s%lld", i == 0U ? "" : ",", (long long)vm->regs[i]);
