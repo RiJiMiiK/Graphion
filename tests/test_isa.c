@@ -205,6 +205,7 @@ int test_isa_execute_golden_fixtures(void) {
           {42, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           0,
           0,
+          0,
       },
       {
           "exec_invalid_register_mov_imm",
@@ -215,6 +216,7 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           1U,
           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          0,
           0,
           0,
       },
@@ -229,6 +231,7 @@ int test_isa_execute_golden_fixtures(void) {
           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           0,
           0,
+          0,
       },
       {
           "exec_bfs_levels",
@@ -240,6 +243,7 @@ int test_isa_execute_golden_fixtures(void) {
           3U,
           {0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           1,
+          0,
           0,
       },
       {
