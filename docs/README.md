@@ -47,6 +47,7 @@ These paths stay at the top level because other policies or checks already refer
 
 - `docs/performance/policies/ASM_FALLBACK_POLICY.md`
 - `docs/performance/policies/CROSS_COMPILER_POLICY.md`
+- `docs/performance/policies/FRONTIER_REGRESSION_GATES.md`
 - `docs/performance/policies/PGO_CORPUS_POLICY.md`
 
 ### Reports

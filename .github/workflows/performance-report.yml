@@ -191,6 +191,17 @@ jobs:
         with:
           name: performance-rust
           path: benchmarks/results/performance
+      - name: Enforce frontier/traversal regression gate
+        if: ${{ needs.rust-comparison.result == 'success' }}
+        shell: bash
+        run: |
+          if [[ -f benchmarks/results/performance/rust_automated.json ]]; then
+            python scripts/bench/compare/check_frontier_regressions.py \
+              --graphion-json benchmarks/results/performance/windows_automated.json \
+              --rust-json benchmarks/results/performance/rust_automated.json
+          else
+            echo "Rust benchmark lane missing; frontier/traversal regression gate skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Render performance report
         shell: bash
         run: |
