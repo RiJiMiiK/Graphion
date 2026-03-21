@@ -6,6 +6,7 @@ See also:
 - `docs/IR.md` for frontend-to-bytecode bridge contract
 - `docs/VM_ERRORS.md` for structured runtime error interpretation
 - `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
+- `docs/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
 
 ## Encoding
 
@@ -122,10 +123,10 @@ Notes:
 
 ## Error behavior
 
-- Invalid VM/program pointer: `-1`
-- Invalid register in `MOV_IMM`: `-2`
-- Invalid register in `ADD`: `-3`
-- Unknown opcode: `-4`
+- `GVM_ERR_INVALID_ARG (-1)`: invalid VM/program pointer or entry-point argument
+- `GVM_ERR_INVALID_MOV_IMM_REG (-2)`: invalid register in `MOV_IMM`
+- `GVM_ERR_INVALID_REG (-3)`: invalid register in register-based VM opcodes
+- `GVM_ERR_UNKNOWN_OPCODE (-4)`: unknown opcode
 - Full layer-scoped error model and subsystem interpretation rules are defined in
   `docs/VM_ERRORS.md`.
 
@@ -147,6 +148,8 @@ Notes:
 - Deterministic mode bypasses fast arithmetic specialization and any asm-backed
   execution path.
 - Instruction semantics and observable register / `pc` results remain the same.
+- `graphion_vm_write_snapshot(...)` provides a versioned state dump for
+  deterministic repro capture.
 
 ## Golden conformance coverage
 

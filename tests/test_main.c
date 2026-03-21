@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 typedef int (*test_fn)(void);
@@ -17,7 +18,10 @@ int test_vm_hypergraph_opcodes(void);
 int test_vm_superinstruction_add_pair_semantics(void);
 int test_vm_superinstruction_movimm_add_semantics(void);
 int test_vm_deterministic_mode_toggle(void);
+int test_vm_deterministic_mode_unknown_opcode(void);
+int test_vm_deterministic_mode_graph_semantics(void);
 int test_vm_add_wraparound_semantics(void);
+int test_vm_snapshot_format(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
 int test_vm_dispatch_variant_edge_semantics(void);
@@ -34,7 +38,39 @@ int test_graph_init_and_neighbors(void);
 int test_graph_bfs_levels(void);
 int test_hypergraph_init_and_queries(void);
 
-int main(void) {
+static int should_run_test(const char *name, int argc, char **argv) {
+  int i;
+  if (argc <= 1) {
+    return 1;
+  }
+  for (i = 1; i < argc; ++i) {
+    if (strcmp(name, argv[i]) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int unknown_requested_tests(const test_case *tests, size_t count, int argc, char **argv) {
+  int i;
+  for (i = 1; i < argc; ++i) {
+    size_t j;
+    int found = 0;
+    for (j = 0; j < count; ++j) {
+      if (strcmp(argv[i], tests[j].name) == 0) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "[FAIL] unknown test '%s'\n", argv[i]);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int main(int argc, char **argv) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
@@ -43,7 +79,10 @@ int main(void) {
       {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
       {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
       {"vm_deterministic_mode_toggle", test_vm_deterministic_mode_toggle},
+      {"vm_deterministic_mode_unknown_opcode", test_vm_deterministic_mode_unknown_opcode},
+      {"vm_deterministic_mode_graph_semantics", test_vm_deterministic_mode_graph_semantics},
       {"vm_add_wraparound_semantics", test_vm_add_wraparound_semantics},
+      {"vm_snapshot_format", test_vm_snapshot_format},
       {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
       {"vm_fastpath_shape_cache_same_pointer_content_change",
        test_vm_fastpath_shape_cache_same_pointer_content_change},
@@ -63,16 +102,25 @@ int main(void) {
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;
+  size_t executed = 0;
+
+  if (unknown_requested_tests(tests, count, argc, argv) != 0) {
+    return EXIT_FAILURE;
+  }
 
   for (i = 0; i < count; ++i) {
+    if (!should_run_test(tests[i].name, argc, argv)) {
+      continue;
+    }
     const int rc = tests[i].fn();
     if (rc != 0) {
       fprintf(stderr, "[FAIL] %s (rc=%d)\n", tests[i].name, rc);
       return EXIT_FAILURE;
     }
     fprintf(stdout, "[OK] %s\n", tests[i].name);
+    executed++;
   }
 
-  fprintf(stdout, "All tests passed (%zu)\n", count);
+  fprintf(stdout, "All tests passed (%zu)\n", executed);
   return EXIT_SUCCESS;
 }

@@ -22,6 +22,20 @@ typedef enum {
   GVM_OP_HYPEREDGE_NODE_SUM = 20
 } graphion_opcode;
 
+typedef enum {
+  GVM_OK = 0,
+  GVM_ERR_INVALID_ARG = -1,
+  GVM_ERR_INVALID_MOV_IMM_REG = -2,
+  GVM_ERR_INVALID_REG = -3,
+  GVM_ERR_UNKNOWN_OPCODE = -4,
+  GVM_ERR_CSR_UNBOUND = -5,
+  GVM_ERR_INVALID_BFS_SOURCE = -6,
+  GVM_ERR_BFS_RUNTIME = -7,
+  GVM_ERR_HYPERGRAPH_UNBOUND = -8,
+  GVM_ERR_INVALID_NODE_ID = -9,
+  GVM_ERR_INVALID_HYPEREDGE_ID = -10
+} graphion_vm_result;
+
 typedef struct {
   uint8_t op;
   uint8_t a;
@@ -55,5 +69,6 @@ void graphion_vm_bind_csr(graphion_vm *vm,
                           size_t bfs_capacity);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);
 int graphion_vm_run(graphion_vm *vm);
+size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t buffer_size);
 
 #endif

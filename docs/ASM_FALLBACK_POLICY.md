@@ -18,6 +18,7 @@ Any assembly hotpath change must provide both:
 - semantic parity evidence
   - `ctest` passes with `GRAPHION_ENABLE_ASM=OFF`
   - `ctest` passes with `GRAPHION_ENABLE_ASM=ON`
+  - hardening-sensitive ISA cases pass with `GRAPHION_ENABLE_ASM=OFF` and `GRAPHION_ENABLE_ASM=ON`
   - benchmark checksums match between C and asm builds
 - performance evidence
   - `vm_dispatch` must meet at least `1.05x` speedup versus the C fallback
@@ -48,6 +49,19 @@ The command generates:
 - `benchmarks/results/asm_fallback_report_latest.json`
 - `docs/ASM_FALLBACK_REPORT.md`
 
+For hardening-sensitive semantic coverage, use:
+
+```bash
+python3 scripts/quality/test_asm_hardening_parity.py \
+  --build-root build-asm-hardening \
+  -- -G Ninja -DCMAKE_C_COMPILER=gcc
+```
+
+This command generates:
+
+- `benchmarks/results/asm_hardening_parity_latest.json`
+- `docs/ASM_HARDENING_PARITY.md`
+
 The Markdown report is the latest local comparison snapshot. It should be treated as evidence for review, not as a release baseline unless it is regenerated with the intended benchmark scale.
 
 For the current Linux asm path, `gcc` is the reference compiler for this comparison flow.
@@ -56,6 +70,7 @@ Clang may require extra assembler-flag handling because GNU-style `.s` files plu
 ## Review Guidance
 
 - if parity fails, asm is not shippable
+- if hardening-sensitive ISA cases fail under asm, asm is not shippable
 - if `vm_dispatch` fails the minimum speedup, asm is not justified
 - if non-targeted workloads regress materially, the asm path must be reconsidered or narrowed
 - if the evidence is noisy, rerun with more iterations before making a policy decision

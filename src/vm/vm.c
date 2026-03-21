@@ -2,8 +2,10 @@
 
 #include "vm/vm.h"
 
+#include <stdarg.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct {
   const graphion_insn *program;
@@ -206,6 +208,27 @@ static int64_t count_visited_levels(const int32_t *levels, size_t count) {
   return total;
 }
 
+static size_t appendf(char *buffer, size_t buffer_size, size_t offset, const char *fmt, ...) {
+  va_list args;
+  int written;
+  char *dst = NULL;
+  size_t remaining = 0U;
+
+  if (offset < buffer_size) {
+    dst = buffer + offset;
+    remaining = buffer_size - offset;
+  }
+
+  va_start(args, fmt);
+  written = vsnprintf(dst, remaining, fmt, args);
+  va_end(args);
+
+  if (written < 0) {
+    return offset;
+  }
+  return offset + (size_t)written;
+}
+
 void graphion_vm_init(graphion_vm *vm) {
   size_t i;
   if (vm == NULL) {
@@ -239,7 +262,7 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   bool halt_terminated = false;
   bool arith_only_fastpath = false;
   if (vm == NULL || program == NULL || program_len == 0U) {
-    return -1;
+    return GVM_ERR_INVALID_ARG;
   }
   vm->program = program;
   vm->program_len = program_len;
@@ -290,7 +313,7 @@ static int op_halt(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_mov_imm(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
-    return -2;
+    return GVM_ERR_INVALID_MOV_IMM_REG;
   }
   vm->regs[in->a] = (int64_t)in->imm;
   return 0;
@@ -298,7 +321,7 @@ static int op_mov_imm(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_add(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   vm->regs[in->a] = wrap_add_i64(vm->regs[in->a], vm->regs[in->b]);
   return 0;
@@ -308,21 +331,21 @@ static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
   uint32_t source;
   int rc;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   if (vm->csr_graph == NULL || vm->bfs_levels == NULL || vm->bfs_queue == NULL) {
-    return -5;
+    return GVM_ERR_CSR_UNBOUND;
   }
   if (vm->regs[in->a] < 0) {
-    return -6;
+    return GVM_ERR_INVALID_BFS_SOURCE;
   }
   source = (uint32_t)vm->regs[in->a];
   if ((size_t)source >= vm->csr_graph->node_count) {
-    return -6;
+    return GVM_ERR_INVALID_BFS_SOURCE;
   }
   rc = graphion_bfs_levels(vm->csr_graph, source, vm->bfs_levels, vm->bfs_queue, vm->bfs_capacity);
   if (rc != 0) {
-    return -7;
+    return GVM_ERR_BFS_RUNTIME;
   }
   vm->regs[in->b] = count_visited_levels(vm->bfs_levels, vm->csr_graph->node_count);
   return 0;
@@ -331,17 +354,17 @@ static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
 static int op_incident_count(graphion_vm *vm, const graphion_insn *in) {
   uint32_t node;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   if (vm->hypergraph == NULL) {
-    return -8;
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
   }
   if (vm->regs[in->a] < 0) {
-    return -9;
+    return GVM_ERR_INVALID_NODE_ID;
   }
   node = (uint32_t)vm->regs[in->a];
   if ((size_t)node >= vm->hypergraph->node_count) {
-    return -9;
+    return GVM_ERR_INVALID_NODE_ID;
   }
   vm->regs[in->b] = (int64_t)(vm->hypergraph->node_offsets[node + 1U] - vm->hypergraph->node_offsets[node]);
   return 0;
@@ -350,17 +373,17 @@ static int op_incident_count(graphion_vm *vm, const graphion_insn *in) {
 static int op_hyperedge_size(graphion_vm *vm, const graphion_insn *in) {
   uint32_t hyperedge;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   if (vm->hypergraph == NULL) {
-    return -8;
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
   }
   if (vm->regs[in->a] < 0) {
-    return -10;
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
   }
   hyperedge = (uint32_t)vm->regs[in->a];
   if ((size_t)hyperedge >= vm->hypergraph->hyperedge_count) {
-    return -10;
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
   }
   vm->regs[in->b] =
       (int64_t)(vm->hypergraph->hyperedge_offsets[hyperedge + 1U] - vm->hypergraph->hyperedge_offsets[hyperedge]);
@@ -370,17 +393,17 @@ static int op_hyperedge_size(graphion_vm *vm, const graphion_insn *in) {
 static int op_incident_sum(graphion_vm *vm, const graphion_insn *in) {
   uint32_t node;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   if (vm->hypergraph == NULL) {
-    return -8;
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
   }
   if (vm->regs[in->a] < 0) {
-    return -9;
+    return GVM_ERR_INVALID_NODE_ID;
   }
   node = (uint32_t)vm->regs[in->a];
   if ((size_t)node >= vm->hypergraph->node_count) {
-    return -9;
+    return GVM_ERR_INVALID_NODE_ID;
   }
   vm->regs[in->b] = (int64_t)graphion_hypergraph_incident_sum(vm->hypergraph, node);
   return 0;
@@ -389,17 +412,17 @@ static int op_incident_sum(graphion_vm *vm, const graphion_insn *in) {
 static int op_hyperedge_node_sum(graphion_vm *vm, const graphion_insn *in) {
   uint32_t hyperedge;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
-    return -3;
+    return GVM_ERR_INVALID_REG;
   }
   if (vm->hypergraph == NULL) {
-    return -8;
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
   }
   if (vm->regs[in->a] < 0) {
-    return -10;
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
   }
   hyperedge = (uint32_t)vm->regs[in->a];
   if ((size_t)hyperedge >= vm->hypergraph->hyperedge_count) {
-    return -10;
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
   }
   vm->regs[in->b] = (int64_t)graphion_hypergraph_hyperedge_node_sum(vm->hypergraph, hyperedge);
   return 0;
@@ -438,7 +461,7 @@ static int run_dispatch_switch(graphion_vm *vm) {
         rc = op_hyperedge_node_sum(vm, &in);
         break;
       default:
-        return -4;
+        return GVM_ERR_UNKNOWN_OPCODE;
     }
     if (rc != 0) {
       return rc;
@@ -467,7 +490,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
     const handler_fn fn = table[in.op];
     int rc;
     if (fn == NULL) {
-      return -4;
+      return GVM_ERR_UNKNOWN_OPCODE;
     }
     rc = fn(vm, &in);
     if (rc != 0) {
@@ -500,7 +523,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
     const graphion_insn in = vm->program[vm->pc++];
     int rc;
     if (dispatch[in.op] == NULL) {
-      return -4;
+      return GVM_ERR_UNKNOWN_OPCODE;
     }
     goto *dispatch[in.op];
 L_nop:
@@ -567,7 +590,7 @@ L_hyperedge_node_sum:
 
 int graphion_vm_run(graphion_vm *vm) {
   if (vm == NULL || vm->program == NULL) {
-    return -1;
+    return GVM_ERR_INVALID_ARG;
   }
 
   if (vm->deterministic_mode) {
@@ -600,4 +623,31 @@ int graphion_vm_run(graphion_vm *vm) {
 #else
   return run_dispatch_switch(vm);
 #endif
+}
+
+size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t buffer_size) {
+  size_t offset = 0U;
+  size_t i;
+
+  if (vm == NULL) {
+    return 0U;
+  }
+
+  offset = appendf(buffer, buffer_size, offset, "GRAPHION_VM_SNAPSHOT_V1\n");
+  offset = appendf(buffer, buffer_size, offset, "pc=%zu\n", vm->pc);
+  offset = appendf(buffer, buffer_size, offset, "program_bound=%d\n", vm->program != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "program_len=%zu\n", vm->program_len);
+  offset = appendf(buffer, buffer_size, offset, "halted=%d\n", vm->halted ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "deterministic_mode=%d\n", vm->deterministic_mode ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "arith_only_fastpath=%d\n", vm->arith_only_fastpath ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "arith_only_halt_terminated=%d\n",
+                   vm->arith_only_halt_terminated ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "csr_bound=%d\n", vm->csr_graph != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "hypergraph_bound=%d\n", vm->hypergraph != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "regs=[");
+  for (i = 0U; i < 16U; ++i) {
+    offset = appendf(buffer, buffer_size, offset, "%s%lld", i == 0U ? "" : ",", (long long)vm->regs[i]);
+  }
+  offset = appendf(buffer, buffer_size, offset, "]\n");
+  return offset;
 }

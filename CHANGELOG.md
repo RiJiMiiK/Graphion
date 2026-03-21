@@ -87,6 +87,10 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Overflow policy documented per opcode class, with explicit wraparound semantics for `GVM_OP_ADD`.
 - ISA fixture format and fixture expansion policy document for golden conformance coverage.
 - Opcode-by-opcode semantic tables added to the ISA documentation.
+- Public named VM runtime error codes exported in `src/vm/vm.h`.
+- Deterministic-mode test coverage expanded across switch/jumptable/computed-goto dispatch builds.
+- ASM parity coverage added for hardening-sensitive ISA cases.
+- Versioned VM state snapshot/debug dump format added for deterministic repro.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
