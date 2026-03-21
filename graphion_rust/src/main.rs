@@ -263,6 +263,44 @@ fn bench_hypergraph(iterations: u64) {
     );
 }
 
+fn bench_hypergraph_traversal(iterations: u64) {
+    let hg = HyperGraph {
+        node_offsets: &[0, 2, 5, 8, 10, 12],
+        node_hyperedges: &[0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1],
+        hyperedge_offsets: &[0, 3, 6, 9, 12],
+    };
+    let hyperedge_nodes: [u32; 12] = [0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3];
+    let memberships_per_iteration = hg.node_hyperedges.len() + hyperedge_nodes.len();
+    let mut checksum: u64 = 0;
+
+    let start = Instant::now();
+    for _ in 0..iterations {
+        for node in 0..(hg.node_offsets.len() - 1) {
+            let begin = hg.node_offsets[node] as usize;
+            let end = hg.node_offsets[node + 1] as usize;
+            for &hyperedge in &hg.node_hyperedges[begin..end] {
+                checksum = checksum.wrapping_add(u64::from(hyperedge));
+            }
+        }
+        for hyperedge in 0..(hg.hyperedge_offsets.len() - 1) {
+            let begin = hg.hyperedge_offsets[hyperedge] as usize;
+            let end = hg.hyperedge_offsets[hyperedge + 1] as usize;
+            for &node in &hyperedge_nodes[begin..end] {
+                checksum = checksum.wrapping_add(u64::from(node));
+            }
+        }
+    }
+    black_box(checksum);
+    let secs = start.elapsed().as_secs_f64().max(1e-9);
+    let mteps = (iterations as f64 * memberships_per_iteration as f64 / secs) / 1_000_000.0;
+    let ns_per_membership =
+        (secs * 1_000_000_000.0) / (iterations as f64 * memberships_per_iteration as f64);
+    println!(
+        "{{\"benchmark\":\"hypergraph_traversal\",\"iterations\":{},\"memberships_per_iteration\":{},\"seconds\":{:.6},\"mteps\":{:.3},\"ns_per_membership\":{:.3},\"checksum\":{}}}",
+        iterations, memberships_per_iteration, secs, mteps, ns_per_membership, checksum
+    );
+}
+
 fn bench_hypergraph_incident_sum(iterations: u64) {
     let hg = HyperGraph {
         node_offsets: &[0, 2, 5, 8, 10, 12],
@@ -396,7 +434,7 @@ fn parse_iterations(args: &[String], default_value: u64) -> u64 {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|hypergraph_incidence|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
+        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
         std::process::exit(2);
     }
 
@@ -406,6 +444,7 @@ fn main() {
         "bfs_levels" => bench_bfs(parse_iterations(&args, 200_000)),
         "neighbor_iteration" => bench_neighbors(parse_iterations(&args, 300_000)),
         "hypergraph_incidence" => bench_hypergraph(parse_iterations(&args, 500_000)),
+        "hypergraph_traversal" => bench_hypergraph_traversal(parse_iterations(&args, 300_000)),
         "hypergraph_incident_sum" => bench_hypergraph_incident_sum(parse_iterations(&args, 500_000)),
         "hypergraph_hyperedge_node_sum" => {
             bench_hypergraph_hyperedge_node_sum(parse_iterations(&args, 500_000))

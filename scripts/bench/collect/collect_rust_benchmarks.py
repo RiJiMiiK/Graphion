@@ -47,6 +47,12 @@ BENCH_SPECS = [
         "throughput_key": "mips",
     },
     {
+        "benchmark": "hypergraph_traversal",
+        "iterations": 300000,
+        "latency_key": "ns_per_membership",
+        "throughput_key": "mteps",
+    },
+    {
         "benchmark": "hypergraph_incident_sum",
         "iterations": 500000,
         "latency_key": "ns_per_call",
@@ -103,6 +109,7 @@ def average_payloads(
         "edges_per_iteration",
         "neighbors_per_iteration",
         "frontier_len",
+        "memberships_per_iteration",
         "incidence_per_iteration",
         "calls_per_iteration",
     ):

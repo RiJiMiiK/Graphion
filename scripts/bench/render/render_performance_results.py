@@ -21,6 +21,7 @@ BENCHMARK_ORDER = [
     "bfs_levels",
     "neighbor_iteration",
     "hypergraph_incidence",
+    "hypergraph_traversal",
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
     "vm_graph_ops",
@@ -32,6 +33,7 @@ DISPLAY_NAMES = {
     "bfs_levels": "bfs_levels",
     "neighbor_iteration": "neighbor_iteration",
     "hypergraph_incidence": "hypergraph_incidence",
+    "hypergraph_traversal": "hypergraph_traversal",
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
     "vm_graph_ops": "vm_graph_ops",
@@ -43,6 +45,7 @@ LATENCY_LABELS = {
     "ns_per_edge": "ns_per_edge",
     "ns_per_neighbor": "ns_per_neighbor",
     "ns_per_incidence": "ns_per_incidence",
+    "ns_per_membership": "ns_per_membership",
     "ns_per_call": "ns_per_call",
 }
 
