@@ -415,7 +415,7 @@ static const graphion_runtime_function *find_function(const graphion_program *pr
 static int index_functions(graphion_program *program, graphion_runtime_diagnostic *diagnostic) {
   size_t i = 0U;
   while (i < program->line_count) {
-    graphion_source_line *line = &program->lines[i];
+    const graphion_source_line *line = &program->lines[i];
     graphion_runtime_function function;
     int rc;
     if (strncmp(line->text, "def ", 4U) != 0) {
@@ -517,7 +517,7 @@ static int split_call(const char *expr, char *name_out, char *args_out) {
   return 1;
 }
 
-static int split_arguments(char *args_buf, char args[GINT_ARG_MAX][GINT_LINE_MAX], size_t *arg_count) {
+static int split_arguments(const char *args_buf, char args[GINT_ARG_MAX][GINT_LINE_MAX], size_t *arg_count) {
   size_t i = 0U;
   size_t start = 0U;
   int in_string = 0;
@@ -687,25 +687,27 @@ static int eval_expression(const char *expr,
                            size_t line_no,
                            graphion_runtime_value *value) {
   const graphion_runtime_value *existing;
-  char name[GRAPHION_RUNTIME_NAME_MAX];
-  char args[GINT_LINE_MAX];
-  const graphion_runtime_function *function;
 
   if (parse_string_literal(expr, value) || parse_bool_literal(expr, value) ||
       parse_float_literal(expr, value) || parse_int_literal(expr, value)) {
     return GINT_OK;
   }
-  if (split_call(expr, name, args)) {
-    if (strcmp(name, "print") == 0) {
-      set_diagnostic(diagnostic, line_no, 1U, "print cannot be used as an expression");
-      return GINT_ERR_CALL;
+  {
+    char name[GRAPHION_RUNTIME_NAME_MAX];
+    char args[GINT_LINE_MAX];
+    if (split_call(expr, name, args)) {
+      const graphion_runtime_function *function;
+      if (strcmp(name, "print") == 0) {
+        set_diagnostic(diagnostic, line_no, 1U, "print cannot be used as an expression");
+        return GINT_ERR_CALL;
+      }
+      function = find_function(program, name);
+      if (function == NULL) {
+        set_diagnostic(diagnostic, line_no, 1U, "unknown function call");
+        return GINT_ERR_CALL;
+      }
+      return call_function(program, function, global_scope, local_scope, diagnostic, output, line_no, args, value);
     }
-    function = find_function(program, name);
-    if (function == NULL) {
-      set_diagnostic(diagnostic, line_no, 1U, "unknown function call");
-      return GINT_ERR_CALL;
-    }
-    return call_function(program, function, global_scope, local_scope, diagnostic, output, line_no, args, value);
   }
   if (!is_valid_identifier(expr)) {
     set_diagnostic(diagnostic, line_no, 1U, "invalid expression");
