@@ -35,6 +35,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `src/vm/vm.h` exposes named `graphion_vm_result` values for load/run failures.
 - VM state snapshot format:
   - `graphion_vm_write_snapshot(...)` emits a versioned text dump for deterministic repro.
+- Deterministic repro workflow:
+  - `docs/VM_REPRO.md` defines how to capture fixture + snapshot + environment.
 - Arithmetic overflow policy:
   - `ADD` uses explicit two's-complement wraparound semantics in the VM.
 

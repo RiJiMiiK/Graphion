@@ -91,6 +91,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Deterministic-mode test coverage expanded across switch/jumptable/computed-goto dispatch builds.
 - ASM parity coverage added for hardening-sensitive ISA cases.
 - Versioned VM state snapshot/debug dump format added for deterministic repro.
+- Deterministic VM repro workflow documented with fixture, snapshot, and environment capture rules.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
