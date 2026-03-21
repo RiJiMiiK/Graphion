@@ -74,3 +74,4 @@ Errors:
 
 IR v0 is a bridge format and may evolve.
 Any incompatible change should update this file and `docs/ISA.md` together.
+ISA versioning and compatibility policy are defined in `docs/ISA_VERSIONING.md`.

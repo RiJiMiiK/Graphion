@@ -27,6 +27,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `GVM_OP_HYPEREDGE_SIZE`
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
+- ISA versioning and compatibility policy:
+  - `docs/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 
 ## Hotpath acceleration
 

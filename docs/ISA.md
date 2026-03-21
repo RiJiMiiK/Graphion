@@ -1,5 +1,10 @@
 # VM ISA (v0)
 
+See also:
+
+- `docs/ISA_VERSIONING.md` for version and compatibility policy
+- `docs/IR.md` for frontend-to-bytecode bridge contract
+
 ## Encoding
 
 Instruction binary encoding is fixed to 7 bytes:
@@ -40,3 +45,5 @@ Instruction binary encoding is fixed to 7 bytes:
   - `src/parser/bytecode.*`
   - tests and fuzz harnesses
 - Backward-incompatible changes must be called out in `CHANGELOG.md`.
+- `v0.x` bytecode compatibility is not guaranteed across revisions.
+- `v1.0` will be the first compatibility-frozen ISA line.
