@@ -83,6 +83,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
 - Frontier-sensitive benchmark outputs now report the recommended sparse/dense mode in collections and perf docs.
 - Automated `PERFORMANCE_RESULTS.md` refresh workflow added for Windows/Linux benchmark lanes with optional PR publication.
+- Frontier recommendation thresholds are now benchmark-backed, with calibrated `15%` node and `28%` edge-work cutovers plus a dedicated calibration report.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

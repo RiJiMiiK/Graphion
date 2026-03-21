@@ -66,12 +66,14 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - Graphion now exposes a runtime recommendation for frontier execution mode:
   - `GRAPHION_FRONTIER_MODE_SPARSE`
   - `GRAPHION_FRONTIER_MODE_DENSE`
-- The current heuristic is intentionally simple and deterministic:
-  - prefer `dense` when `frontier_len >= 20%` of `node_count`
-  - prefer `dense` when estimated frontier neighbor work reaches `35%` of total edge count
+- The current heuristic is benchmark-backed, simple, and deterministic:
+  - prefer `dense` when `frontier_len >= 15%` of `node_count`
+  - prefer `dense` when estimated frontier neighbor work reaches `28%` of total edge count
   - otherwise prefer `sparse`
 - This does not introduce a second frontier representation inside the VM yet.
 - It is a planning/runtime hint for future frontier kernels and benchmark work.
+- Calibration report:
+  - `docs/performance/reports/FRONTIER_THRESHOLD_CALIBRATION.md`
 
 ## Hotpath acceleration
 
