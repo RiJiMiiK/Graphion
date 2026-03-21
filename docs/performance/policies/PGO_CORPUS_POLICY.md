@@ -14,6 +14,7 @@ A valid representative corpus must cover all of these workload families:
 - VM arithmetic dispatch hotpath
 - CSR/BFS traversal
 - Frontier-driven CSR neighbor traversal
+- Weighted CSR execution
 - Hypergraph incidence traversal
 - Bidirectional hypergraph traversal
 - Hypergraph reducer paths
@@ -25,6 +26,7 @@ In practice, the committed `representative` corpus currently trains with:
 - `graphion_bench`
 - `graphion_bench_bfs`
 - `graphion_bench_neighbors`
+- `graphion_bench_weighted_graph`
 - `graphion_bench_hypergraph`
 - `graphion_bench_hypergraph_traversal`
 - `graphion_bench_hypergraph_incident_sum`
@@ -89,6 +91,9 @@ Current thresholds:
   - minimum: `0.98x`
   - target: `1.05x`
 - CSR frontier traversal
+  - minimum: `0.98x`
+  - target: `1.05x`
+- Weighted CSR execution
   - minimum: `0.98x`
   - target: `1.05x`
 - Hypergraph incidence traversal

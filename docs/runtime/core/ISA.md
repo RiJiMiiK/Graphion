@@ -42,6 +42,8 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_NEIGHBORS_EXPAND (39)`: append neighbors of every node in the input frontier to the frontier output buffer, write output length to `r[a]`
 - `GVM_OP_INCIDENT_OF (40)`: write the incident hyperedges of node `r[a]` to the frontier output buffer
 - `GVM_OP_HYPEREDGE_NODES_OF (41)`: write the nodes of hyperedge `r[a]` to the frontier output buffer
+- `GVM_OP_NEIGHBOR_WEIGHT_SUM (42)`: node id in `r[a]`, sum of outgoing edge weights to `r[b]`
+- `GVM_OP_NEIGHBOR_ATTR_SUM (43)`: node id in `r[a]`, sum of outgoing edge attributes to `r[b]`
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
@@ -180,6 +182,24 @@ Notes:
 | State changes | output frontier becomes the node list of hyperedge `r[a]` |
 | Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-10` invalid hyperedge id, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
 
+### `GVM_OP_NEIGHBOR_WEIGHT_SUM (42)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | node id in `r[a]`, destination register `b` |
+| Outputs | sum of outgoing CSR edge weights written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-5` missing CSR binding, `-9` invalid node id, `-14` missing CSR weights side data |
+
+### `GVM_OP_NEIGHBOR_ATTR_SUM (43)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | node id in `r[a]`, destination register `b` |
+| Outputs | sum of outgoing CSR edge attributes written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-5` missing CSR binding, `-9` invalid node id, `-15` missing CSR edge-attribute side data |
+
 ### `GVM_OP_BFS_LEVELS (16)`
 
 | Field | Value |
@@ -234,6 +254,8 @@ Notes:
 - `GVM_ERR_FRONTIER_UNBOUND (-11)`: frontier buffers are not bound
 - `GVM_ERR_FRONTIER_OVERFLOW (-12)`: frontier operation exceeded configured capacity
 - `GVM_ERR_INVALID_FRONTIER_VALUE (-13)`: frontier value or reduction result violated the documented range contract
+- `GVM_ERR_CSR_WEIGHTS_UNBOUND (-14)`: weighted graph opcode requires CSR weight side data
+- `GVM_ERR_CSR_EDGE_ATTRS_UNBOUND (-15)`: edge-attribute opcode requires CSR edge-attribute side data
 - Full layer-scoped error model and subsystem interpretation rules are defined in
   `docs/runtime/debugging/VM_ERRORS.md`.
 

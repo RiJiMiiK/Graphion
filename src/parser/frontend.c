@@ -54,6 +54,8 @@ static const op_spec *find_op_spec(const char *mnemonic) {
       {"neighbors_expand", GIR_OP_NEIGHBORS_EXPAND, OP_KIND_REG_IMM},
       {"incident_of", GIR_OP_INCIDENT_OF, OP_KIND_REG_IMM},
       {"hyperedge_nodes_of", GIR_OP_HYPEREDGE_NODES_OF, OP_KIND_REG_IMM},
+      {"neighbor_weight_sum", GIR_OP_NEIGHBOR_WEIGHT_SUM, OP_KIND_REG_REG},
+      {"neighbor_attr_sum", GIR_OP_NEIGHBOR_ATTR_SUM, OP_KIND_REG_REG},
       {"bfs_levels", GIR_OP_BFS_LEVELS, OP_KIND_REG_REG},
       {"incident_count", GIR_OP_INCIDENT_COUNT, OP_KIND_REG_REG},
       {"hyperedge_size", GIR_OP_HYPEREDGE_SIZE, OP_KIND_REG_REG},

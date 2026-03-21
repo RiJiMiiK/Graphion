@@ -21,6 +21,8 @@ static int valid_ir_opcode(uint8_t op) {
     case GIR_OP_NEIGHBORS_EXPAND:
     case GIR_OP_INCIDENT_OF:
     case GIR_OP_HYPEREDGE_NODES_OF:
+    case GIR_OP_NEIGHBOR_WEIGHT_SUM:
+    case GIR_OP_NEIGHBOR_ATTR_SUM:
     case GIR_OP_BFS_LEVELS:
     case GIR_OP_INCIDENT_COUNT:
     case GIR_OP_HYPEREDGE_SIZE:

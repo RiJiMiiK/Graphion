@@ -17,6 +17,8 @@ const OP_HALT: u8 = 1;
 const OP_BFS_LEVELS: u8 = 16;
 const OP_INCIDENT_COUNT: u8 = 17;
 const OP_HYPEREDGE_SIZE: u8 = 18;
+const OP_NEIGHBOR_WEIGHT_SUM: u8 = 21;
+const OP_NEIGHBOR_ATTR_SUM: u8 = 22;
 
 struct CsrGraph<'a> {
     offsets: &'a [u32],
@@ -196,6 +198,28 @@ fn sum_frontier_neighbors(graph: &CsrGraph<'_>, frontier: &[usize]) -> u64 {
 }
 
 #[inline(never)]
+fn sum_weighted_node_weights(offsets: &[u32], weights: &[i64], node: usize) -> i64 {
+    let begin = offsets[node] as usize;
+    let end = offsets[node + 1] as usize;
+    let mut total = 0_i64;
+    for &weight in &weights[begin..end] {
+        total = total.wrapping_add(weight);
+    }
+    total
+}
+
+#[inline(never)]
+fn sum_weighted_node_attrs(offsets: &[u32], edge_attrs: &[i64], node: usize) -> i64 {
+    let begin = offsets[node] as usize;
+    let end = offsets[node + 1] as usize;
+    let mut total = 0_i64;
+    for &attr in &edge_attrs[begin..end] {
+        total = total.wrapping_add(attr);
+    }
+    total
+}
+
+#[inline(never)]
 fn sum_hypergraph_memberships(hg: &HyperGraph<'_>, hyperedge_nodes: &[u32]) -> u64 {
     let node_offsets = black_box(hg.node_offsets);
     let node_hyperedges = black_box(hg.node_hyperedges);
@@ -284,6 +308,89 @@ fn bench_neighbors(iterations: u64) {
         secs,
         mteps,
         ns_per_neighbor,
+        checksum
+    );
+}
+
+fn bench_weighted_neighbor_sums(iterations: u64) {
+    const NODE_COUNT: usize = 8;
+    const EDGES_PER_NODE: usize = 1024;
+    const EDGE_COUNT: usize = NODE_COUNT * EDGES_PER_NODE;
+
+    let offsets: Vec<u32> = (0..=NODE_COUNT)
+        .map(|node| (node * EDGES_PER_NODE) as u32)
+        .collect();
+    let mut weights = Vec::with_capacity(EDGE_COUNT);
+    let mut edge_attrs = Vec::with_capacity(EDGE_COUNT);
+    for idx in 0..EDGE_COUNT {
+        weights.push((idx + 1) as i64);
+        edge_attrs.push((100 + idx) as i64);
+    }
+    let edge_data_items_per_iteration = 8192usize;
+    let program = [
+        VmInsn { op: OP_MOV_IMM, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_NEIGHBOR_WEIGHT_SUM, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 2, b: 0, imm: 2 },
+        VmInsn { op: OP_NEIGHBOR_ATTR_SUM, a: 2, b: 3, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 4, b: 0, imm: 4 },
+        VmInsn { op: OP_NEIGHBOR_WEIGHT_SUM, a: 4, b: 5, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 6, b: 0, imm: 6 },
+        VmInsn { op: OP_NEIGHBOR_ATTR_SUM, a: 6, b: 7, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 8, b: 0, imm: 1 },
+        VmInsn { op: OP_NEIGHBOR_WEIGHT_SUM, a: 8, b: 9, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 10, b: 0, imm: 3 },
+        VmInsn { op: OP_NEIGHBOR_ATTR_SUM, a: 10, b: 11, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 12, b: 0, imm: 5 },
+        VmInsn { op: OP_NEIGHBOR_WEIGHT_SUM, a: 12, b: 13, imm: 0 },
+        VmInsn { op: OP_MOV_IMM, a: 14, b: 0, imm: 7 },
+        VmInsn { op: OP_NEIGHBOR_ATTR_SUM, a: 14, b: 15, imm: 0 },
+        VmInsn { op: OP_HALT, a: 0, b: 0, imm: 0 },
+    ];
+
+    let start = Instant::now();
+    let mut checksum: u64 = 0;
+    for _ in 0..iterations {
+        let mut regs = [0_i64; 16];
+        let mut pc = 0usize;
+        loop {
+            let insn = program[pc];
+            pc += 1;
+            match insn.op {
+                OP_MOV_IMM => regs[insn.a as usize] = i64::from(insn.imm),
+                OP_NEIGHBOR_WEIGHT_SUM => {
+                    let node = regs[insn.a as usize] as usize;
+                    regs[insn.b as usize] = sum_weighted_node_weights(&offsets, &weights, node);
+                }
+                OP_NEIGHBOR_ATTR_SUM => {
+                    let node = regs[insn.a as usize] as usize;
+                    regs[insn.b as usize] = sum_weighted_node_attrs(&offsets, &edge_attrs, node);
+                }
+                OP_HALT => break,
+                _ => panic!("invalid opcode"),
+            }
+        }
+        checksum = checksum.wrapping_add(
+            (regs[1] + regs[3] + regs[5] + regs[7] + regs[9] + regs[11] + regs[13] + regs[15])
+                as u64,
+        );
+    }
+    black_box(checksum);
+    let secs = start.elapsed().as_secs_f64().max(1e-9);
+    let instruction_count = program.len();
+    let mteps = (iterations as f64 * edge_data_items_per_iteration as f64 / secs) / 1_000_000.0;
+    let ns_per_instruction =
+        (secs * 1_000_000_000.0) / (iterations as f64 * instruction_count as f64);
+    let ns_per_edge_data =
+        (secs * 1_000_000_000.0) / (iterations as f64 * edge_data_items_per_iteration as f64);
+    println!(
+        "{{\"benchmark\":\"weighted_neighbor_sums\",\"iterations\":{},\"instructions_per_iteration\":{},\"edge_data_items_per_iteration\":{},\"seconds\":{:.6},\"mteps\":{:.3},\"ns_per_instruction\":{:.3},\"ns_per_edge_data\":{:.3},\"checksum\":{}}}",
+        iterations,
+        instruction_count,
+        edge_data_items_per_iteration,
+        secs,
+        mteps,
+        ns_per_instruction,
+        ns_per_edge_data,
         checksum
     );
 }
@@ -485,7 +592,7 @@ fn parse_iterations(args: &[String], default_value: u64) -> u64 {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
+        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|weighted_neighbor_sums|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
         std::process::exit(2);
     }
 
@@ -494,6 +601,7 @@ fn main() {
         "vm_dispatch" => vm_dispatch(parse_iterations(&args, 500_000)),
         "bfs_levels" => bench_bfs(parse_iterations(&args, 200_000)),
         "neighbor_iteration" => bench_neighbors(parse_iterations(&args, 300_000)),
+        "weighted_neighbor_sums" => bench_weighted_neighbor_sums(parse_iterations(&args, 300_000)),
         "hypergraph_incidence" => bench_hypergraph(parse_iterations(&args, 500_000)),
         "hypergraph_traversal" => bench_hypergraph_traversal(parse_iterations(&args, 300_000)),
         "hypergraph_incident_sum" => bench_hypergraph_incident_sum(parse_iterations(&args, 500_000)),

@@ -39,6 +39,13 @@ WORKLOAD_THRESHOLDS: dict[str, dict[str, Any]] = {
         "target_speedup_x": 1.05,
         "rationale": "Frontier-driven CSR expansion should not regress and may benefit modestly from layout-aware optimization.",
     },
+    "weighted_neighbor_sums": {
+        "family": "weighted_csr",
+        "label": "Weighted CSR VM opcodes",
+        "minimum_speedup_x": 0.98,
+        "target_speedup_x": 1.05,
+        "rationale": "Weighted neighbor reducers should not regress and may benefit modestly from PGO on VM dispatch and side-data access.",
+    },
     "hypergraph_incidence": {
         "family": "hypergraph_traversal",
         "label": "Hypergraph incidence traversal",

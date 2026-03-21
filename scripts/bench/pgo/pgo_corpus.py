@@ -35,6 +35,12 @@ WORKLOADS: dict[str, dict[str, Any]] = {
         "family": "frontier-csr",
         "coverage": "bounded CSR frontier neighbor iteration and sparse/dense recommendation path",
     },
+    "weighted_neighbor_sums": {
+        "target": "graphion_bench_weighted_graph",
+        "iterations": 200000,
+        "family": "weighted-csr",
+        "coverage": "weighted CSR VM opcodes for neighbor weight sums and edge-attribute sums",
+    },
     "hypergraph_incidence": {
         "target": "graphion_bench_hypergraph",
         "iterations": 200000,
@@ -76,6 +82,7 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "vm_dispatch",
             "bfs_levels",
             "neighbor_iteration",
+            "weighted_neighbor_sums",
             "hypergraph_incidence",
             "hypergraph_traversal",
             "hypergraph_incident_sum",
@@ -93,6 +100,7 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "vm_dispatch",
             "bfs_levels",
             "neighbor_iteration",
+            "weighted_neighbor_sums",
             "hypergraph_incidence",
             "hypergraph_traversal",
             "hypergraph_incident_sum",

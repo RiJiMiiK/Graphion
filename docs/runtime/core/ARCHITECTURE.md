@@ -60,6 +60,9 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - These side arrays are aligned by edge index with `neighbors`.
 - Existing graph algorithms remain valid when the optional arrays are absent.
 - Weighted/attribute-aware execution can build on the same CSR layout without a second graph format.
+- The VM now exposes aggregated weighted execution opcodes over the same layout:
+  - `GVM_OP_NEIGHBOR_WEIGHT_SUM`
+  - `GVM_OP_NEIGHBOR_ATTR_SUM`
 
 ## Frontier mode heuristics
 
