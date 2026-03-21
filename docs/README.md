@@ -16,7 +16,6 @@ These paths stay at the top level because other policies or checks already refer
 - `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
 - `docs/runtime/core/IR.md`
 - `docs/runtime/core/ISA.md`
-- `docs/runtime/core/STDLIB.md`
 
 ### Contracts
 

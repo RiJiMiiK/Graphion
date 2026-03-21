@@ -92,41 +92,53 @@
 
 ## Milestone 0.6 (Frontend And Language Surface)
 
-- [x] Lexer and parser for source language prototype.
-- [x] AST + lowering to bytecode.
-- [x] Diagnostics with line/column spans and stable error messages.
-- [x] Minimal standard library for graph/hypergraph operations.
-- [ ] Examples and reference programs for BFS, centrality, and incidence queries.
+- [ ] `.gion` source-file extension and interpreter entry flow.
+- [ ] High-level interpreted syntax for dynamic variables, assignment, `print`, `def`, and `return`.
+- [ ] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
+- [ ] User-facing hypergraph declarations with explicit hyperedge ids and integer node lists.
+- [ ] Scalar attribute parsing for graph/hypergraph declarations, with reserved `weight` normalized to float.
+- [ ] Builtin graph/hypergraph functions with user-facing semantics (`bfs`, `bfs_level`, incidence queries).
+- [ ] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`).
+
+## Milestone 0.6.1 (Language Surface Follow-Up)
+
+- [ ] Composite attribute values: `list`, `enum`, `dict`, and `struct`.
+- [ ] Non-integer node identifiers for graphs and hypergraphs.
+- [ ] Richer user-facing graph/hypergraph examples using post-0.6 value types.
 
 ## Milestone 0.7 (Runtime And Memory)
 
-- [ ] Arena metrics (peak, allocations, reset stats).
-- [ ] Optional debug runtime checks (bounds/poison/guards).
-- [ ] Memory lifetime audit for VM-bound graph objects.
-- [ ] Configurable allocator strategy (arena/system/hybrid).
+- [ ] Runtime value model for dynamic variables, scalars, graphs, hypergraphs, and function returns.
+- [ ] Scope/environment model for globals, locals, builtin functions, and user-defined functions.
+- [ ] Memory lifetime audit for interpreted values and VM-bound graph objects.
+- [ ] Optional debug runtime checks for interpreted execution and runtime value invariants.
+- [ ] Configurable allocator strategy (arena/system/hybrid) for interpreter-owned values.
+- [ ] Arena/runtime metrics (peak, allocations, reset stats) for interpreted workloads.
 - [ ] Thread-safety plan for future parallel runtime.
 
 ## Milestone 0.8 (Assembly Program)
 
-- [ ] Additional assembly hotpaths for proven bottlenecks only.
+- [ ] Additional assembly hotpaths for proven interpreted-runtime bottlenecks only.
 - [ ] Per-ABI docs (SysV + Windows x64 strategy).
 - [ ] Automated asm correctness tests vs C reference path.
-- [ ] Differential perf checks (asm on/off thresholds).
+- [ ] Differential perf checks (asm on/off thresholds) for language-visible workloads.
 - [ ] Hardened asm lint rules and exception workflow.
 
 ## Milestone 0.9 (Benchmark Governance)
 
-- [ ] Official benchmark matrix: small/medium/large inputs.
+- [ ] Official benchmark matrix split between VM/internal kernels and user-facing interpreted programs.
 - [ ] Mandatory report metadata (CPU, governor, flags, OS, date).
-- [ ] Baseline update policy and review gate.
+- [ ] Baseline update policy and review gate for both VM and language-surface workloads.
 - [ ] Trend reports committed on schedule (weekly or per release).
-- [ ] Cross-platform comparison table (Windows/Linux/Rust) in docs.
+- [ ] Cross-platform comparison tables for interpreted-language workloads (Windows/Linux/Rust where applicable).
+- [ ] Benchmark policy for startup cost vs steady-state interpreter cost.
 
 ## Milestone 1.0 (Language MVP)
 
-- [ ] End-to-end source -> bytecode pipeline.
+- [ ] End-to-end interpreted source execution for `.gion` programs.
+- [ ] Stable user-facing syntax for graphs, hypergraphs, functions, builtins, and scalar attributes.
 - [ ] Stable runtime + documentation + release process.
-- [ ] Performance target definition per workload family.
+- [ ] Performance target definition for interpreted-language workloads and internal kernels.
 - [ ] Security model and supported platform matrix.
 - [ ] v1.0 release checklist and migration notes.
 
@@ -140,7 +152,7 @@
 
 ### Quality
 
-- [ ] Expand tests for parser, VM, graph kernels, and edge cases.
+- [ ] Expand tests for parser, interpreter runtime, VM kernels, and edge cases.
 - [ ] Fuzz corpus curation and crash triage process.
 - [ ] Static analysis budget (`clang-tidy`, `cppcheck`) with zero-regression rule.
 
@@ -148,4 +160,4 @@
 
 - [ ] One-command local setup parity (Windows/Linux).
 - [ ] Script UX consistency and structured logs.
-- [ ] Contributor quickstart for perf repro.
+- [ ] Contributor quickstart for interpreted-language repro and perf repro.

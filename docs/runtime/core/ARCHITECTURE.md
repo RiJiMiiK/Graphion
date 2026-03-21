@@ -34,8 +34,6 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `src/parser/frontend.*` now parses from that token stream into a small AST
     instead of direct line splitting.
   - `src/parser/ast.*` lowers AST statements into the existing IR layer.
-  - `src/parser/stdlib.*` exposes a minimal catalog of named graph/hypergraph
-    source programs that lower through the same frontend pipeline.
   - parser diagnostics now expose stable error codes, messages, and line/column
     spans via `graphion_parse_source_to_ir_with_diagnostic(...)`.
 - ISA versioning and compatibility policy:
@@ -59,7 +57,6 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
   - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
   - reference source programs for these flows live in `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
-  - reusable stdlib snippets for graph/hypergraph kernels live in `docs/runtime/core/STDLIB.md`
 
 ## Graph storage model (current)
 
