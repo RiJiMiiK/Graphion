@@ -88,7 +88,7 @@ static uint64_t sum_weight_slice_wrap(const int64_t *values, size_t count) {
 #if defined(GRAPHION_AVX2_SUMS)
   __m256i acc0 = _mm256_setzero_si256();
   __m256i acc1 = _mm256_setzero_si256();
-  uint64_t lanes[4];
+  uint64_t lanes[4] = {0U, 0U, 0U, 0U};
   size_t i = 0U;
 
   for (; i + 8U <= count; i += 8U) {
@@ -112,7 +112,7 @@ static uint64_t sum_weight_slice_wrap(const int64_t *values, size_t count) {
   }
 #elif defined(GRAPHION_SSE2_SUMS)
   __m128i acc = _mm_setzero_si128();
-  uint64_t lanes[2];
+  uint64_t lanes[2] = {0U, 0U};
   size_t i = 0U;
 
   for (; i + 2U <= count; i += 2U) {
@@ -151,7 +151,7 @@ static uint64_t sum_attr_slice_wrap(const uint32_t *values, size_t count) {
 #if defined(GRAPHION_AVX2_SUMS)
   __m256i acc0 = _mm256_setzero_si256();
   __m256i acc1 = _mm256_setzero_si256();
-  uint64_t lanes[4];
+  uint64_t lanes[4] = {0U, 0U, 0U, 0U};
   size_t i = 0U;
 
   for (; i + 8U <= count; i += 8U) {
@@ -178,8 +178,8 @@ static uint64_t sum_attr_slice_wrap(const uint32_t *values, size_t count) {
   const __m128i zero = _mm_setzero_si128();
   __m128i acc_lo = _mm_setzero_si128();
   __m128i acc_hi = _mm_setzero_si128();
-  uint64_t lanes_lo[2];
-  uint64_t lanes_hi[2];
+  uint64_t lanes_lo[2] = {0U, 0U};
+  uint64_t lanes_hi[2] = {0U, 0U};
   size_t i = 0U;
 
   for (; i + 4U <= count; i += 4U) {
