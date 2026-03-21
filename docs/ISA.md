@@ -9,6 +9,7 @@ See also:
 - `docs/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
 - `docs/VM_REPRO.md` for deterministic repro workflow
 - `docs/REPRO_ARTIFACTS.md` for named repro artifact policy
+- `docs/ISA_COMPATIBILITY_CHECKLIST.md` for opcode change review requirements
 
 ## Encoding
 
