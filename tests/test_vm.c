@@ -431,6 +431,97 @@ int test_vm_frontier_errors(void) {
   return 0;
 }
 
+int test_vm_neighbor_iteration_primitives(void) {
+  graphion_vm vm;
+  graphion_csr_graph graph;
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  uint32_t frontier_a[8] = {0U, 2U, 0U, 0U, 0U, 0U, 0U, 0U};
+  uint32_t frontier_b[8] = {0U};
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 2},
+      {GVM_OP_NEIGHBORS_OF, 0U, 0U, 0},
+      {GVM_OP_FRONTIER_SWAP, 1U, 0U, 0},
+      {GVM_OP_NEIGHBORS_EXPAND, 2U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  int rc;
+
+  rc = graphion_csr_graph_init(&graph, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 1;
+  }
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &graph, NULL, NULL, 0U);
+  graphion_vm_bind_frontier(&vm, frontier_a, 2U, frontier_b, 8U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 3;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 4;
+  }
+  if (vm.frontier_output_len != 3U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 2U ||
+      vm.frontier_output[2] != 1U) {
+    return 5;
+  }
+  if (vm.regs[1] != 2 || vm.regs[2] != 3) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_vm_neighbor_iteration_errors(void) {
+  graphion_vm vm;
+  graphion_csr_graph graph;
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  uint32_t frontier_a[2] = {0U, 2U};
+  uint32_t frontier_b[2] = {0U};
+  const graphion_insn overflow_program[] = {
+      {GVM_OP_NEIGHBORS_EXPAND, 0U, 0U, 0},
+  };
+  const graphion_insn invalid_node_program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 99},
+      {GVM_OP_NEIGHBORS_OF, 0U, 0U, 0},
+  };
+  int rc;
+
+  rc = graphion_csr_graph_init(&graph, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 1;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &graph, NULL, NULL, 0U);
+  graphion_vm_bind_frontier(&vm, frontier_a, 2U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, overflow_program, sizeof(overflow_program) / sizeof(overflow_program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_FRONTIER_OVERFLOW) {
+    return 3;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &graph, NULL, NULL, 0U);
+  graphion_vm_bind_frontier(&vm, frontier_a, 2U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, invalid_node_program, sizeof(invalid_node_program) / sizeof(invalid_node_program[0]));
+  if (rc != 0) {
+    return 4;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_NODE_ID) {
+    return 5;
+  }
+  return 0;
+}
+
 int test_vm_snapshot_format(void) {
   graphion_vm vm;
   char snapshot[512];

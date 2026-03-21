@@ -45,7 +45,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - frontier capacity is explicit and fixed by the binding call
   - `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`
     operate without dynamic allocation
-  - future neighbor and hyperedge traversal opcodes can reuse this bounded model
+  - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
+  - future hyperedge traversal opcodes can layer on top of the same contract
 
 ## Hotpath acceleration
 

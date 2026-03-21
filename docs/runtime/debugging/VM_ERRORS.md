@@ -138,6 +138,11 @@ Arithmetic overflow currently does not raise a dedicated VM error:
 | `-6` | `GVM_ERR_INVALID_BFS_SOURCE` | Invalid BFS source register value or out-of-range node id |
 | `-7` | `GVM_ERR_BFS_RUNTIME` | CSR BFS kernel returned a runtime failure |
 
+Neighbor iteration opcodes also use graph VM codes:
+
+- `GVM_OP_NEIGHBORS_OF` uses `GVM_ERR_CSR_UNBOUND` and `GVM_ERR_INVALID_NODE_ID`
+- `GVM_OP_NEIGHBORS_EXPAND` uses `GVM_ERR_CSR_UNBOUND`, `GVM_ERR_INVALID_NODE_ID`, and frontier-bound errors
+
 ### Hypergraph VM codes
 
 | Code | Symbol | Current meaning |

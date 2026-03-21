@@ -178,6 +178,13 @@ int test_isa_execute_golden_fixtures(void) {
       {GVM_OP_FRONTIER_REDUCE_SUM, 5U, 0U, 0},
       {GVM_OP_HALT, 0U, 0U, 0},
   };
+  static const graphion_insn program_neighbors[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 2},
+      {GVM_OP_NEIGHBORS_OF, 0U, 0U, 0},
+      {GVM_OP_FRONTIER_SWAP, 1U, 0U, 0},
+      {GVM_OP_NEIGHBORS_EXPAND, 2U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
   static const isa_execute_fixture fixtures[] = {
       {
           "exec_addition_halt",
@@ -250,6 +257,19 @@ int test_isa_execute_golden_fixtures(void) {
           7U,
           {0, 2, 2, 2, 2, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           0,
+          0,
+          1,
+      },
+      {
+          "exec_neighbor_iteration",
+          program_neighbors,
+          sizeof(program_neighbors) / sizeof(program_neighbors[0]),
+          0,
+          0,
+          1,
+          5U,
+          {2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          1,
           0,
           1,
       },
@@ -328,8 +348,16 @@ int test_isa_execute_golden_fixtures(void) {
         return (int)(150 + i);
       }
       if (fixtures[i].bind_frontier) {
-        if (vm.frontier_input_len != 2U || vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
-          return (int)(160 + i);
+        if (strcmp(fixtures[i].name, "exec_frontier_pipeline") == 0) {
+          if (vm.frontier_input_len != 2U || vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
+            return (int)(160 + i);
+          }
+        }
+        if (strcmp(fixtures[i].name, "exec_neighbor_iteration") == 0) {
+          if (vm.frontier_output_len != 3U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 2U ||
+              vm.frontier_output[2] != 1U) {
+            return (int)(170 + i);
+          }
         }
       }
     }

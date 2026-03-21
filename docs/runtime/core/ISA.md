@@ -38,6 +38,8 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_FRONTIER_MAP_ADD_IMM (35)`: map input frontier values with `value + imm`, write output length to `r[a]`
 - `GVM_OP_FRONTIER_REDUCE_SUM (36)`: sum input frontier values into `r[a]`
 - `GVM_OP_FRONTIER_SWAP (37)`: swap frontier input/output roles, write new input length to `r[a]`
+- `GVM_OP_NEIGHBORS_OF (38)`: write the neighbors of node `r[a]` to the frontier output buffer
+- `GVM_OP_NEIGHBORS_EXPAND (39)`: append neighbors of every node in the input frontier to the frontier output buffer, write output length to `r[a]`
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
@@ -139,6 +141,24 @@ Notes:
 | Outputs | writes the new input frontier length to `r[a]` |
 | State changes | previous output frontier becomes the next input frontier; new output length resets to `0` |
 | Failure cases | `-3` invalid register, `-11` frontier buffers not bound |
+
+### `GVM_OP_NEIGHBORS_OF (38)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | source node id in `r[a]` |
+| Outputs | writes all CSR neighbors of the node to the frontier output buffer |
+| State changes | output frontier becomes the adjacency list of `r[a]` |
+| Failure cases | `-3` invalid register, `-5` missing CSR binding, `-9` invalid node id, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
+
+### `GVM_OP_NEIGHBORS_EXPAND (39)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a`; input frontier interpreted as node ids |
+| Outputs | writes all neighbors of all input frontier nodes to the frontier output buffer and stores output length in `r[a]` |
+| State changes | output frontier becomes the concatenated adjacency lists of all input frontier nodes, preserving input-node order and per-node neighbor order |
+| Failure cases | `-3` invalid register, `-5` missing CSR binding, `-9` invalid node id in the input frontier, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
 
 ### `GVM_OP_BFS_LEVELS (16)`
 
@@ -253,3 +273,5 @@ Current fixture coverage includes:
 - `GVM_OP_FRONTIER_MAP_ADD_IMM`: exact signed-delta map when the result stays inside `[0, UINT32_MAX]`.
 - `GVM_OP_FRONTIER_REDUCE_SUM`: exact `int64` reduction while the result stays within the documented bound.
 - `GVM_OP_FRONTIER_SWAP`: exact input/output role swap without dynamic allocation.
+- `GVM_OP_NEIGHBORS_OF`: exact adjacency-list copy for the source node within the configured frontier capacity.
+- `GVM_OP_NEIGHBORS_EXPAND`: exact concatenation of adjacency lists for the input frontier while preserving encounter order.

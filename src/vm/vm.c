@@ -462,6 +462,76 @@ static int op_frontier_swap(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_neighbors_of(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t node;
+  const uint32_t *neighbors;
+  size_t count;
+  size_t i;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->csr_graph == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  node = (uint32_t)vm->regs[in->a];
+  if ((size_t)node >= vm->csr_graph->node_count) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  neighbors = graphion_csr_graph_neighbors(vm->csr_graph, node);
+  count = graphion_csr_graph_neighbor_count(vm->csr_graph, node);
+  if (count > vm->frontier_capacity) {
+    vm->frontier_output_len = 0U;
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  vm->frontier_output_len = count;
+  for (i = 0U; i < count; ++i) {
+    vm->frontier_output[i] = neighbors[i];
+  }
+  return GVM_OK;
+}
+
+static int op_neighbors_expand(graphion_vm *vm, const graphion_insn *in) {
+  size_t i;
+  size_t out_len = 0U;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->csr_graph == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  for (i = 0U; i < vm->frontier_input_len; ++i) {
+    const uint32_t node = vm->frontier_input[i];
+    const uint32_t *neighbors;
+    size_t count;
+    size_t j;
+    if ((size_t)node >= vm->csr_graph->node_count) {
+      vm->frontier_output_len = 0U;
+      return GVM_ERR_INVALID_NODE_ID;
+    }
+    neighbors = graphion_csr_graph_neighbors(vm->csr_graph, node);
+    count = graphion_csr_graph_neighbor_count(vm->csr_graph, node);
+    if (out_len + count > vm->frontier_capacity) {
+      vm->frontier_output_len = 0U;
+      return GVM_ERR_FRONTIER_OVERFLOW;
+    }
+    for (j = 0U; j < count; ++j) {
+      vm->frontier_output[out_len++] = neighbors[j];
+    }
+  }
+  vm->frontier_output_len = out_len;
+  vm->regs[in->a] = (int64_t)out_len;
+  return GVM_OK;
+}
+
 static int op_nop(graphion_vm *vm, const graphion_insn *in) {
   (void)vm;
   (void)in;
@@ -626,6 +696,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_FRONTIER_SWAP:
         rc = op_frontier_swap(vm, &in);
         break;
+      case GVM_OP_NEIGHBORS_OF:
+        rc = op_neighbors_of(vm, &in);
+        break;
+      case GVM_OP_NEIGHBORS_EXPAND:
+        rc = op_neighbors_expand(vm, &in);
+        break;
       case GVM_OP_BFS_LEVELS:
         rc = op_bfs_levels(vm, &in);
         break;
@@ -665,6 +741,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_FRONTIER_MAP_ADD_IMM] = op_frontier_map_add_imm,
       [GVM_OP_FRONTIER_REDUCE_SUM] = op_frontier_reduce_sum,
       [GVM_OP_FRONTIER_SWAP] = op_frontier_swap,
+      [GVM_OP_NEIGHBORS_OF] = op_neighbors_of,
+      [GVM_OP_NEIGHBORS_EXPAND] = op_neighbors_expand,
       [GVM_OP_BFS_LEVELS] = op_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = op_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = op_hyperedge_size,
@@ -705,6 +783,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_FRONTIER_MAP_ADD_IMM] = &&L_frontier_map_add_imm,
       [GVM_OP_FRONTIER_REDUCE_SUM] = &&L_frontier_reduce_sum,
       [GVM_OP_FRONTIER_SWAP] = &&L_frontier_swap,
+      [GVM_OP_NEIGHBORS_OF] = &&L_neighbors_of,
+      [GVM_OP_NEIGHBORS_EXPAND] = &&L_neighbors_expand,
       [GVM_OP_BFS_LEVELS] = &&L_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = &&L_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = &&L_hyperedge_size,
@@ -775,6 +855,18 @@ L_frontier_reduce_sum:
     continue;
 L_frontier_swap:
     rc = op_frontier_swap(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_neighbors_of:
+    rc = op_neighbors_of(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_neighbors_expand:
+    rc = op_neighbors_expand(vm, &in);
     if (rc != 0) {
       return rc;
     }
