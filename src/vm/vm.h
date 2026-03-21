@@ -35,6 +35,7 @@ typedef struct {
   size_t program_len;
   size_t pc;
   bool halted;
+  bool deterministic_mode;
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   const graphion_csr_graph *csr_graph;
@@ -45,6 +46,7 @@ typedef struct {
 } graphion_vm;
 
 void graphion_vm_init(graphion_vm *vm);
+void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled);
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len);
 void graphion_vm_bind_csr(graphion_vm *vm,
                           const graphion_csr_graph *graph,

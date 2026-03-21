@@ -48,7 +48,7 @@
 - [x] ISA version policy (`v0.x` -> `v1.0`) with compatibility matrix.
 - [x] Golden ISA conformance tests (decode + execute fixtures).
 - [x] Structured VM error model and error codes document.
-- [ ] Deterministic execution mode toggle (for reproducible debugging).
+- [x] Deterministic execution mode toggle (for reproducible debugging).
 - [ ] Overflow/checked arithmetic policy per opcode class.
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)

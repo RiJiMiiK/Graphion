@@ -51,6 +51,15 @@ Instruction binary encoding is fixed to 7 bytes:
 - `v0.x` bytecode compatibility is not guaranteed across revisions.
 - `v1.0` will be the first compatibility-frozen ISA line.
 
+## Deterministic execution mode
+
+- The VM exposes `graphion_vm_set_deterministic(vm, true)` for reproducible
+  debugging runs.
+- In deterministic mode, execution uses the portable switch-dispatch path.
+- Deterministic mode bypasses fast arithmetic specialization and any asm-backed
+  execution path.
+- Instruction semantics and observable register / `pc` results remain the same.
+
 ## Golden conformance coverage
 
 Golden ISA fixtures live in:
