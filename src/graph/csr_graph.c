@@ -14,6 +14,16 @@ int graphion_csr_graph_init(graphion_csr_graph *graph,
                             size_t edge_count,
                             const uint32_t *offsets,
                             const uint32_t *neighbors) {
+  return graphion_csr_graph_init_with_edge_data(graph, node_count, edge_count, offsets, neighbors, NULL, NULL);
+}
+
+int graphion_csr_graph_init_with_edge_data(graphion_csr_graph *graph,
+                                           size_t node_count,
+                                           size_t edge_count,
+                                           const uint32_t *offsets,
+                                           const uint32_t *neighbors,
+                                           const int64_t *weights,
+                                           const uint32_t *edge_attrs) {
   size_t i;
   if (graph == NULL || offsets == NULL || neighbors == NULL) {
     return -1;
@@ -42,6 +52,8 @@ int graphion_csr_graph_init(graphion_csr_graph *graph,
   graph->edge_count = edge_count;
   graph->offsets = offsets;
   graph->neighbors = neighbors;
+  graph->weights = weights;
+  graph->edge_attrs = edge_attrs;
   return 0;
 }
 
@@ -57,6 +69,28 @@ const uint32_t *graphion_csr_graph_neighbors(const graphion_csr_graph *graph, ui
     return NULL;
   }
   return &graph->neighbors[graph->offsets[node]];
+}
+
+const int64_t *graphion_csr_graph_weights(const graphion_csr_graph *graph, uint32_t node) {
+  if (!is_valid_node(graph, node) || graph->weights == NULL) {
+    return NULL;
+  }
+  return &graph->weights[graph->offsets[node]];
+}
+
+const uint32_t *graphion_csr_graph_edge_attrs(const graphion_csr_graph *graph, uint32_t node) {
+  if (!is_valid_node(graph, node) || graph->edge_attrs == NULL) {
+    return NULL;
+  }
+  return &graph->edge_attrs[graph->offsets[node]];
+}
+
+int graphion_csr_graph_has_weights(const graphion_csr_graph *graph) {
+  return graph != NULL && graph->weights != NULL;
+}
+
+int graphion_csr_graph_has_edge_attrs(const graphion_csr_graph *graph) {
+  return graph != NULL && graph->edge_attrs != NULL;
 }
 
 int graphion_bfs_levels(const graphion_csr_graph *graph,

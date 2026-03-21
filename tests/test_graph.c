@@ -43,3 +43,45 @@ int test_graph_bfs_levels(void) {
   }
   return 0;
 }
+
+int test_graph_optional_edge_data(void) {
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  const int64_t weights[] = {5, 8, 13, 21, 34, 55};
+  const uint32_t edge_attrs[] = {10U, 11U, 12U, 13U, 14U, 15U};
+  graphion_csr_graph g;
+  const int64_t *node0_weights;
+  const uint32_t *node2_attrs;
+  int rc;
+
+  rc = graphion_csr_graph_init_with_edge_data(&g, 4U, 6U, offsets, neighbors, weights, edge_attrs);
+  if (rc != 0) {
+    return 1;
+  }
+  if (!graphion_csr_graph_has_weights(&g) || !graphion_csr_graph_has_edge_attrs(&g)) {
+    return 2;
+  }
+  node0_weights = graphion_csr_graph_weights(&g, 0U);
+  node2_attrs = graphion_csr_graph_edge_attrs(&g, 2U);
+  if (node0_weights == NULL || node2_attrs == NULL) {
+    return 3;
+  }
+  if (node0_weights[0] != 5 || node0_weights[1] != 8) {
+    return 4;
+  }
+  if (node2_attrs[0] != 13U || node2_attrs[1] != 14U) {
+    return 5;
+  }
+
+  rc = graphion_csr_graph_init(&g, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 6;
+  }
+  if (graphion_csr_graph_has_weights(&g) || graphion_csr_graph_has_edge_attrs(&g)) {
+    return 7;
+  }
+  if (graphion_csr_graph_weights(&g, 0U) != NULL || graphion_csr_graph_edge_attrs(&g, 0U) != NULL) {
+    return 8;
+  }
+  return 0;
+}
