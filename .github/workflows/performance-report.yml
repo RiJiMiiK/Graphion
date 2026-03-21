@@ -213,6 +213,13 @@ jobs:
           name: performance-report-md
           path: docs/performance/reports/PERFORMANCE_RESULTS.md
           retention-days: 14
+      - name: Generate GitHub App token
+        id: app-token
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr) }}
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GRAPHION_PERF_APP_ID }}
+          private-key: ${{ secrets.GRAPHION_PERF_APP_PRIVATE_KEY }}
       - name: Write summary
         shell: bash
         run: |
@@ -233,6 +240,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr) }}
         uses: peter-evans/create-pull-request@v8
         with:
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "docs(perf): refresh automated performance report"
           branch: automation/performance-report
           delete-branch: true
@@ -249,6 +257,7 @@ jobs:
         if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr)) && steps.create-pr.outputs.pull-request-number != '' }}
         uses: actions/github-script@v8
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const pullNumber = Number("${{ steps.create-pr.outputs.pull-request-number }}");
             const { owner, repo } = context.repo;
