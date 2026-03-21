@@ -210,6 +210,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/test_vm.c
     tests/test_arena.c
     tests/test_parser.c
+    tests/test_isa.c
     tests/test_graph.c
     tests/test_hypergraph.c
   )

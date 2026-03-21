@@ -46,7 +46,7 @@
 ## Milestone 0.4 (VM + ISA Hardening)
 
 - [x] ISA version policy (`v0.x` -> `v1.0`) with compatibility matrix.
-- [ ] Golden ISA conformance tests (decode + execute fixtures).
+- [x] Golden ISA conformance tests (decode + execute fixtures).
 - [x] Structured VM error model and error codes document.
 - [ ] Deterministic execution mode toggle (for reproducible debugging).
 - [ ] Overflow/checked arithmetic policy per opcode class.

@@ -50,3 +50,16 @@ Instruction binary encoding is fixed to 7 bytes:
 - Backward-incompatible changes must be called out in `CHANGELOG.md`.
 - `v0.x` bytecode compatibility is not guaranteed across revisions.
 - `v1.0` will be the first compatibility-frozen ISA line.
+
+## Golden conformance coverage
+
+Golden ISA fixtures live in:
+
+- `tests/test_isa.c`
+
+Current fixture coverage includes:
+
+- bytecode decode success and failure cases
+- arithmetic execution semantics
+- unknown-opcode rejection
+- graph and hypergraph execution fixtures for currently documented opcodes
