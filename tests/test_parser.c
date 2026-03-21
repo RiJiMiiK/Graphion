@@ -361,6 +361,13 @@ static int expect_graph_binding(const graphion_runtime_scope *scope,
   if (value->graph_value->node_count != expected_node_count) {
     return 0;
   }
+  if (value->graph_value->lowered_node_count != expected_node_count) {
+    return 0;
+  }
+  if (value->graph_value->lowered_graph.node_count != expected_node_count ||
+      value->graph_value->lowered_graph.edge_count != expected_edge_count) {
+    return 0;
+  }
   if (expected_edge_count >= 1U &&
       (value->graph_value->edges[0].source != first_source || value->graph_value->edges[0].target != first_target)) {
     return 0;
@@ -384,6 +391,13 @@ static int expect_hypergraph_binding(const graphion_runtime_scope *scope,
   }
   if (value->hypergraph_value->hyperedge_count != expected_hyperedge_count ||
       value->hypergraph_value->node_count != expected_node_count) {
+    return 0;
+  }
+  if (value->hypergraph_value->lowered_node_count != expected_node_count) {
+    return 0;
+  }
+  if (value->hypergraph_value->lowered_hypergraph.node_count != expected_node_count ||
+      value->hypergraph_value->lowered_hypergraph.hyperedge_count != expected_hyperedge_count) {
     return 0;
   }
   if (expected_hyperedge_count >= 1U) {
@@ -1079,6 +1093,48 @@ int test_interpreter_bfs_builtin(void) {
   return 0;
 }
 
+int test_interpreter_bfs_builtin_non_compact_ids(void) {
+  const char *source = "graph G:\n"
+                       "  10 -> 20\n"
+                       "  10 -> 30\n"
+                       "  20 -> 40\n"
+                       "  30 -> 40\n"
+                       "order = bfs(G, 10)\n"
+                       "levels = bfs_level(G, 10)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *order;
+  const graphion_runtime_value *levels;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  order = graphion_runtime_scope_find(&scope, "order");
+  levels = graphion_runtime_scope_find(&scope, "levels");
+  if (order == NULL || order->kind != GRAPHION_VALUE_INT_SEQUENCE) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (order->int_sequence_value.count != 4U ||
+      order->int_sequence_value.items[0] != 10 ||
+      order->int_sequence_value.items[1] != 20 ||
+      order->int_sequence_value.items[2] != 30 ||
+      order->int_sequence_value.items[3] != 40) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  if (levels == NULL || levels->kind != GRAPHION_VALUE_INT || levels->int_value != 3) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
 int test_interpreter_print_bfs_builtin(void) {
   const char *path = "interpreter_bfs_output.txt";
   const char *source = "graph G:\n"
@@ -1144,6 +1200,38 @@ int test_interpreter_incidence_builtins(void) {
                        "  [2, 4]\n"
                        "count = incident_count(H, 2)\n"
                        "sum = incident_sum(H, 2)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *count;
+  const graphion_runtime_value *sum;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  count = graphion_runtime_scope_find(&scope, "count");
+  sum = graphion_runtime_scope_find(&scope, "sum");
+  if (count == NULL || count->kind != GRAPHION_VALUE_INT || count->int_value != 2) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (sum == NULL || sum->kind != GRAPHION_VALUE_INT || sum->int_value != 1) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_incidence_builtins_non_compact_ids(void) {
+  const char *source = "hypergraph H:\n"
+                       "  [10, 20, 30]\n"
+                       "  [20, 40]\n"
+                       "count = incident_count(H, 20)\n"
+                       "sum = incident_sum(H, 20)\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *count;

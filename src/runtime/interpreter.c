@@ -360,6 +360,141 @@ static int graph_find_node_index(const int64_t nodes[GRAPHION_RUNTIME_SEQUENCE_I
   return -1;
 }
 
+static int prepare_graph_native(graphion_runtime_graph_value *graph) {
+  size_t counts[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  size_t i;
+
+  if (graph == NULL) {
+    return 0;
+  }
+  memset(&graph->lowered_graph, 0, sizeof(graph->lowered_graph));
+  memset(graph->lowered_offsets, 0, sizeof(graph->lowered_offsets));
+  memset(graph->lowered_neighbors, 0, sizeof(graph->lowered_neighbors));
+  memset(graph->lowered_node_ids, 0, sizeof(graph->lowered_node_ids));
+  graph->lowered_node_count = graph_collect_nodes(graph, graph->lowered_node_ids);
+  if (graph->lowered_node_count == 0U) {
+    return 0;
+  }
+
+  memset(counts, 0, sizeof(counts));
+  for (i = 0U; i < graph->edge_count; ++i) {
+    int source_index = graph_find_node_index(graph->lowered_node_ids, graph->lowered_node_count, graph->edges[i].source);
+    if (source_index < 0) {
+      return 0;
+    }
+    counts[(size_t)source_index] += 1U;
+  }
+
+  graph->lowered_offsets[0] = 0U;
+  for (i = 0U; i < graph->lowered_node_count; ++i) {
+    graph->lowered_offsets[i + 1U] = graph->lowered_offsets[i] + (uint32_t)counts[i];
+  }
+
+  memset(counts, 0, sizeof(counts));
+  for (i = 0U; i < graph->edge_count; ++i) {
+    int source_index = graph_find_node_index(graph->lowered_node_ids, graph->lowered_node_count, graph->edges[i].source);
+    int target_index = graph_find_node_index(graph->lowered_node_ids, graph->lowered_node_count, graph->edges[i].target);
+    uint32_t slot;
+    if (source_index < 0 || target_index < 0) {
+      return 0;
+    }
+    slot = graph->lowered_offsets[(size_t)source_index] + (uint32_t)counts[(size_t)source_index];
+    graph->lowered_neighbors[slot] = (uint32_t)target_index;
+    counts[(size_t)source_index] += 1U;
+  }
+
+  if (graphion_csr_graph_init(&graph->lowered_graph,
+                              graph->lowered_node_count,
+                              graph->edge_count,
+                              graph->lowered_offsets,
+                              graph->lowered_neighbors) != 0) {
+    return 0;
+  }
+  graph->node_count = graph->lowered_node_count;
+  return 1;
+}
+
+static int prepare_hypergraph_native(graphion_runtime_hypergraph_value *hypergraph) {
+  size_t node_incidence_counts[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  size_t write_offsets[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  size_t i;
+  size_t j;
+  size_t incidence_count = 0U;
+
+  if (hypergraph == NULL) {
+    return 0;
+  }
+  memset(&hypergraph->lowered_hypergraph, 0, sizeof(hypergraph->lowered_hypergraph));
+  memset(hypergraph->lowered_node_offsets, 0, sizeof(hypergraph->lowered_node_offsets));
+  memset(hypergraph->lowered_node_hyperedges, 0, sizeof(hypergraph->lowered_node_hyperedges));
+  memset(hypergraph->lowered_hyperedge_offsets, 0, sizeof(hypergraph->lowered_hyperedge_offsets));
+  memset(hypergraph->lowered_hyperedge_nodes, 0, sizeof(hypergraph->lowered_hyperedge_nodes));
+  memset(hypergraph->lowered_node_ids, 0, sizeof(hypergraph->lowered_node_ids));
+  hypergraph->lowered_node_count = 0U;
+
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      int64_t node_id = hypergraph->hyperedges[i].nodes[j];
+      if (graph_find_node_index(hypergraph->lowered_node_ids, hypergraph->lowered_node_count, node_id) < 0) {
+        if (hypergraph->lowered_node_count >= GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX) {
+          return 0;
+        }
+        hypergraph->lowered_node_ids[hypergraph->lowered_node_count++] = node_id;
+      }
+    }
+  }
+  if (hypergraph->lowered_node_count == 0U) {
+    return 0;
+  }
+
+  memset(node_incidence_counts, 0, sizeof(node_incidence_counts));
+  hypergraph->lowered_hyperedge_offsets[0] = 0U;
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    hypergraph->lowered_hyperedge_offsets[i + 1U] =
+        hypergraph->lowered_hyperedge_offsets[i] + (uint32_t)hypergraph->hyperedges[i].node_count;
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      int node_index =
+          graph_find_node_index(hypergraph->lowered_node_ids, hypergraph->lowered_node_count, hypergraph->hyperedges[i].nodes[j]);
+      if (node_index < 0) {
+        return 0;
+      }
+      hypergraph->lowered_hyperedge_nodes[incidence_count++] = (uint32_t)node_index;
+      node_incidence_counts[(size_t)node_index] += 1U;
+    }
+  }
+
+  hypergraph->lowered_node_offsets[0] = 0U;
+  for (i = 0U; i < hypergraph->lowered_node_count; ++i) {
+    hypergraph->lowered_node_offsets[i + 1U] =
+        hypergraph->lowered_node_offsets[i] + (uint32_t)node_incidence_counts[i];
+    write_offsets[i] = hypergraph->lowered_node_offsets[i];
+  }
+
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      int node_index =
+          graph_find_node_index(hypergraph->lowered_node_ids, hypergraph->lowered_node_count, hypergraph->hyperedges[i].nodes[j]);
+      if (node_index < 0) {
+        return 0;
+      }
+      hypergraph->lowered_node_hyperedges[write_offsets[(size_t)node_index]++] = (uint32_t)i;
+    }
+  }
+
+  if (graphion_hypergraph_init(&hypergraph->lowered_hypergraph,
+                               hypergraph->lowered_node_count,
+                               hypergraph->hyperedge_count,
+                               incidence_count,
+                               hypergraph->lowered_node_offsets,
+                               hypergraph->lowered_node_hyperedges,
+                               hypergraph->lowered_hyperedge_offsets,
+                               hypergraph->lowered_hyperedge_nodes) != 0) {
+    return 0;
+  }
+  hypergraph->node_count = hypergraph->lowered_node_count;
+  return 1;
+}
+
 static int graph_bfs_visit_order(const graphion_runtime_graph_value *graph,
                                  int64_t source,
                                  graphion_runtime_int_sequence_value *sequence,
@@ -1832,6 +1967,11 @@ static int execute_block(const graphion_program *program,
         graphion_runtime_value_dispose(&graph_value);
         return GINT_ERR_PARSE;
       }
+      if (!prepare_graph_native(graph_payload)) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "graph native preparation failed");
+        graphion_runtime_value_dispose(&graph_value);
+        return GINT_ERR_PARSE;
+      }
       rc = assign_value(global_scope, graph_name, &graph_value);
       if (rc != GINT_OK) {
         set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
@@ -1885,6 +2025,11 @@ static int execute_block(const graphion_program *program,
       }
       if (body_end == i + 1U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph body cannot be empty");
+        graphion_runtime_value_dispose(&hypergraph_value);
+        return GINT_ERR_PARSE;
+      }
+      if (!prepare_hypergraph_native(hypergraph_payload)) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph native preparation failed");
         graphion_runtime_value_dispose(&hypergraph_value);
         return GINT_ERR_PARSE;
       }

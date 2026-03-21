@@ -249,6 +249,8 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_NEIGHBOR_WEIGHT_SUM:
       case GVM_OP_NEIGHBOR_ATTR_SUM:
       case GVM_OP_BFS_LEVELS:
+      case GVM_OP_BFS_LEVEL_COUNT:
+      case GVM_OP_BFS_ORDER:
       case GVM_OP_INCIDENT_COUNT:
       case GVM_OP_HYPEREDGE_SIZE:
       case GVM_OP_INCIDENT_SUM:
@@ -500,6 +502,17 @@ static int64_t count_visited_levels(const int32_t *levels, size_t count) {
     }
   }
   return total;
+}
+
+static int64_t count_bfs_level_count(const int32_t *levels, size_t count) {
+  size_t i;
+  int32_t max_level = -1;
+  for (i = 0U; i < count; ++i) {
+    if (levels[i] > max_level) {
+      max_level = levels[i];
+    }
+  }
+  return max_level < 0 ? 0 : (int64_t)max_level + 1;
 }
 
 static size_t appendf(char *buffer, size_t buffer_size, size_t offset, const char *fmt, ...) {
@@ -999,6 +1012,68 @@ static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
   return 0;
 }
 
+static int op_bfs_level_count(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t source;
+  int rc;
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->csr_graph == NULL || vm->bfs_levels == NULL || vm->bfs_queue == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_BFS_SOURCE;
+  }
+  source = (uint32_t)vm->regs[in->a];
+  if ((size_t)source >= vm->csr_graph->node_count) {
+    return GVM_ERR_INVALID_BFS_SOURCE;
+  }
+  rc = graphion_bfs_levels(vm->csr_graph, source, vm->bfs_levels, vm->bfs_queue, vm->bfs_capacity);
+  if (rc != 0) {
+    return GVM_ERR_BFS_RUNTIME;
+  }
+  vm->regs[in->b] = count_bfs_level_count(vm->bfs_levels, vm->csr_graph->node_count);
+  return 0;
+}
+
+static int op_bfs_order(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t source;
+  int rc;
+  int64_t visited_count;
+  size_t i;
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->csr_graph == NULL || vm->bfs_levels == NULL || vm->bfs_queue == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_BFS_SOURCE;
+  }
+  source = (uint32_t)vm->regs[in->a];
+  if ((size_t)source >= vm->csr_graph->node_count) {
+    return GVM_ERR_INVALID_BFS_SOURCE;
+  }
+  rc = graphion_bfs_levels(vm->csr_graph, source, vm->bfs_levels, vm->bfs_queue, vm->bfs_capacity);
+  if (rc != 0) {
+    return GVM_ERR_BFS_RUNTIME;
+  }
+  visited_count = count_visited_levels(vm->bfs_levels, vm->csr_graph->node_count);
+  if ((size_t)visited_count > vm->frontier_capacity) {
+    vm->frontier_output_len = 0U;
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  vm->frontier_output_len = (size_t)visited_count;
+  for (i = 0U; i < vm->frontier_output_len; ++i) {
+    vm->frontier_output[i] = vm->bfs_queue[i];
+  }
+  vm->regs[in->b] = visited_count;
+  return 0;
+}
+
 static int op_incident_count(graphion_vm *vm, const graphion_insn *in) {
   uint32_t node;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
@@ -1132,6 +1207,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_BFS_LEVELS:
         rc = op_bfs_levels(vm, &in);
         break;
+      case GVM_OP_BFS_LEVEL_COUNT:
+        rc = op_bfs_level_count(vm, &in);
+        break;
+      case GVM_OP_BFS_ORDER:
+        rc = op_bfs_order(vm, &in);
+        break;
       case GVM_OP_INCIDENT_COUNT:
         rc = op_incident_count(vm, &in);
         break;
@@ -1175,6 +1256,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_NEIGHBOR_WEIGHT_SUM] = op_neighbor_weight_sum,
       [GVM_OP_NEIGHBOR_ATTR_SUM] = op_neighbor_attr_sum,
       [GVM_OP_BFS_LEVELS] = op_bfs_levels,
+      [GVM_OP_BFS_LEVEL_COUNT] = op_bfs_level_count,
+      [GVM_OP_BFS_ORDER] = op_bfs_order,
       [GVM_OP_INCIDENT_COUNT] = op_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = op_hyperedge_size,
       [GVM_OP_INCIDENT_SUM] = op_incident_sum,
@@ -1221,6 +1304,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_NEIGHBOR_WEIGHT_SUM] = &&L_neighbor_weight_sum,
       [GVM_OP_NEIGHBOR_ATTR_SUM] = &&L_neighbor_attr_sum,
       [GVM_OP_BFS_LEVELS] = &&L_bfs_levels,
+      [GVM_OP_BFS_LEVEL_COUNT] = &&L_bfs_level_count,
+      [GVM_OP_BFS_ORDER] = &&L_bfs_order,
       [GVM_OP_INCIDENT_COUNT] = &&L_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = &&L_hyperedge_size,
       [GVM_OP_INCIDENT_SUM] = &&L_incident_sum,
@@ -1332,6 +1417,18 @@ L_neighbor_attr_sum:
     continue;
 L_bfs_levels:
     rc = op_bfs_levels(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_bfs_level_count:
+    rc = op_bfs_level_count(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_bfs_order:
+    rc = op_bfs_order(vm, &in);
     if (rc != 0) {
       return rc;
     }

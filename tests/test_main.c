@@ -14,6 +14,8 @@ typedef struct {
 int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
 int test_vm_bfs_levels_opcode(void);
+int test_vm_bfs_level_count_opcode(void);
+int test_vm_bfs_order_opcode(void);
 int test_vm_hypergraph_opcodes(void);
 int test_vm_superinstruction_add_pair_semantics(void);
 int test_vm_superinstruction_movimm_add_semantics(void);
@@ -61,6 +63,8 @@ int test_interpreter_print_hyperedge_value(void);
 int test_interpreter_bfs_builtin(void);
 int test_interpreter_print_bfs_builtin(void);
 int test_interpreter_incidence_builtins(void);
+int test_interpreter_bfs_builtin_non_compact_ids(void);
+int test_interpreter_incidence_builtins_non_compact_ids(void);
 int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
@@ -107,6 +111,8 @@ int main(int argc, char **argv) {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
+      {"vm_bfs_level_count_opcode", test_vm_bfs_level_count_opcode},
+      {"vm_bfs_order_opcode", test_vm_bfs_order_opcode},
       {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
       {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
       {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
@@ -155,6 +161,8 @@ int main(int argc, char **argv) {
       {"interpreter_bfs_builtin", test_interpreter_bfs_builtin},
       {"interpreter_print_bfs_builtin", test_interpreter_print_bfs_builtin},
       {"interpreter_incidence_builtins", test_interpreter_incidence_builtins},
+      {"interpreter_bfs_builtin_non_compact_ids", test_interpreter_bfs_builtin_non_compact_ids},
+      {"interpreter_incidence_builtins_non_compact_ids", test_interpreter_incidence_builtins_non_compact_ids},
       {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
