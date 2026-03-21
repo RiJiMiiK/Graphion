@@ -784,6 +784,109 @@ int test_interpreter_print_hypergraph_summary(void) {
   return 0;
 }
 
+int test_interpreter_print_graph_node_value(void) {
+  const char *path = "interpreter_graph_node_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  1 -> 3\n"
+                       "  2 -> 3\n"
+                       "print(G.node[1])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<node id=1 neighbors=2>\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_interpreter_print_graph_edge_value(void) {
+  const char *path = "interpreter_graph_edge_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2 [weight=7, color=\"red\", active=true, rank=3]\n"
+                       "  2 -> 3 [rank=9]\n"
+                       "print(G.edge[0])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[256];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<edge 1->2 weight=7 color=\"red\" active=true rank=3>\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
 int test_gion_entry_flow_execution(void) {
   const char *path = "entry_flow_sample.gion";
   graphion_runtime_scope scope;

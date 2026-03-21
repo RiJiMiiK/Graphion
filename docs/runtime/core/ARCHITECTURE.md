@@ -49,12 +49,12 @@ Current source-program entry flow uses the `.gion` extension.
 - `weight` is reserved and normalized to a runtime float whether written as `7` or `7.0`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
-- `print(...)` writes scalar runtime values to the configured interpreter output stream.
+- `print(...)` writes runtime values to the configured interpreter output stream.
 - printable graph-oriented runtime values are part of the intended user-facing model:
-  - `print(graph)` should show graph name, node count, and edge count
-  - `print(node)` should show node id/name and neighbor count for graph nodes
-  - `print(edge)` should show source, target, reserved `weight` when present, and other attributes
-  - `print(hypergraph)` should show hypergraph name, node count, and hyperedge count
+  - `print(graph)` shows graph name, node count, and edge count
+  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
+  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
+  - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
   - `print(node)` should show node id/name and incident hyperedge count for hypergraph nodes
   - `print(hyperedge)` should show hyperedge id and member node count
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
@@ -65,11 +65,14 @@ Current source-program entry flow uses the `.gion` extension.
 - the current graph declaration model is also intentionally narrow:
   - top-level declarations only
   - integer node ids only
-  - no graph attributes yet
-  - only summary printing is implemented today:
+  - scalar attributes only
+  - currently implemented printable values:
     - `print(graph)` -> graph name, node count, edge count
+    - `print(G.node[id])` -> node id and neighbor count
+    - `print(G.edge[id])` -> edge endpoints, optional weight, and scalar attributes
     - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
-  - `node`, `edge`, and `hyperedge` printable values will land with the future user-facing graph API
+  - graph edge ids are implicit and auto-increment by declaration order
+  - `hyperedge` printable values will land with the future user-facing graph API
 
 ## VM model (current)
 

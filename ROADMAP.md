@@ -102,10 +102,10 @@
   - `bfs(...)` returns visited node ids in BFS encounter order
   - `bfs_level(...)` returns only the number of BFS levels
   - incidence query builtins align with the future user-facing graph/hypergraph API
-- [ ] User-facing printable graph values for `graph`, `node`, and `edge`:
+- [x] User-facing printable graph values for `graph`, `node`, and `edge`:
   - `print(graph)` shows graph name, node count, and edge count
-  - `print(node)` shows node id/name and neighbor count for graph nodes
-  - `print(edge)` shows source, target, reserved `weight` when present, and other attributes
+  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
+  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
 - [ ] User-facing printable hypergraph values for `hypergraph` and `hyperedge`:
   - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
   - `print(node)` shows node id/name and incident hyperedge count for hypergraph nodes

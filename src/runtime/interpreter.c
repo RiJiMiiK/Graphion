@@ -967,6 +967,46 @@ static int split_call(const char *expr, char *name_out, char *args_out) {
   return 1;
 }
 
+static int split_graph_member_access(const char *expr,
+                                     char *graph_name_out,
+                                     char *member_name_out,
+                                     char *index_out) {
+  const char *dot;
+  const char *open_bracket;
+  const char *close_bracket;
+  size_t graph_name_len;
+  size_t member_name_len;
+  size_t index_len;
+
+  if (expr == NULL || graph_name_out == NULL || member_name_out == NULL || index_out == NULL) {
+    return 0;
+  }
+  dot = strchr(expr, '.');
+  open_bracket = strchr(expr, '[');
+  close_bracket = strrchr(expr, ']');
+  if (dot == NULL || open_bracket == NULL || close_bracket == NULL || dot > open_bracket || close_bracket[1] != '\0') {
+    return 0;
+  }
+  graph_name_len = (size_t)(dot - expr);
+  member_name_len = (size_t)(open_bracket - (dot + 1U));
+  index_len = (size_t)(close_bracket - open_bracket - 1U);
+  if (graph_name_len == 0U || graph_name_len >= GRAPHION_RUNTIME_NAME_MAX ||
+      member_name_len == 0U || member_name_len >= GRAPHION_RUNTIME_NAME_MAX ||
+      index_len == 0U || index_len >= GINT_LINE_MAX) {
+    return 0;
+  }
+  memcpy(graph_name_out, expr, graph_name_len);
+  graph_name_out[graph_name_len] = '\0';
+  trim_in_place(graph_name_out);
+  memcpy(member_name_out, dot + 1U, member_name_len);
+  member_name_out[member_name_len] = '\0';
+  trim_in_place(member_name_out);
+  memcpy(index_out, open_bracket + 1U, index_len);
+  index_out[index_len] = '\0';
+  trim_in_place(index_out);
+  return is_valid_identifier(graph_name_out) && is_valid_identifier(member_name_out) && index_out[0] != '\0';
+}
+
 static int split_arguments(const char *args_buf, char args[GINT_ARG_MAX][GINT_LINE_MAX], size_t *arg_count) {
   size_t i = 0U;
   size_t start = 0U;
@@ -1017,7 +1057,53 @@ static int split_arguments(const char *args_buf, char args[GINT_ARG_MAX][GINT_LI
   return 1;
 }
 
+static size_t graph_neighbor_count(const graphion_runtime_graph_value *graph, int64_t node_id) {
+  size_t i;
+  size_t count = 0U;
+  if (graph == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    if (graph->edges[i].source == node_id) {
+      count += 1U;
+    }
+  }
+  return count;
+}
+
+static const graphion_runtime_graph_edge *find_graph_edge_by_id(const graphion_runtime_graph_value *graph, int64_t edge_id) {
+  if (graph == NULL || edge_id < 0 || (size_t)edge_id >= graph->edge_count) {
+    return NULL;
+  }
+  return &graph->edges[edge_id];
+}
+
+static void print_attribute(FILE *output, const graphion_runtime_attribute *attribute) {
+  if (output == NULL || attribute == NULL) {
+    return;
+  }
+  fprintf(output, " %s=", attribute->name);
+  switch (attribute->kind) {
+    case GRAPHION_ATTRIBUTE_INT:
+      fprintf(output, "%lld", (long long)attribute->int_value);
+      break;
+    case GRAPHION_ATTRIBUTE_FLOAT:
+      fprintf(output, "%g", attribute->float_value);
+      break;
+    case GRAPHION_ATTRIBUTE_BOOL:
+      fprintf(output, "%s", attribute->bool_value != 0 ? "true" : "false");
+      break;
+    case GRAPHION_ATTRIBUTE_STRING:
+      fprintf(output, "\"%s\"", attribute->string_value);
+      break;
+    default:
+      fprintf(output, "none");
+      break;
+  }
+}
+
 static int print_value(FILE *output, const graphion_runtime_value *value) {
+  size_t i;
   if (output == NULL || value == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
@@ -1047,6 +1133,27 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
               value->hypergraph_value != NULL ? value->hypergraph_value->name : "",
               value->hypergraph_value != NULL ? value->hypergraph_value->node_count : 0U,
               value->hypergraph_value != NULL ? value->hypergraph_value->hyperedge_count : 0U);
+      break;
+    case GRAPHION_VALUE_GRAPH_NODE:
+      fprintf(output,
+              "<node id=%lld neighbors=%zu>\n",
+              (long long)value->graph_node_value.id,
+              graph_neighbor_count(value->graph_node_value.graph, value->graph_node_value.id));
+      break;
+    case GRAPHION_VALUE_GRAPH_EDGE:
+      fprintf(output,
+              "<edge %lld->%lld",
+              (long long)(value->graph_edge_value.edge != NULL ? value->graph_edge_value.edge->source : 0),
+              (long long)(value->graph_edge_value.edge != NULL ? value->graph_edge_value.edge->target : 0));
+      if (value->graph_edge_value.edge != NULL && value->graph_edge_value.edge->has_weight != 0) {
+        fprintf(output, " weight=%g", value->graph_edge_value.edge->weight);
+      }
+      for (i = 0U;
+           value->graph_edge_value.edge != NULL && i < value->graph_edge_value.edge->attribute_count;
+           ++i) {
+        print_attribute(output, &value->graph_edge_value.edge->attributes[i]);
+      }
+      fprintf(output, ">\n");
       break;
     default:
       fprintf(output, "none\n");
@@ -1155,6 +1262,58 @@ static int eval_expression(const char *expr,
   if (parse_string_literal(expr, value) || parse_bool_literal(expr, value) ||
       parse_float_literal(expr, value) || parse_int_literal(expr, value)) {
     return GINT_OK;
+  }
+  {
+    char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+    char member_name[GRAPHION_RUNTIME_NAME_MAX];
+    char index_expr[GINT_LINE_MAX];
+    if (split_graph_member_access(expr, graph_name, member_name, index_expr)) {
+      const graphion_runtime_value *graph_value = find_value(local_scope, global_scope, graph_name);
+      graphion_runtime_value index_value;
+      int rc;
+      if (graph_value == NULL || graph_value->kind != GRAPHION_VALUE_GRAPH || graph_value->graph_value == NULL) {
+        set_diagnostic(diagnostic, line_no, 1U, "graph member access expects a graph value");
+        return GINT_ERR_CALL;
+      }
+      rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      if (strcmp(member_name, "node") == 0) {
+        if (index_value.kind != GRAPHION_VALUE_INT) {
+          set_diagnostic(diagnostic, line_no, 1U, "graph node index must be an integer");
+          return GINT_ERR_CALL;
+        }
+        if (!graph_contains_node(graph_value, index_value.int_value)) {
+          set_diagnostic(diagnostic, line_no, 1U, "graph node not found");
+          return GINT_ERR_CALL;
+        }
+        memset(value, 0, sizeof(*value));
+        value->kind = GRAPHION_VALUE_GRAPH_NODE;
+        value->graph_node_value.id = index_value.int_value;
+        value->graph_node_value.graph = graph_value->graph_value;
+        return GINT_OK;
+      }
+      if (strcmp(member_name, "edge") == 0) {
+        const graphion_runtime_graph_edge *edge_value;
+        if (index_value.kind != GRAPHION_VALUE_INT) {
+          set_diagnostic(diagnostic, line_no, 1U, "graph edge id must be an integer");
+          return GINT_ERR_CALL;
+        }
+        edge_value = find_graph_edge_by_id(graph_value->graph_value, index_value.int_value);
+        if (edge_value == NULL) {
+          set_diagnostic(diagnostic, line_no, 1U, "graph edge not found");
+          return GINT_ERR_CALL;
+        }
+        memset(value, 0, sizeof(*value));
+        value->kind = GRAPHION_VALUE_GRAPH_EDGE;
+        value->graph_edge_value.graph = graph_value->graph_value;
+        value->graph_edge_value.edge = edge_value;
+        return GINT_OK;
+      }
+      set_diagnostic(diagnostic, line_no, 1U, "unknown graph member access");
+      return GINT_ERR_CALL;
+    }
   }
   {
     char name[GRAPHION_RUNTIME_NAME_MAX];

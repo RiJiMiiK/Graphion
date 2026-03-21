@@ -54,6 +54,8 @@ int test_interpreter_rejects_invalid_weight_type(void);
 int test_interpreter_print_and_function_return(void);
 int test_interpreter_print_graph_summary(void);
 int test_interpreter_print_hypergraph_summary(void);
+int test_interpreter_print_graph_node_value(void);
+int test_interpreter_print_graph_edge_value(void);
 int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
@@ -141,6 +143,8 @@ int main(int argc, char **argv) {
       {"interpreter_print_and_function_return", test_interpreter_print_and_function_return},
       {"interpreter_print_graph_summary", test_interpreter_print_graph_summary},
       {"interpreter_print_hypergraph_summary", test_interpreter_print_hypergraph_summary},
+      {"interpreter_print_graph_node_value", test_interpreter_print_graph_node_value},
+      {"interpreter_print_graph_edge_value", test_interpreter_print_graph_edge_value},
       {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},

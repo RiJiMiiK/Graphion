@@ -19,6 +19,8 @@ print(ready)
 print(copy)
 print(G)
 print(H)
+print(G.node[1])
+print(G.edge[0])
 
 def echo(value):
   print(value)

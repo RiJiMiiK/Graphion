@@ -78,6 +78,10 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Hypergraph traversal opcodes with bounded frontier contracts: `incident_of` and `hyperedge_nodes_of`.
 - Optional CSR edge weights and edge attributes in the graph runtime, with backward-compatible topology-only initialization.
 - Sparse/dense frontier mode recommendation heuristic added to the CSR graph runtime.
+- Printable graph runtime values in `.gion`:
+  - `print(graph)` summary
+  - `print(G.node[id])`
+  - `print(G.edge[id])`
 - Official frontier primitive benchmark added and integrated into the performance collection pipeline.
 - Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
