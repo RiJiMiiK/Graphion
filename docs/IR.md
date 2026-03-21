@@ -70,6 +70,8 @@ Errors:
 - `GIR_ERR_CAPACITY`
 - `GIR_ERR_INVALID_OPCODE`
 
+Cross-subsystem error-model policy is documented in `docs/VM_ERRORS.md`.
+
 ## Stability
 
 IR v0 is a bridge format and may evolve.

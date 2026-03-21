@@ -4,6 +4,7 @@ See also:
 
 - `docs/ISA_VERSIONING.md` for version and compatibility policy
 - `docs/IR.md` for frontend-to-bytecode bridge contract
+- `docs/VM_ERRORS.md` for structured runtime error interpretation
 
 ## Encoding
 
@@ -37,6 +38,8 @@ Instruction binary encoding is fixed to 7 bytes:
 - Invalid register in `MOV_IMM`: `-2`
 - Invalid register in `ADD`: `-3`
 - Unknown opcode: `-4`
+- Full layer-scoped error model and subsystem interpretation rules are defined in
+  `docs/VM_ERRORS.md`.
 
 ## Compatibility policy
 

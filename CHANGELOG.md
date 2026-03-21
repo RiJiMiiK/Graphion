@@ -81,6 +81,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - PGO profile artifact manifests and explicit cache invalidation rules.
 - Assembly-vs-C fallback parity and performance reporting policy with dedicated comparison runner.
 - ISA versioning policy and compatibility matrix for the `v0.x` to `v1.0` transition.
+- Structured VM error model document covering frontend, IR, bytecode, and VM runtime codes.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

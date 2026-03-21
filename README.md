@@ -169,6 +169,7 @@ Security contacts and response targets are documented in [SECURITY_CONTACTS.md](
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 VM instruction encoding and compatibility are documented in [docs/ISA.md](docs/ISA.md).
 ISA versioning policy and compatibility matrix are documented in [docs/ISA_VERSIONING.md](docs/ISA_VERSIONING.md).
+Structured subsystem and VM runtime error behavior is documented in [docs/VM_ERRORS.md](docs/VM_ERRORS.md).
 Git workflow policy is documented in [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md).
 
 ## Support
