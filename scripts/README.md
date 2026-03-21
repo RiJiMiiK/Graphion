@@ -24,5 +24,6 @@ Quick pointers:
 - Cross-compiler report: `python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500000`
 - Report metadata is enforced by the bench JSON schema; renderers now reject missing `metadata` blocks.
 - Dispatch parity: `python scripts/quality/test_dispatch_variants.py --build-root build-dispatch-tests`
+  This includes deterministic-mode VM tests on each supported dispatch variant.
 - ASM safety: `python scripts/quality/check_asm_safety.py`
 - Local gate: `scripts/quality/quality_gate.sh` or `scripts/quality/quality_gate.ps1`

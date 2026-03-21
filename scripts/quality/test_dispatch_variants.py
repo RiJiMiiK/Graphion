@@ -19,7 +19,9 @@ def variant_supported(variant: str) -> bool:
 
 
 def main() -> int:
-  parser = argparse.ArgumentParser(description="Build and run Graphion tests across VM dispatch variants.")
+  parser = argparse.ArgumentParser(
+      description="Build and run Graphion tests across VM dispatch variants, including deterministic-mode coverage."
+  )
   parser.add_argument("--build-root", default="build-dispatch-tests", help="Root directory for per-variant build trees")
   parser.add_argument("--build-type", default="Release", help="Build type / config")
   parser.add_argument("--compiler", default="", help="Optional C compiler path or name")

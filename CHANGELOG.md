@@ -88,6 +88,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - ISA fixture format and fixture expansion policy document for golden conformance coverage.
 - Opcode-by-opcode semantic tables added to the ISA documentation.
 - Public named VM runtime error codes exported in `src/vm/vm.h`.
+- Deterministic-mode test coverage expanded across switch/jumptable/computed-goto dispatch builds.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

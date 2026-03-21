@@ -17,6 +17,8 @@ int test_vm_hypergraph_opcodes(void);
 int test_vm_superinstruction_add_pair_semantics(void);
 int test_vm_superinstruction_movimm_add_semantics(void);
 int test_vm_deterministic_mode_toggle(void);
+int test_vm_deterministic_mode_unknown_opcode(void);
+int test_vm_deterministic_mode_graph_semantics(void);
 int test_vm_add_wraparound_semantics(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
@@ -43,6 +45,8 @@ int main(void) {
       {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
       {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
       {"vm_deterministic_mode_toggle", test_vm_deterministic_mode_toggle},
+      {"vm_deterministic_mode_unknown_opcode", test_vm_deterministic_mode_unknown_opcode},
+      {"vm_deterministic_mode_graph_semantics", test_vm_deterministic_mode_graph_semantics},
       {"vm_add_wraparound_semantics", test_vm_add_wraparound_semantics},
       {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
       {"vm_fastpath_shape_cache_same_pointer_content_change",

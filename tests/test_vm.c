@@ -242,6 +242,77 @@ int test_vm_deterministic_mode_toggle(void) {
   return 0;
 }
 
+int test_vm_deterministic_mode_unknown_opcode(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {99, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  graphion_vm_set_deterministic(&vm, true);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_UNKNOWN_OPCODE) {
+    return 2;
+  }
+  if (vm.halted) {
+    return 3;
+  }
+  if (vm.pc != 2U) {
+    return 4;
+  }
+  if (vm.regs[0] != 7) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_vm_deterministic_mode_graph_semantics(void) {
+  graphion_vm vm;
+  graphion_csr_graph graph;
+  const uint32_t offsets[] = {0, 2, 3, 5, 6};
+  const uint32_t neighbors[] = {1, 2, 3, 0, 3, 1};
+  int32_t levels[4];
+  uint32_t queue[4];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 0},
+      {GVM_OP_BFS_LEVELS, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  rc = graphion_csr_graph_init(&graph, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 1;
+  }
+  graphion_vm_init(&vm);
+  graphion_vm_set_deterministic(&vm, true);
+  graphion_vm_bind_csr(&vm, &graph, levels, queue, 4U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  if (vm.arith_only_fastpath || vm.arith_only_halt_terminated) {
+    return 3;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 4;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 5;
+  }
+  if (vm.regs[1] != 4) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_vm_add_wraparound_semantics(void) {
   graphion_vm vm;
   const graphion_insn program[] = {
