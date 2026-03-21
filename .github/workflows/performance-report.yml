@@ -217,10 +217,10 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_pr }}
         uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: docs(perf): refresh automated performance report
+          commit-message: "docs(perf): refresh automated performance report"
           branch: automation/performance-report
           delete-branch: true
-          title: docs: refresh automated performance report
+          title: "docs: refresh automated performance report"
           body: |
             Automated refresh of `docs/performance/reports/PERFORMANCE_RESULTS.md`.
 

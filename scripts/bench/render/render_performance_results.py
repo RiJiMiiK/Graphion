@@ -19,6 +19,7 @@ BENCHMARK_ORDER = [
     "frontier_primitives",
     "vm_dispatch",
     "bfs_levels",
+    "neighbor_iteration",
     "hypergraph_incidence",
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
@@ -29,6 +30,7 @@ DISPLAY_NAMES = {
     "frontier_primitives": "frontier_primitives",
     "vm_dispatch": "vm_dispatch",
     "bfs_levels": "bfs_levels",
+    "neighbor_iteration": "neighbor_iteration",
     "hypergraph_incidence": "hypergraph_incidence",
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
@@ -39,6 +41,7 @@ LATENCY_LABELS = {
     "ns_per_frontier_item": "ns_per_frontier_item",
     "ns_per_instruction": "ns_per_instruction",
     "ns_per_edge": "ns_per_edge",
+    "ns_per_neighbor": "ns_per_neighbor",
     "ns_per_incidence": "ns_per_incidence",
     "ns_per_call": "ns_per_call",
 }

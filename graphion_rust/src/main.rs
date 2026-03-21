@@ -188,6 +188,45 @@ fn bench_bfs(iterations: u64) {
     );
 }
 
+fn bench_neighbors(iterations: u64) {
+    let graph = CsrGraph {
+        offsets: &[0, 2, 4, 6, 9, 12, 14, 17, 19],
+        neighbors: &[1, 2, 3, 4, 4, 5, 0, 6, 7, 1, 5, 7, 6, 7, 0, 2, 3, 1, 4],
+    };
+    let frontier: [usize; 3] = [0, 3, 6];
+    let frontier_neighbor_work: usize = frontier
+        .iter()
+        .map(|&node| (graph.offsets[node + 1] - graph.offsets[node]) as usize)
+        .sum();
+
+    let start = Instant::now();
+    let mut checksum: u64 = 0;
+    for _ in 0..iterations {
+        for &node in &frontier {
+            let begin = graph.offsets[node] as usize;
+            let end = graph.offsets[node + 1] as usize;
+            for &neighbor in &graph.neighbors[begin..end] {
+                checksum = checksum.wrapping_add(u64::from(neighbor));
+            }
+        }
+    }
+    black_box(checksum);
+    let secs = start.elapsed().as_secs_f64().max(1e-9);
+    let mteps = (iterations as f64 * frontier_neighbor_work as f64 / secs) / 1_000_000.0;
+    let ns_per_neighbor =
+        (secs * 1_000_000_000.0) / (iterations as f64 * frontier_neighbor_work as f64);
+    println!(
+        "{{\"benchmark\":\"neighbor_iteration\",\"iterations\":{},\"frontier_len\":{},\"neighbors_per_iteration\":{},\"seconds\":{:.6},\"mteps\":{:.3},\"ns_per_neighbor\":{:.3},\"checksum\":{}}}",
+        iterations,
+        frontier.len(),
+        frontier_neighbor_work,
+        secs,
+        mteps,
+        ns_per_neighbor,
+        checksum
+    );
+}
+
 fn bench_hypergraph(iterations: u64) {
     let hg = HyperGraph {
         node_offsets: &[0, 2, 5, 8, 10, 12],
@@ -357,7 +396,7 @@ fn parse_iterations(args: &[String], default_value: u64) -> u64 {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|hypergraph_incidence|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
+        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|hypergraph_incidence|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
         std::process::exit(2);
     }
 
@@ -365,6 +404,7 @@ fn main() {
         "frontier_primitives" => frontier_primitives(parse_iterations(&args, 300_000)),
         "vm_dispatch" => vm_dispatch(parse_iterations(&args, 500_000)),
         "bfs_levels" => bench_bfs(parse_iterations(&args, 200_000)),
+        "neighbor_iteration" => bench_neighbors(parse_iterations(&args, 300_000)),
         "hypergraph_incidence" => bench_hypergraph(parse_iterations(&args, 500_000)),
         "hypergraph_incident_sum" => bench_hypergraph_incident_sum(parse_iterations(&args, 500_000)),
         "hypergraph_hyperedge_node_sum" => {

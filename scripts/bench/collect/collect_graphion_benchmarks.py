@@ -38,6 +38,13 @@ BENCH_SPECS = [
         "throughput_key": "mteps",
     },
     {
+        "benchmark": "neighbor_iteration",
+        "target": "graphion_bench_neighbors",
+        "iterations": 300000,
+        "latency_key": "ns_per_neighbor",
+        "throughput_key": "mteps",
+    },
+    {
         "benchmark": "hypergraph_incidence",
         "target": "graphion_bench_hypergraph",
         "iterations": 500000,
@@ -116,6 +123,8 @@ def average_payloads(
         "frontier_items_per_iteration",
         "instructions_per_iteration",
         "edges_per_iteration",
+        "neighbors_per_iteration",
+        "frontier_len",
         "incidence_per_iteration",
         "calls_per_iteration",
     ):
