@@ -12,3 +12,13 @@ Layout:
 - `benchmarks/results/smoke/`: metadata smoke outputs and temporary merged-report scratch files.
 
 `benchmarks/results/` is intentionally gitignored. The structure is still documented here so scripts and local runs converge on the same paths.
+
+Benchmark scope is intentionally split:
+- some binaries measure raw kernels directly (`bench_bfs.c`, `bench_hypergraph*.c`)
+- some binaries measure VM execution (`bench_vm.c`, `bench_vm_graph.c`)
+
+`bench_vm_graph.c` is the coherence check for the current `.gion -> VM` backend path:
+- it exercises `GVM_OP_BFS_LEVEL_COUNT`
+- it exercises `GVM_OP_BFS_ORDER`
+- it exercises `GVM_OP_INCIDENT_COUNT`
+- it exercises `GVM_OP_INCIDENT_SUM`

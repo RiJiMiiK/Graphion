@@ -32,12 +32,14 @@ int main(int argc, char **argv) {
   const uint32_t hyperedge_nodes[] = {0, 1, 2, 1, 3, 2, 3};
   int32_t levels[4];
   uint32_t queue[4];
+  uint32_t frontier[4];
   const graphion_insn program[] = {
-      {GVM_OP_MOV_IMM, 0, 0, 0},          {GVM_OP_BFS_LEVELS, 0, 1, 0},
-      {GVM_OP_MOV_IMM, 2, 0, 1},          {GVM_OP_INCIDENT_COUNT, 2, 3, 0},
-      {GVM_OP_MOV_IMM, 4, 0, 0},          {GVM_OP_HYPEREDGE_SIZE, 4, 5, 0},
-      {GVM_OP_ADD, 6, 1, 0},              {GVM_OP_ADD, 6, 3, 0},
-      {GVM_OP_ADD, 6, 5, 0},              {GVM_OP_HALT, 0, 0, 0},
+      {GVM_OP_MOV_IMM, 0, 0, 0},          {GVM_OP_BFS_LEVEL_COUNT, 0, 1, 0},
+      {GVM_OP_MOV_IMM, 2, 0, 0},          {GVM_OP_BFS_ORDER, 2, 3, 0},
+      {GVM_OP_MOV_IMM, 4, 0, 1},          {GVM_OP_INCIDENT_COUNT, 4, 5, 0},
+      {GVM_OP_INCIDENT_SUM, 4, 6, 0},     {GVM_OP_ADD, 7, 1, 0},
+      {GVM_OP_ADD, 7, 3, 0},              {GVM_OP_ADD, 7, 5, 0},
+      {GVM_OP_ADD, 7, 6, 0},              {GVM_OP_HALT, 0, 0, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
   long iterations = 300000;
@@ -71,6 +73,7 @@ int main(int argc, char **argv) {
   graphion_vm_init(&vm);
   graphion_vm_bind_csr(&vm, &csr, levels, queue, 4U);
   graphion_vm_bind_hypergraph(&vm, &hg);
+  graphion_vm_bind_frontier(&vm, frontier, 0U, frontier, 4U);
   rc = graphion_vm_load(&vm, program, instruction_count);
   if (rc != 0) {
     return 5;
@@ -85,7 +88,7 @@ int main(int argc, char **argv) {
     if (rc != 0) {
       return 6;
     }
-    checksum += (uint64_t)vm.regs[6];
+    checksum += (uint64_t)vm.regs[7];
   }
   end = now_seconds();
 
