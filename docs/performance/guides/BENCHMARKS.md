@@ -42,6 +42,7 @@ Run hypergraph sum benches directly:
 ./build-bench/graphion_bench_frontier 300000
 ./build-bench/graphion_bench_neighbors 300000
 ./build-bench/graphion_bench_hypergraph_traversal 300000
+./build-bench/graphion_bench_frontier_thresholds
 ```
 
 Dispatch variant study (switch vs jumptable vs computed-goto when supported):
@@ -182,5 +183,7 @@ Interpretation order:
 - Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.
 - Prefer the automated `performance-report` workflow for official rolling snapshots instead of hand-editing the report.
 - Frontier-sensitive benchmark rows should carry the recommended `sparse` / `dense` mode when the heuristic applies.
+- Keep frontier threshold changes tied to `graphion_bench_frontier_thresholds` and the
+  paired report in `docs/performance/reports/FRONTIER_THRESHOLD_CALIBRATION.md`.
 - Keep official `baseline` vs `PGO` reports in `docs/performance/reports/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/optimization/`.
 - Keep cross-compiler governance snapshots in `docs/performance/reports/CROSS_COMPILER_REPORT.md` using the portable lane only.

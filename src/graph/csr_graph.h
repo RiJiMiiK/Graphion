@@ -20,6 +20,11 @@ typedef enum {
   GRAPHION_FRONTIER_MODE_DENSE = 1
 } graphion_frontier_mode;
 
+enum {
+  GRAPHION_FRONTIER_DENSE_NODE_PERCENT = 15,
+  GRAPHION_FRONTIER_DENSE_EDGE_PERCENT = 28
+};
+
 int graphion_csr_graph_init(graphion_csr_graph *graph,
                             size_t node_count,
                             size_t edge_count,

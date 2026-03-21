@@ -89,7 +89,10 @@ int test_graph_optional_edge_data(void) {
 int test_graph_frontier_mode_heuristics(void) {
   const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
   const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  const uint32_t threshold_offsets[] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U};
+  const uint32_t threshold_neighbors[] = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 0U};
   graphion_csr_graph g;
+  graphion_csr_graph threshold_graph;
   int rc;
 
   rc = graphion_csr_graph_init(&g, 4U, 6U, offsets, neighbors);
@@ -107,6 +110,22 @@ int test_graph_frontier_mode_heuristics(void) {
   }
   if (graphion_csr_graph_recommend_frontier_mode(&g, 0U, 1U) != GRAPHION_FRONTIER_MODE_SPARSE) {
     return 5;
+  }
+  rc = graphion_csr_graph_init(&threshold_graph, 10U, 10U, threshold_offsets, threshold_neighbors);
+  if (rc != 0) {
+    return 6;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&threshold_graph, 1U, 1U) != GRAPHION_FRONTIER_MODE_SPARSE) {
+    return 7;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&threshold_graph, 2U, 2U) != GRAPHION_FRONTIER_MODE_DENSE) {
+    return 8;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&threshold_graph, 0U, 2U) != GRAPHION_FRONTIER_MODE_SPARSE) {
+    return 9;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&threshold_graph, 0U, 3U) != GRAPHION_FRONTIER_MODE_DENSE) {
+    return 10;
   }
   return 0;
 }

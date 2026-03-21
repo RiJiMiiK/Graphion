@@ -100,11 +100,12 @@ graphion_frontier_mode graphion_csr_graph_recommend_frontier_mode(const graphion
     return GRAPHION_FRONTIER_MODE_SPARSE;
   }
 
-  if (frontier_len * 100U >= graph->node_count * 20U) {
+  if (frontier_len * 100U >= graph->node_count * GRAPHION_FRONTIER_DENSE_NODE_PERCENT) {
     return GRAPHION_FRONTIER_MODE_DENSE;
   }
 
-  if (graph->edge_count > 0U && frontier_neighbor_work * 100U >= graph->edge_count * 35U) {
+  if (graph->edge_count > 0U &&
+      frontier_neighbor_work * 100U >= graph->edge_count * GRAPHION_FRONTIER_DENSE_EDGE_PERCENT) {
     return GRAPHION_FRONTIER_MODE_DENSE;
   }
 
