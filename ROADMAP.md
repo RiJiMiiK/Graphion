@@ -34,7 +34,7 @@
 - [x] Optimization parity tests for dispatch variants and fastpath cache edge cases.
 - [x] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
 
-## Milestone 0.3.2 (Optimization Governance)
+## Milestone 0.3.2 (Optimization Governance) [done]
 
 - [x] Official PGO effectiveness thresholds per workload family.
 - [x] Cross-compiler optimization comparison policy (`MSVC` vs `GCC` vs `Clang`).
@@ -43,13 +43,22 @@
 - [x] Assembly-vs-C fallback parity and performance reporting policy.
 - [x] Profile artifact hygiene and cache invalidation rules.
 
-## Milestone 0.4 (VM + ISA Hardening)
+## Milestone 0.4 (VM + ISA Hardening) [done]
 
 - [x] ISA version policy (`v0.x` -> `v1.0`) with compatibility matrix.
 - [x] Golden ISA conformance tests (decode + execute fixtures).
 - [x] Structured VM error model and error codes document.
 - [x] Deterministic execution mode toggle (for reproducible debugging).
 - [x] Overflow/checked arithmetic policy per opcode class.
+
+## Milestone 0.4.1 (VM/ISA Stabilization)
+
+- [ ] Public named VM runtime error codes in `src/vm/vm.h`.
+- [ ] ISA fixture format documentation and fixture expansion policy.
+- [ ] Deterministic-mode coverage across all dispatch variants.
+- [ ] ASM parity coverage for hardening-sensitive ISA cases.
+- [ ] VM state snapshot/debug dump format for deterministic repro.
+- [ ] Opcode-by-opcode semantic tables (inputs, outputs, failure cases).
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)
 
