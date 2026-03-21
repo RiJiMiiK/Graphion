@@ -159,8 +159,6 @@ static int parse_graph_edge(const char *text,
     const char *close_bracket = strrchr(attrs, ']');
     char attrs_buf[GINT_LINE_MAX];
     size_t attrs_len;
-    size_t start = 0U;
-    size_t i = 0U;
     int in_string = 0;
     if (close_bracket == NULL || close_bracket < attrs) {
       set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute list");
@@ -175,6 +173,8 @@ static int parse_graph_edge(const char *text,
     attrs_buf[attrs_len] = '\0';
     trim_in_place(attrs_buf);
     if (attrs_buf[0] != '\0') {
+      size_t start = 0U;
+      size_t i = 0U;
       while (1) {
         const char current = attrs_buf[i];
         if (current == '"' && (i == 0U || attrs_buf[i - 1U] != '\\')) {
