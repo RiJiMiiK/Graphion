@@ -93,11 +93,15 @@
 ## Milestone 0.6 (Frontend And Language Surface)
 
 - [ ] `.gion` source-file extension and interpreter entry flow.
-- [ ] High-level interpreted syntax for dynamic variables, assignment, `print`, `def`, and `return`.
+- [ ] High-level interpreted syntax for dynamic variables and assignment, with no user-declared types.
+- [ ] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
 - [ ] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
 - [ ] User-facing hypergraph declarations with explicit hyperedge ids and integer node lists.
-- [ ] Scalar attribute parsing for graph/hypergraph declarations, with reserved `weight` normalized to float.
-- [ ] Builtin graph/hypergraph functions with user-facing semantics (`bfs`, `bfs_level`, incidence queries).
+- [ ] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
+- [ ] Builtin graph/hypergraph functions with user-facing semantics:
+  - `bfs(...)` returns visited node ids in BFS encounter order
+  - `bfs_level(...)` returns only the number of BFS levels
+  - incidence query builtins align with the future user-facing graph/hypergraph API
 - [ ] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`).
 
 ## Milestone 0.6.1 (Language Surface Follow-Up)
