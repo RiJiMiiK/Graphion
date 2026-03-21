@@ -23,6 +23,19 @@ struct CsrGraph {
     neighbors: &'static [u32],
 }
 
+fn recommend_frontier_mode(node_count: usize, edge_count: usize, frontier_len: usize, frontier_neighbor_work: usize) -> &'static str {
+    if node_count == 0 {
+        return "sparse";
+    }
+    if frontier_len * 100 >= node_count * 20 {
+        return "dense";
+    }
+    if edge_count > 0 && frontier_neighbor_work * 100 >= edge_count * 35 {
+        return "dense";
+    }
+    "sparse"
+}
+
 struct HyperGraph {
     node_offsets: &'static [u32],
     node_hyperedges: &'static [u32],
@@ -198,6 +211,12 @@ fn bench_neighbors(iterations: u64) {
         .iter()
         .map(|&node| (graph.offsets[node + 1] - graph.offsets[node]) as usize)
         .sum();
+    let frontier_mode = recommend_frontier_mode(
+        graph.offsets.len() - 1,
+        graph.neighbors.len(),
+        frontier.len(),
+        frontier_neighbor_work,
+    );
 
     let start = Instant::now();
     let mut checksum: u64 = 0;
@@ -216,10 +235,12 @@ fn bench_neighbors(iterations: u64) {
     let ns_per_neighbor =
         (secs * 1_000_000_000.0) / (iterations as f64 * frontier_neighbor_work as f64);
     println!(
-        "{{\"benchmark\":\"neighbor_iteration\",\"iterations\":{},\"frontier_len\":{},\"neighbors_per_iteration\":{},\"seconds\":{:.6},\"mteps\":{:.3},\"ns_per_neighbor\":{:.3},\"checksum\":{}}}",
+        "{{\"benchmark\":\"neighbor_iteration\",\"iterations\":{},\"frontier_len\":{},\"neighbors_per_iteration\":{},\"frontier_neighbor_work\":{},\"recommended_frontier_mode\":\"{}\",\"seconds\":{:.6},\"mteps\":{:.3},\"ns_per_neighbor\":{:.3},\"checksum\":{}}}",
         iterations,
         frontier.len(),
         frontier_neighbor_work,
+        frontier_neighbor_work,
+        frontier_mode,
         secs,
         mteps,
         ns_per_neighbor,

@@ -81,6 +81,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Official frontier primitive benchmark added and integrated into the performance collection pipeline.
 - Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
+- Frontier-sensitive benchmark outputs now report the recommended sparse/dense mode in collections and perf docs.
 - Automated `PERFORMANCE_RESULTS.md` refresh workflow added for Windows/Linux benchmark lanes with optional PR publication.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.

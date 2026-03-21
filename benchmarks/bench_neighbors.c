@@ -35,6 +35,8 @@ int main(int argc, char **argv) {
   int rc;
   uint64_t checksum = 0U;
   size_t frontier_neighbor_work = 0U;
+  graphion_frontier_mode mode;
+  const char *mode_label;
 
   if (argc > 1) {
     iterations = strtol(argv[1], NULL, 10);
@@ -53,6 +55,8 @@ int main(int argc, char **argv) {
   for (size_t j = 0; j < frontier_len; ++j) {
     frontier_neighbor_work += graphion_csr_graph_neighbor_count(&graph, frontier[j]);
   }
+  mode = graphion_csr_graph_recommend_frontier_mode(&graph, frontier_len, frontier_neighbor_work);
+  mode_label = mode == GRAPHION_FRONTIER_MODE_DENSE ? "dense" : "sparse";
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
@@ -77,9 +81,11 @@ int main(int argc, char **argv) {
 
   printf("{\"benchmark\":\"neighbor_iteration\",\"iterations\":%ld,"
          "\"frontier_len\":%zu,\"neighbors_per_iteration\":%zu,"
+         "\"frontier_neighbor_work\":%zu,\"recommended_frontier_mode\":\"%s\","
          "\"seconds\":%.6f,\"mteps\":%.3f,\"ns_per_neighbor\":%.3f,"
          "\"checksum\":%llu}\n",
-         iterations, frontier_len, frontier_neighbor_work, seconds, mteps, ns_per_neighbor,
+         iterations, frontier_len, frontier_neighbor_work, frontier_neighbor_work, mode_label,
+         seconds, mteps, ns_per_neighbor,
          (unsigned long long)checksum);
   return 0;
 }

@@ -109,6 +109,8 @@ def average_payloads(
         "edges_per_iteration",
         "neighbors_per_iteration",
         "frontier_len",
+        "frontier_neighbor_work",
+        "recommended_frontier_mode",
         "memberships_per_iteration",
         "incidence_per_iteration",
         "calls_per_iteration",
