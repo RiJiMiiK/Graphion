@@ -123,21 +123,36 @@ jobs:
 
   rust-comparison:
     needs: resolve-policy
-    if: ${{ hashFiles('graphion_rust/Cargo.toml') != '' }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
+      - name: Detect Rust benchmark project
+        id: rust-project
+        shell: pwsh
+        run: |
+          if (Test-Path "graphion_rust/Cargo.toml") {
+            "present=true" >> $env:GITHUB_OUTPUT
+          } else {
+            "present=false" >> $env:GITHUB_OUTPUT
+          }
       - name: Collect Rust benchmark lane
+        if: steps.rust-project.outputs.present == 'true'
         run: >
           python scripts/bench/collect/collect_rust_benchmarks.py
           --manifest-path graphion_rust/Cargo.toml
           --runs ${{ needs.resolve-policy.outputs.runs }}
           --platform-label "Rust Windows"
           --output benchmarks/results/performance/rust_automated.json
+      - name: Summarize Rust skip
+        if: steps.rust-project.outputs.present != 'true'
+        shell: pwsh
+        run: |
+          "Rust lane skipped: graphion_rust/Cargo.toml not present in checkout." >> $env:GITHUB_STEP_SUMMARY
       - name: Upload Rust artifacts
+        if: steps.rust-project.outputs.present == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: performance-rust
