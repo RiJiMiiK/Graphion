@@ -225,10 +225,11 @@ jobs:
             echo "- rust lane: ${{ needs.rust-comparison.result }}"
             echo "- report artifact: performance-report-md"
             if [[ ! -f benchmarks/results/performance/rust_automated.json ]]; then
-              echo "- rust note: skipped because graphion_rust is not versioned in this repository checkout"
+              echo "- rust note: skipped because graphion_rust is not present in this checkout"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Open PR with refreshed report
+        id: create-pr
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_pr }}
         uses: peter-evans/create-pull-request@v8
         with:
@@ -244,3 +245,42 @@ jobs:
             - Windows Graphion benchmark lane
             - Linux Graphion benchmark lane
             - Optional Rust lane when `graphion_rust` is present in the checkout
+      - name: Enable auto-merge on refreshed report PR
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_pr && steps.create-pr.outputs.pull-request-number != '' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pullNumber = Number("${{ steps.create-pr.outputs.pull-request-number }}");
+            const { owner, repo } = context.repo;
+
+            const { data: pull } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pullNumber,
+            });
+
+            await github.graphql(
+              `
+                mutation EnableAutoMerge($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(
+                    input: {
+                      pullRequestId: $pullRequestId
+                      mergeMethod: MERGE
+                    }
+                  ) {
+                    pullRequest {
+                      number
+                      autoMergeRequest {
+                        enabledAt
+                      }
+                    }
+                  }
+                }
+              `,
+              { pullRequestId: pull.node_id }
+            );
+
+            core.summary
+              .addHeading("Auto-merge enabled")
+              .addRaw(`PR #${pull.number} is configured for auto-merge once required checks pass.`)
+              .write();
