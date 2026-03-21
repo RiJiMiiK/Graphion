@@ -51,7 +51,7 @@
 - [x] Deterministic execution mode toggle (for reproducible debugging).
 - [x] Overflow/checked arithmetic policy per opcode class.
 
-## Milestone 0.4.1 (VM/ISA Stabilization)
+## Milestone 0.4.1 (VM/ISA Stabilization) [done]
 
 - [x] Public named VM runtime error codes in `src/vm/vm.h`.
 - [x] ISA fixture format documentation and fixture expansion policy.
@@ -59,6 +59,13 @@
 - [x] ASM parity coverage for hardening-sensitive ISA cases.
 - [x] VM state snapshot/debug dump format for deterministic repro.
 - [x] Opcode-by-opcode semantic tables (inputs, outputs, failure cases).
+
+## Milestone 0.4.2 (VM/ISA Repro And Governance)
+
+- [ ] Deterministic repro workflow documentation (snapshot + fixture + environment capture).
+- [ ] Named repro artifact policy for bug reports and CI failures.
+- [ ] VM/ISA compatibility checklist for adding or changing opcodes.
+- [ ] Decode/load/execute failure classification table for debugging and tests.
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)
 
