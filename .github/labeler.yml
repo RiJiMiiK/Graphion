@@ -16,9 +16,8 @@ security:
 
 performance:
   - changed-files:
-      - any-glob-to-any-file: ["benchmarks/**", "scripts/bench/run_bench.py", "scripts/bench/compare_bench.py", "scripts/bench/bench_compare_with_rust.py"]
+      - any-glob-to-any-file: ["benchmarks/**", "scripts/bench/**"]
 
 dependencies:
   - changed-files:
       - any-glob-to-any-file: ["Dockerfile", "docker-compose.yml"]
-

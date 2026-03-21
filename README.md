@@ -65,13 +65,13 @@ cmake --build build-asm --config Release
 PGO pipeline:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
 PowerShell / MSVC:
 
 ```powershell
-python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
 Sanitizer build (Linux/macOS with Clang/GCC):
@@ -114,12 +114,12 @@ Run benchmark smoke and produce JSON:
 ```bash
 cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
 cmake --build build-bench
-python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
+python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
-See [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
-Latest comparative snapshot: [docs/PERFORMANCE_RESULTS.md](docs/PERFORMANCE_RESULTS.md).
-PGO workflow details: [docs/PGO.md](docs/PGO.md).
+See [docs/performance/guides/BENCHMARKS.md](docs/performance/guides/BENCHMARKS.md).
+Latest comparative snapshot: [docs/performance/reports/PERFORMANCE_RESULTS.md](docs/performance/reports/PERFORMANCE_RESULTS.md).
+PGO workflow details: [docs/performance/guides/PGO.md](docs/performance/guides/PGO.md).
 
 Additional graph-core benchmark:
 
@@ -156,9 +156,9 @@ PowerShell:
 ## Security
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
-For assembly-specific safeguards and workflow, see [docs/ASSEMBLY_SAFETY.md](docs/ASSEMBLY_SAFETY.md).
-For assembly ABI/register mapping, see [docs/ASM_REGISTERS.md](docs/ASM_REGISTERS.md).
-For branch hardening settings, see [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md).
+For assembly-specific safeguards and workflow, see [docs/runtime/asm/ASSEMBLY_SAFETY.md](docs/runtime/asm/ASSEMBLY_SAFETY.md).
+For assembly ABI/register mapping, see [docs/runtime/asm/ASM_REGISTERS.md](docs/runtime/asm/ASM_REGISTERS.md).
+For branch hardening settings, see [docs/process/BRANCH_PROTECTION.md](docs/process/BRANCH_PROTECTION.md).
 For GitHub Actions security posture, see [docs/ACTIONS_SECURITY.md](docs/ACTIONS_SECURITY.md).
 Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
 Nightly long fuzzing is scheduled in GitHub Actions.
@@ -167,10 +167,11 @@ Security contacts and response targets are documented in [SECURITY_CONTACTS.md](
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
-VM instruction encoding and compatibility are documented in [docs/ISA.md](docs/ISA.md).
-ISA versioning policy and compatibility matrix are documented in [docs/ISA_VERSIONING.md](docs/ISA_VERSIONING.md).
-Structured subsystem and VM runtime error behavior is documented in [docs/VM_ERRORS.md](docs/VM_ERRORS.md).
-Git workflow policy is documented in [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md).
+Documentation map: [docs/README.md](docs/README.md).
+VM instruction encoding and compatibility are documented in [docs/runtime/core/ISA.md](docs/runtime/core/ISA.md).
+ISA versioning policy and compatibility matrix are documented in [docs/runtime/contracts/ISA_VERSIONING.md](docs/runtime/contracts/ISA_VERSIONING.md).
+Structured subsystem and VM runtime error behavior is documented in [docs/runtime/debugging/VM_ERRORS.md](docs/runtime/debugging/VM_ERRORS.md).
+Git workflow policy is documented in [docs/process/GIT_WORKFLOW.md](docs/process/GIT_WORKFLOW.md).
 
 ## Support
 
