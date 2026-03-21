@@ -121,6 +121,11 @@ Current `v0.x` status:
 | `-2` | Invalid register in `MOV_IMM` |
 | `-3` | Invalid register operands for register-based VM opcodes |
 
+Arithmetic overflow currently does not raise a dedicated VM error:
+
+- `MOV_IMM` is exact for its `int32 -> int64` conversion
+- `ADD` uses explicit two's-complement wraparound semantics
+
 ### Graph VM codes
 
 | Code | Current meaning |

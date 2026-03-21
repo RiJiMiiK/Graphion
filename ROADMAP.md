@@ -49,7 +49,7 @@
 - [x] Golden ISA conformance tests (decode + execute fixtures).
 - [x] Structured VM error model and error codes document.
 - [x] Deterministic execution mode toggle (for reproducible debugging).
-- [ ] Overflow/checked arithmetic policy per opcode class.
+- [x] Overflow/checked arithmetic policy per opcode class.
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)
 

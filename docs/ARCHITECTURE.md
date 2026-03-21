@@ -31,6 +31,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `docs/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:
   - `docs/VM_ERRORS.md` defines subsystem-local error-code interpretation.
+- Arithmetic overflow policy:
+  - `ADD` uses explicit two's-complement wraparound semantics in the VM.
 
 ## Hotpath acceleration
 

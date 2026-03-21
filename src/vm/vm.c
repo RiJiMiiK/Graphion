@@ -2,6 +2,7 @@
 
 #include "vm/vm.h"
 
+#include <limits.h>
 #include <stddef.h>
 
 typedef struct {
@@ -61,6 +62,12 @@ static void shape_cache_store(const graphion_insn *program,
 
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
 
+static int64_t wrap_add_i64(int64_t lhs, int64_t rhs) {
+  const uint64_t ulhs = (uint64_t)lhs;
+  const uint64_t urhs = (uint64_t)rhs;
+  return (int64_t)(ulhs + urhs);
+}
+
 static int is_arith_only_fastpath_candidate(const graphion_insn *program,
                                             size_t program_len,
                                             bool *halt_terminated) {
@@ -113,7 +120,7 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.b == in.a) {
-            regs[next.a] += regs[in.a];
+            regs[next.a] = wrap_add_i64(regs[next.a], regs[in.a]);
             p++;
           }
         }
@@ -122,12 +129,12 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-            regs[in.a] += regs[in.b] + regs[next.b];
+            regs[in.a] = wrap_add_i64(regs[in.a], wrap_add_i64(regs[in.b], regs[next.b]));
             p++;
             break;
           }
         }
-        regs[in.a] += regs[in.b];
+        regs[in.a] = wrap_add_i64(regs[in.a], regs[in.b]);
         break;
       default:
         vm->pc = (size_t)(p - vm->program);
@@ -156,7 +163,7 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.b == in.a) {
-            regs[next.a] += regs[in.a];
+            regs[next.a] = wrap_add_i64(regs[next.a], regs[in.a]);
             p++;
           }
         }
@@ -165,12 +172,12 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-            regs[in.a] += regs[in.b] + regs[next.b];
+            regs[in.a] = wrap_add_i64(regs[in.a], wrap_add_i64(regs[in.b], regs[next.b]));
             p++;
             break;
           }
         }
-        regs[in.a] += regs[in.b];
+        regs[in.a] = wrap_add_i64(regs[in.a], regs[in.b]);
         break;
       default:
         vm->pc = (size_t)(p - vm->program);
@@ -293,7 +300,7 @@ static int op_add(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return -3;
   }
-  vm->regs[in->a] += vm->regs[in->b];
+  vm->regs[in->a] = wrap_add_i64(vm->regs[in->a], vm->regs[in->b]);
   return 0;
 }
 

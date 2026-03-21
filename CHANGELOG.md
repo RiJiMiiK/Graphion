@@ -84,6 +84,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Structured VM error model document covering frontend, IR, bytecode, and VM runtime codes.
 - Golden ISA conformance fixtures covering decode and execute behavior for documented VM opcodes.
 - Deterministic VM execution toggle for reproducible debugging on the portable switch-dispatch path.
+- Overflow policy documented per opcode class, with explicit wraparound semantics for `GVM_OP_ADD`.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
