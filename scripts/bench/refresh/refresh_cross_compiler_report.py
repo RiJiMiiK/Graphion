@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
 import pathlib
+import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
+import argparse
 import subprocess
 import tempfile
 
@@ -49,7 +54,7 @@ def main() -> int:
     if not args.skip_windows:
         run([
             "python",
-            "scripts/bench/generate_optimization_report.py",
+            "scripts/bench/pgo/generate_optimization_report.py",
             "--build-root",
             args.windows_build_root,
             "--output-json",
@@ -86,7 +91,7 @@ def main() -> int:
             "-lc",
             shell_join([
                 (
-                    "python3 scripts/bench/generate_optimization_report.py "
+                    "python3 scripts/bench/pgo/generate_optimization_report.py "
                     "--build-root {build_root} "
                     "--output-json benchmarks/results/cross-compiler/cross_compiler_linux_gcc.json "
                     "--output-md benchmarks/results/smoke/{temp_dir}/{md_name} "
@@ -117,7 +122,7 @@ def main() -> int:
             "-lc",
             shell_join([
                 (
-                    "python3 scripts/bench/generate_optimization_report.py "
+                    "python3 scripts/bench/pgo/generate_optimization_report.py "
                     "--build-root {build_root} "
                     "--output-json benchmarks/results/cross-compiler/cross_compiler_linux_clang.json "
                     "--output-md benchmarks/results/smoke/{temp_dir}/{md_name} "
@@ -139,7 +144,7 @@ def main() -> int:
 
     render_cmd = [
         "python",
-        "scripts/bench/render_cross_compiler_report.py",
+        "scripts/bench/render/render_cross_compiler_report.py",
         "--output-md",
         str(CROSS_COMPILER_REPORT_MD),
         "--output-json",

@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import pathlib
+import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import json
 import statistics
 import subprocess
 
-from bench_paths import LINUX_10X_JSON
+from bench_paths import PERFORMANCE_LINUX_JSON
 
 
 def main() -> int:
@@ -22,7 +28,7 @@ def main() -> int:
   for name, exe, thr_key in benches:
     secs = []
     thrs = []
-    for _ in range(10):
+    for _ in range(100):
       out = subprocess.check_output([exe, "500000"], text=True).strip().splitlines()[-1]
       payload = json.loads(out)
       secs.append(float(payload["seconds"]))
@@ -30,12 +36,13 @@ def main() -> int:
     rows.append(
         {
             "benchmark": name,
+            "runs": 100,
             "graphion_linux_seconds_avg": round(statistics.mean(secs), 6),
             "graphion_linux_throughput_avg": round(statistics.mean(thrs), 3),
         }
     )
 
-  out_path = LINUX_10X_JSON
+  out_path = PERFORMANCE_LINUX_JSON
   out_path.parent.mkdir(parents=True, exist_ok=True)
   out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
   print(json.dumps(rows, indent=2))

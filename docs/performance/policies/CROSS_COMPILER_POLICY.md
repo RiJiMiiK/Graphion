@@ -35,7 +35,7 @@ This is a release-governance view, not a pure compiler microbenchmark. `MSVC` re
 Refresh the cross-compiler governance report:
 
 ```powershell
-python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500000
+python scripts/bench/refresh/refresh_cross_compiler_report.py --runs 20 --iterations 500000
 ```
 
 This generates:

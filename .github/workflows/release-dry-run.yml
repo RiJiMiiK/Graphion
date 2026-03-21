@@ -30,7 +30,7 @@ jobs:
           grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/process/RELEASE_CHECKLIST.md
       - name: Generate release-candidate PGO smoke report
         run: |
-          python3 scripts/bench/generate_optimization_report.py \
+          python3 scripts/bench/pgo/generate_optimization_report.py \
             --build-root build-release-pgo \
             --output-json benchmarks/results/release/release_candidate_pgo.json \
             --output-md docs/performance/reports/OPTIMIZATION_REPORTS.md \
@@ -57,7 +57,7 @@ jobs:
       - name: Evaluate PGO release-candidate alert policy
         run: |
           echo "PGO alert mode: ${{ steps.pgo-alert-mode.outputs.mode }} (${{ steps.pgo-alert-mode.outputs.reason }})"
-          python3 scripts/bench/check_pgo_alerts.py \
+          python3 scripts/bench/pgo/check_pgo_alerts.py \
             --report-json benchmarks/results/release/release_candidate_pgo.json \
             --mode "${{ steps.pgo-alert-mode.outputs.mode }}"
       - name: Simulate source archive generation

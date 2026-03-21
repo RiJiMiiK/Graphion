@@ -16,14 +16,14 @@ cmake --build build-bench
 Run and store JSON:
 
 ```bash
-python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
+python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
 Refresh the rolling performance snapshot doc from local Windows, optional Rust sandbox,
 and Docker Linux measurements:
 
 ```powershell
-python scripts/bench/refresh_performance_results.py
+python scripts/bench/refresh/refresh_performance_results.py
 ```
 
 Run hypergraph sum benches directly:
@@ -36,13 +36,13 @@ Run hypergraph sum benches directly:
 Dispatch variant study (switch vs jumptable vs computed-goto when supported):
 
 ```bash
-python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs 20
+python3 scripts/bench/compare/compare_dispatch_variants.py --iterations 500000 --runs 20
 ```
 
 Render `docs/performance/reports/PERFORMANCE_RESULTS.md` from collected JSON artifacts only:
 
 ```bash
-python3 scripts/bench/render_performance_results.py \
+python3 scripts/bench/render/render_performance_results.py \
   --windows-json benchmarks/results/performance/windows_100x_latest.json \
   --linux-json benchmarks/results/performance/linux_100x_latest.json \
   --rust-json benchmarks/results/performance/rust_100x_latest.json \
@@ -53,25 +53,25 @@ python3 scripts/bench/render_performance_results.py \
 PGO training + optimized rebuild:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
 MSVC:
 
 ```powershell
-python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
 The default PGO corpus is `representative`. For CI-style smoke runs:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- -G Ninja -DCMAKE_C_COMPILER=clang
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo --corpus-profile ci --iterations-scale 0.10 -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
 Official baseline vs PGO report:
 
 ```bash
-python3 scripts/bench/generate_optimization_report.py \
+python3 scripts/bench/pgo/generate_optimization_report.py \
   --build-root build-opt-report \
   --output-json benchmarks/results/optimization/optimization_report_latest.json \
   --output-md docs/performance/reports/OPTIMIZATION_REPORTS.md \
@@ -81,25 +81,25 @@ python3 scripts/bench/generate_optimization_report.py \
 MSVC:
 
 ```powershell
-python scripts/bench/generate_optimization_report.py --build-root build-opt-report
+python scripts/bench/pgo/generate_optimization_report.py --build-root build-opt-report
 ```
 
 Refresh the unified optimization report with local Windows plus Docker Linux:
 
 ```powershell
-python scripts/bench/refresh_optimization_reports.py --runs 100
+python scripts/bench/refresh/refresh_optimization_reports.py --runs 100
 ```
 
 Refresh the portable cross-compiler governance report:
 
 ```powershell
-python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500000
+python scripts/bench/refresh/refresh_cross_compiler_report.py --runs 20 --iterations 500000
 ```
 
 Compare the asm hotpath against the C fallback (Linux / Docker):
 
 ```bash
-python3 scripts/bench/compare_asm_fallback.py \
+python3 scripts/bench/compare/compare_asm_fallback.py \
   --build-root build-asm-fallback \
   --runs 20 \
   --iterations 500000 \
@@ -109,7 +109,7 @@ python3 scripts/bench/compare_asm_fallback.py \
 Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
-python3 scripts/bench/bench_compare_with_rust.py \
+python3 scripts/bench/compare/bench_compare_with_rust.py \
   --vm-json benchmarks/results/performance/latest.json \
   --rust-cmd "cargo run --release --manifest-path /absolute/path/to/rust_bench/Cargo.toml"
 ```
@@ -117,7 +117,7 @@ python3 scripts/bench/bench_compare_with_rust.py \
 Or with a prepared Rust JSON result:
 
 ```bash
-python3 scripts/bench/bench_compare_with_rust.py \
+python3 scripts/bench/compare/bench_compare_with_rust.py \
   --vm-json benchmarks/results/performance/latest.json \
   --rust-json /absolute/path/to/rust_result.json
 ```
@@ -147,7 +147,7 @@ Interpretation order:
 - Run on a stable machine profile when comparing commits.
 - Generated reports must include enforced environment metadata (`platform_label`, `platform`, `machine`, `cpu_model`, `hostname`, `python`, `git_rev`, `runs`).
 - Toolchain-oriented reports must also include enforced lane metadata such as `compiler_kind`, `asm_enabled`, and relevant build/report parameters.
-- Compare against baseline with `scripts/bench/compare_bench.py` in CI.
+- Compare against baseline with `scripts/bench/compare/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
 - Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.

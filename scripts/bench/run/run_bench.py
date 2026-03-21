@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import pathlib
+import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import argparse
 import json
-import pathlib
 import subprocess
-import sys
 from datetime import datetime, timezone
 
 from bench_paths import PERFORMANCE_LATEST_JSON

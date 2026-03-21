@@ -60,13 +60,13 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Dedicated hypergraph sum benchmark binaries:
   - `graphion_bench_hypergraph_incident_sum`
   - `graphion_bench_hypergraph_hyperedge_node_sum`
-- Linux benchmark helper scripts (`scripts/bench/run_linux_bench_*.py`).
+- Linux benchmark helper scripts (`scripts/bench/run/run_linux_bench_*.py`).
 - Assembly ABI/register reference doc (`docs/runtime/asm/ASM_REGISTERS.md`).
 - Performance snapshot doc with x100 benchmark runs (`docs/performance/reports/PERFORMANCE_RESULTS.md`).
 - Scripts index and categorized scripts layout (`scripts/README.md`).
 - Parser front-end skeleton (`source -> IR`) and IR lowering bridge (`IR -> VM bytecode`) with tests.
 - End-to-end parser bridge execution test (`source -> IR -> bytecode -> VM`) and IR v0 contract doc (`docs/runtime/core/IR.md`).
-- Cross-toolchain PGO pipeline doc, workflow, and local runner script (`docs/performance/guides/PGO.md`, `scripts/bench/run_pgo_pipeline.py`).
+- Cross-toolchain PGO pipeline doc, workflow, and local runner script (`docs/performance/guides/PGO.md`, `scripts/bench/pgo/run_pgo_pipeline.py`).
 - Dispatch-variant parity runner and extra VM edge-case tests for shape-cache / dispatch semantics.
 - Official optimization report generator and report doc for `baseline` vs `PGO`, including per-variant `vm_dispatch` sections.
 - Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.

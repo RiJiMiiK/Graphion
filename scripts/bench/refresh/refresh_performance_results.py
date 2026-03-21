@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
 import pathlib
-import subprocess
 import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
+import argparse
+import subprocess
 
 from bench_paths import (
     DISPATCH_LINUX_JSON,
@@ -54,7 +58,7 @@ def main() -> int:
         run(["cmake", "--build", args.windows_build_dir, "--config", "Release"])
         run([
             "python",
-            "scripts/bench/collect_graphion_benchmarks.py",
+            "scripts/bench/collect/collect_graphion_benchmarks.py",
             "--build-dir",
             args.windows_build_dir,
             "--config",
@@ -72,7 +76,7 @@ def main() -> int:
         ])
         dispatch_cmd = [
             "python",
-            "scripts/bench/compare_dispatch_variants.py",
+            "scripts/bench/compare/compare_dispatch_variants.py",
             "--iterations",
             "500000",
             "--runs",
@@ -93,7 +97,7 @@ def main() -> int:
     if not args.skip_rust:
         run([
             "python",
-            "scripts/bench/collect_rust_benchmarks.py",
+            "scripts/bench/collect/collect_rust_benchmarks.py",
             "--runs",
             str(args.runs),
             "--platform-label",
@@ -110,12 +114,12 @@ def main() -> int:
             ),
             "cmake --build {build_dir} --config Release".format(build_dir=args.linux_build_dir),
             (
-                "python3 scripts/bench/collect_graphion_benchmarks.py --build-dir {build_dir} --config Release --runs {runs} "
+                "python3 scripts/bench/collect/collect_graphion_benchmarks.py --build-dir {build_dir} --config Release --runs {runs} "
                 "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
                 "--output benchmarks/results/performance/linux_100x_latest.json"
             ).format(build_dir=args.linux_build_dir, runs=args.runs),
             (
-                "python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs {runs} "
+                "python3 scripts/bench/compare/compare_dispatch_variants.py --iterations 500000 --runs {runs} "
                 "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
                 "--output benchmarks/results/performance/dispatch_variants.json --cmake-arg=-DGRAPHION_ENABLE_ASM=ON"
             ).format(runs=args.runs),
@@ -133,7 +137,7 @@ def main() -> int:
 
     render_cmd = [
         "python",
-        "scripts/bench/render_performance_results.py",
+        "scripts/bench/render/render_performance_results.py",
         "--windows-json",
         str(windows_json),
         "--linux-json",

@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
 import pathlib
+import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
+import argparse
 import subprocess
 import tempfile
 
@@ -43,7 +48,7 @@ def main() -> int:
     if not args.skip_windows:
         run([
             "python",
-            "scripts/bench/generate_optimization_report.py",
+            "scripts/bench/pgo/generate_optimization_report.py",
             "--build-root",
             args.windows_build_root,
             "--output-json",
@@ -62,7 +67,7 @@ def main() -> int:
     if not args.skip_linux:
         linux_commands = [
             (
-                "python3 scripts/bench/generate_optimization_report.py --build-root {build_root} "
+                "python3 scripts/bench/pgo/generate_optimization_report.py --build-root {build_root} "
                 "--output-json benchmarks/results/optimization/optimization_report_linux.json "
                 "--output-md benchmarks/results/smoke/{temp_dir}/{linux_md_name} "
                 "--platform-label \"Graphion Linux (Docker GCC)\" "
@@ -89,7 +94,7 @@ def main() -> int:
 
     render_cmd = [
         "python",
-        "scripts/bench/render_optimization_reports.py",
+        "scripts/bench/render/render_optimization_reports.py",
         "--output-md",
         str(OPTIMIZATION_REPORT_MD),
         "--output-json",

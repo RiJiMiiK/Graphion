@@ -30,7 +30,7 @@ Any assembly hotpath change must provide both:
 Use the dedicated comparison runner:
 
 ```bash
-python3 scripts/bench/compare_asm_fallback.py \
+python3 scripts/bench/compare/compare_asm_fallback.py \
   --build-root build-asm-fallback \
   --runs 20 \
   --iterations 500000 \
@@ -41,7 +41,7 @@ On Windows, run the comparison inside the project Docker environment because the
 
 ```powershell
 docker compose run --rm graphion-dev bash -lc \
-  "python3 scripts/bench/compare_asm_fallback.py --build-root build-asm-fallback --runs 20 --iterations 500000 -- -G Ninja -DCMAKE_C_COMPILER=gcc"
+  "python3 scripts/bench/compare/compare_asm_fallback.py --build-root build-asm-fallback --runs 20 --iterations 500000 -- -G Ninja -DCMAKE_C_COMPILER=gcc"
 ```
 
 The command generates:

@@ -17,19 +17,19 @@ The build is controlled with:
 Recommended entrypoint:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
 GCC:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=gcc
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=gcc
 ```
 
 MSVC:
 
 ```powershell
-python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
 The default corpus profile is `representative`.
@@ -99,10 +99,10 @@ Policy by trigger:
 The `pull_request` gate is intentionally path-scoped to release and PGO workflow files so the smoke job is not attached to unrelated feature work.
 
 For a unified engineering report that merges local Windows and Docker Linux optimization results,
-use `scripts/bench/refresh_optimization_reports.py`.
+use `scripts/bench/refresh/refresh_optimization_reports.py`.
 
 For portable cross-compiler governance (`MSVC` vs `GCC` vs `Clang`), use
-`scripts/bench/refresh_cross_compiler_report.py` and `docs/performance/policies/CROSS_COMPILER_POLICY.md`.
+`scripts/bench/refresh/refresh_cross_compiler_report.py` and `docs/performance/policies/CROSS_COMPILER_POLICY.md`.
 Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
 the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
 On pull requests this is advisory-only; the blocking mode is reserved for manual candidate validation.

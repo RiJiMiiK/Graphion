@@ -65,13 +65,13 @@ cmake --build build-asm --config Release
 PGO pipeline:
 
 ```bash
-python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
 PowerShell / MSVC:
 
 ```powershell
-python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
 Sanitizer build (Linux/macOS with Clang/GCC):
@@ -114,7 +114,7 @@ Run benchmark smoke and produce JSON:
 ```bash
 cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
 cmake --build build-bench
-python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
+python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
 ```
 
 See [docs/performance/guides/BENCHMARKS.md](docs/performance/guides/BENCHMARKS.md).

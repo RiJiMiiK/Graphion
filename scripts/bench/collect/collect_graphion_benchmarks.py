@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import pathlib
+import sys
+
+SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(SCRIPT_BENCH_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import argparse
 import json
-import pathlib
 import statistics
 import subprocess
-import sys
 
 from report_metadata import base_metadata, validate_metadata
 
@@ -14,36 +18,42 @@ from report_metadata import base_metadata, validate_metadata
 BENCH_SPECS = [
     {
         "benchmark": "vm_dispatch",
+        "target": "graphion_bench",
         "iterations": 500000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
     {
         "benchmark": "bfs_levels",
+        "target": "graphion_bench_bfs",
         "iterations": 200000,
         "latency_key": "ns_per_edge",
         "throughput_key": "mteps",
     },
     {
         "benchmark": "hypergraph_incidence",
+        "target": "graphion_bench_hypergraph",
         "iterations": 500000,
         "latency_key": "ns_per_incidence",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_incident_sum",
+        "target": "graphion_bench_hypergraph_incident_sum",
         "iterations": 500000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_hyperedge_node_sum",
+        "target": "graphion_bench_hypergraph_hyperedge_node_sum",
         "iterations": 500000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "vm_graph_ops",
+        "target": "graphion_bench_vm_graph",
         "iterations": 300000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
@@ -51,12 +61,26 @@ BENCH_SPECS = [
 ]
 
 
+def exe_path(build_dir: pathlib.Path, target: str, config: str) -> pathlib.Path:
+    if sys.platform.startswith("win"):
+        root = build_dir / config
+        if root.exists():
+            return root / f"{target}.exe"
+        return build_dir / f"{target}.exe"
+    return build_dir / target
+
+
 def parse_last_json(stdout: str) -> dict[str, object]:
     for line in reversed(stdout.splitlines()):
         line = line.strip()
         if line.startswith("{") and line.endswith("}"):
             return json.loads(line)
-    raise ValueError("rust benchmark output did not contain a JSON payload")
+    raise ValueError("benchmark output did not contain a JSON payload")
+
+
+def run_benchmark(exe: pathlib.Path, iterations: int) -> dict[str, object]:
+    proc = subprocess.run([str(exe), str(iterations)], capture_output=True, text=True, check=True)
+    return parse_last_json(proc.stdout)
 
 
 def average_payloads(
@@ -92,50 +116,25 @@ def average_payloads(
     return result
 
 
-def exe_path(manifest_path: pathlib.Path) -> pathlib.Path:
-    project_root = manifest_path.parent
-    if sys.platform.startswith("win"):
-        return project_root / "target" / "release" / "graphion_rust.exe"
-    return project_root / "target" / "release" / "graphion_rust"
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Collect Rust comparison benchmark averages.")
-    parser.add_argument("--manifest-path", default="graphion_rust/Cargo.toml", help="Path to graphion_rust Cargo.toml")
+    parser = argparse.ArgumentParser(description="Collect Graphion benchmark averages from a built tree.")
+    parser.add_argument("--build-dir", required=True, help="CMake build directory")
+    parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--runs", type=int, default=100, help="Number of runs per benchmark")
-    parser.add_argument("--platform-label", default="Rust Windows", help="Human-readable platform label")
+    parser.add_argument("--platform-label", required=True, help="Human-readable platform label")
+    parser.add_argument("--compiler-kind", default="unknown", help="Compiler/toolchain label for this lane")
+    parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
     parser.add_argument("--output", required=True, help="Output JSON path")
-    parser.add_argument("--skip-missing", action="store_true", help="Exit successfully if the Rust sandbox is absent")
     args = parser.parse_args()
 
-    manifest_path = pathlib.Path(args.manifest_path)
-    if not manifest_path.exists():
-        if args.skip_missing:
-            print(f"rust benchmark skipped: missing manifest {manifest_path}")
-            return 0
-        raise FileNotFoundError(f"missing rust manifest: {manifest_path}")
-
-    subprocess.run(
-        ["cargo", "build", "--release", "--manifest-path", str(manifest_path)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    exe = exe_path(manifest_path)
-    if not exe.exists():
-        raise FileNotFoundError(f"missing rust benchmark executable: {exe}")
-
+    build_dir = pathlib.Path(args.build_dir)
     rows: list[dict[str, object]] = []
+
     for spec in BENCH_SPECS:
-        payloads = []
-        for _ in range(args.runs):
-            proc = subprocess.run(
-                [str(exe), str(spec["benchmark"]), str(spec["iterations"])],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            payloads.append(parse_last_json(proc.stdout))
+        exe = exe_path(build_dir, spec["target"], args.config)
+        if not exe.exists():
+            raise FileNotFoundError(f"missing benchmark binary: {exe}")
+        payloads = [run_benchmark(exe, int(spec["iterations"])) for _ in range(args.runs)]
         rows.append(
             average_payloads(
                 str(spec["benchmark"]),
@@ -152,14 +151,15 @@ def main() -> int:
             args.runs,
             {
                 "report_kind": "performance-lane",
-                "compiler_kind": "rustc",
-                "asm_enabled": False,
-                "manifest_path": str(manifest_path),
+                "compiler_kind": args.compiler_kind,
+                "asm_enabled": args.asm_enabled == "on",
+                "config": args.config,
+                "build_dir": str(build_dir),
             },
         ),
         "rows": rows,
     }
-    validate_metadata(payload["metadata"], "collect_rust_benchmarks", ["report_kind", "compiler_kind", "asm_enabled", "manifest_path"])
+    validate_metadata(payload["metadata"], "collect_graphion_benchmarks", ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
 
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
