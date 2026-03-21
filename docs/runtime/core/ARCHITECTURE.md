@@ -49,6 +49,11 @@ Current source-program entry flow uses the `.gion` extension.
 - `weight` is reserved and normalized to a runtime float whether written as `7` or `7.0`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
+- builtin graph/hypergraph queries are now available in expressions:
+  - `bfs(G, 0)` -> visited node ids in BFS encounter order
+  - `bfs_level(G, 0)` -> number of BFS levels
+  - `incident_count(H, 2)` -> incident hyperedge count for vertex `2`
+  - `incident_sum(H, 2)` -> sum of incident hyperedge ids for vertex `2`
 - `print(...)` writes runtime values to the configured interpreter output stream.
 - printable graph-oriented runtime values are part of the intended user-facing model:
   - `print(graph)` shows graph name, node count, and edge count
@@ -73,6 +78,7 @@ Current source-program entry flow uses the `.gion` extension.
     - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
     - `print(H.vertex[id])` -> vertex id and incident hyperedge count
     - `print(H.hyperedge[id])` -> hyperedge id and member node count
+    - `print(bfs(G, id))` -> visited node id sequence
   - graph edge ids are implicit and auto-increment by declaration order
   - hypergraph hyperedge ids are implicit and auto-increment by declaration order
 

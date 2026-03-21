@@ -301,6 +301,131 @@ static size_t hypergraph_incident_count(const graphion_runtime_hypergraph_value 
   return count;
 }
 
+static uint64_t hypergraph_incident_sum(const graphion_runtime_hypergraph_value *hypergraph, int64_t node_id) {
+  size_t i;
+  size_t j;
+  uint64_t sum = 0U;
+  if (hypergraph == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      if (hypergraph->hyperedges[i].nodes[j] == node_id) {
+        sum += (uint64_t)i;
+        break;
+      }
+    }
+  }
+  return sum;
+}
+
+static size_t graph_collect_nodes(const graphion_runtime_graph_value *graph,
+                                  int64_t nodes[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX]) {
+  size_t i;
+  size_t count = 0U;
+  if (graph == NULL || nodes == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    size_t j;
+    int seen_source = 0;
+    int seen_target = 0;
+    for (j = 0U; j < count; ++j) {
+      if (nodes[j] == graph->edges[i].source) {
+        seen_source = 1;
+      }
+      if (nodes[j] == graph->edges[i].target) {
+        seen_target = 1;
+      }
+    }
+    if (!seen_source && count < GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX) {
+      nodes[count++] = graph->edges[i].source;
+    }
+    if (!seen_target && count < GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX) {
+      nodes[count++] = graph->edges[i].target;
+    }
+  }
+  return count;
+}
+
+static int graph_find_node_index(const int64_t nodes[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX],
+                                 size_t node_count,
+                                 int64_t node_id) {
+  size_t i;
+  for (i = 0U; i < node_count; ++i) {
+    if (nodes[i] == node_id) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
+static int graph_bfs_visit_order(const graphion_runtime_graph_value *graph,
+                                 int64_t source,
+                                 graphion_runtime_int_sequence_value *sequence,
+                                 size_t *level_count) {
+  int64_t nodes[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  int visited[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  int64_t queue[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  int32_t levels[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  size_t node_count;
+  size_t head = 0U;
+  size_t tail = 0U;
+  size_t i;
+  int source_index;
+
+  if (graph == NULL || sequence == NULL) {
+    return 0;
+  }
+  memset(sequence, 0, sizeof(*sequence));
+  if (level_count != NULL) {
+    *level_count = 0U;
+  }
+  node_count = graph_collect_nodes(graph, nodes);
+  if (node_count == 0U) {
+    return 0;
+  }
+  memset(visited, 0, sizeof(visited));
+  for (i = 0U; i < GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX; ++i) {
+    levels[i] = -1;
+  }
+  source_index = graph_find_node_index(nodes, node_count, source);
+  if (source_index < 0) {
+    return 0;
+  }
+  queue[tail++] = source;
+  visited[(size_t)source_index] = 1;
+  levels[(size_t)source_index] = 0;
+
+  while (head < tail && sequence->count < GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX) {
+    const int64_t current = queue[head++];
+    const int current_index = graph_find_node_index(nodes, node_count, current);
+    sequence->items[sequence->count++] = current;
+    for (i = 0U; i < graph->edge_count; ++i) {
+      if (graph->edges[i].source == current) {
+        const int64_t neighbor = graph->edges[i].target;
+        const int neighbor_index = graph_find_node_index(nodes, node_count, neighbor);
+        if (neighbor_index >= 0 && visited[(size_t)neighbor_index] == 0) {
+          visited[(size_t)neighbor_index] = 1;
+          levels[(size_t)neighbor_index] = levels[(size_t)current_index] + 1;
+          queue[tail++] = neighbor;
+        }
+      }
+    }
+  }
+
+  if (level_count != NULL) {
+    size_t max_level = 0U;
+    for (i = 0U; i < node_count; ++i) {
+      if (levels[i] >= 0 && (size_t)levels[i] > max_level) {
+        max_level = (size_t)levels[i];
+      }
+    }
+    *level_count = sequence->count == 0U ? 0U : max_level + 1U;
+  }
+  return 1;
+}
+
 static const graphion_runtime_hyperedge *find_hyperedge_by_id(const graphion_runtime_hypergraph_value *hypergraph,
                                                               int64_t hyperedge_id) {
   if (hypergraph == NULL || hyperedge_id < 0 || (size_t)hyperedge_id >= hypergraph->hyperedge_count) {
@@ -560,7 +685,8 @@ static int is_valid_identifier(const char *name) {
 }
 
 static int is_reserved_name(const char *name) {
-  static const char *reserved[] = {"def", "return", "print", "graph", "hypergraph", "true", "false"};
+  static const char *reserved[] = {
+      "def", "return", "print", "graph", "hypergraph", "bfs", "bfs_level", "incident_count", "incident_sum", "true", "false"};
   size_t i;
   for (i = 0U; i < sizeof(reserved) / sizeof(reserved[0]); ++i) {
     if (strcmp(name, reserved[i]) == 0) {
@@ -1215,6 +1341,16 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
               value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->name : "",
               value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->node_count : 0U);
       break;
+    case GRAPHION_VALUE_INT_SEQUENCE:
+      fprintf(output, "[");
+      for (i = 0U; i < value->int_sequence_value.count; ++i) {
+        if (i != 0U) {
+          fprintf(output, ", ");
+        }
+        fprintf(output, "%lld", (long long)value->int_sequence_value.items[i]);
+      }
+      fprintf(output, "]\n");
+      break;
     default:
       fprintf(output, "none\n");
       break;
@@ -1428,9 +1564,115 @@ static int eval_expression(const char *expr,
     char args[GINT_LINE_MAX];
     if (split_call(expr, name, args)) {
       const graphion_runtime_function *function;
+      char split_args[GINT_ARG_MAX][GINT_LINE_MAX];
+      size_t arg_count = 0U;
       if (strcmp(name, "print") == 0) {
         set_diagnostic(diagnostic, line_no, 1U, "print cannot be used as an expression");
         return GINT_ERR_CALL;
+      }
+      if (strcmp(name, "bfs") == 0) {
+        graphion_runtime_value graph_value;
+        graphion_runtime_value source_value;
+        size_t level_count = 0U;
+        int rc;
+        if (!split_arguments(args, split_args, &arg_count) || arg_count != 2U) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs expects graph and source node");
+          return GINT_ERR_CALL;
+        }
+        rc = eval_expression(split_args[0], program, global_scope, local_scope, diagnostic, output, line_no, &graph_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        rc = eval_expression(split_args[1], program, global_scope, local_scope, diagnostic, output, line_no, &source_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (graph_value.kind != GRAPHION_VALUE_GRAPH || graph_value.graph_value == NULL) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs expects a graph as first argument");
+          return GINT_ERR_CALL;
+        }
+        if (source_value.kind != GRAPHION_VALUE_INT) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs source must be an integer node id");
+          return GINT_ERR_CALL;
+        }
+        if (!graph_bfs_visit_order(graph_value.graph_value, source_value.int_value, &value->int_sequence_value, &level_count)) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs source node not found");
+          return GINT_ERR_CALL;
+        }
+        value->kind = GRAPHION_VALUE_INT_SEQUENCE;
+        return GINT_OK;
+      }
+      if (strcmp(name, "bfs_level") == 0) {
+        graphion_runtime_value graph_value;
+        graphion_runtime_value source_value;
+        graphion_runtime_int_sequence_value sequence;
+        size_t level_count = 0U;
+        int rc;
+        if (!split_arguments(args, split_args, &arg_count) || arg_count != 2U) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs_level expects graph and source node");
+          return GINT_ERR_CALL;
+        }
+        rc = eval_expression(split_args[0], program, global_scope, local_scope, diagnostic, output, line_no, &graph_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        rc = eval_expression(split_args[1], program, global_scope, local_scope, diagnostic, output, line_no, &source_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (graph_value.kind != GRAPHION_VALUE_GRAPH || graph_value.graph_value == NULL) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs_level expects a graph as first argument");
+          return GINT_ERR_CALL;
+        }
+        if (source_value.kind != GRAPHION_VALUE_INT) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs_level source must be an integer node id");
+          return GINT_ERR_CALL;
+        }
+        if (!graph_bfs_visit_order(graph_value.graph_value, source_value.int_value, &sequence, &level_count)) {
+          set_diagnostic(diagnostic, line_no, 1U, "bfs_level source node not found");
+          return GINT_ERR_CALL;
+        }
+        memset(value, 0, sizeof(*value));
+        value->kind = GRAPHION_VALUE_INT;
+        value->int_value = (int64_t)level_count;
+        return GINT_OK;
+      }
+      if (strcmp(name, "incident_count") == 0 || strcmp(name, "incident_sum") == 0) {
+        graphion_runtime_value hypergraph_value;
+        graphion_runtime_value vertex_value;
+        int rc;
+        if (!split_arguments(args, split_args, &arg_count) || arg_count != 2U) {
+          set_diagnostic(diagnostic, line_no, 1U, "incidence builtins expect hypergraph and vertex id");
+          return GINT_ERR_CALL;
+        }
+        rc = eval_expression(split_args[0], program, global_scope, local_scope, diagnostic, output, line_no, &hypergraph_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        rc = eval_expression(split_args[1], program, global_scope, local_scope, diagnostic, output, line_no, &vertex_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (hypergraph_value.kind != GRAPHION_VALUE_HYPERGRAPH || hypergraph_value.hypergraph_value == NULL) {
+          set_diagnostic(diagnostic, line_no, 1U, "incidence builtins expect a hypergraph as first argument");
+          return GINT_ERR_CALL;
+        }
+        if (vertex_value.kind != GRAPHION_VALUE_INT) {
+          set_diagnostic(diagnostic, line_no, 1U, "incidence vertex id must be an integer");
+          return GINT_ERR_CALL;
+        }
+        if (!hypergraph_contains_node(&hypergraph_value, vertex_value.int_value)) {
+          set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex not found");
+          return GINT_ERR_CALL;
+        }
+        memset(value, 0, sizeof(*value));
+        value->kind = GRAPHION_VALUE_INT;
+        if (strcmp(name, "incident_count") == 0) {
+          value->int_value = (int64_t)hypergraph_incident_count(hypergraph_value.hypergraph_value, vertex_value.int_value);
+        } else {
+          value->int_value = (int64_t)hypergraph_incident_sum(hypergraph_value.hypergraph_value, vertex_value.int_value);
+        }
+        return GINT_OK;
       }
       function = find_function(program, name);
       if (function == NULL) {

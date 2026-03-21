@@ -12,6 +12,7 @@ enum {
   GRAPHION_RUNTIME_NAME_MAX = 64,
   GRAPHION_RUNTIME_STRING_MAX = 256,
   GRAPHION_RUNTIME_GRAPH_EDGE_MAX = 128,
+  GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX = 256,
   GRAPHION_RUNTIME_HYPEREDGE_MAX = 64,
   GRAPHION_RUNTIME_HYPEREDGE_NODE_MAX = 32,
   GRAPHION_RUNTIME_ATTRIBUTE_MAX = 8
@@ -86,6 +87,11 @@ typedef struct {
   const graphion_runtime_hyperedge *hyperedge;
 } graphion_runtime_hyperedge_value;
 
+typedef struct {
+  int64_t items[GRAPHION_RUNTIME_SEQUENCE_ITEM_MAX];
+  size_t count;
+} graphion_runtime_int_sequence_value;
+
 typedef enum {
   GRAPHION_VALUE_NONE = 0,
   GRAPHION_VALUE_INT = 1,
@@ -97,7 +103,8 @@ typedef enum {
   GRAPHION_VALUE_GRAPH_NODE = 7,
   GRAPHION_VALUE_GRAPH_EDGE = 8,
   GRAPHION_VALUE_HYPERGRAPH_NODE = 9,
-  GRAPHION_VALUE_HYPEREDGE = 10
+  GRAPHION_VALUE_HYPEREDGE = 10,
+  GRAPHION_VALUE_INT_SEQUENCE = 11
 } graphion_runtime_value_kind;
 
 typedef struct {
@@ -114,6 +121,7 @@ typedef struct {
   graphion_runtime_graph_edge_value graph_edge_value;
   graphion_runtime_hypergraph_node_value hypergraph_node_value;
   graphion_runtime_hyperedge_value hyperedge_value;
+  graphion_runtime_int_sequence_value int_sequence_value;
 } graphion_runtime_value;
 
 typedef struct {

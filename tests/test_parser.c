@@ -1037,6 +1037,139 @@ int test_interpreter_print_hyperedge_value(void) {
   return 0;
 }
 
+int test_interpreter_bfs_builtin(void) {
+  const char *source = "graph G:\n"
+                       "  0 -> 1\n"
+                       "  0 -> 2\n"
+                       "  1 -> 3\n"
+                       "  2 -> 3\n"
+                       "order = bfs(G, 0)\n"
+                       "levels = bfs_level(G, 0)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *order;
+  const graphion_runtime_value *levels;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  order = graphion_runtime_scope_find(&scope, "order");
+  levels = graphion_runtime_scope_find(&scope, "levels");
+  if (order == NULL || order->kind != GRAPHION_VALUE_INT_SEQUENCE) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (order->int_sequence_value.count != 4U ||
+      order->int_sequence_value.items[0] != 0 ||
+      order->int_sequence_value.items[1] != 1 ||
+      order->int_sequence_value.items[2] != 2 ||
+      order->int_sequence_value.items[3] != 3) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  if (levels == NULL || levels->kind != GRAPHION_VALUE_INT || levels->int_value != 3) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_bfs_builtin(void) {
+  const char *path = "interpreter_bfs_output.txt";
+  const char *source = "graph G:\n"
+                       "  0 -> 1\n"
+                       "  0 -> 2\n"
+                       "  1 -> 3\n"
+                       "  2 -> 3\n"
+                       "print(bfs(G, 0))\n"
+                       "print(bfs_level(G, 0))\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    graphion_runtime_scope_dispose(&scope);
+    remove(path);
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "[0, 1, 2, 3]\n3\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_incidence_builtins(void) {
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n"
+                       "count = incident_count(H, 2)\n"
+                       "sum = incident_sum(H, 2)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *count;
+  const graphion_runtime_value *sum;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  count = graphion_runtime_scope_find(&scope, "count");
+  sum = graphion_runtime_scope_find(&scope, "sum");
+  if (count == NULL || count->kind != GRAPHION_VALUE_INT || count->int_value != 2) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (sum == NULL || sum->kind != GRAPHION_VALUE_INT || sum->int_value != 1) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
 int test_gion_entry_flow_execution(void) {
   const char *path = "entry_flow_sample.gion";
   graphion_runtime_scope scope;

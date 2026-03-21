@@ -98,7 +98,7 @@
 - [x] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
 - [x] User-facing hypergraph declarations with auto-indexed hyperedges and integer node lists.
 - [x] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
-- [ ] Builtin graph/hypergraph functions with user-facing semantics:
+- [x] Builtin graph/hypergraph functions with user-facing semantics:
   - `bfs(...)` returns visited node ids in BFS encounter order
   - `bfs_level(...)` returns only the number of BFS levels
   - incidence query builtins align with the future user-facing graph/hypergraph API

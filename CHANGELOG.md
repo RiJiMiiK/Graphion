@@ -86,6 +86,11 @@ The format follows Keep a Changelog and Semantic Versioning.
   - `print(hypergraph)` summary
   - `print(H.vertex[id])`
   - `print(H.hyperedge[id])`
+- Builtin graph/hypergraph queries in `.gion`:
+  - `bfs(...)`
+  - `bfs_level(...)`
+  - `incident_count(...)`
+  - `incident_sum(...)`
 - Official frontier primitive benchmark added and integrated into the performance collection pipeline.
 - Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
