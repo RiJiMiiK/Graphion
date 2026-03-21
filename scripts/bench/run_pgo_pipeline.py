@@ -7,6 +7,7 @@ import pathlib
 import subprocess
 import sys
 
+from pgo_artifacts import profile_manifest, reset_profile_dir
 from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads, get_corpus_profile
 
 
@@ -187,11 +188,20 @@ def main() -> int:
   if compiler_kind == "auto":
     compiler_kind = detect_compiler_kind(args.cmake_args)
 
-  profile_dir.mkdir(parents=True, exist_ok=True)
-  if build_dir.exists():
-    for path in profile_dir.glob("*"):
-      if path.is_file():
-        path.unlink()
+  manifest = profile_manifest(
+      compiler_kind=compiler_kind,
+      corpus_profile=args.corpus_profile,
+      iterations_scale=args.iterations_scale,
+      config=args.config,
+      build_type=args.build_type,
+      dispatch="switch",
+      extra_args=args.cmake_args,
+      producer="run_pgo_pipeline.py",
+  )
+  reasons = reset_profile_dir(profile_dir, manifest)
+  print("pgo profile invalidation:")
+  for reason in reasons:
+    print(f"  - {reason}")
   if compiler_kind == "msvc":
     cleanup_msvc_profile_artifacts(build_dir, args.config)
 

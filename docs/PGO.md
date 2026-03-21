@@ -57,6 +57,12 @@ The default `representative` profile covers:
 
 The detailed policy is documented in [PGO_CORPUS_POLICY.md](./PGO_CORPUS_POLICY.md).
 
+PGO effectiveness thresholds are reported per workload family in the generated optimization report.
+They are review guidance for optimization quality, not a standalone release gate.
+
+Generated PGO profiles are treated as single-run artifacts and are reset before each new `GENERATE` phase.
+The profile directory records a `profile_manifest.json` so invalidation reasons are explicit.
+
 ## CI
 
 GitHub Actions workflow:
@@ -97,6 +103,9 @@ use `scripts/bench/refresh_optimization_reports.py`.
 
 For portable cross-compiler governance (`MSVC` vs `GCC` vs `Clang`), use
 `scripts/bench/refresh_cross_compiler_report.py` and `docs/CROSS_COMPILER_POLICY.md`.
+Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
+the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
+On pull requests this is advisory-only; the blocking mode is reserved for manual candidate validation.
 
 ## Notes
 
