@@ -126,6 +126,7 @@ add_library(graphion_vm
   src/vm/vm.c
   src/runtime/arena.c
   src/parser/bytecode.c
+  src/parser/lexer.c
   src/parser/frontend.c
   src/compiler/ir.c
   src/graph/csr_graph.c
