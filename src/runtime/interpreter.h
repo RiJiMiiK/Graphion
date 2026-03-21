@@ -4,6 +4,7 @@
 #define GRAPHION_RUNTIME_INTERPRETER_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
 
 enum {
@@ -50,7 +51,9 @@ typedef enum {
   GINT_ERR_CAPACITY = -2,
   GINT_ERR_PARSE = -3,
   GINT_ERR_UNKNOWN_VARIABLE = -4,
-  GINT_ERR_RESERVED_NAME = -5
+  GINT_ERR_RESERVED_NAME = -5,
+  GINT_ERR_CALL = -6,
+  GINT_ERR_RETURN = -7
 } graphion_interpreter_result;
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope);
@@ -61,5 +64,10 @@ const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime
 int graphion_interpret_source(const char *source,
                               graphion_runtime_scope *scope,
                               graphion_runtime_diagnostic *diagnostic);
+
+int graphion_interpret_source_with_output(const char *source,
+                                          graphion_runtime_scope *scope,
+                                          graphion_runtime_diagnostic *diagnostic,
+                                          FILE *output);
 
 #endif

@@ -19,6 +19,9 @@ Current source-program entry flow uses the `.gion` extension.
 - `.gion` programs currently execute through `src/runtime/entry.*`.
 - The current interpreted surface is intentionally minimal:
   - dynamic variable assignment only
+  - builtin `print(...)`
+  - top-level user-defined functions via `def name(...):`
+  - `return` inside function bodies
   - no user-declared types
   - supported scalar values:
     - `int`
@@ -28,7 +31,14 @@ Current source-program entry flow uses the `.gion` extension.
 - assignment expressions may reference an already-bound variable:
   - `answer = 42`
   - `copy = answer`
+- function calls may appear in assignment expressions:
+  - `answer = echo(42)`
+- `print(...)` writes scalar runtime values to the configured interpreter output stream.
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
+- the current function model is intentionally narrow:
+  - top-level definitions only
+  - no nested `def`
+  - local function scope with fallback reads from the global scope
 
 ## VM model (current)
 

@@ -1,0 +1,18 @@
+count = 42
+ratio = 3.5
+name = "graphion"
+ready = true
+copy = count
+
+print(count)
+print(ratio)
+print(name)
+print(ready)
+print(copy)
+
+def echo(value):
+  print(value)
+  return value
+
+answer = echo(7)
+print(answer)

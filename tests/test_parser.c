@@ -395,6 +395,63 @@ int test_interpreter_rejects_declared_type_syntax(void) {
   return 0;
 }
 
+int test_interpreter_print_and_function_return(void) {
+  const char *path = "interpreter_print_output.txt";
+  const char *source = "def echo(value):\n"
+                       "  print(value)\n"
+                       "  return value\n"
+                       "answer = echo(42)\n"
+                       "print(answer)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[64];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  if (!expect_int_binding(&scope, "answer", 42)) {
+    remove(path);
+    return 3;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 4;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "42\n42\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
 int test_gion_entry_flow_execution(void) {
   const char *path = "entry_flow_sample.gion";
   graphion_runtime_scope scope;

@@ -94,7 +94,7 @@
 
 - [x] `.gion` source-file extension and interpreter entry flow.
 - [x] High-level interpreted syntax for dynamic variables and assignment, with no user-declared types.
-- [ ] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
+- [x] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
 - [ ] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
 - [ ] User-facing hypergraph declarations with explicit hyperedge ids and integer node lists.
 - [ ] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
