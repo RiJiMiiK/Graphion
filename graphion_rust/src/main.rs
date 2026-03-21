@@ -18,9 +18,9 @@ const OP_BFS_LEVELS: u8 = 16;
 const OP_INCIDENT_COUNT: u8 = 17;
 const OP_HYPEREDGE_SIZE: u8 = 18;
 
-struct CsrGraph {
-    offsets: &'static [u32],
-    neighbors: &'static [u32],
+struct CsrGraph<'a> {
+    offsets: &'a [u32],
+    neighbors: &'a [u32],
 }
 
 fn recommend_frontier_mode(node_count: usize, edge_count: usize, frontier_len: usize, frontier_neighbor_work: usize) -> &'static str {
@@ -36,14 +36,14 @@ fn recommend_frontier_mode(node_count: usize, edge_count: usize, frontier_len: u
     "sparse"
 }
 
-struct HyperGraph {
-    node_offsets: &'static [u32],
-    node_hyperedges: &'static [u32],
-    hyperedge_offsets: &'static [u32],
+struct HyperGraph<'a> {
+    node_offsets: &'a [u32],
+    node_hyperedges: &'a [u32],
+    hyperedge_offsets: &'a [u32],
 }
 
 #[inline(never)]
-fn hypergraph_incident_sum(hg: &HyperGraph, node: usize) -> u64 {
+fn hypergraph_incident_sum(hg: &HyperGraph<'_>, node: usize) -> u64 {
     let b = hg.node_offsets[node] as usize;
     let e = hg.node_offsets[node + 1] as usize;
     let mut total = 0_u64;
@@ -55,7 +55,7 @@ fn hypergraph_incident_sum(hg: &HyperGraph, node: usize) -> u64 {
 
 #[inline(never)]
 fn hypergraph_hyperedge_node_sum(
-    hg: &HyperGraph,
+    hg: &HyperGraph<'_>,
     hyperedge_nodes: &[u32],
     hyperedge: usize,
 ) -> u64 {
@@ -157,7 +157,7 @@ fn frontier_primitives(iterations: u64) {
     );
 }
 
-fn bfs_levels(graph: &CsrGraph, source: usize, levels: &mut [i32]) {
+fn bfs_levels(graph: &CsrGraph<'_>, source: usize, levels: &mut [i32]) {
     levels.fill(-1);
     levels[source] = 0;
     let mut q = VecDeque::new();
@@ -175,6 +175,50 @@ fn bfs_levels(graph: &CsrGraph, source: usize, levels: &mut [i32]) {
             }
         }
     }
+}
+
+#[inline(never)]
+fn sum_frontier_neighbors(graph: &CsrGraph<'_>, frontier: &[usize]) -> u64 {
+    let offsets = black_box(graph.offsets);
+    let neighbors = black_box(graph.neighbors);
+    let frontier = black_box(frontier);
+    let mut checksum = 0_u64;
+
+    for &node in frontier {
+        let begin = offsets[node] as usize;
+        let end = offsets[node + 1] as usize;
+        for &neighbor in &neighbors[begin..end] {
+            checksum = checksum.wrapping_add(u64::from(neighbor));
+        }
+    }
+
+    checksum
+}
+
+#[inline(never)]
+fn sum_hypergraph_memberships(hg: &HyperGraph<'_>, hyperedge_nodes: &[u32]) -> u64 {
+    let node_offsets = black_box(hg.node_offsets);
+    let node_hyperedges = black_box(hg.node_hyperedges);
+    let hyperedge_offsets = black_box(hg.hyperedge_offsets);
+    let hyperedge_nodes = black_box(hyperedge_nodes);
+    let mut checksum = 0_u64;
+
+    for node in 0..(node_offsets.len() - 1) {
+        let begin = node_offsets[node] as usize;
+        let end = node_offsets[node + 1] as usize;
+        for &hyperedge in &node_hyperedges[begin..end] {
+            checksum = checksum.wrapping_add(u64::from(hyperedge));
+        }
+    }
+    for hyperedge in 0..(hyperedge_offsets.len() - 1) {
+        let begin = hyperedge_offsets[hyperedge] as usize;
+        let end = hyperedge_offsets[hyperedge + 1] as usize;
+        for &node in &hyperedge_nodes[begin..end] {
+            checksum = checksum.wrapping_add(u64::from(node));
+        }
+    }
+
+    checksum
 }
 
 fn bench_bfs(iterations: u64) {
@@ -202,11 +246,13 @@ fn bench_bfs(iterations: u64) {
 }
 
 fn bench_neighbors(iterations: u64) {
+    let offsets = vec![0, 2, 4, 6, 9, 12, 14, 17, 19];
+    let neighbors = vec![1, 2, 3, 4, 4, 5, 0, 6, 7, 1, 5, 7, 6, 7, 0, 2, 3, 1, 4];
+    let frontier: Vec<usize> = vec![0, 3, 6];
     let graph = CsrGraph {
-        offsets: &[0, 2, 4, 6, 9, 12, 14, 17, 19],
-        neighbors: &[1, 2, 3, 4, 4, 5, 0, 6, 7, 1, 5, 7, 6, 7, 0, 2, 3, 1, 4],
+        offsets: &offsets,
+        neighbors: &neighbors,
     };
-    let frontier: [usize; 3] = [0, 3, 6];
     let frontier_neighbor_work: usize = frontier
         .iter()
         .map(|&node| (graph.offsets[node + 1] - graph.offsets[node]) as usize)
@@ -221,13 +267,7 @@ fn bench_neighbors(iterations: u64) {
     let start = Instant::now();
     let mut checksum: u64 = 0;
     for _ in 0..iterations {
-        for &node in &frontier {
-            let begin = graph.offsets[node] as usize;
-            let end = graph.offsets[node + 1] as usize;
-            for &neighbor in &graph.neighbors[begin..end] {
-                checksum = checksum.wrapping_add(u64::from(neighbor));
-            }
-        }
+        checksum = checksum.wrapping_add(sum_frontier_neighbors(&graph, &frontier));
     }
     black_box(checksum);
     let secs = start.elapsed().as_secs_f64().max(1e-9);
@@ -285,31 +325,21 @@ fn bench_hypergraph(iterations: u64) {
 }
 
 fn bench_hypergraph_traversal(iterations: u64) {
+    let node_offsets = vec![0, 2, 5, 8, 10, 12];
+    let node_hyperedges = vec![0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1];
+    let hyperedge_offsets = vec![0, 3, 6, 9, 12];
+    let hyperedge_nodes = vec![0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3];
     let hg = HyperGraph {
-        node_offsets: &[0, 2, 5, 8, 10, 12],
-        node_hyperedges: &[0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1],
-        hyperedge_offsets: &[0, 3, 6, 9, 12],
+        node_offsets: &node_offsets,
+        node_hyperedges: &node_hyperedges,
+        hyperedge_offsets: &hyperedge_offsets,
     };
-    let hyperedge_nodes: [u32; 12] = [0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3];
     let memberships_per_iteration = hg.node_hyperedges.len() + hyperedge_nodes.len();
     let mut checksum: u64 = 0;
 
     let start = Instant::now();
     for _ in 0..iterations {
-        for node in 0..(hg.node_offsets.len() - 1) {
-            let begin = hg.node_offsets[node] as usize;
-            let end = hg.node_offsets[node + 1] as usize;
-            for &hyperedge in &hg.node_hyperedges[begin..end] {
-                checksum = checksum.wrapping_add(u64::from(hyperedge));
-            }
-        }
-        for hyperedge in 0..(hg.hyperedge_offsets.len() - 1) {
-            let begin = hg.hyperedge_offsets[hyperedge] as usize;
-            let end = hg.hyperedge_offsets[hyperedge + 1] as usize;
-            for &node in &hyperedge_nodes[begin..end] {
-                checksum = checksum.wrapping_add(u64::from(node));
-            }
-        }
+        checksum = checksum.wrapping_add(sum_hypergraph_memberships(&hg, &hyperedge_nodes));
     }
     black_box(checksum);
     let secs = start.elapsed().as_secs_f64().max(1e-9);
