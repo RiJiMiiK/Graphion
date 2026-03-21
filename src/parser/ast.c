@@ -94,7 +94,6 @@ int graphion_ast_lower_to_ir(const graphion_ast_stmt *ast_program,
                              size_t out_capacity,
                              size_t *out_count) {
   size_t i;
-  int rc;
 
   if (ast_program == NULL || out_ir == NULL || out_count == NULL) {
     return GAST_ERR_INVALID_ARG;
@@ -104,7 +103,7 @@ int graphion_ast_lower_to_ir(const graphion_ast_stmt *ast_program,
   }
 
   for (i = 0U; i < ast_count; ++i) {
-    rc = lower_stmt(&ast_program[i], &out_ir[i]);
+    const int rc = lower_stmt(&ast_program[i], &out_ir[i]);
     if (rc != GAST_OK) {
       return rc;
     }
