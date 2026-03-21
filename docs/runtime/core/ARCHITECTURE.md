@@ -4,12 +4,41 @@
 
 Graphion is a graph/hypergraph-focused language project. Current implementation targets an efficient interpreter core.
 
+Current source-program entry flow uses the `.gion` extension.
+
 ## Runtime layers
 
 - `src/runtime/arena.*`: bump allocator for predictable low-overhead temporary allocations.
+- `src/runtime/interpreter.*`: minimal interpreted-language runtime for dynamic scalar values and assignment.
 - `src/vm/vm.*`: register-based VM scaffold with fixed-size register file.
 - `src/vm/hotpaths.s`: assembly hotpath entry point (disabled by default).
 - `src/graph/csr_graph.*`: CSR graph runtime with optional per-edge weights and edge attributes.
+
+## Interpreted source model (current)
+
+- `.gion` programs currently execute through `src/runtime/entry.*`.
+- The current interpreted surface is intentionally minimal:
+  - dynamic variable assignment only
+  - builtin `print(...)`
+  - top-level user-defined functions via `def name(...):`
+  - `return` inside function bodies
+  - no user-declared types
+  - supported scalar values:
+    - `int`
+    - `float`
+    - `bool`
+    - `string`
+- assignment expressions may reference an already-bound variable:
+  - `answer = 42`
+  - `copy = answer`
+- function calls may appear in assignment expressions:
+  - `answer = echo(42)`
+- `print(...)` writes scalar runtime values to the configured interpreter output stream.
+- reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
+- the current function model is intentionally narrow:
+  - top-level definitions only
+  - no nested `def`
+  - local function scope with fallback reads from the global scope
 
 ## VM model (current)
 
@@ -28,6 +57,11 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `GVM_OP_HYPEREDGE_SIZE`
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
+- Source entry flow:
+  - `src/runtime/entry.*` validates `.gion` source files, reads source text, and executes
+    the current interpreted runtime.
+- Legacy VM-oriented parser flow:
+  - `src/parser/frontend.*` still exists for mnemonic/IR bridge coverage and internal VM tests.
 - ISA versioning and compatibility policy:
   - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:
