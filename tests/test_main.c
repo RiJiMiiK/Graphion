@@ -14,6 +14,11 @@ int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
 int test_vm_bfs_levels_opcode(void);
 int test_vm_hypergraph_opcodes(void);
+int test_vm_superinstruction_add_pair_semantics(void);
+int test_vm_superinstruction_movimm_add_semantics(void);
+int test_vm_fastpath_shape_cache_load_flags(void);
+int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
+int test_vm_dispatch_variant_edge_semantics(void);
 int test_arena_alignment_and_reset(void);
 int test_arena_invalid_alignment_fails(void);
 int test_parser_decode_valid_program(void);
@@ -31,6 +36,12 @@ int main(void) {
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
       {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
+      {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
+      {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
+      {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
+      {"vm_fastpath_shape_cache_same_pointer_content_change",
+       test_vm_fastpath_shape_cache_same_pointer_content_change},
+      {"vm_dispatch_variant_edge_semantics", test_vm_dispatch_variant_edge_semantics},
       {"arena_alignment_and_reset", test_arena_alignment_and_reset},
       {"arena_invalid_alignment_fails", test_arena_invalid_alignment_fails},
       {"parser_decode_valid_program", test_parser_decode_valid_program},

@@ -36,6 +36,7 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - Portable C fallback (always available).
   - x86_64 assembly backend (`src/vm/hotpaths.s`) when `GRAPHION_ENABLE_ASM=ON` with GCC/Clang.
 - Register/ABI details for assembly are documented in `docs/ASM_REGISTERS.md`.
+- Assembly-vs-C parity/performance policy is documented in `docs/ASM_FALLBACK_POLICY.md`.
 
 ## Safety constraints
 

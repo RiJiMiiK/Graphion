@@ -18,6 +18,12 @@
     "unreviewed",
     "hotpath",
     "hotpaths",
+    "jumptable",
+    "profraw",
+    "profdata",
+    "fprofile",
+    "GENPROFILE",
+    "USEPROFILE",
     "cppcheck",
     "CodeQL",
     "lcov",
@@ -30,6 +36,9 @@
     "fuzzer",
     "fuzzing",
     "SPDX"
+    ,
+    "microbenchmark",
+    "Werror"
   ],
   "ignorePaths": [
     "build/**",

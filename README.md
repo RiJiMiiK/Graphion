@@ -62,6 +62,18 @@ cmake -S . -B build-asm -DGRAPHION_ENABLE_ASM=ON
 cmake --build build-asm --config Release
 ```
 
+PGO pipeline:
+
+```bash
+python3 scripts/bench/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
+```
+
+PowerShell / MSVC:
+
+```powershell
+python scripts/bench/run_pgo_pipeline.py --build-dir build-pgo
+```
+
 Sanitizer build (Linux/macOS with Clang/GCC):
 
 ```bash
@@ -107,6 +119,7 @@ python3 scripts/bench/run_bench.py --build-dir build-bench --iterations 500000
 
 See [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 Latest comparative snapshot: [docs/PERFORMANCE_RESULTS.md](docs/PERFORMANCE_RESULTS.md).
+PGO workflow details: [docs/PGO.md](docs/PGO.md).
 
 Additional graph-core benchmark:
 

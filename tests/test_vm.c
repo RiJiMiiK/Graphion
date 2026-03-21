@@ -4,6 +4,16 @@
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
 
+static int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t len) {
+  int rc;
+  graphion_vm_init(vm);
+  rc = graphion_vm_load(vm, program, len);
+  if (rc != 0) {
+    return rc;
+  }
+  return graphion_vm_run(vm);
+}
+
 int test_vm_addition_program(void) {
   graphion_vm vm;
   const graphion_insn program[] = {
@@ -122,5 +132,201 @@ int test_vm_hypergraph_opcodes(void) {
   if (vm.regs[1] != 2 || vm.regs[3] != 3 || vm.regs[4] != 1 || vm.regs[5] != 3) {
     return 4;
   }
+  return 0;
+}
+
+int test_vm_superinstruction_add_pair_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 1},  {GVM_OP_MOV_IMM, 1, 0, 2}, {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 0, 1, 0},      {GVM_OP_ADD, 0, 2, 0},     {GVM_OP_MOV_IMM, 3, 0, 5},
+      {GVM_OP_ADD, 3, 3, 0},      {GVM_OP_ADD, 3, 1, 0},     {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 6) {
+    return 4;
+  }
+  if (vm.regs[3] != 12) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_vm_superinstruction_movimm_add_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},   {GVM_OP_ADD, 1, 0, 0},      {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_ADD, 2, 2, 0},       {GVM_OP_MOV_IMM, 3, 0, -2}, {GVM_OP_ADD, 1, 3, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (vm.regs[0] != 7) {
+    return 4;
+  }
+  if (vm.regs[1] != 5) {
+    return 5;
+  }
+  if (vm.regs[2] != 6) {
+    return 6;
+  }
+  if (vm.regs[3] != -2) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_vm_fastpath_shape_cache_load_flags(void) {
+  graphion_vm vm1;
+  graphion_vm vm2;
+  graphion_vm vm3;
+  graphion_vm vm4;
+  const graphion_insn program_fast[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_ADD, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  const graphion_insn program_generic[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 0},
+      {GVM_OP_BFS_LEVELS, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+
+  graphion_vm_init(&vm1);
+  graphion_vm_init(&vm2);
+  graphion_vm_init(&vm3);
+  graphion_vm_init(&vm4);
+
+  if (graphion_vm_load(&vm1, program_fast, sizeof(program_fast) / sizeof(program_fast[0])) != 0) {
+    return 1;
+  }
+  if (!vm1.arith_only_fastpath || !vm1.arith_only_halt_terminated) {
+    return 2;
+  }
+
+  if (graphion_vm_load(&vm2, program_fast, sizeof(program_fast) / sizeof(program_fast[0])) != 0) {
+    return 3;
+  }
+  if (!vm2.arith_only_fastpath || !vm2.arith_only_halt_terminated) {
+    return 4;
+  }
+
+  if (graphion_vm_load(&vm3, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
+    return 5;
+  }
+  if (vm3.arith_only_fastpath || vm3.arith_only_halt_terminated) {
+    return 6;
+  }
+
+  if (graphion_vm_load(&vm4, program_generic, sizeof(program_generic) / sizeof(program_generic[0])) != 0) {
+    return 7;
+  }
+  if (vm4.arith_only_fastpath || vm4.arith_only_halt_terminated) {
+    return 8;
+  }
+
+  return 0;
+}
+
+int test_vm_fastpath_shape_cache_same_pointer_content_change(void) {
+  graphion_vm vm_fast;
+  graphion_vm vm_generic;
+  graphion_insn program[3] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_ADD, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+
+  graphion_vm_init(&vm_fast);
+  if (graphion_vm_load(&vm_fast, program, sizeof(program) / sizeof(program[0])) != 0) {
+    return 1;
+  }
+  if (!vm_fast.arith_only_fastpath || !vm_fast.arith_only_halt_terminated) {
+    return 2;
+  }
+
+  program[0].imm = 0;
+  program[1].op = GVM_OP_BFS_LEVELS;
+  program[1].a = 0;
+  program[1].b = 1;
+  program[1].imm = 0;
+
+  graphion_vm_init(&vm_generic);
+  if (graphion_vm_load(&vm_generic, program, sizeof(program) / sizeof(program[0])) != 0) {
+    return 3;
+  }
+  if (vm_generic.arith_only_fastpath || vm_generic.arith_only_halt_terminated) {
+    return 4;
+  }
+
+  return 0;
+}
+
+int test_vm_dispatch_variant_edge_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn halt_before_invalid[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 5},
+      {GVM_OP_HALT, 0, 0, 0},
+      {255, 0, 0, 0},
+  };
+  const graphion_insn invalid_opcode[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 5},
+      {255, 0, 0, 0},
+  };
+  const graphion_insn nop_halt[] = {
+      {GVM_OP_NOP, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  rc = run_vm_program(&vm, halt_before_invalid, sizeof(halt_before_invalid) / sizeof(halt_before_invalid[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  if (!vm.halted || vm.regs[0] != 5 || vm.pc != 2U) {
+    return 2;
+  }
+
+  rc = run_vm_program(&vm, invalid_opcode, sizeof(invalid_opcode) / sizeof(invalid_opcode[0]));
+  if (rc != -4) {
+    return 3;
+  }
+  if (vm.halted || vm.pc != 2U || vm.regs[0] != 5) {
+    return 4;
+  }
+
+  rc = run_vm_program(&vm, nop_halt, sizeof(nop_halt) / sizeof(nop_halt[0]));
+  if (rc != 0) {
+    return 5;
+  }
+  if (!vm.halted || vm.pc != 2U) {
+    return 6;
+  }
+
   return 0;
 }

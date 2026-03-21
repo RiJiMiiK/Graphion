@@ -22,7 +22,7 @@ jobs:
       - name: Update CONTRIBUTORS.md
         run: python scripts/repo/update_contributors.py
       - name: Create pull request if changed
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "docs: update CONTRIBUTORS.md"
           title: "docs: update contributors list"

@@ -102,6 +102,18 @@ jobs:
       - name: Assembly safety policy
         run: python scripts/quality/check_asm_safety.py
 
+  dispatch-variant-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y gcc clang
+      - name: Run dispatch variant parity tests
+        run: python scripts/quality/test_dispatch_variants.py --build-root build-dispatch-tests --build-type Release --compiler clang
+
   docker-build:
     runs-on: ubuntu-latest
     steps:
@@ -130,4 +142,3 @@ jobs:
           name: bench-latest
           path: benchmarks/results/latest.json
           retention-days: 30
-
