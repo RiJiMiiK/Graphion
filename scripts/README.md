@@ -26,6 +26,7 @@ Quick pointers:
 - PGO thresholds: `scripts/bench/pgo/pgo_thresholds.py`
 - PGO release alerts: `python scripts/bench/pgo/check_pgo_alerts.py --report-json <path>`
 - ASM fallback compare: `python scripts/bench/compare/compare_asm_fallback.py --build-root build-asm-fallback --runs 20 --iterations 500000 -- -G Ninja -DCMAKE_C_COMPILER=clang`
+- Frontier/traversal regression gate: `python scripts/bench/compare/check_frontier_regressions.py --graphion-json <graphion_lane.json> --rust-json <rust_lane.json>`
 - ASM hardening parity: `python scripts/quality/test_asm_hardening_parity.py --build-root build-asm-hardening -- -G Ninja -DCMAKE_C_COMPILER=gcc`
 - Optimization report: `python scripts/bench/pgo/generate_optimization_report.py --build-root build-opt-report`
 - Unified optimization report: `python scripts/bench/refresh/refresh_optimization_reports.py --runs 100`

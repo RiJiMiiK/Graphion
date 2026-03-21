@@ -185,6 +185,10 @@ Interpretation order:
 - Toolchain-oriented reports must also include enforced lane metadata such as `compiler_kind`, `asm_enabled`, and relevant build/report parameters.
 - Compare against baseline with `scripts/bench/compare/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
+- Frontier/traversal parity is separately gated against the Rust lane via
+  `scripts/bench/compare/check_frontier_regressions.py`.
+- The current frontier/traversal parity contract is documented in
+  `docs/performance/policies/FRONTIER_REGRESSION_GATES.md`.
 - Keep Rust comparison benchmarks aligned with the versioned `graphion_rust` project.
 - Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.
 - Prefer the automated `performance-report` workflow for official rolling snapshots instead of hand-editing the report.
