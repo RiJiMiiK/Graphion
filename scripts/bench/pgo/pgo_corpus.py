@@ -11,6 +11,12 @@ from typing import Any
 
 
 WORKLOADS: dict[str, dict[str, Any]] = {
+    "frontier_primitives": {
+        "target": "graphion_bench_frontier",
+        "iterations": 200000,
+        "family": "frontier",
+        "coverage": "frontier filter/map/reduce primitives and buffer choreography",
+    },
     "vm_dispatch": {
         "target": "graphion_bench",
         "iterations": 200000,
@@ -23,11 +29,23 @@ WORKLOADS: dict[str, dict[str, Any]] = {
         "family": "csr",
         "coverage": "CSR traversal and BFS frontier expansion",
     },
+    "neighbor_iteration": {
+        "target": "graphion_bench_neighbors",
+        "iterations": 200000,
+        "family": "frontier-csr",
+        "coverage": "bounded CSR frontier neighbor iteration and sparse/dense recommendation path",
+    },
     "hypergraph_incidence": {
         "target": "graphion_bench_hypergraph",
         "iterations": 200000,
         "family": "hypergraph",
         "coverage": "incidence traversal across node-edge relationships",
+    },
+    "hypergraph_traversal": {
+        "target": "graphion_bench_hypergraph_traversal",
+        "iterations": 200000,
+        "family": "hypergraph",
+        "coverage": "node-to-edge and edge-to-node traversal primitives",
     },
     "hypergraph_incident_sum": {
         "target": "graphion_bench_hypergraph_incident_sum",
@@ -52,11 +70,14 @@ WORKLOADS: dict[str, dict[str, Any]] = {
 
 CORPUS_PROFILES: dict[str, dict[str, Any]] = {
     "representative": {
-        "description": "Balanced default corpus spanning VM dispatch, CSR/BFS, hypergraph traversal, reducers, and VM graph opcodes.",
+        "description": "Balanced default corpus spanning frontier primitives, VM dispatch, CSR/BFS, hypergraph traversal, reducers, and VM graph opcodes.",
         "workloads": [
+            "frontier_primitives",
             "vm_dispatch",
             "bfs_levels",
+            "neighbor_iteration",
             "hypergraph_incidence",
+            "hypergraph_traversal",
             "hypergraph_incident_sum",
             "hypergraph_hyperedge_node_sum",
             "vm_graph_ops",
@@ -68,9 +89,12 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
     "ci": {
         "description": "Same workload families as the representative corpus, intended for CI with reduced iteration scale.",
         "workloads": [
+            "frontier_primitives",
             "vm_dispatch",
             "bfs_levels",
+            "neighbor_iteration",
             "hypergraph_incidence",
+            "hypergraph_traversal",
             "hypergraph_incident_sum",
             "hypergraph_hyperedge_node_sum",
             "vm_graph_ops",

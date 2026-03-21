@@ -1,20 +1,37 @@
-# Performance Snapshot (x100)
+# Performance Snapshot (x1)
 
-This snapshot is generated from the latest local benchmark artifacts on 2026-03-06 21:21:40 UTC.
+This snapshot is generated from the latest local benchmark artifacts on 2026-03-21 14:57:03 UTC.
 
-Benchmark runs use x100 averages with benchmark-specific default iteration counts committed in the bench sources.
+Benchmark runs use x1 averages with benchmark-specific default iteration counts committed in the bench sources.
 
 Format requested: `s | mteps | mips | ns_per_X`.
 
 For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS.md](OPTIMIZATION_REPORTS.md).
 
+## Environment Metadata
+
+| Lane | Compiler | ASM | CPU | Machine | Git | Runs |
+|---|---|---|---|---|---|---:|
+| Graphion Windows | msvc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | fe4e39425a13 | 1 |
+| Graphion Linux (preview) | gcc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | fe4e39425a13 | 1 |
+| Rust Windows | rustc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | fe4e39425a13 | 1 |
+
+
+## frontier_primitives (`ns_per_frontier_item`)
+
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.065240 | - | 27.591 | 1.699 |
+| Graphion Linux (preview) | 0.065240 | - | 27.591 | 1.699 |
+| Rust Windows | 0.177894 | - | 10.118 | 4.633 |
+
 ## vm_dispatch (`ns_per_instruction`)
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.007162 | - | 1259.400 | 0.796 |
-| Graphion Linux | 0.006772 | - | 1338.038 | 0.752 |
-| Rust Windows | 0.006341 | - | 1422.667 | 0.704 |
+| Graphion Windows | 0.014658 | - | 613.980 | 1.629 |
+| Graphion Linux (preview) | 0.014658 | - | 613.980 | 1.629 |
+| Rust Windows | 0.016855 | - | 533.973 | 1.873 |
 
 ## vm_dispatch dispatch variants (`ns_per_instruction`, x100)
 
@@ -30,41 +47,41 @@ For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.005192 | 732.664 | - | 1.366 |
-| Graphion Linux | 0.005290 | 718.959 | - | 1.392 |
-| Rust Windows | 0.018781 | 236.357 | - | 4.942 |
+| Graphion Windows | 0.010927 | 347.764 | - | 2.876 |
+| Graphion Linux (preview) | 0.010927 | 347.764 | - | 2.876 |
+| Rust Windows | 0.032338 | 117.510 | - | 8.510 |
 
 ## hypergraph_incidence (`ns_per_incidence`)
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.001166 | - | 5185.339 | 0.194 |
-| Graphion Linux | 0.000942 | - | 6585.419 | 0.157 |
-| Rust Windows | 0.001759 | - | 3449.891 | 0.293 |
+| Graphion Windows | 0.003922 | - | 1529.651 | 0.654 |
+| Graphion Linux (preview) | 0.003922 | - | 1529.651 | 0.654 |
+| Rust Windows | 0.003835 | - | 1564.537 | 0.639 |
 
 ## hypergraph_incident_sum (`ns_per_call`)
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.004504 | - | 555.591 | 1.801 |
-| Graphion Linux | 0.002975 | - | 842.726 | 1.190 |
-| Rust Windows | 0.006227 | - | 402.106 | 2.491 |
+| Graphion Windows | 0.012170 | - | 205.422 | 4.868 |
+| Graphion Linux (preview) | 0.012170 | - | 205.422 | 4.868 |
+| Rust Windows | 0.012135 | - | 206.017 | 4.854 |
 
 ## hypergraph_hyperedge_node_sum (`ns_per_call`)
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.003649 | - | 549.588 | 1.825 |
-| Graphion Linux | 0.002862 | - | 701.030 | 1.431 |
-| Rust Windows | 0.004793 | - | 417.718 | 2.396 |
+| Graphion Windows | 0.006680 | - | 299.422 | 3.340 |
+| Graphion Linux (preview) | 0.006680 | - | 299.422 | 3.340 |
+| Rust Windows | 0.009671 | - | 206.808 | 4.835 |
 
 ## vm_graph_ops (`ns_per_instruction`)
 
 | Platform | s | mteps | mips | ns_per_X |
 |---|---:|---:|---:|---:|
-| Graphion Windows | 0.009848 | - | 304.924 | 3.283 |
-| Graphion Linux | 0.010623 | - | 282.671 | 3.541 |
-| Rust Windows | 0.026911 | - | 126.701 | 8.970 |
+| Graphion Windows | 0.019402 | - | 154.623 | 6.467 |
+| Graphion Linux (preview) | 0.019402 | - | 154.623 | 6.467 |
+| Rust Windows | 0.057007 | - | 52.625 | 19.002 |
 
 Notes:
 

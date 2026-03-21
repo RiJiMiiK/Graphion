@@ -10,17 +10,23 @@ The corpus must optimize for real graph and hypergraph execution patterns, not o
 
 A valid representative corpus must cover all of these workload families:
 
+- Frontier primitive orchestration
 - VM arithmetic dispatch hotpath
 - CSR/BFS traversal
+- Frontier-driven CSR neighbor traversal
 - Hypergraph incidence traversal
+- Bidirectional hypergraph traversal
 - Hypergraph reducer paths
 - Graph-oriented VM opcode dispatch
 
 In practice, the committed `representative` corpus currently trains with:
 
+- `graphion_bench_frontier`
 - `graphion_bench`
 - `graphion_bench_bfs`
+- `graphion_bench_neighbors`
 - `graphion_bench_hypergraph`
+- `graphion_bench_hypergraph_traversal`
 - `graphion_bench_hypergraph_incident_sum`
 - `graphion_bench_hypergraph_hyperedge_node_sum`
 - `graphion_bench_vm_graph`
@@ -73,15 +79,24 @@ The official optimization report tracks advisory PGO effectiveness thresholds pe
 
 Current thresholds:
 
+- Frontier primitives
+  - minimum: `1.00x`
+  - target: `1.08x`
 - VM arithmetic dispatch
   - minimum: `1.05x`
   - target: `1.15x`
 - CSR/BFS traversal
   - minimum: `0.98x`
   - target: `1.05x`
+- CSR frontier traversal
+  - minimum: `0.98x`
+  - target: `1.05x`
 - Hypergraph incidence traversal
   - minimum: `1.03x`
   - target: `1.10x`
+- Hypergraph traversal primitives
+  - minimum: `1.00x`
+  - target: `1.08x`
 - Hypergraph reducers
   - minimum: `1.05x`
   - target: `1.15x`
@@ -92,6 +107,7 @@ Current thresholds:
 These thresholds are intentionally asymmetric:
 
 - dispatch and reducer-heavy loops are expected to benefit clearly from PGO
+- frontier orchestration and traversal primitives are expected to at least break even
 - CSR/BFS kernels are allowed to be near break-even because control-flow and memory behavior dominate more of the runtime
 - graph-oriented VM opcodes must at least not regress
 

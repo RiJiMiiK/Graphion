@@ -18,6 +18,7 @@ Quick pointers:
 
 - Bench run: `python scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000`
 - Perf snapshot: `python scripts/bench/refresh/refresh_performance_results.py`
+- Automated perf snapshot workflow: `.github/workflows/performance-report.yml`
 - PGO run: `python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo`
 - PGO corpus policy: `docs/performance/policies/PGO_CORPUS_POLICY.md`
 - Cross-compiler policy: `docs/performance/policies/CROSS_COMPILER_POLICY.md`

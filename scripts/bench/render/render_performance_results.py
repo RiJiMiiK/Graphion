@@ -16,27 +16,36 @@ from report_metadata import validate_metadata
 
 
 BENCHMARK_ORDER = [
+    "frontier_primitives",
     "vm_dispatch",
     "bfs_levels",
+    "neighbor_iteration",
     "hypergraph_incidence",
+    "hypergraph_traversal",
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
     "vm_graph_ops",
 ]
 
 DISPLAY_NAMES = {
+    "frontier_primitives": "frontier_primitives",
     "vm_dispatch": "vm_dispatch",
     "bfs_levels": "bfs_levels",
+    "neighbor_iteration": "neighbor_iteration",
     "hypergraph_incidence": "hypergraph_incidence",
+    "hypergraph_traversal": "hypergraph_traversal",
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
     "vm_graph_ops": "vm_graph_ops",
 }
 
 LATENCY_LABELS = {
+    "ns_per_frontier_item": "ns_per_frontier_item",
     "ns_per_instruction": "ns_per_instruction",
     "ns_per_edge": "ns_per_edge",
+    "ns_per_neighbor": "ns_per_neighbor",
     "ns_per_incidence": "ns_per_incidence",
+    "ns_per_membership": "ns_per_membership",
     "ns_per_call": "ns_per_call",
 }
 
@@ -110,6 +119,20 @@ def render_benchmark_section(name: str, row_sets: list[dict[str, dict[str, objec
         lines.append(
             f"| {row['platform']} | {fmt_seconds(row['seconds_avg'])} | {mteps_cell(row)} | {mips_cell(row)} | {fmt(metric_value(row, latency_key))} |"
         )
+    mode_rows = [row for row in available if "recommended_frontier_mode" in row]
+    if mode_rows:
+        lines.append("")
+        lines.append("Frontier mode notes:")
+        lines.append("")
+        for row in mode_rows:
+            lines.append(
+                "- {platform}: mode=`{mode}` frontier_len={frontier_len} frontier_neighbor_work={neighbor_work}".format(
+                    platform=row["platform"],
+                    mode=row["recommended_frontier_mode"],
+                    frontier_len=row.get("frontier_len", "?"),
+                    neighbor_work=row.get("frontier_neighbor_work", "?"),
+                )
+            )
     lines.append("")
     return "\n".join(lines)
 
@@ -220,7 +243,7 @@ def main() -> int:
             "",
             "- Linux measurements are intended to come from Docker (`GRAPHION_ENABLE_ASM=ON`).",
             "- `computed-goto` is expected only on Linux/GCC/Clang paths.",
-            "- Rust comparison uses the local `graphion_rust` sandbox when present; that sandbox stays gitignored.",
+            "- Rust comparison uses the versioned `graphion_rust` benchmark lane when present in the checkout.",
             "- Numbers vary by CPU governor, thermal state, and host load.",
             "- Treat this as a rolling engineering checkpoint, not a publication-grade benchmark.",
             "",

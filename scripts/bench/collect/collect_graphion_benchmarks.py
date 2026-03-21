@@ -17,6 +17,13 @@ from report_metadata import base_metadata, validate_metadata
 
 BENCH_SPECS = [
     {
+        "benchmark": "frontier_primitives",
+        "target": "graphion_bench_frontier",
+        "iterations": 300000,
+        "latency_key": "ns_per_frontier_item",
+        "throughput_key": "mips",
+    },
+    {
         "benchmark": "vm_dispatch",
         "target": "graphion_bench",
         "iterations": 500000,
@@ -31,11 +38,25 @@ BENCH_SPECS = [
         "throughput_key": "mteps",
     },
     {
+        "benchmark": "neighbor_iteration",
+        "target": "graphion_bench_neighbors",
+        "iterations": 300000,
+        "latency_key": "ns_per_neighbor",
+        "throughput_key": "mteps",
+    },
+    {
         "benchmark": "hypergraph_incidence",
         "target": "graphion_bench_hypergraph",
         "iterations": 500000,
         "latency_key": "ns_per_incidence",
         "throughput_key": "mips",
+    },
+    {
+        "benchmark": "hypergraph_traversal",
+        "target": "graphion_bench_hypergraph_traversal",
+        "iterations": 300000,
+        "latency_key": "ns_per_membership",
+        "throughput_key": "mteps",
     },
     {
         "benchmark": "hypergraph_incident_sum",
@@ -106,8 +127,14 @@ def average_payloads(
     }
     for key in (
         "iterations",
+        "frontier_items_per_iteration",
         "instructions_per_iteration",
         "edges_per_iteration",
+        "neighbors_per_iteration",
+        "frontier_len",
+        "frontier_neighbor_work",
+        "recommended_frontier_mode",
+        "memberships_per_iteration",
         "incidence_per_iteration",
         "calls_per_iteration",
     ):

@@ -11,6 +11,13 @@ from typing import Any
 
 
 WORKLOAD_THRESHOLDS: dict[str, dict[str, Any]] = {
+    "frontier_primitives": {
+        "family": "frontier_primitives",
+        "label": "Frontier primitives",
+        "minimum_speedup_x": 1.00,
+        "target_speedup_x": 1.08,
+        "rationale": "Frontier orchestration should at least break even under PGO and usually improve modestly.",
+    },
     "vm_dispatch": {
         "family": "vm_dispatch",
         "label": "VM arithmetic dispatch",
@@ -25,12 +32,26 @@ WORKLOAD_THRESHOLDS: dict[str, dict[str, Any]] = {
         "target_speedup_x": 1.05,
         "rationale": "PGO should not regress traversal-heavy kernels; gains are welcome but not mandatory.",
     },
+    "neighbor_iteration": {
+        "family": "frontier_csr",
+        "label": "CSR frontier traversal",
+        "minimum_speedup_x": 0.98,
+        "target_speedup_x": 1.05,
+        "rationale": "Frontier-driven CSR expansion should not regress and may benefit modestly from layout-aware optimization.",
+    },
     "hypergraph_incidence": {
         "family": "hypergraph_traversal",
         "label": "Hypergraph incidence traversal",
         "minimum_speedup_x": 1.03,
         "target_speedup_x": 1.10,
         "rationale": "Traversal-heavy hypergraph kernels should see at least modest improvement.",
+    },
+    "hypergraph_traversal": {
+        "family": "hypergraph_traversal",
+        "label": "Hypergraph traversal primitives",
+        "minimum_speedup_x": 1.00,
+        "target_speedup_x": 1.08,
+        "rationale": "Bidirectional hypergraph traversal should at least break even and ideally improve modestly under PGO.",
     },
     "hypergraph_incident_sum": {
         "family": "hypergraph_reducer",

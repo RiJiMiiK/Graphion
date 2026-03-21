@@ -26,11 +26,22 @@ and Docker Linux measurements:
 python scripts/bench/refresh/refresh_performance_results.py
 ```
 
+GitHub Actions can also render the rolling report automatically:
+
+- workflow: `.github/workflows/performance-report.yml`
+- outputs:
+  - benchmark JSON artifacts per lane
+  - rendered `docs/performance/reports/PERFORMANCE_RESULTS.md` artifact
+- optional manual-dispatch PR refresh for the report markdown
+
 Run hypergraph sum benches directly:
 
 ```bash
 ./build-bench/graphion_bench_hypergraph_incident_sum 500000
 ./build-bench/graphion_bench_hypergraph_hyperedge_node_sum 500000
+./build-bench/graphion_bench_frontier 300000
+./build-bench/graphion_bench_neighbors 300000
+./build-bench/graphion_bench_hypergraph_traversal 300000
 ```
 
 Dispatch variant study (switch vs jumptable vs computed-goto when supported):
@@ -106,7 +117,7 @@ python3 scripts/bench/compare/compare_asm_fallback.py \
   -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
-Optional local Rust comparison (for private/local sandbox projects):
+Optional direct Rust comparison against a prepared command:
 
 ```bash
 python3 scripts/bench/compare/bench_compare_with_rust.py \
@@ -136,6 +147,24 @@ Output example:
 }
 ```
 
+Frontier primitive runs also emit:
+
+- `frontier_items_per_iteration`
+- `ns_per_frontier_item`
+
+Neighbor iteration runs also emit:
+
+- `frontier_len`
+- `neighbors_per_iteration`
+- `frontier_neighbor_work`
+- `recommended_frontier_mode`
+- `ns_per_neighbor`
+
+Hypergraph traversal runs also emit:
+
+- `memberships_per_iteration`
+- `ns_per_membership`
+
 Interpretation order:
 - `seconds`: primary metric (wall-clock speed on the measured workload).
 - `ns_per_*`: primary normalized latency metric (`ns_per_instruction`, `ns_per_edge`, `ns_per_incidence`).
@@ -149,7 +178,9 @@ Interpretation order:
 - Toolchain-oriented reports must also include enforced lane metadata such as `compiler_kind`, `asm_enabled`, and relevant build/report parameters.
 - Compare against baseline with `scripts/bench/compare/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
-- Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
+- Keep Rust comparison benchmarks aligned with the versioned `graphion_rust` project.
 - Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.
+- Prefer the automated `performance-report` workflow for official rolling snapshots instead of hand-editing the report.
+- Frontier-sensitive benchmark rows should carry the recommended `sparse` / `dense` mode when the heuristic applies.
 - Keep official `baseline` vs `PGO` reports in `docs/performance/reports/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/optimization/`.
 - Keep cross-compiler governance snapshots in `docs/performance/reports/CROSS_COMPILER_REPORT.md` using the portable lane only.

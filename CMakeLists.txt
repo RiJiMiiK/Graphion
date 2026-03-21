@@ -236,6 +236,17 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
+  add_executable(graphion_bench_frontier
+    benchmarks/bench_frontier.c
+  )
+  target_link_libraries(graphion_bench_frontier PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_frontier)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
   add_executable(graphion_bench_bfs
     benchmarks/bench_bfs.c
   )
@@ -247,6 +258,17 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
+  add_executable(graphion_bench_neighbors
+    benchmarks/bench_neighbors.c
+  )
+  target_link_libraries(graphion_bench_neighbors PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_neighbors)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
   add_executable(graphion_bench_hypergraph
     benchmarks/bench_hypergraph.c
   )
@@ -256,6 +278,17 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_hypergraph_traversal
+    benchmarks/bench_hypergraph_traversal.c
+  )
+  target_link_libraries(graphion_bench_hypergraph_traversal PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_hypergraph_traversal)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
   add_executable(graphion_bench_hypergraph_incident_sum

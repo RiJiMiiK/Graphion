@@ -2,7 +2,7 @@ name: monthly-audit
 
 on:
   schedule:
-    - cron: "7 6 1 * *"
+    - cron: "0 18 * * 5"
   workflow_dispatch:
 
 permissions:
