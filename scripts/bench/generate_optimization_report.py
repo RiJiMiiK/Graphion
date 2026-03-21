@@ -532,8 +532,8 @@ def render_markdown(payload: dict[str, object]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate an official Graphion optimization report (baseline vs PGO).")
     parser.add_argument("--build-root", default="build-optimization-report", help="Directory root used for report builds")
-    parser.add_argument("--output-json", default="benchmarks/results/optimization_report_latest.json", help="JSON report output path")
-    parser.add_argument("--output-md", default="docs/OPTIMIZATION_REPORTS.md", help="Markdown report output path")
+    parser.add_argument("--output-json", default="benchmarks/results/optimization/optimization_report_latest.json", help="JSON report output path")
+    parser.add_argument("--output-md", default="docs/performance/reports/OPTIMIZATION_REPORTS.md", help="Markdown report output path")
     parser.add_argument("--platform-label", default="", help="Human-readable platform label used in the report metadata")
     parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--build-type", default="Release", help="CMAKE_BUILD_TYPE for single-config generators")

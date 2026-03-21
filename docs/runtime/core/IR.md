@@ -70,10 +70,10 @@ Errors:
 - `GIR_ERR_CAPACITY`
 - `GIR_ERR_INVALID_OPCODE`
 
-Cross-subsystem error-model policy is documented in `docs/VM_ERRORS.md`.
+Cross-subsystem error-model policy is documented in `docs/runtime/debugging/VM_ERRORS.md`.
 
 ## Stability
 
 IR v0 is a bridge format and may evolve.
-Any incompatible change should update this file and `docs/ISA.md` together.
-ISA versioning and compatibility policy are defined in `docs/ISA_VERSIONING.md`.
+Any incompatible change should update this file and `docs/runtime/core/ISA.md` together.
+ISA versioning and compatibility policy are defined in `docs/runtime/contracts/ISA_VERSIONING.md`.

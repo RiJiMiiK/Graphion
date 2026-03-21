@@ -27,7 +27,7 @@ def main() -> int:
   parser = argparse.ArgumentParser(description="Compare VM dispatch variants on vm_dispatch benchmark.")
   parser.add_argument("--iterations", type=int, default=500000)
   parser.add_argument("--runs", type=int, default=10)
-  parser.add_argument("--output", default="benchmarks/results/dispatch_variants.json")
+  parser.add_argument("--output", default="benchmarks/results/performance/dispatch_variants.json")
   parser.add_argument(
       "--cmake-arg",
       action="append",

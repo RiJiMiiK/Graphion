@@ -17,7 +17,7 @@
 ## Milestone 0.2.1 (Stabilization) [done]
 
 - [x] End-to-end parser integration test (`source -> IR -> bytecode -> VM run`).
-- [x] IR v0 bridge contract document (`docs/IR.md`).
+- [x] IR v0 bridge contract document (`docs/runtime/core/IR.md`).
 
 ## Milestone 0.3 (Optimization Pass) [done]
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).

@@ -11,7 +11,7 @@ This document defines the current Graphion error-model structure across:
 
 See also:
 
-- `docs/FAILURE_CLASSIFICATION.md` for decode/load/execute triage by phase
+- `docs/runtime/debugging/FAILURE_CLASSIFICATION.md` for decode/load/execute triage by phase
 
 The current implementation uses signed integer return codes, with `0` meaning
 success and negative values meaning failure.
@@ -175,8 +175,8 @@ Current behavior:
 Any incompatible change must update:
 
 - this document
-- `docs/ISA.md` when VM-visible behavior changes
-- `docs/IR.md` when frontend/IR contracts change
+- `docs/runtime/core/ISA.md` when VM-visible behavior changes
+- `docs/runtime/core/IR.md` when frontend/IR contracts change
 - tests that assert specific codes
 - `CHANGELOG.md`
 

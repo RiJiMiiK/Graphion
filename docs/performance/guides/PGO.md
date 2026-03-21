@@ -102,7 +102,7 @@ For a unified engineering report that merges local Windows and Docker Linux opti
 use `scripts/bench/refresh_optimization_reports.py`.
 
 For portable cross-compiler governance (`MSVC` vs `GCC` vs `Clang`), use
-`scripts/bench/refresh_cross_compiler_report.py` and `docs/CROSS_COMPILER_POLICY.md`.
+`scripts/bench/refresh_cross_compiler_report.py` and `docs/performance/policies/CROSS_COMPILER_POLICY.md`.
 Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
 the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
 On pull requests this is advisory-only; the blocking mode is reserved for manual candidate validation.

@@ -1,4 +1,4 @@
-﻿# ISA Version Policy
+# ISA Version Policy
 
 ## Scope
 
@@ -35,8 +35,8 @@ Rules:
 - Encoding details may still change.
 - Error-code assignments may still change.
 - Any incompatible change must update:
-  - `docs/ISA.md`
-  - `docs/IR.md` when lowering or parser contracts are affected
+  - `docs/runtime/core/ISA.md`
+  - `docs/runtime/core/IR.md` when lowering or parser contracts are affected
   - conformance tests / parser tests / fuzz expectations
   - `CHANGELOG.md`
 
@@ -86,11 +86,11 @@ Any ISA-affecting change must classify itself as one of:
 
 At minimum, the change must update:
 
-- `docs/ISA.md`
-- `docs/IR.md` if the parser/IR bridge is affected
+- `docs/runtime/core/ISA.md`
+- `docs/runtime/core/IR.md` if the parser/IR bridge is affected
 - tests or fixtures that encode the affected behavior
 - `CHANGELOG.md`
-- `docs/ISA_COMPATIBILITY_CHECKLIST.md` review items when opcode semantics change
+- `docs/runtime/contracts/ISA_COMPATIBILITY_CHECKLIST.md` review items when opcode semantics change
 
 ## Rules for adding opcodes before `v1.0`
 
@@ -127,6 +127,6 @@ true:
 
 Until `v1.0`, the normative sources are:
 
-- `docs/ISA.md` for opcode and encoding definition
+- `docs/runtime/core/ISA.md` for opcode and encoding definition
 - this document for versioning and compatibility policy
-- `docs/IR.md` for frontend-to-bytecode bridge expectations
+- `docs/runtime/core/IR.md` for frontend-to-bytecode bridge expectations

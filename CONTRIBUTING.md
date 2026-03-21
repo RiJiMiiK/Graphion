@@ -53,7 +53,7 @@ Enable local git hooks:
 - Include rationale and benchmark notes for performance-sensitive changes.
 - Add or update tests when behavior changes.
 - For VM hot paths, include before/after performance evidence.
-- Use branch naming and PR title rules from `docs/GIT_WORKFLOW.md`.
+- Use branch naming and PR title rules from `docs/process/GIT_WORKFLOW.md`.
 - Prefer squash merge and keep linear history.
 
 ## Commit message style
@@ -64,12 +64,12 @@ Use concise imperative messages, for example:
 
 ## Release and architecture docs
 
-- Release process: `docs/RELEASE.md`
-- Release checklist: `docs/RELEASE_CHECKLIST.md`
-- Architecture overview: `docs/ARCHITECTURE.md`
-- ISA spec: `docs/ISA.md`
-- Git signing guidance: `docs/GIT_SIGNING.md`
-- Git workflow policy: `docs/GIT_WORKFLOW.md`
+- Release process: `docs/process/RELEASE.md`
+- Release checklist: `docs/process/RELEASE_CHECKLIST.md`
+- Architecture overview: `docs/runtime/core/ARCHITECTURE.md`
+- ISA spec: `docs/runtime/core/ISA.md`
+- Git signing guidance: `docs/process/GIT_SIGNING.md`
+- Git workflow policy: `docs/process/GIT_WORKFLOW.md`
 - Actions security policy: `docs/ACTIONS_SECURITY.md`
 - Support policy: `docs/SUPPORT_POLICY.md`
 

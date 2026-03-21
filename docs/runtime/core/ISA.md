@@ -2,15 +2,15 @@
 
 See also:
 
-- `docs/ISA_VERSIONING.md` for version and compatibility policy
-- `docs/IR.md` for frontend-to-bytecode bridge contract
-- `docs/VM_ERRORS.md` for structured runtime error interpretation
-- `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
-- `docs/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
-- `docs/VM_REPRO.md` for deterministic repro workflow
-- `docs/REPRO_ARTIFACTS.md` for named repro artifact policy
-- `docs/ISA_COMPATIBILITY_CHECKLIST.md` for opcode change review requirements
-- `docs/FAILURE_CLASSIFICATION.md` for decode/load/execute triage
+- `docs/runtime/contracts/ISA_VERSIONING.md` for version and compatibility policy
+- `docs/runtime/core/IR.md` for frontend-to-bytecode bridge contract
+- `docs/runtime/debugging/VM_ERRORS.md` for structured runtime error interpretation
+- `docs/runtime/contracts/ISA_FIXTURES.md` for golden fixture format and expansion policy
+- `docs/runtime/debugging/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
+- `docs/runtime/debugging/VM_REPRO.md` for deterministic repro workflow
+- `docs/runtime/debugging/REPRO_ARTIFACTS.md` for named repro artifact policy
+- `docs/runtime/contracts/ISA_COMPATIBILITY_CHECKLIST.md` for opcode change review requirements
+- `docs/runtime/debugging/FAILURE_CLASSIFICATION.md` for decode/load/execute triage
 
 ## Encoding
 
@@ -132,12 +132,12 @@ Notes:
 - `GVM_ERR_INVALID_REG (-3)`: invalid register in register-based VM opcodes
 - `GVM_ERR_UNKNOWN_OPCODE (-4)`: unknown opcode
 - Full layer-scoped error model and subsystem interpretation rules are defined in
-  `docs/VM_ERRORS.md`.
+  `docs/runtime/debugging/VM_ERRORS.md`.
 
 ## Compatibility policy
 
 - Encoding changes must update:
-  - `docs/ISA.md`
+  - `docs/runtime/core/ISA.md`
   - `src/parser/bytecode.*`
   - tests and fuzz harnesses
 - Backward-incompatible changes must be called out in `CHANGELOG.md`.
@@ -160,7 +160,7 @@ Notes:
 Golden ISA fixtures live in:
 
 - `tests/test_isa.c`
-- `docs/ISA_FIXTURES.md`
+- `docs/runtime/contracts/ISA_FIXTURES.md`
 
 Current fixture coverage includes:
 

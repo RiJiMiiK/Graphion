@@ -174,9 +174,9 @@ If that happens, the transition must define:
 
 Fixture changes must remain aligned with:
 
-- `docs/ISA.md`
-- `docs/ISA_VERSIONING.md`
-- `docs/VM_ERRORS.md`
+- `docs/runtime/core/ISA.md`
+- `docs/runtime/contracts/ISA_VERSIONING.md`
+- `docs/runtime/debugging/VM_ERRORS.md`
 
 In `v0.x`, fixtures may evolve with incompatible ISA changes, but the same
 change must update docs and fixtures together.

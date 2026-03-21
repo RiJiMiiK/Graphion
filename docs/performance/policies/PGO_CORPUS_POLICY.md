@@ -47,7 +47,7 @@ Any change to the representative corpus must satisfy all of the following:
 
 - keep all required workload families covered
 - update the committed policy in this document
-- update `docs/PGO.md` if the workflow or defaults change
+- update `docs/performance/guides/PGO.md` if the workflow or defaults change
 - update the optimization report metadata if the corpus meaning changes
 - be justified by measured before/after reports, not by assumption
 

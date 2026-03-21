@@ -25,10 +25,10 @@ def main() -> int:
     parser.add_argument("--skip-windows", action="store_true", help="Skip Windows report generation")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/optimization_report_windows.json")
-    linux_json = pathlib.Path("benchmarks/results/optimization_report_linux.json")
+    windows_json = pathlib.Path("benchmarks/results/optimization/optimization_report_windows.json")
+    linux_json = pathlib.Path("benchmarks/results/optimization/optimization_report_linux.json")
     input_jsons: list[str] = []
-    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-opt-report-", dir="benchmarks/results"))
+    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-opt-report-", dir="benchmarks/results/smoke"))
     windows_md = temp_root / "optimization_report_windows.md"
     linux_md = temp_root / "optimization_report_linux.md"
 
@@ -55,12 +55,17 @@ def main() -> int:
         linux_commands = [
             (
                 "python3 scripts/bench/generate_optimization_report.py --build-root {build_root} "
-                "--output-json benchmarks/results/optimization_report_linux.json "
-                "--output-md benchmarks/results/{linux_md_name} "
+                "--output-json benchmarks/results/optimization/optimization_report_linux.json "
+                "--output-md benchmarks/results/smoke/{temp_dir}/{linux_md_name} "
                 "--platform-label \"Graphion Linux (Docker GCC)\" "
                 "--compiler-kind gcc --runs {runs} --variant-runs {runs} -- "
                 "-G Ninja -DCMAKE_C_COMPILER=gcc -DGRAPHION_ENABLE_ASM=ON -DGRAPHION_ENABLE_IPO=OFF"
-            ).format(build_root=args.linux_build_root, runs=args.runs, linux_md_name=linux_md.name)
+            ).format(
+                build_root=args.linux_build_root,
+                runs=args.runs,
+                temp_dir=temp_root.name,
+                linux_md_name=linux_md.name,
+            )
         ]
         run([
             "docker",
@@ -78,9 +83,9 @@ def main() -> int:
         "python",
         "scripts/bench/render_optimization_reports.py",
         "--output-md",
-        "docs/OPTIMIZATION_REPORTS.md",
+        "docs/performance/reports/OPTIMIZATION_REPORTS.md",
         "--output-json",
-        "benchmarks/results/optimization_report_latest.json",
+        "benchmarks/results/optimization/optimization_report_latest.json",
     ]
     for path in input_jsons:
         render_cmd.extend(["--input-json", path])

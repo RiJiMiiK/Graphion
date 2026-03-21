@@ -28,11 +28,11 @@ def main() -> int:
     parser.add_argument("--skip-linux-clang", action="store_true", help="Skip the Linux Docker Clang lane")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/cross_compiler_windows_msvc.json")
-    linux_gcc_json = pathlib.Path("benchmarks/results/cross_compiler_linux_gcc.json")
-    linux_clang_json = pathlib.Path("benchmarks/results/cross_compiler_linux_clang.json")
+    windows_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_windows_msvc.json")
+    linux_gcc_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_linux_gcc.json")
+    linux_clang_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_linux_clang.json")
     input_jsons: list[str] = []
-    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-cross-compiler-", dir="benchmarks/results"))
+    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-cross-compiler-", dir="benchmarks/results/smoke"))
     windows_md = temp_root / "cross_compiler_windows.md"
     gcc_md = temp_root / "cross_compiler_gcc.md"
     clang_md = temp_root / "cross_compiler_clang.md"
@@ -79,14 +79,20 @@ def main() -> int:
                 (
                     "python3 scripts/bench/generate_optimization_report.py "
                     "--build-root {build_root} "
-                    "--output-json benchmarks/results/cross_compiler_linux_gcc.json "
-                    "--output-md benchmarks/results/{md_name} "
+                    "--output-json benchmarks/results/cross-compiler/cross_compiler_linux_gcc.json "
+                    "--output-md benchmarks/results/smoke/{temp_dir}/{md_name} "
                     "--platform-label \"Linux GCC portable\" "
                     "--compiler-kind gcc --dispatch switch "
                     "--iterations {iterations} --variant-iterations {iterations} "
                     "--runs {runs} --variant-runs {runs} -- "
                     "-G Ninja -DCMAKE_C_COMPILER=gcc -DGRAPHION_ENABLE_ASM=OFF -DGRAPHION_ENABLE_IPO=OFF"
-                ).format(build_root=args.linux_gcc_build_root, iterations=args.iterations, runs=args.runs, md_name=gcc_md.name)
+                ).format(
+                    build_root=args.linux_gcc_build_root,
+                    iterations=args.iterations,
+                    runs=args.runs,
+                    temp_dir=temp_root.name,
+                    md_name=gcc_md.name,
+                )
             ]),
         ])
         input_jsons.append(str(linux_gcc_json))
@@ -104,14 +110,20 @@ def main() -> int:
                 (
                     "python3 scripts/bench/generate_optimization_report.py "
                     "--build-root {build_root} "
-                    "--output-json benchmarks/results/cross_compiler_linux_clang.json "
-                    "--output-md benchmarks/results/{md_name} "
+                    "--output-json benchmarks/results/cross-compiler/cross_compiler_linux_clang.json "
+                    "--output-md benchmarks/results/smoke/{temp_dir}/{md_name} "
                     "--platform-label \"Linux Clang portable\" "
                     "--compiler-kind clang --dispatch switch "
                     "--iterations {iterations} --variant-iterations {iterations} "
                     "--runs {runs} --variant-runs {runs} --llvm-profdata llvm-profdata -- "
                     "-G Ninja -DCMAKE_C_COMPILER=clang -DGRAPHION_ENABLE_ASM=OFF -DGRAPHION_ENABLE_IPO=OFF"
-                ).format(build_root=args.linux_clang_build_root, iterations=args.iterations, runs=args.runs, md_name=clang_md.name)
+                ).format(
+                    build_root=args.linux_clang_build_root,
+                    iterations=args.iterations,
+                    runs=args.runs,
+                    temp_dir=temp_root.name,
+                    md_name=clang_md.name,
+                )
             ]),
         ])
         input_jsons.append(str(linux_clang_json))
@@ -120,9 +132,9 @@ def main() -> int:
         "python",
         "scripts/bench/render_cross_compiler_report.py",
         "--output-md",
-        "docs/CROSS_COMPILER_REPORT.md",
+        "docs/performance/reports/CROSS_COMPILER_REPORT.md",
         "--output-json",
-        "benchmarks/results/cross_compiler_report_latest.json",
+        "benchmarks/results/cross-compiler/cross_compiler_report_latest.json",
     ]
     for path in input_jsons:
         render_cmd.extend(["--input-json", path])

@@ -125,7 +125,7 @@ Do not attach:
 
 ## Relationship With Other Docs
 
-- `docs/VM_REPRO.md`: overall deterministic repro workflow
-- `docs/VM_SNAPSHOT.md`: snapshot format
-- `docs/ISA_FIXTURES.md`: fixture structure
-- `docs/VM_ERRORS.md`: return-code interpretation
+- `docs/runtime/debugging/VM_REPRO.md`: overall deterministic repro workflow
+- `docs/runtime/debugging/VM_SNAPSHOT.md`: snapshot format
+- `docs/runtime/contracts/ISA_FIXTURES.md`: fixture structure
+- `docs/runtime/debugging/VM_ERRORS.md`: return-code interpretation

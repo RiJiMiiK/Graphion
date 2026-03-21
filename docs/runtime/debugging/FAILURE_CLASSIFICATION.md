@@ -148,7 +148,7 @@ Avoid mixing phases in a single bug description unless the reduction proves the 
 
 ## Relationship With Other Docs
 
-- `docs/VM_ERRORS.md`
-- `docs/VM_REPRO.md`
-- `docs/REPRO_ARTIFACTS.md`
-- `docs/ISA_FIXTURES.md`
+- `docs/runtime/debugging/VM_ERRORS.md`
+- `docs/runtime/debugging/VM_REPRO.md`
+- `docs/runtime/debugging/REPRO_ARTIFACTS.md`
+- `docs/runtime/contracts/ISA_FIXTURES.md`

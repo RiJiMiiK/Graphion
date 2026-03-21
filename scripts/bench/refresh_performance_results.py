@@ -27,11 +27,11 @@ def main() -> int:
     parser.add_argument("--dispatch-build-root", default="", help="Optional build root prefix for dispatch-variant study")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/windows_100x_latest.json")
-    linux_json = pathlib.Path("benchmarks/results/linux_100x_latest.json")
-    rust_json = pathlib.Path("benchmarks/results/rust_100x_latest.json")
-    dispatch_windows_json = pathlib.Path("benchmarks/results/dispatch_variants_windows.json")
-    dispatch_linux_json = pathlib.Path("benchmarks/results/dispatch_variants.json")
+    windows_json = pathlib.Path("benchmarks/results/performance/windows_100x_latest.json")
+    linux_json = pathlib.Path("benchmarks/results/performance/linux_100x_latest.json")
+    rust_json = pathlib.Path("benchmarks/results/performance/rust_100x_latest.json")
+    dispatch_windows_json = pathlib.Path("benchmarks/results/performance/dispatch_variants_windows.json")
+    dispatch_linux_json = pathlib.Path("benchmarks/results/performance/dispatch_variants.json")
 
     if not args.skip_windows:
         run([
@@ -104,12 +104,12 @@ def main() -> int:
             (
                 "python3 scripts/bench/collect_graphion_benchmarks.py --build-dir {build_dir} --config Release --runs {runs} "
                 "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
-                "--output benchmarks/results/linux_100x_latest.json"
+                "--output benchmarks/results/performance/linux_100x_latest.json"
             ).format(build_dir=args.linux_build_dir, runs=args.runs),
             (
                 "python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs {runs} "
                 "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
-                "--output benchmarks/results/dispatch_variants.json --cmake-arg=-DGRAPHION_ENABLE_ASM=ON"
+                "--output benchmarks/results/performance/dispatch_variants.json --cmake-arg=-DGRAPHION_ENABLE_ASM=ON"
             ).format(runs=args.runs),
         ]
         run([

@@ -9,7 +9,7 @@
 
 1. Update `CHANGELOG.md` and move relevant entries from `[Unreleased]`.
 2. Ensure CI checks are green.
-3. Follow `docs/RELEASE_CHECKLIST.md`.
+3. Follow `docs/process/RELEASE_CHECKLIST.md`.
 4. Ensure the release-candidate PGO smoke alert is green on release-related PRs.
 5. Create and push tag:
 

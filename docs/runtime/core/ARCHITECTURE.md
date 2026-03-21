@@ -28,15 +28,15 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
 - ISA versioning and compatibility policy:
-  - `docs/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
+  - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:
-  - `docs/VM_ERRORS.md` defines subsystem-local error-code interpretation.
+  - `docs/runtime/debugging/VM_ERRORS.md` defines subsystem-local error-code interpretation.
 - Public VM runtime error codes:
   - `src/vm/vm.h` exposes named `graphion_vm_result` values for load/run failures.
 - VM state snapshot format:
   - `graphion_vm_write_snapshot(...)` emits a versioned text dump for deterministic repro.
 - Deterministic repro workflow:
-  - `docs/VM_REPRO.md` defines how to capture fixture + snapshot + environment.
+  - `docs/runtime/debugging/VM_REPRO.md` defines how to capture fixture + snapshot + environment.
 - Arithmetic overflow policy:
   - `ADD` uses explicit two's-complement wraparound semantics in the VM.
 
@@ -47,8 +47,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - Fast path backends:
   - Portable C fallback (always available).
   - x86_64 assembly backend (`src/vm/hotpaths.s`) when `GRAPHION_ENABLE_ASM=ON` with GCC/Clang.
-- Register/ABI details for assembly are documented in `docs/ASM_REGISTERS.md`.
-- Assembly-vs-C parity/performance policy is documented in `docs/ASM_FALLBACK_POLICY.md`.
+- Register/ABI details for assembly are documented in `docs/runtime/asm/ASM_REGISTERS.md`.
+- Assembly-vs-C parity/performance policy is documented in `docs/performance/policies/ASM_FALLBACK_POLICY.md`.
 - `graphion_vm_set_deterministic(vm, true)` forces the portable switch-dispatch
   path and bypasses fast arithmetic specialization for reproducible debugging.
 

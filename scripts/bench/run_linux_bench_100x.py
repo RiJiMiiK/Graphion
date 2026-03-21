@@ -35,7 +35,7 @@ def main() -> int:
         }
     )
 
-  out_path = pathlib.Path("benchmarks/results/linux_100x_latest.json")
+  out_path = pathlib.Path("benchmarks/results/performance/linux_100x_latest.json")
   out_path.parent.mkdir(parents=True, exist_ok=True)
   out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
   print(json.dumps(rows, indent=2))

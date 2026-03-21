@@ -48,5 +48,5 @@ cmake --build build-asm --config Release
 - Forbidden by default: privileged/control-register/system-entry instructions.
 - Enforced by `scripts/quality/check_asm_safety.py` in CI.
 - Exception process: add `ALLOW_UNSAFE_ASM` on the same line and justify in PR.
-- ABI/register mapping for current hotpath: `docs/ASM_REGISTERS.md`.
-- C fallback parity and performance policy: `docs/ASM_FALLBACK_POLICY.md`.
+- ABI/register mapping for current hotpath: `docs/runtime/asm/ASM_REGISTERS.md`.
+- C fallback parity and performance policy: `docs/performance/policies/ASM_FALLBACK_POLICY.md`.

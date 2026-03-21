@@ -148,8 +148,8 @@ def render_markdown(payloads: list[dict[str, object]]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render the cross-compiler optimization governance report.")
     parser.add_argument("--input-json", action="append", required=True, help="Input optimization report JSON (repeatable)")
-    parser.add_argument("--output-md", default="docs/CROSS_COMPILER_REPORT.md", help="Output Markdown path")
-    parser.add_argument("--output-json", default="benchmarks/results/cross_compiler_report_latest.json", help="Output merged JSON path")
+    parser.add_argument("--output-md", default="docs/performance/reports/CROSS_COMPILER_REPORT.md", help="Output Markdown path")
+    parser.add_argument("--output-json", default="benchmarks/results/cross-compiler/cross_compiler_report_latest.json", help="Output merged JSON path")
     args = parser.parse_args()
 
     payloads = [load_payload(pathlib.Path(path)) for path in args.input_json]

@@ -39,15 +39,15 @@ Dispatch variant study (switch vs jumptable vs computed-goto when supported):
 python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs 20
 ```
 
-Render `docs/PERFORMANCE_RESULTS.md` from collected JSON artifacts only:
+Render `docs/performance/reports/PERFORMANCE_RESULTS.md` from collected JSON artifacts only:
 
 ```bash
 python3 scripts/bench/render_performance_results.py \
-  --windows-json benchmarks/results/windows_100x_latest.json \
-  --linux-json benchmarks/results/linux_100x_latest.json \
-  --rust-json benchmarks/results/rust_100x_latest.json \
-  --dispatch-windows-json benchmarks/results/dispatch_variants_windows.json \
-  --dispatch-linux-json benchmarks/results/dispatch_variants.json
+  --windows-json benchmarks/results/performance/windows_100x_latest.json \
+  --linux-json benchmarks/results/performance/linux_100x_latest.json \
+  --rust-json benchmarks/results/performance/rust_100x_latest.json \
+  --dispatch-windows-json benchmarks/results/performance/dispatch_variants_windows.json \
+  --dispatch-linux-json benchmarks/results/performance/dispatch_variants.json
 ```
 
 PGO training + optimized rebuild:
@@ -73,8 +73,8 @@ Official baseline vs PGO report:
 ```bash
 python3 scripts/bench/generate_optimization_report.py \
   --build-root build-opt-report \
-  --output-json benchmarks/results/optimization_report_latest.json \
-  --output-md docs/OPTIMIZATION_REPORTS.md \
+  --output-json benchmarks/results/optimization/optimization_report_latest.json \
+  --output-md docs/performance/reports/OPTIMIZATION_REPORTS.md \
   -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
@@ -110,7 +110,7 @@ Optional local Rust comparison (for private/local sandbox projects):
 
 ```bash
 python3 scripts/bench/bench_compare_with_rust.py \
-  --vm-json benchmarks/results/latest.json \
+  --vm-json benchmarks/results/performance/latest.json \
   --rust-cmd "cargo run --release --manifest-path /absolute/path/to/rust_bench/Cargo.toml"
 ```
 
@@ -118,7 +118,7 @@ Or with a prepared Rust JSON result:
 
 ```bash
 python3 scripts/bench/bench_compare_with_rust.py \
-  --vm-json benchmarks/results/latest.json \
+  --vm-json benchmarks/results/performance/latest.json \
   --rust-json /absolute/path/to/rust_result.json
 ```
 
@@ -150,6 +150,6 @@ Interpretation order:
 - Compare against baseline with `scripts/bench/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
-- Keep periodic summarized snapshots in `docs/PERFORMANCE_RESULTS.md`.
-- Keep official `baseline` vs `PGO` reports in `docs/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/`.
-- Keep cross-compiler governance snapshots in `docs/CROSS_COMPILER_REPORT.md` using the portable lane only.
+- Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.
+- Keep official `baseline` vs `PGO` reports in `docs/performance/reports/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/optimization/`.
+- Keep cross-compiler governance snapshots in `docs/performance/reports/CROSS_COMPILER_REPORT.md` using the portable lane only.

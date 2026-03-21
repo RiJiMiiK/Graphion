@@ -164,13 +164,13 @@ def render_environment_table(metas: list[dict[str, object]]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render docs/PERFORMANCE_RESULTS.md from collected benchmark JSON artifacts.")
+    parser = argparse.ArgumentParser(description="Render docs/performance/reports/PERFORMANCE_RESULTS.md from collected benchmark JSON artifacts.")
     parser.add_argument("--windows-json", required=True, help="Graphion Windows benchmark JSON")
     parser.add_argument("--linux-json", required=True, help="Graphion Linux benchmark JSON")
     parser.add_argument("--rust-json", default="", help="Rust benchmark JSON")
     parser.add_argument("--dispatch-windows-json", required=True, help="Windows dispatch variants JSON")
     parser.add_argument("--dispatch-linux-json", required=True, help="Linux dispatch variants JSON")
-    parser.add_argument("--output", default="docs/PERFORMANCE_RESULTS.md", help="Output markdown path")
+    parser.add_argument("--output", default="docs/performance/reports/PERFORMANCE_RESULTS.md", help="Output markdown path")
     args = parser.parse_args()
 
     windows_meta, windows_rows = load_rows(pathlib.Path(args.windows_json), ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])

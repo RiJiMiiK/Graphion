@@ -46,8 +46,8 @@ docker compose run --rm graphion-dev bash -lc \
 
 The command generates:
 
-- `benchmarks/results/asm_fallback_report_latest.json`
-- `docs/ASM_FALLBACK_REPORT.md`
+- `benchmarks/results/asm/asm_fallback_report_latest.json`
+- `docs/performance/reports/ASM_FALLBACK_REPORT.md`
 
 For hardening-sensitive semantic coverage, use:
 
@@ -59,8 +59,8 @@ python3 scripts/quality/test_asm_hardening_parity.py \
 
 This command generates:
 
-- `benchmarks/results/asm_hardening_parity_latest.json`
-- `docs/ASM_HARDENING_PARITY.md`
+- `benchmarks/results/asm/asm_hardening_parity_latest.json`
+- `docs/performance/reports/ASM_HARDENING_PARITY.md`
 
 The Markdown report is the latest local comparison snapshot. It should be treated as evidence for review, not as a release baseline unless it is regenerated with the intended benchmark scale.
 

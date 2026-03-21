@@ -28,8 +28,8 @@ Run this checklist whenever a change affects one or more of:
 
 ### 1. Opcode contract
 
-- [ ] Opcode number is documented in `docs/ISA.md`
-- [ ] Operand meaning is documented in `docs/ISA.md`
+- [ ] Opcode number is documented in `docs/runtime/core/ISA.md`
+- [ ] Operand meaning is documented in `docs/runtime/core/ISA.md`
 - [ ] success behavior is documented
 - [ ] failure behavior is documented
 - [ ] overflow or exactness rules are documented if arithmetic is involved
@@ -41,7 +41,7 @@ Run this checklist whenever a change affects one or more of:
   - backward-compatible extension
   - backward-incompatible pre-`v1.0` change
   - future version-gated change
-- [ ] `docs/ISA_VERSIONING.md` remains accurate after the change
+- [ ] `docs/runtime/contracts/ISA_VERSIONING.md` remains accurate after the change
 - [ ] `CHANGELOG.md` calls out incompatible semantic changes
 
 ### 3. Decode / encode impact
@@ -59,7 +59,7 @@ Run this checklist whenever a change affects one or more of:
 
 ### 5. Error behavior
 
-- [ ] `docs/VM_ERRORS.md` is updated if any VM-visible error behavior changed
+- [ ] `docs/runtime/debugging/VM_ERRORS.md` is updated if any VM-visible error behavior changed
 - [ ] named VM result codes are reused only for the same meaning
 - [ ] new VM-visible errors are documented before use
 
@@ -72,13 +72,13 @@ Run this checklist whenever a change affects one or more of:
 
 ### 7. Repro and debugging
 
-- [ ] `docs/VM_REPRO.md` remains accurate
-- [ ] `docs/REPRO_ARTIFACTS.md` remains accurate if the repro bundle changed
+- [ ] `docs/runtime/debugging/VM_REPRO.md` remains accurate
+- [ ] `docs/runtime/debugging/REPRO_ARTIFACTS.md` remains accurate if the repro bundle changed
 - [ ] the issue can be reduced to a fixture, inline program, or byte payload
 
 ### 8. Frontend / IR bridge
 
-- [ ] `docs/IR.md` was reviewed if frontend lowering is affected
+- [ ] `docs/runtime/core/IR.md` was reviewed if frontend lowering is affected
 - [ ] parser or IR tests were updated if source-level behavior changed
 
 ## Reviewer Shortcut
@@ -94,9 +94,9 @@ If one of those is missing, the opcode change is incomplete.
 
 ## Relationship With Other Docs
 
-- `docs/ISA.md`
-- `docs/ISA_VERSIONING.md`
-- `docs/ISA_FIXTURES.md`
-- `docs/VM_ERRORS.md`
-- `docs/VM_REPRO.md`
-- `docs/REPRO_ARTIFACTS.md`
+- `docs/runtime/core/ISA.md`
+- `docs/runtime/contracts/ISA_VERSIONING.md`
+- `docs/runtime/contracts/ISA_FIXTURES.md`
+- `docs/runtime/debugging/VM_ERRORS.md`
+- `docs/runtime/debugging/VM_REPRO.md`
+- `docs/runtime/debugging/REPRO_ARTIFACTS.md`

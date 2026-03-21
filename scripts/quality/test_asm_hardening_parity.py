@@ -139,12 +139,12 @@ def main() -> int:
     parser.add_argument("--build-type", default="Release", help="CMAKE_BUILD_TYPE for single-config generators")
     parser.add_argument(
         "--output-json",
-        default="benchmarks/results/asm_hardening_parity_latest.json",
+        default="benchmarks/results/asm/asm_hardening_parity_latest.json",
         help="JSON output path",
     )
     parser.add_argument(
         "--output-md",
-        default="docs/ASM_HARDENING_PARITY.md",
+        default="docs/performance/reports/ASM_HARDENING_PARITY.md",
         help="Markdown output path",
     )
     parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=gcc")

@@ -21,4 +21,4 @@ git config --global tag.gpgSign true
 In GitHub branch protection for `main`, enable:
 - Require signed commits.
 
-See `docs/BRANCH_PROTECTION.md` for full protection policy.
+See `docs/process/BRANCH_PROTECTION.md` for full protection policy.

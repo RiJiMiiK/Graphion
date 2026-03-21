@@ -22,7 +22,7 @@ def parse_last_json_line(stdout: str) -> dict:
 
 def main() -> int:
   parser = argparse.ArgumentParser(description="Compare Graphion VM benchmark to optional Rust benchmark.")
-  parser.add_argument("--vm-json", default="benchmarks/results/latest.json", help="Path to VM benchmark JSON")
+  parser.add_argument("--vm-json", default="benchmarks/results/performance/latest.json", help="Path to VM benchmark JSON")
   parser.add_argument(
       "--rust-json",
       default="",

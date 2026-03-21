@@ -42,7 +42,7 @@ Minimum bundle contents:
 
 Named artifact policy:
 
-- `docs/REPRO_ARTIFACTS.md`
+- `docs/runtime/debugging/REPRO_ARTIFACTS.md`
 
 ## Repro Order
 
@@ -110,7 +110,7 @@ For deterministic repro work:
 
 Relevant snapshot doc:
 
-- `docs/VM_SNAPSHOT.md`
+- `docs/runtime/debugging/VM_SNAPSHOT.md`
 
 ## Environment Capture
 
@@ -173,14 +173,14 @@ If decode, load, and execute all disagree across reports:
 
 Phase classification reference:
 
-- `docs/FAILURE_CLASSIFICATION.md`
+- `docs/runtime/debugging/FAILURE_CLASSIFICATION.md`
 
 ## Relationship With Other Docs
 
-- `docs/ISA.md`: opcode contract
-- `docs/ISA_FIXTURES.md`: fixture format and expansion policy
-- `docs/VM_ERRORS.md`: error-code interpretation
-- `docs/VM_SNAPSHOT.md`: snapshot format
-- `docs/REPRO_ARTIFACTS.md`: required repro artifact names and contents
-- `docs/FAILURE_CLASSIFICATION.md`: decode/load/execute phase classification
-- `docs/ASM_FALLBACK_POLICY.md`: asm parity and policy rules
+- `docs/runtime/core/ISA.md`: opcode contract
+- `docs/runtime/contracts/ISA_FIXTURES.md`: fixture format and expansion policy
+- `docs/runtime/debugging/VM_ERRORS.md`: error-code interpretation
+- `docs/runtime/debugging/VM_SNAPSHOT.md`: snapshot format
+- `docs/runtime/debugging/REPRO_ARTIFACTS.md`: required repro artifact names and contents
+- `docs/runtime/debugging/FAILURE_CLASSIFICATION.md`: decode/load/execute phase classification
+- `docs/performance/policies/ASM_FALLBACK_POLICY.md`: asm parity and policy rules

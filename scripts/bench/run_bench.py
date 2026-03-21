@@ -13,7 +13,7 @@ def main() -> int:
   parser = argparse.ArgumentParser(description="Run Graphion benchmark binary and store JSON results.")
   parser.add_argument("--build-dir", default="build-dev", help="CMake build directory")
   parser.add_argument("--iterations", type=int, default=500000, help="Iterations for bench program")
-  parser.add_argument("--output", default="benchmarks/results/latest.json", help="Output JSON path")
+  parser.add_argument("--output", default="benchmarks/results/performance/latest.json", help="Output JSON path")
   args = parser.parse_args()
 
   build_dir = pathlib.Path(args.build_dir)

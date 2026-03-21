@@ -8,8 +8,8 @@ on:
       - ".github/workflows/pgo.yml"
       - ".github/workflows/release.yml"
       - ".github/workflows/release-dry-run.yml"
-      - "docs/PGO.md"
-      - "docs/PGO_CORPUS_POLICY.md"
+      - "docs/performance/guides/PGO.md"
+      - "docs/performance/policies/PGO_CORPUS_POLICY.md"
       - "scripts/bench/run_pgo_pipeline.py"
       - "scripts/bench/pgo_corpus.py"
   workflow_dispatch:

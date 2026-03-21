@@ -40,8 +40,8 @@ python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500
 
 This generates:
 
-- `docs/CROSS_COMPILER_REPORT.md`
-- `benchmarks/results/cross_compiler_report_latest.json`
+- `docs/performance/reports/CROSS_COMPILER_REPORT.md`
+- `benchmarks/results/cross-compiler/cross_compiler_report_latest.json`
 
 ## Review Guidance
 
