@@ -8,6 +8,8 @@ import statistics
 import subprocess
 import sys
 
+from report_metadata import base_metadata, validate_metadata
+
 
 BENCH_SPECS = [
     {
@@ -144,10 +146,25 @@ def main() -> int:
             )
         )
 
+    payload = {
+        "metadata": base_metadata(
+            args.platform_label,
+            args.runs,
+            {
+                "report_kind": "performance-lane",
+                "compiler_kind": "rustc",
+                "asm_enabled": False,
+                "manifest_path": str(manifest_path),
+            },
+        ),
+        "rows": rows,
+    }
+    validate_metadata(payload["metadata"], "collect_rust_benchmarks", ["report_kind", "compiler_kind", "asm_enabled", "manifest_path"])
+
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    print(json.dumps(rows, indent=2))
+    output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(json.dumps(payload, indent=2))
     return 0
 
 

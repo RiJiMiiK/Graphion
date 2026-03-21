@@ -8,6 +8,8 @@ import statistics
 import subprocess
 import sys
 
+from report_metadata import base_metadata, validate_metadata
+
 
 BENCH_SPECS = [
     {
@@ -116,6 +118,8 @@ def main() -> int:
     parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--runs", type=int, default=100, help="Number of runs per benchmark")
     parser.add_argument("--platform-label", required=True, help="Human-readable platform label")
+    parser.add_argument("--compiler-kind", default="unknown", help="Compiler/toolchain label for this lane")
+    parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
     parser.add_argument("--output", required=True, help="Output JSON path")
     args = parser.parse_args()
 
@@ -137,10 +141,26 @@ def main() -> int:
             )
         )
 
+    payload = {
+        "metadata": base_metadata(
+            args.platform_label,
+            args.runs,
+            {
+                "report_kind": "performance-lane",
+                "compiler_kind": args.compiler_kind,
+                "asm_enabled": args.asm_enabled == "on",
+                "config": args.config,
+                "build_dir": str(build_dir),
+            },
+        ),
+        "rows": rows,
+    }
+    validate_metadata(payload["metadata"], "collect_graphion_benchmarks", ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
+
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    print(json.dumps(rows, indent=2))
+    output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(json.dumps(payload, indent=2))
     return 0
 
 

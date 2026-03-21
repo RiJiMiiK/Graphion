@@ -90,6 +90,12 @@ Refresh the unified optimization report with local Windows plus Docker Linux:
 python scripts/bench/refresh_optimization_reports.py --runs 100
 ```
 
+Refresh the portable cross-compiler governance report:
+
+```powershell
+python scripts/bench/refresh_cross_compiler_report.py --runs 20 --iterations 500000
+```
+
 Compare the asm hotpath against the C fallback (Linux / Docker):
 
 ```bash
@@ -139,9 +145,11 @@ Interpretation order:
 
 - Keep benchmark input deterministic.
 - Run on a stable machine profile when comparing commits.
-- Record compiler, flags, and CPU model in benchmark reports.
+- Generated reports must include enforced environment metadata (`platform_label`, `platform`, `machine`, `cpu_model`, `hostname`, `python`, `git_rev`, `runs`).
+- Toolchain-oriented reports must also include enforced lane metadata such as `compiler_kind`, `asm_enabled`, and relevant build/report parameters.
 - Compare against baseline with `scripts/bench/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.
 - Keep periodic summarized snapshots in `docs/PERFORMANCE_RESULTS.md`.
 - Keep official `baseline` vs `PGO` reports in `docs/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/`.
+- Keep cross-compiler governance snapshots in `docs/CROSS_COMPILER_REPORT.md` using the portable lane only.
