@@ -61,6 +61,18 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - Existing graph algorithms remain valid when the optional arrays are absent.
 - Weighted/attribute-aware execution can build on the same CSR layout without a second graph format.
 
+## Frontier mode heuristics
+
+- Graphion now exposes a runtime recommendation for frontier execution mode:
+  - `GRAPHION_FRONTIER_MODE_SPARSE`
+  - `GRAPHION_FRONTIER_MODE_DENSE`
+- The current heuristic is intentionally simple and deterministic:
+  - prefer `dense` when `frontier_len >= 20%` of `node_count`
+  - prefer `dense` when estimated frontier neighbor work reaches `35%` of total edge count
+  - otherwise prefer `sparse`
+- This does not introduce a second frontier representation inside the VM yet.
+- It is a planning/runtime hint for future frontier kernels and benchmark work.
+
 ## Hotpath acceleration
 
 - `graphion_vm_run` selects a fast arithmetic path when the loaded program only contains:

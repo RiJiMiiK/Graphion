@@ -85,3 +85,28 @@ int test_graph_optional_edge_data(void) {
   }
   return 0;
 }
+
+int test_graph_frontier_mode_heuristics(void) {
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  graphion_csr_graph g;
+  int rc;
+
+  rc = graphion_csr_graph_init(&g, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 1;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&g, 0U, 0U) != GRAPHION_FRONTIER_MODE_SPARSE) {
+    return 2;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&g, 1U, 1U) != GRAPHION_FRONTIER_MODE_DENSE) {
+    return 3;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&g, 0U, 3U) != GRAPHION_FRONTIER_MODE_DENSE) {
+    return 4;
+  }
+  if (graphion_csr_graph_recommend_frontier_mode(&g, 0U, 1U) != GRAPHION_FRONTIER_MODE_SPARSE) {
+    return 5;
+  }
+  return 0;
+}

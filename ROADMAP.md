@@ -73,7 +73,7 @@
 - [x] Neighbor iteration opcodes with bounded memory contracts.
 - [x] Hyperedge traversal primitives (node->edge and edge->node).
 - [x] Optional weighted graph support and edge attributes.
-- [ ] Sparse/dense frontier switching heuristics.
+- [x] Sparse/dense frontier switching heuristics.
 
 ## Milestone 0.6 (Frontend And Language Surface)
 
