@@ -6,6 +6,8 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from report_metadata import validate_metadata
+
 
 BENCHMARK_ORDER = [
     "vm_dispatch",
@@ -18,7 +20,18 @@ BENCHMARK_ORDER = [
 
 
 def load_payload(path: pathlib.Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "metadata" not in payload:
+        raise ValueError(f"{path}: expected optimization report payload with metadata")
+    metadata = payload["metadata"]
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{path}: metadata must be an object")
+    validate_metadata(
+        metadata,
+        str(path),
+        ["report_kind", "compiler_kind", "asm_enabled", "config", "build_type", "iterations", "iterations_scale", "corpus_profile", "dispatch", "dispatch_variants", "cmake_args"],
+    )
+    return payload
 
 
 def row_map(payload: dict[str, object]) -> dict[str, dict[str, object]]:
@@ -79,17 +92,19 @@ def render_policy_table(payloads: list[dict[str, object]]) -> str:
 
 def render_metadata_table(payloads: list[dict[str, object]]) -> str:
     lines = [
-        "| Lane | Compiler | Platform | ASM | Dispatch | Corpus | Runs | Iterations |",
-        "|---|---|---|---|---|---|---:|---:|",
+        "| Lane | Compiler | Platform | ASM | CPU | Git | Dispatch | Corpus | Runs | Iterations |",
+        "|---|---|---|---|---|---|---|---|---:|---:|",
     ]
     for payload in payloads:
         meta = payload["metadata"]
         lines.append(
-            "| {lane} | {compiler} | {platform} | {asm} | {dispatch} | {corpus} | {runs} | {iterations} |".format(
+            "| {lane} | {compiler} | {platform} | {asm} | {cpu} | {git_rev} | {dispatch} | {corpus} | {runs} | {iterations} |".format(
                 lane=meta["platform_label"],
                 compiler=meta["compiler_kind"],
                 platform=meta["platform"],
                 asm="on" if meta.get("asm_enabled", True) else "off",
+                cpu=meta["cpu_model"],
+                git_rev=str(meta["git_rev"])[:12],
                 dispatch=meta["dispatch"],
                 corpus=meta["corpus_profile"],
                 runs=meta["runs"],

@@ -135,7 +135,8 @@ Interpretation order:
 
 - Keep benchmark input deterministic.
 - Run on a stable machine profile when comparing commits.
-- Record compiler, flags, and CPU model in benchmark reports.
+- Generated reports must include enforced environment metadata (`platform_label`, `platform`, `machine`, `cpu_model`, `hostname`, `python`, `git_rev`, `runs`).
+- Toolchain-oriented reports must also include enforced lane metadata such as `compiler_kind`, `asm_enabled`, and relevant build/report parameters.
 - Compare against baseline with `scripts/bench/compare_bench.py` in CI.
 - Keep allowed regression threshold explicit in workflow config.
 - Keep Rust comparisons local/optional; do not commit Rust sandbox projects.

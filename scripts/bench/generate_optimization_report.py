@@ -13,6 +13,7 @@ import sys
 from datetime import datetime, timezone
 
 from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
+from report_metadata import base_metadata, validate_metadata
 
 
 BENCH_SPECS = [
@@ -434,7 +435,13 @@ def render_markdown(payload: dict[str, object]) -> str:
         "",
         f"- Platform label: {meta['platform_label']}",
         f"- Platform: {meta['platform']}",
+        f"- CPU: {meta['cpu_model']}",
+        f"- Machine: {meta['machine']}",
+        f"- Hostname: {meta['hostname']}",
+        f"- Git revision: {str(meta['git_rev'])[:12]}",
+        f"- Python: {meta['python']}",
         f"- Compiler: {meta['compiler_kind']}",
+        f"- ASM enabled: {'on' if meta['asm_enabled'] else 'off'}",
         f"- Config: {meta['config']}",
         f"- Iterations per benchmark run: {meta['iterations']}",
         f"- Averaging runs: {meta['runs']}",
@@ -539,29 +546,35 @@ def main() -> int:
     )
 
     payload = {
-        "metadata": {
-            "generated_utc": datetime.now(timezone.utc).isoformat(),
-            "platform_label": platform_label,
-            "platform": platform.platform(),
-            "compiler_kind": compiler_kind,
-            "asm_enabled": detect_asm_enabled(args.cmake_args),
-            "config": args.config,
-            "build_type": args.build_type,
-            "iterations": args.iterations,
-            "runs": args.runs,
-            "iterations_scale": args.iterations_scale,
-            "corpus_profile": args.corpus_profile,
-            "corpus_coverage_classes": coverage_classes(args.corpus_profile),
-            "corpus_targets": [str(row["target"]) for row in expanded_workloads(args.corpus_profile, 1.0)],
-            "dispatch": args.dispatch,
-            "dispatch_variants": dispatch_variants,
-            "cmake_args": args.cmake_args,
-        },
+        "metadata": base_metadata(
+            platform_label,
+            args.runs,
+            {
+                "report_kind": "optimization-report",
+                "compiler_kind": compiler_kind,
+                "asm_enabled": detect_asm_enabled(args.cmake_args),
+                "config": args.config,
+                "build_type": args.build_type,
+                "iterations": args.iterations,
+                "iterations_scale": args.iterations_scale,
+                "corpus_profile": args.corpus_profile,
+                "corpus_coverage_classes": coverage_classes(args.corpus_profile),
+                "corpus_targets": [str(row["target"]) for row in expanded_workloads(args.corpus_profile, 1.0)],
+                "dispatch": args.dispatch,
+                "dispatch_variants": dispatch_variants,
+                "cmake_args": args.cmake_args,
+            },
+        ),
         "baseline_rows": baseline_rows,
         "pgo_rows": pgo_rows,
         "report_rows": report_rows,
         "dispatch_variant_rows": dispatch_variant_rows,
     }
+    validate_metadata(
+        payload["metadata"],
+        "generate_optimization_report",
+        ["report_kind", "compiler_kind", "asm_enabled", "config", "build_type", "iterations", "iterations_scale", "corpus_profile", "dispatch", "dispatch_variants", "cmake_args"],
+    )
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_md.parent.mkdir(parents=True, exist_ok=True)

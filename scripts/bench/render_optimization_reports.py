@@ -6,6 +6,8 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from report_metadata import validate_metadata
+
 
 BENCHMARK_ORDER = [
     "vm_dispatch",
@@ -18,7 +20,18 @@ BENCHMARK_ORDER = [
 
 
 def load_payload(path: pathlib.Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "metadata" not in payload:
+        raise ValueError(f"{path}: expected optimization report payload with metadata")
+    metadata = payload["metadata"]
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{path}: metadata must be an object")
+    validate_metadata(
+        metadata,
+        str(path),
+        ["report_kind", "compiler_kind", "asm_enabled", "config", "build_type", "iterations", "iterations_scale", "corpus_profile", "dispatch", "dispatch_variants", "cmake_args"],
+    )
+    return payload
 
 
 def fmt_seconds(value: object) -> str:
@@ -100,6 +113,29 @@ def render_dispatch_tables(payloads: list[dict[str, object]]) -> list[str]:
     return sections
 
 
+def render_metadata_table(payloads: list[dict[str, object]]) -> str:
+    lines = [
+        "| Lane | Compiler | ASM | CPU | Git | Dispatch | Corpus | Runs | Iterations |",
+        "|---|---|---|---|---|---|---|---:|---:|",
+    ]
+    for payload in payloads:
+        meta = payload["metadata"]
+        lines.append(
+            "| {lane} | {compiler} | {asm} | {cpu} | {git_rev} | {dispatch} | {corpus} | {runs} | {iterations} |".format(
+                lane=meta["platform_label"],
+                compiler=meta["compiler_kind"],
+                asm="on" if meta["asm_enabled"] else "off",
+                cpu=meta["cpu_model"],
+                git_rev=str(meta["git_rev"])[:12],
+                dispatch=meta["dispatch"],
+                corpus=meta["corpus_profile"],
+                runs=meta["runs"],
+                iterations=meta["iterations"],
+            )
+        )
+    return "\n".join(lines)
+
+
 def render_markdown(payloads: list[dict[str, object]]) -> str:
     generated = datetime.now(timezone.utc).isoformat()
     platform_labels = ", ".join(str(payload["metadata"]["platform_label"]) for payload in payloads)
@@ -113,6 +149,10 @@ def render_markdown(payloads: list[dict[str, object]]) -> str:
         f"- Platforms covered: {platform_labels}",
         "- This report merges local per-platform `baseline` vs `PGO` runs.",
         "- Linux sections are intended to include Docker-based GCC/Clang workflows, including `computed-goto` when supported.",
+        "",
+        "## Environment Metadata",
+        "",
+        render_metadata_table(payloads),
         "",
         "## Baseline vs PGO",
         "",

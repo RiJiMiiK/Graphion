@@ -55,6 +55,10 @@ def main() -> int:
             str(args.runs),
             "--platform-label",
             "Graphion Windows",
+            "--compiler-kind",
+            "msvc",
+            "--asm-enabled",
+            "off",
             "--output",
             str(windows_json),
         ])
@@ -67,6 +71,12 @@ def main() -> int:
             str(args.runs),
             "--output",
             str(dispatch_windows_json),
+            "--platform-label",
+            "Graphion Windows",
+            "--compiler-kind",
+            "msvc",
+            "--asm-enabled",
+            "off",
         ]
         if args.dispatch_build_root:
             dispatch_cmd.extend(["--build-root", args.dispatch_build_root])
@@ -93,10 +103,12 @@ def main() -> int:
             "cmake --build {build_dir} --config Release".format(build_dir=args.linux_build_dir),
             (
                 "python3 scripts/bench/collect_graphion_benchmarks.py --build-dir {build_dir} --config Release --runs {runs} "
-                "--platform-label \"Graphion Linux\" --output benchmarks/results/linux_100x_latest.json"
+                "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
+                "--output benchmarks/results/linux_100x_latest.json"
             ).format(build_dir=args.linux_build_dir, runs=args.runs),
             (
                 "python3 scripts/bench/compare_dispatch_variants.py --iterations 500000 --runs {runs} "
+                "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
                 "--output benchmarks/results/dispatch_variants.json --cmake-arg=-DGRAPHION_ENABLE_ASM=ON"
             ).format(runs=args.runs),
         ]

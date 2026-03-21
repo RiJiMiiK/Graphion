@@ -74,6 +74,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Named PGO corpus profiles and representative-workload policy documentation.
 - Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
+- Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

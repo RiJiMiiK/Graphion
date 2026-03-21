@@ -7,6 +7,8 @@ import pathlib
 import subprocess
 import sys
 
+from report_metadata import base_metadata, validate_metadata
+
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
   return subprocess.run(cmd, capture_output=True, text=True)
@@ -33,6 +35,9 @@ def main() -> int:
       help="Extra CMake argument forwarded on each configure step (repeatable).",
   )
   parser.add_argument("--build-root", default="", help="Optional build root prefix for generated build dirs")
+  parser.add_argument("--platform-label", default="", help="Human-readable platform label")
+  parser.add_argument("--compiler-kind", default="unknown", help="Compiler/toolchain label for this lane")
+  parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
   args = parser.parse_args()
 
   variants = ["switch", "jumptable", "computed-goto"]
@@ -111,10 +116,26 @@ def main() -> int:
           }
       )
 
+  platform_label = args.platform_label if args.platform_label else ("Graphion Windows" if sys.platform.startswith("win") else "Graphion Linux")
+  payload = {
+      "metadata": base_metadata(
+          platform_label,
+          args.runs,
+          {
+              "report_kind": "dispatch-variants",
+              "compiler_kind": args.compiler_kind,
+              "asm_enabled": args.asm_enabled == "on",
+              "iterations": args.iterations,
+          },
+      ),
+      "rows": rows,
+  }
+  validate_metadata(payload["metadata"], "compare_dispatch_variants", ["report_kind", "compiler_kind", "asm_enabled", "iterations"])
+
   out_path = pathlib.Path(args.output)
   out_path.parent.mkdir(parents=True, exist_ok=True)
-  out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-  print(json.dumps(rows, indent=2))
+  out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+  print(json.dumps(payload, indent=2))
   return 0
 
 

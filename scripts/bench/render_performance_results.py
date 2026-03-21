@@ -6,6 +6,8 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from report_metadata import validate_metadata
+
 
 BENCHMARK_ORDER = [
     "vm_dispatch",
@@ -33,10 +35,25 @@ LATENCY_LABELS = {
 }
 
 
-def load_rows(path: pathlib.Path) -> list[dict[str, object]]:
+def load_payload(path: pathlib.Path) -> dict[str, object]:
     if not path.exists():
-        return []
-    return json.loads(path.read_text(encoding="utf-8"))
+        return {"metadata": {}, "rows": []}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "metadata" not in payload or "rows" not in payload:
+        raise ValueError(f"{path}: expected payload with top-level metadata + rows")
+    return payload
+
+
+def load_rows(path: pathlib.Path, extra_required: list[str]) -> tuple[dict[str, object], list[dict[str, object]]]:
+    payload = load_payload(path)
+    metadata = payload["metadata"]
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{path}: metadata must be an object")
+    validate_metadata(metadata, str(path), extra_required)
+    rows = payload["rows"]
+    if not isinstance(rows, list):
+        raise ValueError(f"{path}: rows must be a list")
+    return metadata, rows
 
 
 def index_rows(rows: list[dict[str, object]]) -> dict[str, dict[str, object]]:
@@ -91,11 +108,16 @@ def render_benchmark_section(name: str, row_sets: list[dict[str, dict[str, objec
     return "\n".join(lines)
 
 
-def render_dispatch_variants(win_rows: list[dict[str, object]], linux_rows: list[dict[str, object]]) -> str:
+def render_dispatch_variants(
+    win_meta: dict[str, object],
+    win_rows: list[dict[str, object]],
+    linux_meta: dict[str, object],
+    linux_rows: list[dict[str, object]],
+) -> str:
     runs = 0
-    for rows in (win_rows, linux_rows):
-        if rows:
-            runs = int(rows[0]["runs"])
+    for meta in (win_meta, linux_meta):
+        if meta:
+            runs = int(meta["runs"])
             break
     lines = [
         f"## vm_dispatch dispatch variants (`ns_per_instruction`, x{runs if runs else '?'})",
@@ -103,7 +125,7 @@ def render_dispatch_variants(win_rows: list[dict[str, object]], linux_rows: list
         "| Platform | s | mteps | mips | ns_per_X |",
         "|---|---:|---:|---:|---:|",
     ]
-    for platform_label, rows in (("Graphion Windows", win_rows), ("Graphion Linux", linux_rows)):
+    for platform_label, rows in ((str(win_meta.get("platform_label", "Graphion Windows")), win_rows), (str(linux_meta.get("platform_label", "Graphion Linux")), linux_rows)):
         for row in rows:
             variant = str(row["variant"])
             status = str(row["status"])
@@ -112,6 +134,31 @@ def render_dispatch_variants(win_rows: list[dict[str, object]], linux_rows: list
             lines.append(
                 f"| {platform_label} ({variant}) | {fmt_seconds(row['seconds_avg'])} | - | {fmt(row['mips_avg'])} | {fmt(row['ns_per_instruction_avg'])} |"
             )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_environment_table(metas: list[dict[str, object]]) -> str:
+    lines = [
+        "## Environment Metadata",
+        "",
+        "| Lane | Compiler | ASM | CPU | Machine | Git | Runs |",
+        "|---|---|---|---|---|---|---:|",
+    ]
+    for meta in metas:
+        if not meta:
+            continue
+        lines.append(
+            "| {lane} | {compiler} | {asm} | {cpu} | {machine} | {git_rev} | {runs} |".format(
+                lane=meta["platform_label"],
+                compiler=meta["compiler_kind"],
+                asm="on" if meta["asm_enabled"] else "off",
+                cpu=meta["cpu_model"],
+                machine=meta["machine"],
+                git_rev=str(meta["git_rev"])[:12],
+                runs=meta["runs"],
+            )
+        )
     lines.append("")
     return "\n".join(lines)
 
@@ -126,18 +173,18 @@ def main() -> int:
     parser.add_argument("--output", default="docs/PERFORMANCE_RESULTS.md", help="Output markdown path")
     args = parser.parse_args()
 
-    windows_rows = load_rows(pathlib.Path(args.windows_json))
-    linux_rows = load_rows(pathlib.Path(args.linux_json))
-    rust_rows = load_rows(pathlib.Path(args.rust_json)) if args.rust_json else []
-    dispatch_windows_rows = load_rows(pathlib.Path(args.dispatch_windows_json))
-    dispatch_linux_rows = load_rows(pathlib.Path(args.dispatch_linux_json))
+    windows_meta, windows_rows = load_rows(pathlib.Path(args.windows_json), ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
+    linux_meta, linux_rows = load_rows(pathlib.Path(args.linux_json), ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
+    rust_meta, rust_rows = load_rows(pathlib.Path(args.rust_json), ["report_kind", "compiler_kind", "asm_enabled", "manifest_path"]) if args.rust_json else ({}, [])
+    dispatch_windows_meta, dispatch_windows_rows = load_rows(pathlib.Path(args.dispatch_windows_json), ["report_kind", "compiler_kind", "asm_enabled", "iterations"])
+    dispatch_linux_meta, dispatch_linux_rows = load_rows(pathlib.Path(args.dispatch_linux_json), ["report_kind", "compiler_kind", "asm_enabled", "iterations"])
 
     indexed_sets = [index_rows(windows_rows), index_rows(linux_rows), index_rows(rust_rows)]
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     runs = 0
-    for rows in (windows_rows, linux_rows, rust_rows):
-        if rows:
-            runs = int(rows[0]["runs"])
+    for meta in (windows_meta, linux_meta, rust_meta):
+        if meta:
+            runs = int(meta["runs"])
             break
 
     sections = []
@@ -146,7 +193,7 @@ def main() -> int:
         if section:
             sections.append(section)
         if benchmark == "vm_dispatch":
-            sections.append(render_dispatch_variants(dispatch_windows_rows, dispatch_linux_rows))
+            sections.append(render_dispatch_variants(dispatch_windows_meta, dispatch_windows_rows, dispatch_linux_meta, dispatch_linux_rows))
 
     text = "\n".join(
         [
@@ -159,6 +206,8 @@ def main() -> int:
             "Format requested: `s | mteps | mips | ns_per_X`.",
             "",
             "For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS.md](OPTIMIZATION_REPORTS.md).",
+            "",
+            render_environment_table([windows_meta, linux_meta, rust_meta]),
             "",
             *sections,
             "Notes:",
