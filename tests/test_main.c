@@ -44,7 +44,20 @@ int test_frontend_reference_graph_execution_examples(void);
 int test_gion_source_path_detection(void);
 int test_interpreter_dynamic_assignments(void);
 int test_interpreter_rejects_declared_type_syntax(void);
+int test_interpreter_graph_declaration(void);
+int test_interpreter_rejects_non_integer_graph_nodes(void);
+int test_interpreter_hypergraph_declaration(void);
+int test_interpreter_rejects_non_integer_hypergraph_nodes(void);
+int test_interpreter_graph_scalar_attributes(void);
+int test_interpreter_hypergraph_scalar_attributes(void);
+int test_interpreter_rejects_invalid_weight_type(void);
 int test_interpreter_print_and_function_return(void);
+int test_interpreter_print_graph_summary(void);
+int test_interpreter_print_hypergraph_summary(void);
+int test_interpreter_print_graph_node_value(void);
+int test_interpreter_print_graph_edge_value(void);
+int test_interpreter_print_hypergraph_node_value(void);
+int test_interpreter_print_hyperedge_value(void);
 int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
@@ -122,7 +135,20 @@ int main(int argc, char **argv) {
       {"gion_source_path_detection", test_gion_source_path_detection},
       {"interpreter_dynamic_assignments", test_interpreter_dynamic_assignments},
       {"interpreter_rejects_declared_type_syntax", test_interpreter_rejects_declared_type_syntax},
+      {"interpreter_graph_declaration", test_interpreter_graph_declaration},
+      {"interpreter_rejects_non_integer_graph_nodes", test_interpreter_rejects_non_integer_graph_nodes},
+      {"interpreter_hypergraph_declaration", test_interpreter_hypergraph_declaration},
+      {"interpreter_rejects_non_integer_hypergraph_nodes", test_interpreter_rejects_non_integer_hypergraph_nodes},
+      {"interpreter_graph_scalar_attributes", test_interpreter_graph_scalar_attributes},
+      {"interpreter_hypergraph_scalar_attributes", test_interpreter_hypergraph_scalar_attributes},
+      {"interpreter_rejects_invalid_weight_type", test_interpreter_rejects_invalid_weight_type},
       {"interpreter_print_and_function_return", test_interpreter_print_and_function_return},
+      {"interpreter_print_graph_summary", test_interpreter_print_graph_summary},
+      {"interpreter_print_hypergraph_summary", test_interpreter_print_hypergraph_summary},
+      {"interpreter_print_graph_node_value", test_interpreter_print_graph_node_value},
+      {"interpreter_print_graph_edge_value", test_interpreter_print_graph_edge_value},
+      {"interpreter_print_hypergraph_node_value", test_interpreter_print_hypergraph_node_value},
+      {"interpreter_print_hyperedge_value", test_interpreter_print_hyperedge_value},
       {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},

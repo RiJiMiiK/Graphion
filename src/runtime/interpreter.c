@@ -36,6 +36,444 @@ typedef struct {
   size_t function_count;
 } graphion_program;
 
+static void set_diagnostic(graphion_runtime_diagnostic *diagnostic,
+                           size_t line,
+                           size_t column,
+                           const char *message);
+static void trim_in_place(char *s);
+static int is_valid_identifier(const char *name);
+static int is_reserved_name(const char *name);
+static int parse_string_literal(const char *token, graphion_runtime_value *value);
+static int parse_bool_literal(const char *token, graphion_runtime_value *value);
+static int parse_int_literal(const char *token, graphion_runtime_value *value);
+static int parse_float_literal(const char *token, graphion_runtime_value *value);
+
+static int parse_graph_header(const char *text,
+                              char *name_out,
+                              graphion_runtime_diagnostic *diagnostic,
+                              size_t line_no) {
+  size_t name_len;
+  const char *cursor;
+  if (strncmp(text, "graph ", 6U) != 0) {
+    return 0;
+  }
+  cursor = text + 6U;
+  name_len = strlen(cursor);
+  if (name_len == 0U || cursor[name_len - 1U] != ':') {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph declaration");
+    return GINT_ERR_PARSE;
+  }
+  if (name_len >= GRAPHION_RUNTIME_NAME_MAX) {
+    set_diagnostic(diagnostic, line_no, 1U, "graph name too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(name_out, cursor, name_len - 1U);
+  name_out[name_len - 1U] = '\0';
+  trim_in_place(name_out);
+  if (!is_valid_identifier(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph name");
+    return GINT_ERR_PARSE;
+  }
+  if (is_reserved_name(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "reserved name cannot be used as a graph");
+    return GINT_ERR_RESERVED_NAME;
+  }
+  return GINT_OK;
+}
+
+static int parse_hypergraph_header(const char *text,
+                                   char *name_out,
+                                   graphion_runtime_diagnostic *diagnostic,
+                                   size_t line_no) {
+  size_t name_len;
+  const char *cursor;
+  if (strncmp(text, "hypergraph ", 11U) != 0) {
+    return 0;
+  }
+  cursor = text + 11U;
+  name_len = strlen(cursor);
+  if (name_len == 0U || cursor[name_len - 1U] != ':') {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hypergraph declaration");
+    return GINT_ERR_PARSE;
+  }
+  if (name_len >= GRAPHION_RUNTIME_NAME_MAX) {
+    set_diagnostic(diagnostic, line_no, 1U, "hypergraph name too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(name_out, cursor, name_len - 1U);
+  name_out[name_len - 1U] = '\0';
+  trim_in_place(name_out);
+  if (!is_valid_identifier(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hypergraph name");
+    return GINT_ERR_PARSE;
+  }
+  if (is_reserved_name(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "reserved name cannot be used as a hypergraph");
+    return GINT_ERR_RESERVED_NAME;
+  }
+  return GINT_OK;
+}
+
+static int parse_graph_edge(const char *text,
+                            graphion_runtime_graph_edge *edge,
+                            graphion_runtime_diagnostic *diagnostic,
+                            size_t line_no) {
+  const char *arrow;
+  const char *attrs;
+  char lhs[GRAPHION_RUNTIME_NAME_MAX];
+  char rhs[GRAPHION_RUNTIME_NAME_MAX];
+  size_t lhs_len;
+  size_t rhs_len;
+  graphion_runtime_value source_value;
+  graphion_runtime_value target_value;
+
+  if (text == NULL || edge == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  arrow = strstr(text, "->");
+  if (arrow == NULL) {
+    set_diagnostic(diagnostic, line_no, 1U, "expected graph edge using a -> b syntax");
+    return GINT_ERR_PARSE;
+  }
+  attrs = strchr(arrow + 2U, '[');
+  lhs_len = (size_t)(arrow - text);
+  rhs_len = attrs != NULL ? (size_t)(attrs - (arrow + 2U)) : strlen(arrow + 2U);
+  if (lhs_len == 0U || lhs_len >= sizeof(lhs) || rhs_len == 0U || rhs_len >= sizeof(rhs)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph edge");
+    return GINT_ERR_PARSE;
+  }
+  memset(edge, 0, sizeof(*edge));
+  memcpy(lhs, text, lhs_len);
+  lhs[lhs_len] = '\0';
+  memcpy(rhs, arrow + 2U, rhs_len);
+  rhs[rhs_len] = '\0';
+  trim_in_place(lhs);
+  trim_in_place(rhs);
+  if (!parse_int_literal(lhs, &source_value) || !parse_int_literal(rhs, &target_value)) {
+    set_diagnostic(diagnostic, line_no, 1U, "graph node ids must be integers");
+    return GINT_ERR_PARSE;
+  }
+  edge->source = source_value.int_value;
+  edge->target = target_value.int_value;
+  if (attrs != NULL) {
+    const char *close_bracket = strrchr(attrs, ']');
+    char attrs_buf[GINT_LINE_MAX];
+    size_t attrs_len;
+    int in_string = 0;
+    if (close_bracket == NULL || close_bracket < attrs) {
+      set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute list");
+      return GINT_ERR_PARSE;
+    }
+    attrs_len = (size_t)(close_bracket - attrs - 1);
+    if (attrs_len >= sizeof(attrs_buf)) {
+      set_diagnostic(diagnostic, line_no, 1U, "graph attribute list too long");
+      return GINT_ERR_PARSE;
+    }
+    memcpy(attrs_buf, attrs + 1U, attrs_len);
+    attrs_buf[attrs_len] = '\0';
+    trim_in_place(attrs_buf);
+    if (attrs_buf[0] != '\0') {
+      size_t start = 0U;
+      size_t i = 0U;
+      while (1) {
+        const char current = attrs_buf[i];
+        if (current == '"' && (i == 0U || attrs_buf[i - 1U] != '\\')) {
+          in_string = !in_string;
+        }
+        if (!in_string && (current == ',' || current == '\0')) {
+          char entry[GINT_LINE_MAX];
+          char *eq;
+          size_t entry_len = i - start;
+          graphion_runtime_attribute attribute;
+          if (entry_len == 0U || entry_len >= sizeof(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute entry");
+            return GINT_ERR_PARSE;
+          }
+          if (edge->attribute_count >= GRAPHION_RUNTIME_ATTRIBUTE_MAX) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attribute capacity exceeded");
+            return GINT_ERR_CAPACITY;
+          }
+          memcpy(entry, attrs_buf + start, entry_len);
+          entry[entry_len] = '\0';
+          trim_in_place(entry);
+          eq = strchr(entry, '=');
+          if (eq == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attributes must use key=value syntax");
+            return GINT_ERR_PARSE;
+          }
+          memset(&attribute, 0, sizeof(attribute));
+          *eq = '\0';
+          trim_in_place(entry);
+          trim_in_place(eq + 1U);
+          if (!is_valid_identifier(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute name");
+            return GINT_ERR_PARSE;
+          }
+          memcpy(attribute.name, entry, strlen(entry) + 1U);
+          if (strcmp(attribute.name, "weight") == 0) {
+            graphion_runtime_value weight_value;
+            if (!parse_float_literal(eq + 1U, &weight_value) && !parse_int_literal(eq + 1U, &weight_value)) {
+              set_diagnostic(diagnostic, line_no, 1U, "weight must be numeric");
+              return GINT_ERR_PARSE;
+            }
+            edge->has_weight = 1;
+            edge->weight = weight_value.kind == GRAPHION_VALUE_FLOAT ? weight_value.float_value
+                                                                     : (double)weight_value.int_value;
+          } else if (parse_string_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_STRING;
+            memcpy(attribute.string_value, source_value.string_value, strlen(source_value.string_value) + 1U);
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_bool_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_BOOL;
+            attribute.bool_value = source_value.bool_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_float_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_FLOAT;
+            attribute.float_value = source_value.float_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_int_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_INT;
+            attribute.int_value = source_value.int_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attributes must be scalar values");
+            return GINT_ERR_PARSE;
+          }
+          if (current == '\0') {
+            break;
+          }
+          start = i + 1U;
+        }
+        if (current == '\0') {
+          break;
+        }
+        ++i;
+      }
+    }
+  }
+  return GINT_OK;
+}
+
+static int graph_contains_node(const graphion_runtime_value *graph, int64_t node_id) {
+  size_t i;
+  if (graph == NULL || graph->graph_value == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < graph->graph_value->edge_count; ++i) {
+    if (graph->graph_value->edges[i].source == node_id || graph->graph_value->edges[i].target == node_id) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int hypergraph_contains_node(const graphion_runtime_value *hypergraph, int64_t node_id) {
+  size_t i;
+  size_t j;
+  if (hypergraph == NULL || hypergraph->hypergraph_value == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < hypergraph->hypergraph_value->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hypergraph_value->hyperedges[i].node_count; ++j) {
+      if (hypergraph->hypergraph_value->hyperedges[i].nodes[j] == node_id) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+static size_t hypergraph_incident_count(const graphion_runtime_hypergraph_value *hypergraph, int64_t node_id) {
+  size_t i;
+  size_t j;
+  size_t count = 0U;
+  if (hypergraph == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      if (hypergraph->hyperedges[i].nodes[j] == node_id) {
+        count += 1U;
+        break;
+      }
+    }
+  }
+  return count;
+}
+
+static const graphion_runtime_hyperedge *find_hyperedge_by_id(const graphion_runtime_hypergraph_value *hypergraph,
+                                                              int64_t hyperedge_id) {
+  if (hypergraph == NULL || hyperedge_id < 0 || (size_t)hyperedge_id >= hypergraph->hyperedge_count) {
+    return NULL;
+  }
+  return &hypergraph->hyperedges[hyperedge_id];
+}
+
+static int parse_hyperedge_line(const char *text,
+                                graphion_runtime_hyperedge *hyperedge,
+                                graphion_runtime_diagnostic *diagnostic,
+                                size_t line_no) {
+  const char *open_bracket;
+  const char *close_bracket;
+  const char *attrs;
+  char nodes_buf[GINT_LINE_MAX];
+  size_t start = 0U;
+  size_t i = 0U;
+
+  if (text == NULL || hyperedge == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  open_bracket = strchr(text, '[');
+  close_bracket = open_bracket != NULL ? strchr(open_bracket + 1U, ']') : NULL;
+  attrs = close_bracket != NULL ? strchr(close_bracket + 1U, '[') : NULL;
+  if (open_bracket == NULL || close_bracket == NULL || close_bracket < open_bracket) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge declaration");
+    return GINT_ERR_PARSE;
+  }
+  memset(hyperedge, 0, sizeof(*hyperedge));
+  if ((size_t)(close_bracket - open_bracket - 1) >= sizeof(nodes_buf)) {
+    set_diagnostic(diagnostic, line_no, 1U, "hyperedge node list too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(nodes_buf, open_bracket + 1, (size_t)(close_bracket - open_bracket - 1));
+  nodes_buf[close_bracket - open_bracket - 1] = '\0';
+  trim_in_place(nodes_buf);
+  if (nodes_buf[0] == '\0') {
+    set_diagnostic(diagnostic, line_no, 1U, "hyperedge node list cannot be empty");
+    return GINT_ERR_PARSE;
+  }
+  while (1) {
+    const char current = nodes_buf[i];
+    if (current == ',' || current == '\0') {
+      char token[GRAPHION_RUNTIME_NAME_MAX];
+      graphion_runtime_value node_value;
+      size_t len = i - start;
+      if (len == 0U || len >= sizeof(token)) {
+        set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge node id");
+        return GINT_ERR_PARSE;
+      }
+      if (hyperedge->node_count >= GRAPHION_RUNTIME_HYPEREDGE_NODE_MAX) {
+        set_diagnostic(diagnostic, line_no, 1U, "hyperedge node capacity exceeded");
+        return GINT_ERR_CAPACITY;
+      }
+      memcpy(token, nodes_buf + start, len);
+      token[len] = '\0';
+      trim_in_place(token);
+      if (!parse_int_literal(token, &node_value)) {
+        set_diagnostic(diagnostic, line_no, 1U, "hypergraph node ids must be integers");
+        return GINT_ERR_PARSE;
+      }
+      hyperedge->nodes[hyperedge->node_count] = node_value.int_value;
+      hyperedge->node_count += 1U;
+      if (current == '\0') {
+        break;
+      }
+      start = i + 1U;
+    }
+    if (current == '\0') {
+      break;
+    }
+    ++i;
+  }
+  if (attrs != NULL) {
+    const char *attrs_close = strrchr(attrs, ']');
+    char attrs_buf[GINT_LINE_MAX];
+    size_t attrs_len;
+    start = 0U;
+    i = 0U;
+    if (attrs_close == NULL || attrs_close < attrs) {
+      set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute list");
+      return GINT_ERR_PARSE;
+    }
+    attrs_len = (size_t)(attrs_close - attrs - 1);
+    if (attrs_len >= sizeof(attrs_buf)) {
+      set_diagnostic(diagnostic, line_no, 1U, "hyperedge attribute list too long");
+      return GINT_ERR_PARSE;
+    }
+    memcpy(attrs_buf, attrs + 1U, attrs_len);
+    attrs_buf[attrs_len] = '\0';
+    trim_in_place(attrs_buf);
+    if (attrs_buf[0] != '\0') {
+      int in_string = 0;
+      while (1) {
+        const char current = attrs_buf[i];
+        if (current == '"' && (i == 0U || attrs_buf[i - 1U] != '\\')) {
+          in_string = !in_string;
+        }
+        if (!in_string && (current == ',' || current == '\0')) {
+          char entry[GINT_LINE_MAX];
+          char *eq;
+          size_t entry_len = i - start;
+          graphion_runtime_attribute attribute;
+          graphion_runtime_value parsed_value;
+          if (entry_len == 0U || entry_len >= sizeof(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute entry");
+            return GINT_ERR_PARSE;
+          }
+          if (hyperedge->attribute_count >= GRAPHION_RUNTIME_ATTRIBUTE_MAX) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attribute capacity exceeded");
+            return GINT_ERR_CAPACITY;
+          }
+          memcpy(entry, attrs_buf + start, entry_len);
+          entry[entry_len] = '\0';
+          trim_in_place(entry);
+          eq = strchr(entry, '=');
+          if (eq == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attributes must use key=value syntax");
+            return GINT_ERR_PARSE;
+          }
+          memset(&attribute, 0, sizeof(attribute));
+          *eq = '\0';
+          trim_in_place(entry);
+          trim_in_place(eq + 1U);
+          if (!is_valid_identifier(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute name");
+            return GINT_ERR_PARSE;
+          }
+          memcpy(attribute.name, entry, strlen(entry) + 1U);
+          if (strcmp(attribute.name, "weight") == 0) {
+            if (!parse_float_literal(eq + 1U, &parsed_value) && !parse_int_literal(eq + 1U, &parsed_value)) {
+              set_diagnostic(diagnostic, line_no, 1U, "weight must be numeric");
+              return GINT_ERR_PARSE;
+            }
+            hyperedge->has_weight = 1;
+            hyperedge->weight = parsed_value.kind == GRAPHION_VALUE_FLOAT ? parsed_value.float_value
+                                                                          : (double)parsed_value.int_value;
+          } else if (parse_string_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_STRING;
+            memcpy(attribute.string_value, parsed_value.string_value, strlen(parsed_value.string_value) + 1U);
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_bool_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_BOOL;
+            attribute.bool_value = parsed_value.bool_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_float_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_FLOAT;
+            attribute.float_value = parsed_value.float_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_int_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_INT;
+            attribute.int_value = parsed_value.int_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attributes must be scalar values");
+            return GINT_ERR_PARSE;
+          }
+          if (current == '\0') {
+            break;
+          }
+          start = i + 1U;
+        }
+        if (current == '\0') {
+          break;
+        }
+        ++i;
+      }
+    }
+  }
+  return GINT_OK;
+}
+
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -145,9 +583,46 @@ static graphion_runtime_binding *find_binding_mut(graphion_runtime_scope *scope,
   return NULL;
 }
 
+static void graphion_runtime_value_dispose(graphion_runtime_value *value) {
+  if (value == NULL) {
+    return;
+  }
+  if (value->owns_graph_value != 0 && value->graph_value != NULL) {
+    free(value->graph_value);
+  }
+  if (value->owns_hypergraph_value != 0 && value->hypergraph_value != NULL) {
+    free(value->hypergraph_value);
+  }
+  memset(value, 0, sizeof(*value));
+}
+
+static void copy_runtime_value(graphion_runtime_value *dst,
+                               const graphion_runtime_value *src,
+                               int take_ownership) {
+  if (dst == NULL || src == NULL) {
+    return;
+  }
+  *dst = *src;
+  if (take_ownership == 0) {
+    dst->owns_graph_value = 0;
+    dst->owns_hypergraph_value = 0;
+  }
+}
+
 void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
   if (scope == NULL) {
     return;
+  }
+  memset(scope, 0, sizeof(*scope));
+}
+
+void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
+  size_t i;
+  if (scope == NULL) {
+    return;
+  }
+  for (i = 0U; i < scope->count; ++i) {
+    graphion_runtime_value_dispose(&scope->bindings[i].value);
   }
   memset(scope, 0, sizeof(*scope));
 }
@@ -179,7 +654,8 @@ static const graphion_runtime_value *find_value(const graphion_runtime_scope *lo
 static int assign_value(graphion_runtime_scope *scope, const char *name, const graphion_runtime_value *value) {
   graphion_runtime_binding *binding = find_binding_mut(scope, name);
   if (binding != NULL) {
-    binding->value = *value;
+    graphion_runtime_value_dispose(&binding->value);
+    copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
     return GINT_OK;
   }
   if (scope->count >= GRAPHION_RUNTIME_BINDING_MAX) {
@@ -188,7 +664,7 @@ static int assign_value(graphion_runtime_scope *scope, const char *name, const g
   binding = &scope->bindings[scope->count];
   memset(binding, 0, sizeof(*binding));
   memcpy(binding->name, name, strlen(name) + 1U);
-  binding->value = *value;
+  copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
   scope->count += 1U;
   return GINT_OK;
 }
@@ -419,6 +895,28 @@ static int index_functions(graphion_program *program, graphion_runtime_diagnosti
     graphion_runtime_function function;
     int rc;
     if (strncmp(line->text, "def ", 4U) != 0) {
+      if (strncmp(line->text, "graph ", 6U) == 0) {
+        if (line->indent != 0U) {
+          set_diagnostic(diagnostic, line->line_no, 1U, "nested graph declarations are not supported");
+          return GINT_ERR_PARSE;
+        }
+        ++i;
+        while (i < program->line_count && program->lines[i].indent > line->indent) {
+          ++i;
+        }
+        continue;
+      }
+      if (strncmp(line->text, "hypergraph ", 11U) == 0) {
+        if (line->indent != 0U) {
+          set_diagnostic(diagnostic, line->line_no, 1U, "nested hypergraph declarations are not supported");
+          return GINT_ERR_PARSE;
+        }
+        ++i;
+        while (i < program->line_count && program->lines[i].indent > line->indent) {
+          ++i;
+        }
+        continue;
+      }
       if (line->indent != 0U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "unexpected indentation outside function body");
         return GINT_ERR_PARSE;
@@ -517,6 +1015,46 @@ static int split_call(const char *expr, char *name_out, char *args_out) {
   return 1;
 }
 
+static int split_graph_member_access(const char *expr,
+                                     char *graph_name_out,
+                                     char *member_name_out,
+                                     char *index_out) {
+  const char *dot;
+  const char *open_bracket;
+  const char *close_bracket;
+  size_t graph_name_len;
+  size_t member_name_len;
+  size_t index_len;
+
+  if (expr == NULL || graph_name_out == NULL || member_name_out == NULL || index_out == NULL) {
+    return 0;
+  }
+  dot = strchr(expr, '.');
+  open_bracket = strchr(expr, '[');
+  close_bracket = strrchr(expr, ']');
+  if (dot == NULL || open_bracket == NULL || close_bracket == NULL || dot > open_bracket || close_bracket[1] != '\0') {
+    return 0;
+  }
+  graph_name_len = (size_t)(dot - expr);
+  member_name_len = (size_t)(open_bracket - (dot + 1U));
+  index_len = (size_t)(close_bracket - open_bracket - 1U);
+  if (graph_name_len == 0U || graph_name_len >= GRAPHION_RUNTIME_NAME_MAX ||
+      member_name_len == 0U || member_name_len >= GRAPHION_RUNTIME_NAME_MAX ||
+      index_len == 0U || index_len >= GINT_LINE_MAX) {
+    return 0;
+  }
+  memcpy(graph_name_out, expr, graph_name_len);
+  graph_name_out[graph_name_len] = '\0';
+  trim_in_place(graph_name_out);
+  memcpy(member_name_out, dot + 1U, member_name_len);
+  member_name_out[member_name_len] = '\0';
+  trim_in_place(member_name_out);
+  memcpy(index_out, open_bracket + 1U, index_len);
+  index_out[index_len] = '\0';
+  trim_in_place(index_out);
+  return is_valid_identifier(graph_name_out) && is_valid_identifier(member_name_out) && index_out[0] != '\0';
+}
+
 static int split_arguments(const char *args_buf, char args[GINT_ARG_MAX][GINT_LINE_MAX], size_t *arg_count) {
   size_t i = 0U;
   size_t start = 0U;
@@ -567,7 +1105,53 @@ static int split_arguments(const char *args_buf, char args[GINT_ARG_MAX][GINT_LI
   return 1;
 }
 
+static size_t graph_neighbor_count(const graphion_runtime_graph_value *graph, int64_t node_id) {
+  size_t i;
+  size_t count = 0U;
+  if (graph == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    if (graph->edges[i].source == node_id) {
+      count += 1U;
+    }
+  }
+  return count;
+}
+
+static const graphion_runtime_graph_edge *find_graph_edge_by_id(const graphion_runtime_graph_value *graph, int64_t edge_id) {
+  if (graph == NULL || edge_id < 0 || (size_t)edge_id >= graph->edge_count) {
+    return NULL;
+  }
+  return &graph->edges[edge_id];
+}
+
+static void print_attribute(FILE *output, const graphion_runtime_attribute *attribute) {
+  if (output == NULL || attribute == NULL) {
+    return;
+  }
+  fprintf(output, " %s=", attribute->name);
+  switch (attribute->kind) {
+    case GRAPHION_ATTRIBUTE_INT:
+      fprintf(output, "%lld", (long long)attribute->int_value);
+      break;
+    case GRAPHION_ATTRIBUTE_FLOAT:
+      fprintf(output, "%g", attribute->float_value);
+      break;
+    case GRAPHION_ATTRIBUTE_BOOL:
+      fprintf(output, "%s", attribute->bool_value != 0 ? "true" : "false");
+      break;
+    case GRAPHION_ATTRIBUTE_STRING:
+      fprintf(output, "\"%s\"", attribute->string_value);
+      break;
+    default:
+      fprintf(output, "none");
+      break;
+  }
+}
+
 static int print_value(FILE *output, const graphion_runtime_value *value) {
+  size_t i;
   if (output == NULL || value == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
@@ -583,6 +1167,53 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
       break;
     case GRAPHION_VALUE_STRING:
       fprintf(output, "%s\n", value->string_value);
+      break;
+    case GRAPHION_VALUE_GRAPH:
+      fprintf(output,
+              "<graph name=%s nodes=%zu edges=%zu>\n",
+              value->graph_value != NULL ? value->graph_value->name : "",
+              value->graph_value != NULL ? value->graph_value->node_count : 0U,
+              value->graph_value != NULL ? value->graph_value->edge_count : 0U);
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH:
+      fprintf(output,
+              "<hypergraph name=%s nodes=%zu hyperedges=%zu>\n",
+              value->hypergraph_value != NULL ? value->hypergraph_value->name : "",
+              value->hypergraph_value != NULL ? value->hypergraph_value->node_count : 0U,
+              value->hypergraph_value != NULL ? value->hypergraph_value->hyperedge_count : 0U);
+      break;
+    case GRAPHION_VALUE_GRAPH_NODE:
+      fprintf(output,
+              "<node id=%lld neighbors=%zu>\n",
+              (long long)value->graph_node_value.id,
+              graph_neighbor_count(value->graph_node_value.graph, value->graph_node_value.id));
+      break;
+    case GRAPHION_VALUE_GRAPH_EDGE:
+      fprintf(output,
+              "<edge %lld->%lld",
+              (long long)(value->graph_edge_value.edge != NULL ? value->graph_edge_value.edge->source : 0),
+              (long long)(value->graph_edge_value.edge != NULL ? value->graph_edge_value.edge->target : 0));
+      if (value->graph_edge_value.edge != NULL && value->graph_edge_value.edge->has_weight != 0) {
+        fprintf(output, " weight=%g", value->graph_edge_value.edge->weight);
+      }
+      for (i = 0U;
+           value->graph_edge_value.edge != NULL && i < value->graph_edge_value.edge->attribute_count;
+           ++i) {
+        print_attribute(output, &value->graph_edge_value.edge->attributes[i]);
+      }
+      fprintf(output, ">\n");
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH_NODE:
+      fprintf(output,
+              "<vertex id=%lld hyperedges=%zu>\n",
+              (long long)value->hypergraph_node_value.id,
+              hypergraph_incident_count(value->hypergraph_node_value.hypergraph, value->hypergraph_node_value.id));
+      break;
+    case GRAPHION_VALUE_HYPEREDGE:
+      fprintf(output,
+              "<hyperedge id=%s members=%zu>\n",
+              value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->name : "",
+              value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->node_count : 0U);
       break;
     default:
       fprintf(output, "none\n");
@@ -647,11 +1278,13 @@ static int call_function(const graphion_program *program,
   for (i = 0U; i < arg_count; ++i) {
     rc = eval_expression(args[i], program, global_scope, caller_scope, diagnostic, output, line_no, &arg_values[i]);
     if (rc != GINT_OK) {
+      graphion_runtime_scope_dispose(&local_scope);
       return rc;
     }
     rc = assign_value(&local_scope, function->params[i], &arg_values[i]);
     if (rc != GINT_OK) {
       set_diagnostic(diagnostic, line_no, 1U, "runtime scope capacity exceeded");
+      graphion_runtime_scope_dispose(&local_scope);
       return rc;
     }
   }
@@ -667,6 +1300,7 @@ static int call_function(const graphion_program *program,
                      &did_return,
                      &return_value);
   if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&local_scope);
     return rc;
   }
   if (did_return) {
@@ -675,6 +1309,7 @@ static int call_function(const graphion_program *program,
     memset(value, 0, sizeof(*value));
     value->kind = GRAPHION_VALUE_NONE;
   }
+  graphion_runtime_scope_dispose(&local_scope);
   return GINT_OK;
 }
 
@@ -691,6 +1326,102 @@ static int eval_expression(const char *expr,
   if (parse_string_literal(expr, value) || parse_bool_literal(expr, value) ||
       parse_float_literal(expr, value) || parse_int_literal(expr, value)) {
     return GINT_OK;
+  }
+  {
+    char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+    char member_name[GRAPHION_RUNTIME_NAME_MAX];
+    char index_expr[GINT_LINE_MAX];
+    if (split_graph_member_access(expr, graph_name, member_name, index_expr)) {
+      const graphion_runtime_value *container_value = find_value(local_scope, global_scope, graph_name);
+      graphion_runtime_value index_value;
+      int rc;
+      if (container_value == NULL ||
+          (container_value->kind != GRAPHION_VALUE_GRAPH && container_value->kind != GRAPHION_VALUE_HYPERGRAPH)) {
+        set_diagnostic(diagnostic, line_no, 1U, "member access expects a graph or hypergraph value");
+        return GINT_ERR_CALL;
+      }
+      if (container_value->kind == GRAPHION_VALUE_GRAPH) {
+        rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (strcmp(member_name, "node") == 0) {
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph node index must be an integer");
+            return GINT_ERR_CALL;
+          }
+          if (!graph_contains_node(container_value, index_value.int_value)) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph node not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_GRAPH_NODE;
+          value->graph_node_value.id = index_value.int_value;
+          value->graph_node_value.graph = container_value->graph_value;
+          return GINT_OK;
+        }
+        if (strcmp(member_name, "edge") == 0) {
+          const graphion_runtime_graph_edge *edge_value;
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph edge id must be an integer");
+            return GINT_ERR_CALL;
+          }
+          edge_value = find_graph_edge_by_id(container_value->graph_value, index_value.int_value);
+          if (edge_value == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph edge not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_GRAPH_EDGE;
+          value->graph_edge_value.graph = container_value->graph_value;
+          value->graph_edge_value.edge = edge_value;
+          return GINT_OK;
+        }
+      } else if (container_value->kind == GRAPHION_VALUE_HYPERGRAPH) {
+        if (strcmp(member_name, "vertex") == 0) {
+          rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex index must be an integer");
+            return GINT_ERR_CALL;
+          }
+          if (!hypergraph_contains_node(container_value, index_value.int_value)) {
+            set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_HYPERGRAPH_NODE;
+          value->hypergraph_node_value.id = index_value.int_value;
+          value->hypergraph_node_value.hypergraph = container_value->hypergraph_value;
+          return GINT_OK;
+        }
+        if (strcmp(member_name, "hyperedge") == 0) {
+          const graphion_runtime_hyperedge *hyperedge_value;
+          rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge id must be an integer");
+            return GINT_ERR_CALL;
+          }
+          hyperedge_value = find_hyperedge_by_id(container_value->hypergraph_value, index_value.int_value);
+          if (hyperedge_value == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_HYPEREDGE;
+          value->hyperedge_value.hypergraph = container_value->hypergraph_value;
+          value->hyperedge_value.hyperedge = hyperedge_value;
+          return GINT_OK;
+        }
+      }
+      set_diagnostic(diagnostic, line_no, 1U, "unknown graph or hypergraph member access");
+      return GINT_ERR_CALL;
+    }
   }
   {
     char name[GRAPHION_RUNTIME_NAME_MAX];
@@ -718,7 +1449,7 @@ static int eval_expression(const char *expr,
     set_diagnostic(diagnostic, line_no, 1U, "unknown variable in expression");
     return GINT_ERR_UNKNOWN_VARIABLE;
   }
-  *value = *existing;
+  copy_runtime_value(value, existing, 0);
   return GINT_OK;
 }
 
@@ -813,6 +1544,117 @@ static int execute_block(const graphion_program *program,
   while (i < end) {
     const graphion_source_line *line = &program->lines[i];
     int rc;
+    if (line->indent == 0U && strncmp(line->text, "graph ", 6U) == 0) {
+      graphion_runtime_value graph_value;
+      char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+      size_t body_end = i + 1U;
+      graphion_runtime_graph_value *graph_payload;
+      rc = parse_graph_header(line->text, graph_name, diagnostic, line->line_no);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      memset(&graph_value, 0, sizeof(graph_value));
+      graph_value.kind = GRAPHION_VALUE_GRAPH;
+      graph_payload = (graphion_runtime_graph_value *)calloc(1U, sizeof(*graph_payload));
+      if (graph_payload == NULL) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "graph allocation failed");
+        return GINT_ERR_CAPACITY;
+      }
+      graph_value.graph_value = graph_payload;
+      graph_value.owns_graph_value = 1;
+      memcpy(graph_payload->name, graph_name, strlen(graph_name) + 1U);
+      while (body_end < end && program->lines[body_end].indent > line->indent) {
+        graphion_runtime_graph_edge edge;
+        if (graph_payload->edge_count >= GRAPHION_RUNTIME_GRAPH_EDGE_MAX) {
+          set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "graph edge capacity exceeded");
+          graphion_runtime_value_dispose(&graph_value);
+          return GINT_ERR_CAPACITY;
+        }
+        rc = parse_graph_edge(program->lines[body_end].text, &edge, diagnostic, program->lines[body_end].line_no);
+        if (rc != GINT_OK) {
+          graphion_runtime_value_dispose(&graph_value);
+          return rc;
+        }
+        if (!graph_contains_node(&graph_value, edge.source)) {
+          graph_payload->node_count += 1U;
+        }
+        if (!graph_contains_node(&graph_value, edge.target)) {
+          graph_payload->node_count += 1U;
+        }
+        graph_payload->edges[graph_payload->edge_count] = edge;
+        graph_payload->edge_count += 1U;
+        body_end += 1U;
+      }
+      if (body_end == i + 1U) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "graph body cannot be empty");
+        graphion_runtime_value_dispose(&graph_value);
+        return GINT_ERR_PARSE;
+      }
+      rc = assign_value(global_scope, graph_name, &graph_value);
+      if (rc != GINT_OK) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        graphion_runtime_value_dispose(&graph_value);
+        return rc;
+      }
+      i = body_end;
+      continue;
+    }
+    if (line->indent == 0U && strncmp(line->text, "hypergraph ", 11U) == 0) {
+      graphion_runtime_value hypergraph_value;
+      char hypergraph_name[GRAPHION_RUNTIME_NAME_MAX];
+      size_t body_end = i + 1U;
+      graphion_runtime_hypergraph_value *hypergraph_payload;
+      rc = parse_hypergraph_header(line->text, hypergraph_name, diagnostic, line->line_no);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      memset(&hypergraph_value, 0, sizeof(hypergraph_value));
+      hypergraph_value.kind = GRAPHION_VALUE_HYPERGRAPH;
+      hypergraph_payload = (graphion_runtime_hypergraph_value *)calloc(1U, sizeof(*hypergraph_payload));
+      if (hypergraph_payload == NULL) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph allocation failed");
+        return GINT_ERR_CAPACITY;
+      }
+      hypergraph_value.hypergraph_value = hypergraph_payload;
+      hypergraph_value.owns_hypergraph_value = 1;
+      memcpy(hypergraph_payload->name, hypergraph_name, strlen(hypergraph_name) + 1U);
+      while (body_end < end && program->lines[body_end].indent > line->indent) {
+        graphion_runtime_hyperedge hyperedge;
+        size_t node_index;
+        if (hypergraph_payload->hyperedge_count >= GRAPHION_RUNTIME_HYPEREDGE_MAX) {
+          set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "hyperedge capacity exceeded");
+          graphion_runtime_value_dispose(&hypergraph_value);
+          return GINT_ERR_CAPACITY;
+        }
+        rc = parse_hyperedge_line(program->lines[body_end].text, &hyperedge, diagnostic, program->lines[body_end].line_no);
+        if (rc != GINT_OK) {
+          graphion_runtime_value_dispose(&hypergraph_value);
+          return rc;
+        }
+        snprintf(hyperedge.name, sizeof(hyperedge.name), "%zu", hypergraph_payload->hyperedge_count);
+        for (node_index = 0U; node_index < hyperedge.node_count; ++node_index) {
+          if (!hypergraph_contains_node(&hypergraph_value, hyperedge.nodes[node_index])) {
+            hypergraph_payload->node_count += 1U;
+          }
+        }
+        hypergraph_payload->hyperedges[hypergraph_payload->hyperedge_count] = hyperedge;
+        hypergraph_payload->hyperedge_count += 1U;
+        body_end += 1U;
+      }
+      if (body_end == i + 1U) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph body cannot be empty");
+        graphion_runtime_value_dispose(&hypergraph_value);
+        return GINT_ERR_PARSE;
+      }
+      rc = assign_value(global_scope, hypergraph_name, &hypergraph_value);
+      if (rc != GINT_OK) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        graphion_runtime_value_dispose(&hypergraph_value);
+        return rc;
+      }
+      i = body_end;
+      continue;
+    }
     if (line->indent == 0U && strncmp(line->text, "def ", 4U) == 0) {
       const graphion_runtime_function *function = find_function(program, line->text + 4U);
       size_t skip_to = i + 1U;

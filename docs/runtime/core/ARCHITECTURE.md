@@ -22,6 +22,8 @@ Current source-program entry flow uses the `.gion` extension.
   - builtin `print(...)`
   - top-level user-defined functions via `def name(...):`
   - `return` inside function bodies
+  - top-level `graph Name:` declarations
+  - top-level `hypergraph Name:` declarations
   - no user-declared types
   - supported scalar values:
     - `int`
@@ -31,14 +33,48 @@ Current source-program entry flow uses the `.gion` extension.
 - assignment expressions may reference an already-bound variable:
   - `answer = 42`
   - `copy = answer`
+- graph declarations currently support integer node ids only:
+  - `graph G:`
+  - `  1 -> 2`
+  - `  2 -> 3 [weight=7, color="red", active=true]`
+- hypergraph declarations currently support auto-indexed hyperedges and integer node lists:
+  - `hypergraph H:`
+  - `  [1, 2, 3]`
+  - `  [2, 4] [weight=2.5, label="core"]`
+- declaration attributes are currently restricted to scalar values only:
+  - `int`
+  - `float`
+  - `string`
+  - `bool`
+- `weight` is reserved and normalized to a runtime float whether written as `7` or `7.0`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
-- `print(...)` writes scalar runtime values to the configured interpreter output stream.
+- `print(...)` writes runtime values to the configured interpreter output stream.
+- printable graph-oriented runtime values are part of the intended user-facing model:
+  - `print(graph)` shows graph name, node count, and edge count
+  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
+  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
+  - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
+  - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
+  - `print(H.hyperedge[id])` shows hyperedge id and member node count
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
 - the current function model is intentionally narrow:
   - top-level definitions only
   - no nested `def`
   - local function scope with fallback reads from the global scope
+- the current graph declaration model is also intentionally narrow:
+  - top-level declarations only
+  - integer node ids only
+  - scalar attributes only
+  - currently implemented printable values:
+    - `print(graph)` -> graph name, node count, edge count
+    - `print(G.node[id])` -> node id and neighbor count
+    - `print(G.edge[id])` -> edge endpoints, optional weight, and scalar attributes
+    - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
+    - `print(H.vertex[id])` -> vertex id and incident hyperedge count
+    - `print(H.hyperedge[id])` -> hyperedge id and member node count
+  - graph edge ids are implicit and auto-increment by declaration order
+  - hypergraph hyperedge ids are implicit and auto-increment by declaration order
 
 ## VM model (current)
 

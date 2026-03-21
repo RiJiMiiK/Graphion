@@ -343,6 +343,60 @@ static int expect_string_binding(const graphion_runtime_scope *scope, const char
   return strcmp(value->string_value, expected) == 0;
 }
 
+static int expect_graph_binding(const graphion_runtime_scope *scope,
+                                const char *name,
+                                size_t expected_edge_count,
+                                size_t expected_node_count,
+                                int64_t first_source,
+                                int64_t first_target,
+                                int64_t second_source,
+                                int64_t second_target) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH || value->graph_value == NULL) {
+    return 0;
+  }
+  if (value->graph_value->edge_count != expected_edge_count) {
+    return 0;
+  }
+  if (value->graph_value->node_count != expected_node_count) {
+    return 0;
+  }
+  if (expected_edge_count >= 1U &&
+      (value->graph_value->edges[0].source != first_source || value->graph_value->edges[0].target != first_target)) {
+    return 0;
+  }
+  if (expected_edge_count >= 2U &&
+      (value->graph_value->edges[1].source != second_source || value->graph_value->edges[1].target != second_target)) {
+    return 0;
+  }
+  return 1;
+}
+
+static int expect_hypergraph_binding(const graphion_runtime_scope *scope,
+                                     const char *name,
+                                     size_t expected_hyperedge_count,
+                                     size_t expected_node_count,
+                                     const char *first_hyperedge_name,
+                                     size_t first_hyperedge_node_count) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_HYPERGRAPH || value->hypergraph_value == NULL) {
+    return 0;
+  }
+  if (value->hypergraph_value->hyperedge_count != expected_hyperedge_count ||
+      value->hypergraph_value->node_count != expected_node_count) {
+    return 0;
+  }
+  if (expected_hyperedge_count >= 1U) {
+    if (strcmp(value->hypergraph_value->hyperedges[0].name, first_hyperedge_name) != 0) {
+      return 0;
+    }
+    if (value->hypergraph_value->hyperedges[0].node_count != first_hyperedge_node_count) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 int test_interpreter_dynamic_assignments(void) {
   const char *source = "count = 7\n"
                        "ratio = 3.5\n"
@@ -395,6 +449,210 @@ int test_interpreter_rejects_declared_type_syntax(void) {
   return 0;
 }
 
+int test_interpreter_graph_declaration(void) {
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  2 -> 3\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  if (!expect_graph_binding(&scope, "G", 2U, 3U, 1, 2, 2, 3)) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_rejects_non_integer_graph_nodes(void) {
+  const char *source = "graph G:\n"
+                       "  alpha -> 2\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_ERR_PARSE) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  if (diagnostic.line != 2U) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_hypergraph_declaration(void) {
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  if (!expect_hypergraph_binding(&scope, "H", 2U, 4U, "0", 3U)) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_graph_scalar_attributes(void) {
+  const char *source = "graph G:\n"
+                       "  1 -> 2 [weight=7, color=\"red\", active=true, rank=3]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *value;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  value = graphion_runtime_scope_find(&scope, "G");
+  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH || value->graph_value == NULL) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (!value->graph_value->edges[0].has_weight || value->graph_value->edges[0].weight != 7.0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  if (value->graph_value->edges[0].attribute_count != 3U) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[0].name, "color") != 0 ||
+      value->graph_value->edges[0].attributes[0].kind != GRAPHION_ATTRIBUTE_STRING ||
+      strcmp(value->graph_value->edges[0].attributes[0].string_value, "red") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 5;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[1].name, "active") != 0 ||
+      value->graph_value->edges[0].attributes[1].kind != GRAPHION_ATTRIBUTE_BOOL ||
+      value->graph_value->edges[0].attributes[1].bool_value != 1) {
+    graphion_runtime_scope_dispose(&scope);
+    return 6;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[2].name, "rank") != 0 ||
+      value->graph_value->edges[0].attributes[2].kind != GRAPHION_ATTRIBUTE_INT ||
+      value->graph_value->edges[0].attributes[2].int_value != 3) {
+    graphion_runtime_scope_dispose(&scope);
+    return 7;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_hypergraph_scalar_attributes(void) {
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3] [weight=2.5, label=\"core\", enabled=false]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *value;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  value = graphion_runtime_scope_find(&scope, "H");
+  if (value == NULL || value->kind != GRAPHION_VALUE_HYPERGRAPH || value->hypergraph_value == NULL) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  if (!value->hypergraph_value->hyperedges[0].has_weight ||
+      value->hypergraph_value->hyperedges[0].weight != 2.5) {
+    graphion_runtime_scope_dispose(&scope);
+    return 3;
+  }
+  if (value->hypergraph_value->hyperedges[0].attribute_count != 2U) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  if (strcmp(value->hypergraph_value->hyperedges[0].attributes[0].name, "label") != 0 ||
+      value->hypergraph_value->hyperedges[0].attributes[0].kind != GRAPHION_ATTRIBUTE_STRING ||
+      strcmp(value->hypergraph_value->hyperedges[0].attributes[0].string_value, "core") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 5;
+  }
+  if (strcmp(value->hypergraph_value->hyperedges[0].attributes[1].name, "enabled") != 0 ||
+      value->hypergraph_value->hyperedges[0].attributes[1].kind != GRAPHION_ATTRIBUTE_BOOL ||
+      value->hypergraph_value->hyperedges[0].attributes[1].bool_value != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 6;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_rejects_invalid_weight_type(void) {
+  static const char *bad_sources[] = {
+      "graph G:\n  1 -> 2 [weight=\"heavy\"]\n",
+      "hypergraph H:\n  [1, 2] [weight=true]\n",
+  };
+  size_t i;
+  for (i = 0U; i < sizeof(bad_sources) / sizeof(bad_sources[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(bad_sources[i], &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      graphion_runtime_scope_dispose(&scope);
+      return (int)(1 + i);
+    }
+    if (diagnostic.line != 2U) {
+      graphion_runtime_scope_dispose(&scope);
+      return (int)(10 + i);
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_interpreter_rejects_non_integer_hypergraph_nodes(void) {
+  const char *source = "hypergraph H:\n"
+                       "  [1, alpha]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_ERR_PARSE) {
+    graphion_runtime_scope_dispose(&scope);
+    return 1;
+  }
+  if (diagnostic.line != 2U) {
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
 int test_interpreter_print_and_function_return(void) {
   const char *path = "interpreter_print_output.txt";
   const char *source = "def echo(value):\n"
@@ -424,6 +682,7 @@ int test_interpreter_print_and_function_return(void) {
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
+    graphion_runtime_scope_dispose(&scope);
     return 2;
   }
   if (!expect_int_binding(&scope, "answer", 42)) {
@@ -449,6 +708,332 @@ int test_interpreter_print_and_function_return(void) {
   if (strcmp(output, "42\n42\n") != 0) {
     return 5;
   }
+  return 0;
+}
+
+int test_interpreter_print_graph_summary(void) {
+  const char *path = "interpreter_graph_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  2 -> 3\n"
+                       "print(G)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<graph name=G nodes=3 edges=2>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_hypergraph_summary(void) {
+  const char *path = "interpreter_hypergraph_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n"
+                       "print(H)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<hypergraph name=H nodes=4 hyperedges=2>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_graph_node_value(void) {
+  const char *path = "interpreter_graph_node_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  1 -> 3\n"
+                       "  2 -> 3\n"
+                       "print(G.node[1])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<node id=1 neighbors=2>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_graph_edge_value(void) {
+  const char *path = "interpreter_graph_edge_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2 [weight=7, color=\"red\", active=true, rank=3]\n"
+                       "  2 -> 3 [rank=9]\n"
+                       "print(G.edge[0])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[256];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<edge 1->2 weight=7 color=\"red\" active=true rank=3>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_hypergraph_node_value(void) {
+  const char *path = "interpreter_hypergraph_node_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n"
+                       "print(H.vertex[2])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<vertex id=2 hyperedges=2>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
+  return 0;
+}
+
+int test_interpreter_print_hyperedge_value(void) {
+  const char *path = "interpreter_hyperedge_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3] [weight=2.5, label=\"core\"]\n"
+                       "  [2, 4] [enabled=false]\n"
+                       "print(H.hyperedge[0])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<hyperedge id=0 members=3>\n") != 0) {
+    graphion_runtime_scope_dispose(&scope);
+    return 4;
+  }
+  graphion_runtime_scope_dispose(&scope);
   return 0;
 }
 

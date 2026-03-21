@@ -95,13 +95,21 @@
 - [x] `.gion` source-file extension and interpreter entry flow.
 - [x] High-level interpreted syntax for dynamic variables and assignment, with no user-declared types.
 - [x] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
-- [ ] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
-- [ ] User-facing hypergraph declarations with explicit hyperedge ids and integer node lists.
-- [ ] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
+- [x] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
+- [x] User-facing hypergraph declarations with auto-indexed hyperedges and integer node lists.
+- [x] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
 - [ ] Builtin graph/hypergraph functions with user-facing semantics:
   - `bfs(...)` returns visited node ids in BFS encounter order
   - `bfs_level(...)` returns only the number of BFS levels
   - incidence query builtins align with the future user-facing graph/hypergraph API
+- [x] User-facing printable graph values for `graph`, `node`, and `edge`:
+  - `print(graph)` shows graph name, node count, and edge count
+  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
+  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
+- [x] User-facing printable hypergraph values for `hypergraph` and `hyperedge`:
+  - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
+  - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
+  - `print(H.hyperedge[id])` shows hyperedge id and member node count
 - [ ] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`).
 
 ## Milestone 0.6.1 (Language Surface Follow-Up)
