@@ -57,7 +57,7 @@
 - [x] ISA fixture format documentation and fixture expansion policy.
 - [x] Deterministic-mode coverage across all dispatch variants.
 - [x] ASM parity coverage for hardening-sensitive ISA cases.
-- [ ] VM state snapshot/debug dump format for deterministic repro.
+- [x] VM state snapshot/debug dump format for deterministic repro.
 - [x] Opcode-by-opcode semantic tables (inputs, outputs, failure cases).
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)

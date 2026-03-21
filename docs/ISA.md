@@ -6,6 +6,7 @@ See also:
 - `docs/IR.md` for frontend-to-bytecode bridge contract
 - `docs/VM_ERRORS.md` for structured runtime error interpretation
 - `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
+- `docs/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
 
 ## Encoding
 
@@ -147,6 +148,8 @@ Notes:
 - Deterministic mode bypasses fast arithmetic specialization and any asm-backed
   execution path.
 - Instruction semantics and observable register / `pc` results remain the same.
+- `graphion_vm_write_snapshot(...)` provides a versioned state dump for
+  deterministic repro capture.
 
 ## Golden conformance coverage
 

@@ -21,6 +21,7 @@ int test_vm_deterministic_mode_toggle(void);
 int test_vm_deterministic_mode_unknown_opcode(void);
 int test_vm_deterministic_mode_graph_semantics(void);
 int test_vm_add_wraparound_semantics(void);
+int test_vm_snapshot_format(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
 int test_vm_dispatch_variant_edge_semantics(void);
@@ -81,6 +82,7 @@ int main(int argc, char **argv) {
       {"vm_deterministic_mode_unknown_opcode", test_vm_deterministic_mode_unknown_opcode},
       {"vm_deterministic_mode_graph_semantics", test_vm_deterministic_mode_graph_semantics},
       {"vm_add_wraparound_semantics", test_vm_add_wraparound_semantics},
+      {"vm_snapshot_format", test_vm_snapshot_format},
       {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
       {"vm_fastpath_shape_cache_same_pointer_content_change",
        test_vm_fastpath_shape_cache_same_pointer_content_change},

@@ -2,8 +2,10 @@
 
 #include "vm/vm.h"
 
+#include <stdarg.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct {
   const graphion_insn *program;
@@ -204,6 +206,27 @@ static int64_t count_visited_levels(const int32_t *levels, size_t count) {
     }
   }
   return total;
+}
+
+static size_t appendf(char *buffer, size_t buffer_size, size_t offset, const char *fmt, ...) {
+  va_list args;
+  int written;
+  char *dst = NULL;
+  size_t remaining = 0U;
+
+  if (offset < buffer_size) {
+    dst = buffer + offset;
+    remaining = buffer_size - offset;
+  }
+
+  va_start(args, fmt);
+  written = vsnprintf(dst, remaining, fmt, args);
+  va_end(args);
+
+  if (written < 0) {
+    return offset;
+  }
+  return offset + (size_t)written;
 }
 
 void graphion_vm_init(graphion_vm *vm) {
@@ -600,4 +623,31 @@ int graphion_vm_run(graphion_vm *vm) {
 #else
   return run_dispatch_switch(vm);
 #endif
+}
+
+size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t buffer_size) {
+  size_t offset = 0U;
+  size_t i;
+
+  if (vm == NULL) {
+    return 0U;
+  }
+
+  offset = appendf(buffer, buffer_size, offset, "GRAPHION_VM_SNAPSHOT_V1\n");
+  offset = appendf(buffer, buffer_size, offset, "pc=%zu\n", vm->pc);
+  offset = appendf(buffer, buffer_size, offset, "program_bound=%d\n", vm->program != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "program_len=%zu\n", vm->program_len);
+  offset = appendf(buffer, buffer_size, offset, "halted=%d\n", vm->halted ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "deterministic_mode=%d\n", vm->deterministic_mode ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "arith_only_fastpath=%d\n", vm->arith_only_fastpath ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "arith_only_halt_terminated=%d\n",
+                   vm->arith_only_halt_terminated ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "csr_bound=%d\n", vm->csr_graph != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "hypergraph_bound=%d\n", vm->hypergraph != NULL ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "regs=[");
+  for (i = 0U; i < 16U; ++i) {
+    offset = appendf(buffer, buffer_size, offset, "%s%lld", i == 0U ? "" : ",", (long long)vm->regs[i]);
+  }
+  offset = appendf(buffer, buffer_size, offset, "]\n");
+  return offset;
 }

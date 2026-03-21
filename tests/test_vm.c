@@ -4,6 +4,7 @@
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
 #include <limits.h>
+#include <string.h>
 
 static int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t len) {
   int rc;
@@ -337,6 +338,64 @@ int test_vm_add_wraparound_semantics(void) {
   }
   if (!vm.halted) {
     return 4;
+  }
+  return 0;
+}
+
+int test_vm_snapshot_format(void) {
+  graphion_vm vm;
+  char snapshot[512];
+  char tiny[16];
+  size_t snapshot_len;
+  size_t tiny_len;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_MOV_IMM, 1, 0, 35},
+      {GVM_OP_ADD, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  const char expected[] =
+      "GRAPHION_VM_SNAPSHOT_V1\n"
+      "pc=4\n"
+      "program_bound=1\n"
+      "program_len=4\n"
+      "halted=1\n"
+      "deterministic_mode=1\n"
+      "arith_only_fastpath=1\n"
+      "arith_only_halt_terminated=1\n"
+      "csr_bound=0\n"
+      "hypergraph_bound=0\n"
+      "regs=[42,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\n";
+  int rc;
+
+  graphion_vm_init(&vm);
+  graphion_vm_set_deterministic(&vm, true);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+
+  snapshot_len = graphion_vm_write_snapshot(&vm, snapshot, sizeof(snapshot));
+  if (snapshot_len != strlen(expected)) {
+    return 3;
+  }
+  if (strcmp(snapshot, expected) != 0) {
+    return 4;
+  }
+
+  tiny_len = graphion_vm_write_snapshot(&vm, tiny, sizeof(tiny));
+  if (tiny_len != strlen(expected)) {
+    return 5;
+  }
+  if (tiny[sizeof(tiny) - 1U] != '\0') {
+    return 6;
+  }
+  if (strncmp(tiny, expected, sizeof(tiny) - 1U) != 0) {
+    return 7;
   }
   return 0;
 }

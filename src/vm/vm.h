@@ -69,5 +69,6 @@ void graphion_vm_bind_csr(graphion_vm *vm,
                           size_t bfs_capacity);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);
 int graphion_vm_run(graphion_vm *vm);
+size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t buffer_size);
 
 #endif
