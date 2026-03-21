@@ -59,6 +59,7 @@ Execute fixtures validate:
 - final `pc`
 - final register file
 - required bound runtime state for graph/hypergraph opcodes
+- frontier input/output snapshots when frontier semantics are part of the ISA claim
 
 Current format in `tests/test_isa.c`:
 
@@ -72,6 +73,12 @@ Current format in `tests/test_isa.c`:
 - `expected_regs`
 - `bind_csr`
 - `bind_hypergraph`
+- `bind_frontier`
+- `expect_frontier_state`
+- `expected_frontier_input_len`
+- `expected_frontier_input`
+- `expected_frontier_output_len`
+- `expected_frontier_output`
 
 ## Required properties of a fixture
 
@@ -145,6 +152,7 @@ Execute fixtures should prefer:
 
 - short inline instruction arrays
 - explicit expected register snapshots
+- explicit frontier snapshots for traversal/materialization opcodes
 
 Avoid:
 
@@ -194,6 +202,8 @@ The fixture suite should maintain coverage for:
 - decode truncation / capacity errors
 - graph opcode happy-path cases
 - hypergraph opcode happy-path cases
+- frontier graph traversal materialization (`neighbors_of`, `neighbors_expand`)
+- frontier hypergraph traversal materialization (`incident_of`, `hyperedge_nodes_of`)
 - deterministic execution expectations
 - overflow semantics for arithmetic opcodes
 
