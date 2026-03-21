@@ -92,7 +92,7 @@
 
 ## Milestone 0.6 (Frontend And Language Surface)
 
-- [ ] `.gion` source-file extension and interpreter entry flow.
+- [x] `.gion` source-file extension and interpreter entry flow.
 - [ ] High-level interpreted syntax for dynamic variables and assignment, with no user-declared types.
 - [ ] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
 - [ ] User-facing graph declarations with integer node ids and `a -> b` edge syntax.

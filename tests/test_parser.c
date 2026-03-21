@@ -5,9 +5,11 @@
 #include "compiler/ir.h"
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
+#include "runtime/entry.h"
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 int test_parser_decode_valid_program(void) {
@@ -289,5 +291,51 @@ int test_frontend_reference_graph_execution_examples(void) {
     }
   }
 
+  return 0;
+}
+
+int test_gion_source_path_detection(void) {
+  if (!graphion_source_path_is_gion("main.gion")) {
+    return 1;
+  }
+  if (!graphion_source_path_is_gion("C:\\tmp\\demo.gion")) {
+    return 2;
+  }
+  if (graphion_source_path_is_gion("demo.gio")) {
+    return 3;
+  }
+  if (graphion_source_path_is_gion("demo.gion.txt")) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_gion_entry_flow_execution(void) {
+  const char *path = "entry_flow_sample.gion";
+  graphion_vm vm;
+  FILE *fp = fopen(path, "wb");
+  int rc;
+  if (fp == NULL) {
+    return 1;
+  }
+  if (fputs("mov r0, 7\nmov r1, 35\nadd r0, r1\nhalt\n", fp) < 0) {
+    fclose(fp);
+    remove(path);
+    return 2;
+  }
+  fclose(fp);
+
+  rc = graphion_run_gion_path(path, &vm);
+  remove(path);
+  if (rc != GENTRY_OK) {
+    return 3;
+  }
+  if (!vm.halted || vm.regs[0] != 42) {
+    return 4;
+  }
+  rc = graphion_run_gion_path("entry_flow_sample.txt", &vm);
+  if (rc != GENTRY_ERR_EXTENSION) {
+    return 5;
+  }
   return 0;
 }

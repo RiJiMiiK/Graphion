@@ -125,6 +125,7 @@ endif()
 add_library(graphion_vm
   src/vm/vm.c
   src/runtime/arena.c
+  src/runtime/entry.c
   src/parser/bytecode.c
   src/parser/frontend.c
   src/compiler/ir.c

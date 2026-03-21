@@ -41,6 +41,8 @@ int test_frontend_parse_and_ir_lowering(void);
 int test_frontend_rejects_invalid_source(void);
 int test_frontend_source_to_vm_execution(void);
 int test_frontend_reference_graph_execution_examples(void);
+int test_gion_source_path_detection(void);
+int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -114,6 +116,8 @@ int main(int argc, char **argv) {
       {"frontend_rejects_invalid_source", test_frontend_rejects_invalid_source},
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
       {"frontend_reference_graph_execution_examples", test_frontend_reference_graph_execution_examples},
+      {"gion_source_path_detection", test_gion_source_path_detection},
+      {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

@@ -4,6 +4,8 @@
 
 Graphion is a graph/hypergraph-focused language project. Current implementation targets an efficient interpreter core.
 
+Current source-program entry flow uses the `.gion` extension.
+
 ## Runtime layers
 
 - `src/runtime/arena.*`: bump allocator for predictable low-overhead temporary allocations.
@@ -28,6 +30,9 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `GVM_OP_HYPEREDGE_SIZE`
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
+- Source entry flow:
+  - `src/runtime/entry.*` validates `.gion` source files, parses them into IR,
+    lowers to bytecode, loads the VM, and executes the program.
 - ISA versioning and compatibility policy:
   - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:
