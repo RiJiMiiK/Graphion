@@ -91,6 +91,7 @@ The format follows Keep a Changelog and Semantic Versioning.
   - `bfs_level(...)`
   - `incident_count(...)`
   - `incident_sum(...)`
+- Architecture/docs now explicitly separate user-facing builtin semantics from legacy VM opcode naming (`bfs_levels` remains internal).
 - Official frontier primitive benchmark added and integrated into the performance collection pipeline.
 - Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.

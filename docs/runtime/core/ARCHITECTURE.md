@@ -54,6 +54,10 @@ Current source-program entry flow uses the `.gion` extension.
   - `bfs_level(G, 0)` -> number of BFS levels
   - `incident_count(H, 2)` -> incident hyperedge count for vertex `2`
   - `incident_sum(H, 2)` -> sum of incident hyperedge ids for vertex `2`
+- user-facing builtin naming is intentionally decoupled from legacy VM opcode names:
+  - `bfs(...)` is the language-level BFS visit-order contract
+  - `bfs_level(...)` is the language-level BFS level-count contract
+  - legacy VM `bfs_levels` remains internal and should not be treated as the user-facing API surface
 - `print(...)` writes runtime values to the configured interpreter output stream.
 - printable graph-oriented runtime values are part of the intended user-facing model:
   - `print(graph)` shows graph name, node count, and edge count
@@ -104,6 +108,9 @@ Current source-program entry flow uses the `.gion` extension.
     the current interpreted runtime.
 - Legacy VM-oriented parser flow:
   - `src/parser/frontend.*` still exists for mnemonic/IR bridge coverage and internal VM tests.
+- Current architecture tension:
+  - `.gion` syntax is now user-facing and coherent
+  - but long-term execution should lower in memory toward the VM so dispatch/PGO/fastpaths remain the real backend
 - ISA versioning and compatibility policy:
   - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:

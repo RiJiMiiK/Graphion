@@ -110,7 +110,11 @@
   - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
   - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
   - `print(H.hyperedge[id])` shows hyperedge id and member node count
-- [ ] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`).
+- [x] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`):
+  - user-facing `bfs(...)` is defined as BFS visit order
+  - user-facing `bfs_level(...)` is defined as BFS level count
+  - legacy VM opcode `bfs_levels` remains internal and is not the user-facing contract
+- [ ] In-memory lowering from `.gion` source semantics into VM execution, so optimized VM paths remain the real runtime backend.
 
 ## Milestone 0.6.1 (Language Surface Follow-Up)
 
