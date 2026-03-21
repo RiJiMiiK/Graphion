@@ -5,6 +5,7 @@ See also:
 - `docs/ISA_VERSIONING.md` for version and compatibility policy
 - `docs/IR.md` for frontend-to-bytecode bridge contract
 - `docs/VM_ERRORS.md` for structured runtime error interpretation
+- `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
 
 ## Encoding
 
@@ -31,6 +32,93 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
 - `GVM_OP_INCIDENT_SUM (19)`: node id in `r[a]`, sum of incident hyperedge ids to `r[b]`
 - `GVM_OP_HYPEREDGE_NODE_SUM (20)`: hyperedge id in `r[a]`, sum of node ids to `r[b]`
+
+## Opcode semantics tables
+
+### `GVM_OP_NOP (0)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | none |
+| Outputs | none |
+| State changes | `pc` advances by one instruction |
+| Failure cases | none |
+
+### `GVM_OP_HALT (1)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | none |
+| Outputs | `vm.halted = true` |
+| State changes | `pc` advances by one instruction, execution stops |
+| Failure cases | none |
+
+### `GVM_OP_MOV_IMM (2)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a`, signed `imm` |
+| Outputs | `r[a] = sign_extend_i32_to_i64(imm)` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-2` if `a` is not a valid VM register |
+
+### `GVM_OP_ADD (3)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | destination register `a`, source register `b` |
+| Outputs | `r[a] = r[a] + r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` if `a` or `b` is not a valid VM register |
+
+Notes:
+
+- arithmetic uses explicit two's-complement wraparound semantics
+
+### `GVM_OP_BFS_LEVELS (16)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | source node id in `r[a]`, destination register `b` |
+| Outputs | visited-node count written to `r[b]` |
+| State changes | `bfs_levels` and `bfs_queue` scratch buffers are used; `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-5` missing CSR/BFS bindings, `-6` invalid source node id, `-7` CSR BFS kernel failure |
+
+### `GVM_OP_INCIDENT_COUNT (17)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | node id in `r[a]`, destination register `b` |
+| Outputs | incident hyperedge count written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-9` invalid node id |
+
+### `GVM_OP_HYPEREDGE_SIZE (18)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | hyperedge id in `r[a]`, destination register `b` |
+| Outputs | hyperedge size written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-10` invalid hyperedge id |
+
+### `GVM_OP_INCIDENT_SUM (19)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | node id in `r[a]`, destination register `b` |
+| Outputs | sum of incident hyperedge ids written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-9` invalid node id |
+
+### `GVM_OP_HYPEREDGE_NODE_SUM (20)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | hyperedge id in `r[a]`, destination register `b` |
+| Outputs | sum of node ids in the hyperedge written to `r[b]` |
+| State changes | `pc` advances by one instruction |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-10` invalid hyperedge id |
 
 ## Error behavior
 
@@ -65,6 +153,7 @@ Instruction binary encoding is fixed to 7 bytes:
 Golden ISA fixtures live in:
 
 - `tests/test_isa.c`
+- `docs/ISA_FIXTURES.md`
 
 Current fixture coverage includes:
 
