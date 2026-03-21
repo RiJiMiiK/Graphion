@@ -39,8 +39,6 @@ int test_parser_decode_valid_program(void);
 int test_parser_rejects_truncated_input(void);
 int test_lexer_tokenizes_source_program(void);
 int test_frontend_parse_and_ir_lowering(void);
-int test_frontend_parse_to_ast_and_lowering(void);
-int test_ast_lower_rejects_invalid_operand_shapes(void);
 int test_frontend_rejects_invalid_source(void);
 int test_frontend_reports_parse_position(void);
 int test_frontend_reports_stable_diagnostic_message(void);
@@ -119,8 +117,6 @@ int main(int argc, char **argv) {
       {"parser_rejects_truncated_input", test_parser_rejects_truncated_input},
       {"lexer_tokenizes_source_program", test_lexer_tokenizes_source_program},
       {"frontend_parse_and_ir_lowering", test_frontend_parse_and_ir_lowering},
-      {"frontend_parse_to_ast_and_lowering", test_frontend_parse_to_ast_and_lowering},
-      {"ast_lower_rejects_invalid_operand_shapes", test_ast_lower_rejects_invalid_operand_shapes},
       {"frontend_rejects_invalid_source", test_frontend_rejects_invalid_source},
       {"frontend_reports_parse_position", test_frontend_reports_parse_position},
       {"frontend_reports_stable_diagnostic_message", test_frontend_reports_stable_diagnostic_message},

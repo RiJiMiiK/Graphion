@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "parser/bytecode.h"
-#include "parser/ast.h"
 #include "parser/frontend.h"
 #include "parser/lexer.h"
 #include "compiler/ir.h"
@@ -127,74 +126,6 @@ int test_frontend_parse_and_ir_lowering(void) {
   }
   if (program[2].op != GVM_OP_ADD || program[4].op != GVM_OP_HALT) {
     return 6;
-  }
-  return 0;
-}
-
-int test_frontend_parse_to_ast_and_lowering(void) {
-  const char *source = "mov r0, 7\n"
-                       "add r0, r1\n"
-                       "halt\n";
-  graphion_ast_stmt ast[8];
-  graphion_ir_insn ir[8];
-  size_t ast_count = 0U;
-  size_t ir_count = 0U;
-  int rc;
-
-  rc = graphion_parse_source_to_ast(source, ast, 8U, &ast_count);
-  if (rc != GFE_OK) {
-    return 1;
-  }
-  if (ast_count != 3U) {
-    return 2;
-  }
-  if (ast[0].op != GIR_OP_MOV_IMM || ast[0].lhs.kind != GAST_OPERAND_REGISTER ||
-      ast[0].lhs.reg != 0U || ast[0].rhs.kind != GAST_OPERAND_IMMEDIATE || ast[0].rhs.imm != 7) {
-    return 3;
-  }
-  if (ast[1].op != GIR_OP_ADD || ast[1].lhs.kind != GAST_OPERAND_REGISTER ||
-      ast[1].rhs.kind != GAST_OPERAND_REGISTER || ast[1].rhs.reg != 1U) {
-    return 4;
-  }
-  if (ast[2].op != GIR_OP_HALT || ast[2].lhs.kind != GAST_OPERAND_NONE || ast[2].rhs.kind != GAST_OPERAND_NONE) {
-    return 5;
-  }
-
-  rc = graphion_ast_lower_to_ir(ast, ast_count, ir, 8U, &ir_count);
-  if (rc != GAST_OK) {
-    return 6;
-  }
-  if (ir_count != ast_count) {
-    return 7;
-  }
-  if (ir[0].op != GIR_OP_MOV_IMM || ir[0].a != 0U || ir[0].imm != 7) {
-    return 8;
-  }
-  if (ir[1].op != GIR_OP_ADD || ir[1].a != 0U || ir[1].b != 1U) {
-    return 9;
-  }
-  if (ir[2].op != GIR_OP_HALT) {
-    return 10;
-  }
-  return 0;
-}
-
-int test_ast_lower_rejects_invalid_operand_shapes(void) {
-  graphion_ast_stmt ast[1];
-  graphion_ir_insn ir[1];
-  size_t count = 0U;
-  int rc;
-
-  memset(&ast[0], 0, sizeof(ast[0]));
-  ast[0].op = GIR_OP_ADD;
-  ast[0].lhs.kind = GAST_OPERAND_REGISTER;
-  ast[0].lhs.reg = 0U;
-  ast[0].rhs.kind = GAST_OPERAND_IMMEDIATE;
-  ast[0].rhs.imm = 7;
-
-  rc = graphion_ast_lower_to_ir(ast, 1U, ir, 1U, &count);
-  if (rc != GAST_ERR_INVALID_OPERAND) {
-    return 1;
   }
   return 0;
 }

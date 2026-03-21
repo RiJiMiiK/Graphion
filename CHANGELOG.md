@@ -91,7 +91,6 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Frontier and traversal workloads now have an automated Rust-parity regression gate in the performance report workflow.
 - Source parsing now runs through an explicit lexer/token stream and parser prototype instead of the old line-splitting frontend.
 - Frontend parse failures now expose stable diagnostic codes, messages, and line/column spans.
-- Source compilation now flows through an explicit AST layer before IR and bytecode lowering.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

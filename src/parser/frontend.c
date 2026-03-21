@@ -163,7 +163,7 @@ static void skip_newlines(parser_cursor *cursor) {
 
 static int parse_instruction(const char *source,
                              parser_cursor *cursor,
-                             graphion_ast_stmt *stmt,
+                             graphion_ir_insn *insn,
                              graphion_frontend_position *error_pos,
                              graphion_frontend_diagnostic *diagnostic) {
   const graphion_token *mnemonic_tok = NULL;
@@ -189,17 +189,10 @@ static int parse_instruction(const char *source,
     return GFE_ERR_PARSE;
   }
 
-  stmt->op = spec->opcode;
-  stmt->lhs.kind = GAST_OPERAND_NONE;
-  stmt->lhs.reg = 0U;
-  stmt->lhs.imm = 0;
-  stmt->rhs.kind = GAST_OPERAND_NONE;
-  stmt->rhs.reg = 0U;
-  stmt->rhs.imm = 0;
-  stmt->start.line = mnemonic_tok->line;
-  stmt->start.column = mnemonic_tok->column;
-  stmt->end.line = mnemonic_tok->line;
-  stmt->end.column = mnemonic_tok->column + (mnemonic_tok->length > 0U ? (mnemonic_tok->length - 1U) : 0U);
+  insn->op = spec->opcode;
+  insn->a = 0U;
+  insn->b = 0U;
+  insn->imm = 0;
 
   if (spec->kind == OP_KIND_ZERO) {
     return GFE_OK;
@@ -215,10 +208,7 @@ static int parse_instruction(const char *source,
   if (rc != GFE_OK) {
     return rc;
   }
-  stmt->lhs.kind = GAST_OPERAND_REGISTER;
-  stmt->lhs.reg = a_tok->reg_value;
-  stmt->end.line = a_tok->line;
-  stmt->end.column = a_tok->column + (a_tok->length > 0U ? (a_tok->length - 1U) : 0U);
+  insn->a = a_tok->reg_value;
 
   rc = expect_token_kind(cursor,
                          GTOK_COMMA,
@@ -242,10 +232,7 @@ static int parse_instruction(const char *source,
     if (rc != GFE_OK) {
       return rc;
     }
-    stmt->rhs.kind = GAST_OPERAND_IMMEDIATE;
-    stmt->rhs.imm = (int32_t)b_tok->int_value;
-    stmt->end.line = b_tok->line;
-    stmt->end.column = b_tok->column + (b_tok->length > 0U ? (b_tok->length - 1U) : 0U);
+    insn->imm = (int32_t)b_tok->int_value;
     return GFE_OK;
   }
 
@@ -259,15 +246,12 @@ static int parse_instruction(const char *source,
   if (rc != GFE_OK) {
     return rc;
   }
-  stmt->rhs.kind = GAST_OPERAND_REGISTER;
-  stmt->rhs.reg = b_tok->reg_value;
-  stmt->end.line = b_tok->line;
-  stmt->end.column = b_tok->column + (b_tok->length > 0U ? (b_tok->length - 1U) : 0U);
+  insn->b = b_tok->reg_value;
   return GFE_OK;
 }
 
-int graphion_parse_source_to_ast_with_diagnostic(const char *source,
-                                                 graphion_ast_stmt *out_ast,
+int graphion_parse_source_to_ir_with_diagnostic(const char *source,
+                                                graphion_ir_insn *out_ir,
                                                 size_t out_capacity,
                                                 size_t *out_count,
                                                 graphion_frontend_diagnostic *diagnostic) {
@@ -279,7 +263,7 @@ int graphion_parse_source_to_ast_with_diagnostic(const char *source,
   size_t lex_error_column = 0U;
   int rc;
 
-  if (source == NULL || out_ast == NULL || out_count == NULL) {
+  if (source == NULL || out_ir == NULL || out_count == NULL) {
     clear_diagnostic(diagnostic);
     if (diagnostic != NULL) {
       diagnostic->code = GFE_DIAG_INVALID_ARGUMENT;
@@ -325,20 +309,20 @@ int graphion_parse_source_to_ast_with_diagnostic(const char *source,
   skip_newlines(&cursor);
   while (peek_token(&cursor) != NULL && peek_token(&cursor)->kind != GTOK_EOF) {
     const graphion_token *tok = NULL;
-    graphion_ast_stmt stmt;
+    graphion_ir_insn insn;
 
     if (produced >= out_capacity) {
       return GFE_ERR_CAPACITY;
     }
 
-    rc = parse_instruction(source, &cursor, &stmt, diagnostic != NULL ? &diagnostic->start : NULL, diagnostic);
+    rc = parse_instruction(source, &cursor, &insn, diagnostic != NULL ? &diagnostic->start : NULL, diagnostic);
     if (rc != GFE_OK) {
       if (diagnostic != NULL && diagnostic->end.line == 0U) {
         diagnostic->end = diagnostic->start;
       }
       return rc;
     }
-    out_ast[produced++] = stmt;
+    out_ir[produced++] = insn;
 
     tok = peek_token(&cursor);
     if (tok != NULL && tok->kind != GTOK_NEWLINE && tok->kind != GTOK_EOF) {
@@ -349,38 +333,6 @@ int graphion_parse_source_to_ast_with_diagnostic(const char *source,
   }
 
   *out_count = produced;
-  return GFE_OK;
-}
-
-int graphion_parse_source_to_ir_with_diagnostic(const char *source,
-                                                graphion_ir_insn *out_ir,
-                                                size_t out_capacity,
-                                                size_t *out_count,
-                                                graphion_frontend_diagnostic *diagnostic) {
-  graphion_ast_stmt ast_program[GFE_TOKEN_CAPACITY];
-  size_t ast_count = 0U;
-  int rc;
-
-  rc = graphion_parse_source_to_ast_with_diagnostic(source, ast_program, GFE_TOKEN_CAPACITY, &ast_count, diagnostic);
-  if (rc != GFE_OK) {
-    return rc;
-  }
-
-  rc = graphion_ast_lower_to_ir(ast_program, ast_count, out_ir, out_capacity, out_count);
-  if (rc == GAST_ERR_CAPACITY) {
-    return GFE_ERR_CAPACITY;
-  }
-  if (rc != GAST_OK) {
-    if (diagnostic != NULL) {
-      diagnostic->code = GFE_DIAG_INVALID_ARGUMENT;
-      diagnostic->message = "internal AST lowering failure";
-      diagnostic->start.line = 0U;
-      diagnostic->start.column = 0U;
-      diagnostic->end.line = 0U;
-      diagnostic->end.column = 0U;
-    }
-    return GFE_ERR_PARSE;
-  }
   return GFE_OK;
 }
 
@@ -403,11 +355,4 @@ int graphion_parse_source_to_ir(const char *source,
                                 size_t out_capacity,
                                 size_t *out_count) {
   return graphion_parse_source_to_ir_with_diagnostic(source, out_ir, out_capacity, out_count, NULL);
-}
-
-int graphion_parse_source_to_ast(const char *source,
-                                 graphion_ast_stmt *out_ast,
-                                 size_t out_capacity,
-                                 size_t *out_count) {
-  return graphion_parse_source_to_ast_with_diagnostic(source, out_ast, out_capacity, out_count, NULL);
 }
