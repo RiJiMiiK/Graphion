@@ -38,6 +38,8 @@
     "SPDX"
     ,
     "microbenchmark",
+    "microbenchmarks",
+    "codegen",
     "Werror"
   ],
   "ignorePaths": [
