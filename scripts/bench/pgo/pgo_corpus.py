@@ -41,6 +41,12 @@ WORKLOADS: dict[str, dict[str, Any]] = {
         "family": "weighted-csr",
         "coverage": "weighted CSR VM opcodes for neighbor weight sums and edge-attribute sums",
     },
+    "frontier_threshold_calibration": {
+        "target": "graphion_bench_frontier_thresholds",
+        "iterations": 1000,
+        "family": "frontier-calibration",
+        "coverage": "frontier sparse/dense threshold calibration benchmark",
+    },
     "hypergraph_incidence": {
         "target": "graphion_bench_hypergraph",
         "iterations": 200000,
@@ -83,6 +89,7 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "bfs_levels",
             "neighbor_iteration",
             "weighted_neighbor_sums",
+            "frontier_threshold_calibration",
             "hypergraph_incidence",
             "hypergraph_traversal",
             "hypergraph_incident_sum",
@@ -101,6 +108,7 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "bfs_levels",
             "neighbor_iteration",
             "weighted_neighbor_sums",
+            "frontier_threshold_calibration",
             "hypergraph_incidence",
             "hypergraph_traversal",
             "hypergraph_incident_sum",

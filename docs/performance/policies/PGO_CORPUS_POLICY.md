@@ -27,6 +27,7 @@ In practice, the committed `representative` corpus currently trains with:
 - `graphion_bench_bfs`
 - `graphion_bench_neighbors`
 - `graphion_bench_weighted_graph`
+- `graphion_bench_frontier_thresholds`
 - `graphion_bench_hypergraph`
 - `graphion_bench_hypergraph_traversal`
 - `graphion_bench_hypergraph_incident_sum`
