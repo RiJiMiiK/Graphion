@@ -14,9 +14,20 @@ typedef enum {
   GFE_ERR_PARSE = -3
 } graphion_frontend_result;
 
+typedef struct {
+  size_t line;
+  size_t column;
+} graphion_frontend_position;
+
 int graphion_parse_source_to_ir(const char *source,
                                 graphion_ir_insn *out_ir,
                                 size_t out_capacity,
                                 size_t *out_count);
+
+int graphion_parse_source_to_ir_with_position(const char *source,
+                                              graphion_ir_insn *out_ir,
+                                              size_t out_capacity,
+                                              size_t *out_count,
+                                              graphion_frontend_position *error_pos);
 
 #endif

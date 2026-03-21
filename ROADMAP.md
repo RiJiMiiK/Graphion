@@ -92,7 +92,7 @@
 
 ## Milestone 0.6 (Frontend And Language Surface)
 
-- [ ] Lexer and parser for source language prototype.
+- [x] Lexer and parser for source language prototype.
 - [ ] AST + lowering to bytecode.
 - [ ] Diagnostics with line/column spans and stable error messages.
 - [ ] Minimal standard library for graph/hypergraph operations.
