@@ -41,7 +41,8 @@
     "microbenchmark",
     "microbenchmarks",
     "codegen",
-    "Werror"
+    "Werror",
+    "cutovers"
   ],
   "ignorePaths": [
     "build/**",
