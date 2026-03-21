@@ -1,0 +1,231 @@
+name: performance-report
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Benchmark runs per lane
+        required: true
+        default: "20"
+      open_pr:
+        description: Open a PR with the refreshed PERFORMANCE_RESULTS.md
+        required: true
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 4 * * 6"
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-policy:
+    runs-on: ubuntu-latest
+    outputs:
+      runs: ${{ steps.policy.outputs.runs }}
+    steps:
+      - id: policy
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "runs=${{ inputs.runs }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "runs=20" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows-graphion:
+    needs: resolve-policy
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Configure
+        run: cmake -S . -B build-perf-win -DCMAKE_BUILD_TYPE=Release -DGRAPHION_ENABLE_BENCHMARKS=ON
+      - name: Build
+        run: cmake --build build-perf-win --config Release
+      - name: Collect Windows benchmark lane
+        run: >
+          python scripts/bench/collect/collect_graphion_benchmarks.py
+          --build-dir build-perf-win
+          --config Release
+          --runs ${{ needs.resolve-policy.outputs.runs }}
+          --platform-label "Graphion Windows"
+          --compiler-kind msvc
+          --asm-enabled off
+          --output benchmarks/results/performance/windows_automated.json
+      - name: Collect Windows dispatch variants
+        run: >
+          python scripts/bench/compare/compare_dispatch_variants.py
+          --iterations 500000
+          --runs ${{ needs.resolve-policy.outputs.runs }}
+          --output benchmarks/results/performance/dispatch_variants_windows_automated.json
+          --platform-label "Graphion Windows"
+          --compiler-kind msvc
+          --asm-enabled off
+          --build-root build-perf-dispatch-win
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-windows
+          path: |
+            benchmarks/results/performance/windows_automated.json
+            benchmarks/results/performance/dispatch_variants_windows_automated.json
+          retention-days: 14
+
+  linux-graphion:
+    needs: resolve-policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y gcc ninja-build
+      - name: Configure
+        run: cmake -S . -B build-perf-linux -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DGRAPHION_ENABLE_BENCHMARKS=ON -DGRAPHION_ENABLE_ASM=ON
+      - name: Build
+        run: cmake --build build-perf-linux --config Release
+      - name: Collect Linux benchmark lane
+        run: >
+          python3 scripts/bench/collect/collect_graphion_benchmarks.py
+          --build-dir build-perf-linux
+          --config Release
+          --runs ${{ needs.resolve-policy.outputs.runs }}
+          --platform-label "Graphion Linux"
+          --compiler-kind gcc
+          --asm-enabled on
+          --output benchmarks/results/performance/linux_automated.json
+      - name: Collect Linux dispatch variants
+        run: >
+          python3 scripts/bench/compare/compare_dispatch_variants.py
+          --iterations 500000
+          --runs ${{ needs.resolve-policy.outputs.runs }}
+          --output benchmarks/results/performance/dispatch_variants_linux_automated.json
+          --platform-label "Graphion Linux"
+          --compiler-kind gcc
+          --asm-enabled on
+          --build-root build-perf-dispatch-linux
+          --cmake-arg=-G
+          --cmake-arg=Ninja
+          --cmake-arg=-DCMAKE_C_COMPILER=gcc
+          --cmake-arg=-DGRAPHION_ENABLE_ASM=ON
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-linux
+          path: |
+            benchmarks/results/performance/linux_automated.json
+            benchmarks/results/performance/dispatch_variants_linux_automated.json
+          retention-days: 14
+
+  rust-comparison:
+    needs: resolve-policy
+    if: ${{ hashFiles('graphion_rust/Cargo.toml') != '' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Collect Rust benchmark lane
+        run: >
+          python scripts/bench/collect/collect_rust_benchmarks.py
+          --manifest-path graphion_rust/Cargo.toml
+          --runs ${{ needs.resolve-policy.outputs.runs }}
+          --platform-label "Rust Windows"
+          --output benchmarks/results/performance/rust_automated.json
+      - name: Upload Rust artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-rust
+          path: benchmarks/results/performance/rust_automated.json
+          retention-days: 14
+
+  render-report:
+    needs:
+      - resolve-policy
+      - windows-graphion
+      - linux-graphion
+      - rust-comparison
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: performance-windows
+          path: benchmarks/results/performance
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: performance-linux
+          path: benchmarks/results/performance
+      - name: Download Rust artifacts
+        if: ${{ needs.rust-comparison.result == 'success' }}
+        uses: actions/download-artifact@v6
+        with:
+          name: performance-rust
+          path: benchmarks/results/performance
+      - name: Render performance report
+        shell: bash
+        run: |
+          cmd=(
+            python
+            scripts/bench/render/render_performance_results.py
+            --windows-json benchmarks/results/performance/windows_automated.json
+            --linux-json benchmarks/results/performance/linux_automated.json
+            --dispatch-windows-json benchmarks/results/performance/dispatch_variants_windows_automated.json
+            --dispatch-linux-json benchmarks/results/performance/dispatch_variants_linux_automated.json
+            --output docs/performance/reports/PERFORMANCE_RESULTS.md
+          )
+          if [[ -f benchmarks/results/performance/rust_automated.json ]]; then
+            cmd+=(--rust-json benchmarks/results/performance/rust_automated.json)
+          fi
+          "${cmd[@]}"
+      - name: Upload rendered report artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-report-md
+          path: docs/performance/reports/PERFORMANCE_RESULTS.md
+          retention-days: 14
+      - name: Write summary
+        shell: bash
+        run: |
+          {
+            echo "## Automated Performance Report"
+            echo
+            echo "- runs: ${{ needs.resolve-policy.outputs.runs }}"
+            echo "- windows lane: ${{ needs.windows-graphion.result }}"
+            echo "- linux lane: ${{ needs.linux-graphion.result }}"
+            echo "- rust lane: ${{ needs.rust-comparison.result }}"
+            echo "- report artifact: performance-report-md"
+            if [[ ! -f benchmarks/results/performance/rust_automated.json ]]; then
+              echo "- rust note: skipped because graphion_rust is not versioned in this repository checkout"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Open PR with refreshed report
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_pr }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: docs(perf): refresh automated performance report
+          branch: automation/performance-report
+          delete-branch: true
+          title: docs: refresh automated performance report
+          body: |
+            Automated refresh of `docs/performance/reports/PERFORMANCE_RESULTS.md`.
+
+            Source:
+            - GitHub Actions workflow `performance-report`
+            - Windows Graphion benchmark lane
+            - Linux Graphion benchmark lane
+            - Optional Rust lane when `graphion_rust` is present in the checkout

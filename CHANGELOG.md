@@ -78,6 +78,8 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Hypergraph traversal opcodes with bounded frontier contracts: `incident_of` and `hyperedge_nodes_of`.
 - Optional CSR edge weights and edge attributes in the graph runtime, with backward-compatible topology-only initialization.
 - Sparse/dense frontier mode recommendation heuristic added to the CSR graph runtime.
+- Official frontier primitive benchmark added and integrated into the performance collection pipeline.
+- Automated `PERFORMANCE_RESULTS.md` refresh workflow added for Windows/Linux benchmark lanes with optional PR publication.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

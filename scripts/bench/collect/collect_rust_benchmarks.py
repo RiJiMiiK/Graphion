@@ -17,6 +17,12 @@ from report_metadata import base_metadata, validate_metadata
 
 BENCH_SPECS = [
     {
+        "benchmark": "frontier_primitives",
+        "iterations": 300000,
+        "latency_key": "ns_per_frontier_item",
+        "throughput_key": "mips",
+    },
+    {
         "benchmark": "vm_dispatch",
         "iterations": 500000,
         "latency_key": "ns_per_instruction",
@@ -86,6 +92,7 @@ def average_payloads(
     }
     for key in (
         "iterations",
+        "frontier_items_per_iteration",
         "instructions_per_iteration",
         "edges_per_iteration",
         "incidence_per_iteration",

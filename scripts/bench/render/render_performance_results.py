@@ -16,6 +16,7 @@ from report_metadata import validate_metadata
 
 
 BENCHMARK_ORDER = [
+    "frontier_primitives",
     "vm_dispatch",
     "bfs_levels",
     "hypergraph_incidence",
@@ -25,6 +26,7 @@ BENCHMARK_ORDER = [
 ]
 
 DISPLAY_NAMES = {
+    "frontier_primitives": "frontier_primitives",
     "vm_dispatch": "vm_dispatch",
     "bfs_levels": "bfs_levels",
     "hypergraph_incidence": "hypergraph_incidence",
@@ -34,6 +36,7 @@ DISPLAY_NAMES = {
 }
 
 LATENCY_LABELS = {
+    "ns_per_frontier_item": "ns_per_frontier_item",
     "ns_per_instruction": "ns_per_instruction",
     "ns_per_edge": "ns_per_edge",
     "ns_per_incidence": "ns_per_incidence",

@@ -77,7 +77,7 @@
 
 ## Milestone 0.5.1 (Graph/Frontier Benchmark Stabilization)
 
-- [ ] Official benchmarks for frontier primitives.
+- [x] Official benchmarks for frontier primitives.
 - [ ] Official benchmarks for CSR neighbor iteration primitives.
 - [ ] Official benchmarks for hypergraph traversal primitives.
 - [ ] Benchmark-backed calibration of sparse/dense frontier thresholds.
