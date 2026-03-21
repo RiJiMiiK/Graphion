@@ -11,7 +11,9 @@ enum {
   GRAPHION_RUNTIME_BINDING_MAX = 128,
   GRAPHION_RUNTIME_NAME_MAX = 64,
   GRAPHION_RUNTIME_STRING_MAX = 256,
-  GRAPHION_RUNTIME_GRAPH_EDGE_MAX = 128
+  GRAPHION_RUNTIME_GRAPH_EDGE_MAX = 128,
+  GRAPHION_RUNTIME_HYPEREDGE_MAX = 64,
+  GRAPHION_RUNTIME_HYPEREDGE_NODE_MAX = 32
 };
 
 typedef struct {
@@ -19,13 +21,34 @@ typedef struct {
   int64_t target;
 } graphion_runtime_graph_edge;
 
+typedef struct {
+  char name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_runtime_graph_edge edges[GRAPHION_RUNTIME_GRAPH_EDGE_MAX];
+  size_t edge_count;
+  size_t node_count;
+} graphion_runtime_graph_value;
+
+typedef struct {
+  char name[GRAPHION_RUNTIME_NAME_MAX];
+  int64_t nodes[GRAPHION_RUNTIME_HYPEREDGE_NODE_MAX];
+  size_t node_count;
+} graphion_runtime_hyperedge;
+
+typedef struct {
+  char name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_runtime_hyperedge hyperedges[GRAPHION_RUNTIME_HYPEREDGE_MAX];
+  size_t hyperedge_count;
+  size_t node_count;
+} graphion_runtime_hypergraph_value;
+
 typedef enum {
   GRAPHION_VALUE_NONE = 0,
   GRAPHION_VALUE_INT = 1,
   GRAPHION_VALUE_FLOAT = 2,
   GRAPHION_VALUE_BOOL = 3,
   GRAPHION_VALUE_STRING = 4,
-  GRAPHION_VALUE_GRAPH = 5
+  GRAPHION_VALUE_GRAPH = 5,
+  GRAPHION_VALUE_HYPERGRAPH = 6
 } graphion_runtime_value_kind;
 
 typedef struct {
@@ -34,10 +57,8 @@ typedef struct {
   double float_value;
   int bool_value;
   char string_value[GRAPHION_RUNTIME_STRING_MAX];
-  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
-  graphion_runtime_graph_edge graph_edges[GRAPHION_RUNTIME_GRAPH_EDGE_MAX];
-  size_t graph_edge_count;
-  size_t graph_node_count;
+  graphion_runtime_graph_value *graph_value;
+  graphion_runtime_hypergraph_value *hypergraph_value;
 } graphion_runtime_value;
 
 typedef struct {

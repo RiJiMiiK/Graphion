@@ -23,6 +23,7 @@ Current source-program entry flow uses the `.gion` extension.
   - top-level user-defined functions via `def name(...):`
   - `return` inside function bodies
   - top-level `graph Name:` declarations
+  - top-level `hypergraph Name:` declarations
   - no user-declared types
   - supported scalar values:
     - `int`
@@ -36,13 +37,20 @@ Current source-program entry flow uses the `.gion` extension.
   - `graph G:`
   - `  1 -> 2`
   - `  2 -> 3`
+- hypergraph declarations currently support explicit hyperedge ids and integer node lists:
+  - `hypergraph H:`
+  - `  e1: [1, 2, 3]`
+  - `  e2: [2, 4]`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
 - `print(...)` writes scalar runtime values to the configured interpreter output stream.
 - printable graph-oriented runtime values are part of the intended user-facing model:
   - `print(graph)` should show graph name, node count, and edge count
-  - `print(node)` should show node id/name and neighbor count
+  - `print(node)` should show node id/name and neighbor count for graph nodes
   - `print(edge)` should show source, target, reserved `weight` when present, and other attributes
+  - `print(hypergraph)` should show hypergraph name, node count, and hyperedge count
+  - `print(node)` should show node id/name and incident hyperedge count for hypergraph nodes
+  - `print(hyperedge)` should show hyperedge id and member node count
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
 - the current function model is intentionally narrow:
   - top-level definitions only
@@ -52,8 +60,10 @@ Current source-program entry flow uses the `.gion` extension.
   - top-level declarations only
   - integer node ids only
   - no graph attributes yet
-  - only `graph` summary printing is implemented today; `node` and `edge` printable values
-    will land with the future user-facing graph API
+  - only summary printing is implemented today:
+    - `print(graph)` -> graph name, node count, edge count
+    - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
+  - `node`, `edge`, and `hyperedge` printable values will land with the future user-facing graph API
 
 ## VM model (current)
 

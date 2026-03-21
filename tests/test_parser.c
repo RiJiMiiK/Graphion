@@ -352,22 +352,47 @@ static int expect_graph_binding(const graphion_runtime_scope *scope,
                                 int64_t second_source,
                                 int64_t second_target) {
   const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
-  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH) {
+  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH || value->graph_value == NULL) {
     return 0;
   }
-  if (value->graph_edge_count != expected_edge_count) {
+  if (value->graph_value->edge_count != expected_edge_count) {
     return 0;
   }
-  if (value->graph_node_count != expected_node_count) {
+  if (value->graph_value->node_count != expected_node_count) {
     return 0;
   }
   if (expected_edge_count >= 1U &&
-      (value->graph_edges[0].source != first_source || value->graph_edges[0].target != first_target)) {
+      (value->graph_value->edges[0].source != first_source || value->graph_value->edges[0].target != first_target)) {
     return 0;
   }
   if (expected_edge_count >= 2U &&
-      (value->graph_edges[1].source != second_source || value->graph_edges[1].target != second_target)) {
+      (value->graph_value->edges[1].source != second_source || value->graph_value->edges[1].target != second_target)) {
     return 0;
+  }
+  return 1;
+}
+
+static int expect_hypergraph_binding(const graphion_runtime_scope *scope,
+                                     const char *name,
+                                     size_t expected_hyperedge_count,
+                                     size_t expected_node_count,
+                                     const char *first_hyperedge_name,
+                                     size_t first_hyperedge_node_count) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_HYPERGRAPH || value->hypergraph_value == NULL) {
+    return 0;
+  }
+  if (value->hypergraph_value->hyperedge_count != expected_hyperedge_count ||
+      value->hypergraph_value->node_count != expected_node_count) {
+    return 0;
+  }
+  if (expected_hyperedge_count >= 1U) {
+    if (strcmp(value->hypergraph_value->hyperedges[0].name, first_hyperedge_name) != 0) {
+      return 0;
+    }
+    if (value->hypergraph_value->hyperedges[0].node_count != first_hyperedge_node_count) {
+      return 0;
+    }
   }
   return 1;
 }
@@ -446,6 +471,43 @@ int test_interpreter_graph_declaration(void) {
 int test_interpreter_rejects_non_integer_graph_nodes(void) {
   const char *source = "graph G:\n"
                        "  alpha -> 2\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_ERR_PARSE) {
+    return 1;
+  }
+  if (diagnostic.line != 2U) {
+    return 2;
+  }
+  return 0;
+}
+
+int test_interpreter_hypergraph_declaration(void) {
+  const char *source = "hypergraph H:\n"
+                       "  e1: [1, 2, 3]\n"
+                       "  e2: [2, 4]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  if (!expect_hypergraph_binding(&scope, "H", 2U, 4U, "e1", 3U)) {
+    return 2;
+  }
+  return 0;
+}
+
+int test_interpreter_rejects_non_integer_hypergraph_nodes(void) {
+  const char *source = "hypergraph H:\n"
+                       "  e1: [1, alpha]\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   int rc;
@@ -565,6 +627,58 @@ int test_interpreter_print_graph_summary(void) {
   remove(path);
   output[read_len] = '\0';
   if (strcmp(output, "<graph name=G nodes=3 edges=2>\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_interpreter_print_hypergraph_summary(void) {
+  const char *path = "interpreter_hypergraph_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  e1: [1, 2, 3]\n"
+                       "  e2: [2, 4]\n"
+                       "print(H)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<hypergraph name=H nodes=4 hyperedges=2>\n") != 0) {
     return 4;
   }
   return 0;

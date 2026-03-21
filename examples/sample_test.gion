@@ -8,12 +8,17 @@ graph G:
   1 -> 2
   2 -> 3
 
+hypergraph H:
+  e1: [1, 2, 3]
+  e2: [2, 4]
+
 print(count)
 print(ratio)
 print(name)
 print(ready)
 print(copy)
 print(G)
+print(H)
 
 def echo(value):
   print(value)

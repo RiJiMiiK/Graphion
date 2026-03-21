@@ -78,6 +78,39 @@ static int parse_graph_header(const char *text,
   return GINT_OK;
 }
 
+static int parse_hypergraph_header(const char *text,
+                                   char *name_out,
+                                   graphion_runtime_diagnostic *diagnostic,
+                                   size_t line_no) {
+  size_t name_len;
+  const char *cursor;
+  if (strncmp(text, "hypergraph ", 11U) != 0) {
+    return 0;
+  }
+  cursor = text + 11U;
+  name_len = strlen(cursor);
+  if (name_len == 0U || cursor[name_len - 1U] != ':') {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hypergraph declaration");
+    return GINT_ERR_PARSE;
+  }
+  if (name_len >= GRAPHION_RUNTIME_NAME_MAX) {
+    set_diagnostic(diagnostic, line_no, 1U, "hypergraph name too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(name_out, cursor, name_len - 1U);
+  name_out[name_len - 1U] = '\0';
+  trim_in_place(name_out);
+  if (!is_valid_identifier(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hypergraph name");
+    return GINT_ERR_PARSE;
+  }
+  if (is_reserved_name(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "reserved name cannot be used as a hypergraph");
+    return GINT_ERR_RESERVED_NAME;
+  }
+  return GINT_OK;
+}
+
 static int parse_graph_edge(const char *text,
                             graphion_runtime_graph_edge *edge,
                             graphion_runtime_diagnostic *diagnostic,
@@ -120,15 +153,114 @@ static int parse_graph_edge(const char *text,
 
 static int graph_contains_node(const graphion_runtime_value *graph, int64_t node_id) {
   size_t i;
-  if (graph == NULL) {
+  if (graph == NULL || graph->graph_value == NULL) {
     return 0;
   }
-  for (i = 0U; i < graph->graph_edge_count; ++i) {
-    if (graph->graph_edges[i].source == node_id || graph->graph_edges[i].target == node_id) {
+  for (i = 0U; i < graph->graph_value->edge_count; ++i) {
+    if (graph->graph_value->edges[i].source == node_id || graph->graph_value->edges[i].target == node_id) {
       return 1;
     }
   }
   return 0;
+}
+
+static int hypergraph_contains_node(const graphion_runtime_value *hypergraph, int64_t node_id) {
+  size_t i;
+  size_t j;
+  if (hypergraph == NULL || hypergraph->hypergraph_value == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < hypergraph->hypergraph_value->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hypergraph_value->hyperedges[i].node_count; ++j) {
+      if (hypergraph->hypergraph_value->hyperedges[i].nodes[j] == node_id) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+static int parse_hyperedge_line(const char *text,
+                                graphion_runtime_hyperedge *hyperedge,
+                                graphion_runtime_diagnostic *diagnostic,
+                                size_t line_no) {
+  const char *colon;
+  const char *open_bracket;
+  const char *close_bracket;
+  size_t name_len;
+  char nodes_buf[GINT_LINE_MAX];
+  size_t start = 0U;
+  size_t i = 0U;
+
+  if (text == NULL || hyperedge == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  colon = strchr(text, ':');
+  open_bracket = strchr(text, '[');
+  close_bracket = strrchr(text, ']');
+  if (colon == NULL || open_bracket == NULL || close_bracket == NULL ||
+      colon > open_bracket || close_bracket < open_bracket) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge declaration");
+    return GINT_ERR_PARSE;
+  }
+  name_len = (size_t)(colon - text);
+  if (name_len == 0U || name_len >= GRAPHION_RUNTIME_NAME_MAX) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge name");
+    return GINT_ERR_PARSE;
+  }
+  memset(hyperedge, 0, sizeof(*hyperedge));
+  memcpy(hyperedge->name, text, name_len);
+  hyperedge->name[name_len] = '\0';
+  trim_in_place(hyperedge->name);
+  if (!is_valid_identifier(hyperedge->name)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge name");
+    return GINT_ERR_PARSE;
+  }
+  if ((size_t)(close_bracket - open_bracket - 1) >= sizeof(nodes_buf)) {
+    set_diagnostic(diagnostic, line_no, 1U, "hyperedge node list too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(nodes_buf, open_bracket + 1, (size_t)(close_bracket - open_bracket - 1));
+  nodes_buf[close_bracket - open_bracket - 1] = '\0';
+  trim_in_place(nodes_buf);
+  if (nodes_buf[0] == '\0') {
+    set_diagnostic(diagnostic, line_no, 1U, "hyperedge node list cannot be empty");
+    return GINT_ERR_PARSE;
+  }
+  while (1) {
+    const char current = nodes_buf[i];
+    if (current == ',' || current == '\0') {
+      char token[GRAPHION_RUNTIME_NAME_MAX];
+      graphion_runtime_value node_value;
+      size_t len = i - start;
+      if (len == 0U || len >= sizeof(token)) {
+        set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge node id");
+        return GINT_ERR_PARSE;
+      }
+      if (hyperedge->node_count >= GRAPHION_RUNTIME_HYPEREDGE_NODE_MAX) {
+        set_diagnostic(diagnostic, line_no, 1U, "hyperedge node capacity exceeded");
+        return GINT_ERR_CAPACITY;
+      }
+      memcpy(token, nodes_buf + start, len);
+      token[len] = '\0';
+      trim_in_place(token);
+      if (!parse_int_literal(token, &node_value)) {
+        set_diagnostic(diagnostic, line_no, 1U, "hypergraph node ids must be integers");
+        return GINT_ERR_PARSE;
+      }
+      hyperedge->nodes[hyperedge->node_count] = node_value.int_value;
+      hyperedge->node_count += 1U;
+      if (current == '\0') {
+        break;
+      }
+      start = i + 1U;
+    }
+    if (current == '\0') {
+      break;
+    }
+    ++i;
+  }
+  return GINT_OK;
 }
 
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
@@ -525,6 +657,17 @@ static int index_functions(graphion_program *program, graphion_runtime_diagnosti
         }
         continue;
       }
+      if (strncmp(line->text, "hypergraph ", 11U) == 0) {
+        if (line->indent != 0U) {
+          set_diagnostic(diagnostic, line->line_no, 1U, "nested hypergraph declarations are not supported");
+          return GINT_ERR_PARSE;
+        }
+        ++i;
+        while (i < program->line_count && program->lines[i].indent > line->indent) {
+          ++i;
+        }
+        continue;
+      }
       if (line->indent != 0U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "unexpected indentation outside function body");
         return GINT_ERR_PARSE;
@@ -693,9 +836,16 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
     case GRAPHION_VALUE_GRAPH:
       fprintf(output,
               "<graph name=%s nodes=%zu edges=%zu>\n",
-              value->graph_name,
-              value->graph_node_count,
-              value->graph_edge_count);
+              value->graph_value != NULL ? value->graph_value->name : "",
+              value->graph_value != NULL ? value->graph_value->node_count : 0U,
+              value->graph_value != NULL ? value->graph_value->edge_count : 0U);
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH:
+      fprintf(output,
+              "<hypergraph name=%s nodes=%zu hyperedges=%zu>\n",
+              value->hypergraph_value != NULL ? value->hypergraph_value->name : "",
+              value->hypergraph_value != NULL ? value->hypergraph_value->node_count : 0U,
+              value->hypergraph_value != NULL ? value->hypergraph_value->hyperedge_count : 0U);
       break;
     default:
       fprintf(output, "none\n");
@@ -930,16 +1080,23 @@ static int execute_block(const graphion_program *program,
       graphion_runtime_value graph_value;
       char graph_name[GRAPHION_RUNTIME_NAME_MAX];
       size_t body_end = i + 1U;
+      graphion_runtime_graph_value *graph_payload;
       rc = parse_graph_header(line->text, graph_name, diagnostic, line->line_no);
       if (rc != GINT_OK) {
         return rc;
       }
       memset(&graph_value, 0, sizeof(graph_value));
       graph_value.kind = GRAPHION_VALUE_GRAPH;
-      memcpy(graph_value.graph_name, graph_name, strlen(graph_name) + 1U);
+      graph_payload = (graphion_runtime_graph_value *)calloc(1U, sizeof(*graph_payload));
+      if (graph_payload == NULL) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "graph allocation failed");
+        return GINT_ERR_CAPACITY;
+      }
+      graph_value.graph_value = graph_payload;
+      memcpy(graph_payload->name, graph_name, strlen(graph_name) + 1U);
       while (body_end < end && program->lines[body_end].indent > line->indent) {
         graphion_runtime_graph_edge edge;
-        if (graph_value.graph_edge_count >= GRAPHION_RUNTIME_GRAPH_EDGE_MAX) {
+        if (graph_payload->edge_count >= GRAPHION_RUNTIME_GRAPH_EDGE_MAX) {
           set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "graph edge capacity exceeded");
           return GINT_ERR_CAPACITY;
         }
@@ -948,13 +1105,13 @@ static int execute_block(const graphion_program *program,
           return rc;
         }
         if (!graph_contains_node(&graph_value, edge.source)) {
-          graph_value.graph_node_count += 1U;
+          graph_payload->node_count += 1U;
         }
         if (!graph_contains_node(&graph_value, edge.target)) {
-          graph_value.graph_node_count += 1U;
+          graph_payload->node_count += 1U;
         }
-        graph_value.graph_edges[graph_value.graph_edge_count] = edge;
-        graph_value.graph_edge_count += 1U;
+        graph_payload->edges[graph_payload->edge_count] = edge;
+        graph_payload->edge_count += 1U;
         body_end += 1U;
       }
       if (body_end == i + 1U) {
@@ -962,6 +1119,56 @@ static int execute_block(const graphion_program *program,
         return GINT_ERR_PARSE;
       }
       rc = assign_value(global_scope, graph_name, &graph_value);
+      if (rc != GINT_OK) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        return rc;
+      }
+      i = body_end;
+      continue;
+    }
+    if (line->indent == 0U && strncmp(line->text, "hypergraph ", 11U) == 0) {
+      graphion_runtime_value hypergraph_value;
+      char hypergraph_name[GRAPHION_RUNTIME_NAME_MAX];
+      size_t body_end = i + 1U;
+      graphion_runtime_hypergraph_value *hypergraph_payload;
+      rc = parse_hypergraph_header(line->text, hypergraph_name, diagnostic, line->line_no);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      memset(&hypergraph_value, 0, sizeof(hypergraph_value));
+      hypergraph_value.kind = GRAPHION_VALUE_HYPERGRAPH;
+      hypergraph_payload = (graphion_runtime_hypergraph_value *)calloc(1U, sizeof(*hypergraph_payload));
+      if (hypergraph_payload == NULL) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph allocation failed");
+        return GINT_ERR_CAPACITY;
+      }
+      hypergraph_value.hypergraph_value = hypergraph_payload;
+      memcpy(hypergraph_payload->name, hypergraph_name, strlen(hypergraph_name) + 1U);
+      while (body_end < end && program->lines[body_end].indent > line->indent) {
+        graphion_runtime_hyperedge hyperedge;
+        size_t node_index;
+        if (hypergraph_payload->hyperedge_count >= GRAPHION_RUNTIME_HYPEREDGE_MAX) {
+          set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "hyperedge capacity exceeded");
+          return GINT_ERR_CAPACITY;
+        }
+        rc = parse_hyperedge_line(program->lines[body_end].text, &hyperedge, diagnostic, program->lines[body_end].line_no);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        for (node_index = 0U; node_index < hyperedge.node_count; ++node_index) {
+          if (!hypergraph_contains_node(&hypergraph_value, hyperedge.nodes[node_index])) {
+            hypergraph_payload->node_count += 1U;
+          }
+        }
+        hypergraph_payload->hyperedges[hypergraph_payload->hyperedge_count] = hyperedge;
+        hypergraph_payload->hyperedge_count += 1U;
+        body_end += 1U;
+      }
+      if (body_end == i + 1U) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph body cannot be empty");
+        return GINT_ERR_PARSE;
+      }
+      rc = assign_value(global_scope, hypergraph_name, &hypergraph_value);
       if (rc != GINT_OK) {
         set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
         return rc;
