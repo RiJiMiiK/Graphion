@@ -63,7 +63,7 @@
 ## Milestone 0.4.2 (VM/ISA Repro And Governance)
 
 - [x] Deterministic repro workflow documentation (snapshot + fixture + environment capture).
-- [ ] Named repro artifact policy for bug reports and CI failures.
+- [x] Named repro artifact policy for bug reports and CI failures.
 - [ ] VM/ISA compatibility checklist for adding or changing opcodes.
 - [ ] Decode/load/execute failure classification table for debugging and tests.
 

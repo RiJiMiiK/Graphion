@@ -8,6 +8,7 @@ See also:
 - `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
 - `docs/VM_SNAPSHOT.md` for deterministic snapshot/debug dump format
 - `docs/VM_REPRO.md` for deterministic repro workflow
+- `docs/REPRO_ARTIFACTS.md` for named repro artifact policy
 
 ## Encoding
 

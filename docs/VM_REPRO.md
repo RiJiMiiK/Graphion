@@ -40,6 +40,10 @@ Minimum bundle contents:
   - asm-enabled build
   - specific dispatch variant
 
+Named artifact policy:
+
+- `docs/REPRO_ARTIFACTS.md`
+
 ## Repro Order
 
 Follow this order:
@@ -173,4 +177,5 @@ If decode, load, and execute all disagree across reports:
 - `docs/ISA_FIXTURES.md`: fixture format and expansion policy
 - `docs/VM_ERRORS.md`: error-code interpretation
 - `docs/VM_SNAPSHOT.md`: snapshot format
+- `docs/REPRO_ARTIFACTS.md`: required repro artifact names and contents
 - `docs/ASM_FALLBACK_POLICY.md`: asm parity and policy rules
