@@ -31,6 +31,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `docs/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:
   - `docs/VM_ERRORS.md` defines subsystem-local error-code interpretation.
+- Arithmetic overflow policy:
+  - `ADD` uses explicit two's-complement wraparound semantics in the VM.
 
 ## Hotpath acceleration
 
@@ -41,6 +43,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - x86_64 assembly backend (`src/vm/hotpaths.s`) when `GRAPHION_ENABLE_ASM=ON` with GCC/Clang.
 - Register/ABI details for assembly are documented in `docs/ASM_REGISTERS.md`.
 - Assembly-vs-C parity/performance policy is documented in `docs/ASM_FALLBACK_POLICY.md`.
+- `graphion_vm_set_deterministic(vm, true)` forces the portable switch-dispatch
+  path and bypasses fast arithmetic specialization for reproducible debugging.
 
 ## Safety constraints
 

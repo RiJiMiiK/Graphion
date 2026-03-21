@@ -3,6 +3,7 @@
 #include "vm/vm.h"
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
+#include <limits.h>
 
 static int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t len) {
   int rc;
@@ -197,6 +198,74 @@ int test_vm_superinstruction_movimm_add_semantics(void) {
   }
   if (vm.regs[3] != -2) {
     return 7;
+  }
+  return 0;
+}
+
+int test_vm_deterministic_mode_toggle(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_MOV_IMM, 1, 0, 35},
+      {GVM_OP_ADD, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  graphion_vm_set_deterministic(&vm, true);
+  if (!vm.deterministic_mode) {
+    return 1;
+  }
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.arith_only_fastpath || !vm.arith_only_halt_terminated) {
+    return 3;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 4;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 5;
+  }
+  if (vm.regs[0] != 42 || vm.regs[1] != 35) {
+    return 6;
+  }
+
+  graphion_vm_set_deterministic(&vm, false);
+  if (vm.deterministic_mode) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_vm_add_wraparound_semantics(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 1, 0, 1},
+      {GVM_OP_ADD, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  graphion_vm_init(&vm);
+  vm.regs[0] = INT64_MAX;
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (vm.regs[0] != INT64_MIN) {
+    return 3;
+  }
+  if (!vm.halted) {
+    return 4;
   }
   return 0;
 }

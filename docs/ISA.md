@@ -25,7 +25,7 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_NOP (0)`: no operation
 - `GVM_OP_HALT (1)`: stop execution
 - `GVM_OP_MOV_IMM (2)`: `r[a] = imm`
-- `GVM_OP_ADD (3)`: `r[a] += r[b]`
+- `GVM_OP_ADD (3)`: `r[a] += r[b]` with two's-complement wraparound semantics
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
@@ -50,3 +50,40 @@ Instruction binary encoding is fixed to 7 bytes:
 - Backward-incompatible changes must be called out in `CHANGELOG.md`.
 - `v0.x` bytecode compatibility is not guaranteed across revisions.
 - `v1.0` will be the first compatibility-frozen ISA line.
+
+## Deterministic execution mode
+
+- The VM exposes `graphion_vm_set_deterministic(vm, true)` for reproducible
+  debugging runs.
+- In deterministic mode, execution uses the portable switch-dispatch path.
+- Deterministic mode bypasses fast arithmetic specialization and any asm-backed
+  execution path.
+- Instruction semantics and observable register / `pc` results remain the same.
+
+## Golden conformance coverage
+
+Golden ISA fixtures live in:
+
+- `tests/test_isa.c`
+
+Current fixture coverage includes:
+
+- bytecode decode success and failure cases
+- arithmetic execution semantics
+- unknown-opcode rejection
+- graph and hypergraph execution fixtures for currently documented opcodes
+
+## Overflow policy
+
+- `GVM_OP_MOV_IMM`: exact sign-extension from `int32` immediate to `int64` register.
+- `GVM_OP_ADD`: two's-complement wraparound on overflow.
+- `GVM_OP_BFS_LEVELS`: exact non-negative visited-count result with current graph
+  storage bounds.
+- `GVM_OP_INCIDENT_COUNT`: exact non-negative result with current hypergraph
+  storage bounds.
+- `GVM_OP_HYPEREDGE_SIZE`: exact non-negative result with current hypergraph
+  storage bounds.
+- `GVM_OP_INCIDENT_SUM`: exact result for current `uint32_t`-bounded hypergraph
+  inputs, then stored in `int64`.
+- `GVM_OP_HYPEREDGE_NODE_SUM`: exact result for current `uint32_t`-bounded
+  hypergraph inputs, then stored in `int64`.

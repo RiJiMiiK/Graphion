@@ -16,6 +16,8 @@ int test_vm_bfs_levels_opcode(void);
 int test_vm_hypergraph_opcodes(void);
 int test_vm_superinstruction_add_pair_semantics(void);
 int test_vm_superinstruction_movimm_add_semantics(void);
+int test_vm_deterministic_mode_toggle(void);
+int test_vm_add_wraparound_semantics(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
 int test_vm_dispatch_variant_edge_semantics(void);
@@ -26,6 +28,8 @@ int test_parser_rejects_truncated_input(void);
 int test_frontend_parse_and_ir_lowering(void);
 int test_frontend_rejects_invalid_source(void);
 int test_frontend_source_to_vm_execution(void);
+int test_isa_decode_golden_fixtures(void);
+int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
 int test_graph_bfs_levels(void);
 int test_hypergraph_init_and_queries(void);
@@ -38,6 +42,8 @@ int main(void) {
       {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
       {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
       {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
+      {"vm_deterministic_mode_toggle", test_vm_deterministic_mode_toggle},
+      {"vm_add_wraparound_semantics", test_vm_add_wraparound_semantics},
       {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
       {"vm_fastpath_shape_cache_same_pointer_content_change",
        test_vm_fastpath_shape_cache_same_pointer_content_change},
@@ -49,6 +55,8 @@ int main(void) {
       {"frontend_parse_and_ir_lowering", test_frontend_parse_and_ir_lowering},
       {"frontend_rejects_invalid_source", test_frontend_rejects_invalid_source},
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
+      {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
+      {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},
       {"graph_bfs_levels", test_graph_bfs_levels},
       {"hypergraph_init_and_queries", test_hypergraph_init_and_queries},

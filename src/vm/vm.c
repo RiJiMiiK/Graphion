@@ -2,6 +2,7 @@
 
 #include "vm/vm.h"
 
+#include <limits.h>
 #include <stddef.h>
 
 typedef struct {
@@ -61,6 +62,12 @@ static void shape_cache_store(const graphion_insn *program,
 
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
 
+static int64_t wrap_add_i64(int64_t lhs, int64_t rhs) {
+  const uint64_t ulhs = (uint64_t)lhs;
+  const uint64_t urhs = (uint64_t)rhs;
+  return (int64_t)(ulhs + urhs);
+}
+
 static int is_arith_only_fastpath_candidate(const graphion_insn *program,
                                             size_t program_len,
                                             bool *halt_terminated) {
@@ -113,7 +120,7 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.b == in.a) {
-            regs[next.a] += regs[in.a];
+            regs[next.a] = wrap_add_i64(regs[next.a], regs[in.a]);
             p++;
           }
         }
@@ -122,12 +129,12 @@ static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-            regs[in.a] += regs[in.b] + regs[next.b];
+            regs[in.a] = wrap_add_i64(regs[in.a], wrap_add_i64(regs[in.b], regs[next.b]));
             p++;
             break;
           }
         }
-        regs[in.a] += regs[in.b];
+        regs[in.a] = wrap_add_i64(regs[in.a], regs[in.b]);
         break;
       default:
         vm->pc = (size_t)(p - vm->program);
@@ -156,7 +163,7 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.b == in.a) {
-            regs[next.a] += regs[in.a];
+            regs[next.a] = wrap_add_i64(regs[next.a], regs[in.a]);
             p++;
           }
         }
@@ -165,12 +172,12 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
         if (p < end) {
           const graphion_insn next = *p;
           if (next.op == GVM_OP_ADD && next.a == in.a && in.b != in.a && next.b != in.a) {
-            regs[in.a] += regs[in.b] + regs[next.b];
+            regs[in.a] = wrap_add_i64(regs[in.a], wrap_add_i64(regs[in.b], regs[next.b]));
             p++;
             break;
           }
         }
-        regs[in.a] += regs[in.b];
+        regs[in.a] = wrap_add_i64(regs[in.a], regs[in.b]);
         break;
       default:
         vm->pc = (size_t)(p - vm->program);
@@ -211,6 +218,7 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->program_len = 0U;
   vm->pc = 0U;
   vm->halted = false;
+  vm->deterministic_mode = false;
   vm->arith_only_fastpath = false;
   vm->arith_only_halt_terminated = false;
   vm->csr_graph = NULL;
@@ -218,6 +226,13 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->bfs_queue = NULL;
   vm->bfs_capacity = 0U;
   vm->hypergraph = NULL;
+}
+
+void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled) {
+  if (vm == NULL) {
+    return;
+  }
+  vm->deterministic_mode = enabled;
 }
 
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len) {
@@ -285,7 +300,7 @@ static int op_add(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return -3;
   }
-  vm->regs[in->a] += vm->regs[in->b];
+  vm->regs[in->a] = wrap_add_i64(vm->regs[in->a], vm->regs[in->b]);
   return 0;
 }
 
@@ -390,7 +405,6 @@ static int op_hyperedge_node_sum(graphion_vm *vm, const graphion_insn *in) {
   return 0;
 }
 
-#if defined(GRAPHION_VM_DISPATCH_SWITCH)
 static int run_dispatch_switch(graphion_vm *vm) {
   while (!vm->halted && vm->pc < vm->program_len) {
     const graphion_insn in = vm->program[vm->pc++];
@@ -432,7 +446,6 @@ static int run_dispatch_switch(graphion_vm *vm) {
   }
   return 0;
 }
-#endif
 
 #if defined(GRAPHION_VM_DISPATCH_JUMPTABLE)
 static int run_dispatch_jumptable(graphion_vm *vm) {
@@ -555,6 +568,10 @@ L_hyperedge_node_sum:
 int graphion_vm_run(graphion_vm *vm) {
   if (vm == NULL || vm->program == NULL) {
     return -1;
+  }
+
+  if (vm->deterministic_mode) {
+    return run_dispatch_switch(vm);
   }
 
   if (vm->arith_only_fastpath) {
