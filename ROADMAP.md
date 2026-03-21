@@ -53,7 +53,7 @@
 
 ## Milestone 0.4.1 (VM/ISA Stabilization)
 
-- [ ] Public named VM runtime error codes in `src/vm/vm.h`.
+- [x] Public named VM runtime error codes in `src/vm/vm.h`.
 - [x] ISA fixture format documentation and fixture expansion policy.
 - [ ] Deterministic-mode coverage across all dispatch variants.
 - [ ] ASM parity coverage for hardening-sensitive ISA cases.

@@ -103,23 +103,23 @@ Implementation:
 Current `v0.x` status:
 
 - VM errors are structured by operation family
-- they are not yet exposed as a public named enum in `src/vm/vm.h`
-- numeric stability is therefore still `v0.x` / best-effort, not frozen
+- they are exposed as public named results in `src/vm/vm.h`
+- numeric stability is still `v0.x` / best-effort, not frozen
 
 ### Generic VM codes
 
-| Code | Current meaning |
+| Code | Symbol | Current meaning |
 | --- | --- |
-| `0` | Success |
-| `-1` | Invalid VM/program argument for load or run entry points |
-| `-4` | Unknown opcode during execution |
+| `0` | `GVM_OK` | Success |
+| `-1` | `GVM_ERR_INVALID_ARG` | Invalid VM/program argument for load or run entry points |
+| `-4` | `GVM_ERR_UNKNOWN_OPCODE` | Unknown opcode during execution |
 
 ### Arithmetic opcode codes
 
-| Code | Current meaning |
+| Code | Symbol | Current meaning |
 | --- | --- |
-| `-2` | Invalid register in `MOV_IMM` |
-| `-3` | Invalid register operands for register-based VM opcodes |
+| `-2` | `GVM_ERR_INVALID_MOV_IMM_REG` | Invalid register in `MOV_IMM` |
+| `-3` | `GVM_ERR_INVALID_REG` | Invalid register operands for register-based VM opcodes |
 
 Arithmetic overflow currently does not raise a dedicated VM error:
 
@@ -128,19 +128,19 @@ Arithmetic overflow currently does not raise a dedicated VM error:
 
 ### Graph VM codes
 
-| Code | Current meaning |
+| Code | Symbol | Current meaning |
 | --- | --- |
-| `-5` | Required CSR/BFS runtime resources are not bound |
-| `-6` | Invalid BFS source register value or out-of-range node id |
-| `-7` | CSR BFS kernel returned a runtime failure |
+| `-5` | `GVM_ERR_CSR_UNBOUND` | Required CSR/BFS runtime resources are not bound |
+| `-6` | `GVM_ERR_INVALID_BFS_SOURCE` | Invalid BFS source register value or out-of-range node id |
+| `-7` | `GVM_ERR_BFS_RUNTIME` | CSR BFS kernel returned a runtime failure |
 
 ### Hypergraph VM codes
 
-| Code | Current meaning |
+| Code | Symbol | Current meaning |
 | --- | --- |
-| `-8` | Required hypergraph runtime object is not bound |
-| `-9` | Invalid node id for node-to-hyperedge operations |
-| `-10` | Invalid hyperedge id for hyperedge-to-node operations |
+| `-8` | `GVM_ERR_HYPERGRAPH_UNBOUND` | Required hypergraph runtime object is not bound |
+| `-9` | `GVM_ERR_INVALID_NODE_ID` | Invalid node id for node-to-hyperedge operations |
+| `-10` | `GVM_ERR_INVALID_HYPEREDGE_ID` | Invalid hyperedge id for hyperedge-to-node operations |
 
 ## Interpretation rule
 
@@ -180,7 +180,6 @@ Any incompatible change must update:
 
 Planned hardening target:
 
-- public named VM error codes for runtime/load path
 - frozen numeric assignments for VM-visible execution errors
 - explicit distinction between decode/load/execute failure classes
 - compatibility guarantees documented alongside ISA `v1.0`
@@ -203,4 +202,4 @@ The next hardening steps are:
 - golden ISA conformance fixtures
 - deterministic execution policy
 - overflow / checked arithmetic policy
-- public VM error-code naming in headers when runtime semantics are frozen
+- public VM error-code numeric stability when runtime semantics are frozen

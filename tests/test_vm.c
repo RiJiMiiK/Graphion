@@ -57,7 +57,7 @@ int test_vm_invalid_register_fails(void) {
     return 1;
   }
   rc = graphion_vm_run(&vm);
-  if (rc != -2) {
+  if (rc != GVM_ERR_INVALID_MOV_IMM_REG) {
     return 2;
   }
   return 0;
