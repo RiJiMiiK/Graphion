@@ -90,6 +90,7 @@ At minimum, the change must update:
 - `docs/IR.md` if the parser/IR bridge is affected
 - tests or fixtures that encode the affected behavior
 - `CHANGELOG.md`
+- `docs/ISA_COMPATIBILITY_CHECKLIST.md` review items when opcode semantics change
 
 ## Rules for adding opcodes before `v1.0`
 
