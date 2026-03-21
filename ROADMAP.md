@@ -83,6 +83,13 @@
 - [x] Benchmark-backed calibration of sparse/dense frontier thresholds.
 - [x] Frontier-mode reporting in benchmark outputs and docs.
 
+## Milestone 0.5.2 (Graph Execution Stabilization)
+
+- [ ] Weighted graph execution opcodes and VM coverage.
+- [ ] Frontier golden fixtures for graph and hypergraph traversal primitives.
+- [ ] Performance regression gates for frontier and traversal workloads.
+- [ ] Reference graph execution examples for frontier, neighbor, and hyperedge traversal flows.
+
 ## Milestone 0.6 (Frontend And Language Surface)
 
 - [ ] Lexer and parser for source language prototype.
