@@ -114,6 +114,18 @@ jobs:
       - name: Run dispatch variant parity tests
         run: python scripts/quality/test_dispatch_variants.py --build-root build-dispatch-tests --build-type Release --compiler clang
 
+  asm-hardening-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y gcc ninja-build
+      - name: Run asm hardening parity checks
+        run: python scripts/quality/test_asm_hardening_parity.py --build-root build-asm-hardening -- -G Ninja -DCMAKE_C_COMPILER=gcc
+
   docker-build:
     runs-on: ubuntu-latest
     steps:

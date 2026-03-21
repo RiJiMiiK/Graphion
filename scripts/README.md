@@ -18,6 +18,7 @@ Quick pointers:
 - PGO thresholds: `scripts/bench/pgo_thresholds.py`
 - PGO release alerts: `python scripts/bench/check_pgo_alerts.py --report-json <path>`
 - ASM fallback compare: `python scripts/bench/compare_asm_fallback.py --build-root build-asm-fallback --runs 20 --iterations 500000 -- -G Ninja -DCMAKE_C_COMPILER=clang`
+- ASM hardening parity: `python scripts/quality/test_asm_hardening_parity.py --build-root build-asm-hardening -- -G Ninja -DCMAKE_C_COMPILER=gcc`
 - Cross-compiler policy: `docs/CROSS_COMPILER_POLICY.md`
 - Optimization report: `python scripts/bench/generate_optimization_report.py --build-root build-opt-report`
 - Unified optimization report: `python scripts/bench/refresh_optimization_reports.py --runs 100`

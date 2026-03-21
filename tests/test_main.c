@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 typedef int (*test_fn)(void);
@@ -36,7 +37,39 @@ int test_graph_init_and_neighbors(void);
 int test_graph_bfs_levels(void);
 int test_hypergraph_init_and_queries(void);
 
-int main(void) {
+static int should_run_test(const char *name, int argc, char **argv) {
+  int i;
+  if (argc <= 1) {
+    return 1;
+  }
+  for (i = 1; i < argc; ++i) {
+    if (strcmp(name, argv[i]) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int unknown_requested_tests(const test_case *tests, size_t count, int argc, char **argv) {
+  int i;
+  for (i = 1; i < argc; ++i) {
+    size_t j;
+    int found = 0;
+    for (j = 0; j < count; ++j) {
+      if (strcmp(argv[i], tests[j].name) == 0) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "[FAIL] unknown test '%s'\n", argv[i]);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int main(int argc, char **argv) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
@@ -67,16 +100,25 @@ int main(void) {
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);
   size_t i;
+  size_t executed = 0;
+
+  if (unknown_requested_tests(tests, count, argc, argv) != 0) {
+    return EXIT_FAILURE;
+  }
 
   for (i = 0; i < count; ++i) {
+    if (!should_run_test(tests[i].name, argc, argv)) {
+      continue;
+    }
     const int rc = tests[i].fn();
     if (rc != 0) {
       fprintf(stderr, "[FAIL] %s (rc=%d)\n", tests[i].name, rc);
       return EXIT_FAILURE;
     }
     fprintf(stdout, "[OK] %s\n", tests[i].name);
+    executed++;
   }
 
-  fprintf(stdout, "All tests passed (%zu)\n", count);
+  fprintf(stdout, "All tests passed (%zu)\n", executed);
   return EXIT_SUCCESS;
 }
