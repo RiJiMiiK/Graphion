@@ -85,6 +85,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Golden ISA conformance fixtures covering decode and execute behavior for documented VM opcodes.
 - Deterministic VM execution toggle for reproducible debugging on the portable switch-dispatch path.
 - Overflow policy documented per opcode class, with explicit wraparound semantics for `GVM_OP_ADD`.
+- ISA fixture format and fixture expansion policy document for golden conformance coverage.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

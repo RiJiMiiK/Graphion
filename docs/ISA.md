@@ -5,6 +5,7 @@ See also:
 - `docs/ISA_VERSIONING.md` for version and compatibility policy
 - `docs/IR.md` for frontend-to-bytecode bridge contract
 - `docs/VM_ERRORS.md` for structured runtime error interpretation
+- `docs/ISA_FIXTURES.md` for golden fixture format and expansion policy
 
 ## Encoding
 
@@ -65,6 +66,7 @@ Instruction binary encoding is fixed to 7 bytes:
 Golden ISA fixtures live in:
 
 - `tests/test_isa.c`
+- `docs/ISA_FIXTURES.md`
 
 Current fixture coverage includes:
 
