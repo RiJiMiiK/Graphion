@@ -31,8 +31,9 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - Source frontend prototype:
   - `src/parser/lexer.*` tokenizes the current source surface into identifiers,
     registers, integers, commas, and newlines.
-  - `src/parser/frontend.*` now parses from that token stream instead of direct
-    line splitting.
+  - `src/parser/frontend.*` now parses from that token stream into a small AST
+    instead of direct line splitting.
+  - `src/parser/ast.*` lowers AST statements into the existing IR layer.
   - parser diagnostics now expose stable error codes, messages, and line/column
     spans via `graphion_parse_source_to_ir_with_diagnostic(...)`.
 - ISA versioning and compatibility policy:

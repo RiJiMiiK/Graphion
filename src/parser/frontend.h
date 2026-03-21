@@ -6,6 +6,7 @@
 #include <stddef.h>
 
 #include "compiler/ir.h"
+#include "parser/ast.h"
 
 typedef enum {
   GFE_OK = 0,
@@ -44,6 +45,11 @@ int graphion_parse_source_to_ir(const char *source,
                                 size_t out_capacity,
                                 size_t *out_count);
 
+int graphion_parse_source_to_ast(const char *source,
+                                 graphion_ast_stmt *out_ast,
+                                 size_t out_capacity,
+                                 size_t *out_count);
+
 int graphion_parse_source_to_ir_with_position(const char *source,
                                               graphion_ir_insn *out_ir,
                                               size_t out_capacity,
@@ -55,5 +61,11 @@ int graphion_parse_source_to_ir_with_diagnostic(const char *source,
                                                 size_t out_capacity,
                                                 size_t *out_count,
                                                 graphion_frontend_diagnostic *diagnostic);
+
+int graphion_parse_source_to_ast_with_diagnostic(const char *source,
+                                                 graphion_ast_stmt *out_ast,
+                                                 size_t out_capacity,
+                                                 size_t *out_count,
+                                                 graphion_frontend_diagnostic *diagnostic);
 
 #endif
