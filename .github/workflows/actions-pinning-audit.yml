@@ -7,7 +7,7 @@ on:
       - ".github/workflows/**"
       - "scripts/repo/audit_actions_pinning.py"
   schedule:
-    - cron: "53 3 * * 0"
+    - cron: "0 18 * * 5"
   workflow_dispatch:
 
 permissions:
@@ -25,4 +25,3 @@ jobs:
       - name: Run action pinning audit (report mode)
         run: |
           python scripts/repo/audit_actions_pinning.py || true
-

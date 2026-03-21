@@ -2,7 +2,7 @@ name: contributors-sync
 
 on:
   schedule:
-    - cron: "11 5 * * 1"
+    - cron: "0 18 * * 5"
   workflow_dispatch:
 
 permissions:
@@ -29,4 +29,3 @@ jobs:
           body: "Automated update of CONTRIBUTORS.md."
           branch: "chore/update-contributors"
           labels: documentation
-
