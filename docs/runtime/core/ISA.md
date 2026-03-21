@@ -286,6 +286,7 @@ Golden ISA fixtures live in:
 
 - `tests/test_isa.c`
 - `docs/runtime/contracts/ISA_FIXTURES.md`
+- `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
 
 Current fixture coverage includes:
 
@@ -295,6 +296,7 @@ Current fixture coverage includes:
 - graph and hypergraph execution fixtures for currently documented opcodes
 - frontier execution fixtures for the current `push/filter/map/reduce/swap` pipeline
 - golden frontier snapshots for `neighbors_of`, `neighbors_expand`, `incident_of`, and `hyperedge_nodes_of`
+- reference graph execution example programs for frontier, neighbor, and hyperedge traversal flows
 
 ## Overflow policy
 

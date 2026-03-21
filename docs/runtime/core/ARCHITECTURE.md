@@ -48,6 +48,7 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
     operate without dynamic allocation
   - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
   - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
+  - reference source programs for these flows live in `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
 
 ## Graph storage model (current)
 

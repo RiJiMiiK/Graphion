@@ -87,6 +87,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Weighted CSR execution opcodes now expose neighbor weight sums and edge-attribute sums in the VM, with dedicated coverage and error handling.
 - Official weighted CSR execution benchmark added and integrated into the performance and PGO collection pipelines.
 - Frontier ISA fixtures now carry explicit golden frontier snapshots for graph and hypergraph traversal primitives.
+- Reference source programs are now documented and test-backed for frontier, neighbor, and hyperedge traversal flows.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

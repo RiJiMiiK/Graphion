@@ -88,7 +88,7 @@
 - [x] Weighted graph execution opcodes and VM coverage.
 - [x] Frontier golden fixtures for graph and hypergraph traversal primitives.
 - [ ] Performance regression gates for frontier and traversal workloads.
-- [ ] Reference graph execution examples for frontier, neighbor, and hyperedge traversal flows.
+- [x] Reference graph execution examples for frontier, neighbor, and hyperedge traversal flows.
 
 ## Milestone 0.6 (Frontend And Language Surface)
 

@@ -13,6 +13,7 @@ These paths stay at the top level because other policies or checks already refer
 ### Core
 
 - `docs/runtime/core/ARCHITECTURE.md`
+- `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
 - `docs/runtime/core/IR.md`
 - `docs/runtime/core/ISA.md`
 
