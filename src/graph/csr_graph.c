@@ -93,6 +93,24 @@ int graphion_csr_graph_has_edge_attrs(const graphion_csr_graph *graph) {
   return graph != NULL && graph->edge_attrs != NULL;
 }
 
+graphion_frontier_mode graphion_csr_graph_recommend_frontier_mode(const graphion_csr_graph *graph,
+                                                                  size_t frontier_len,
+                                                                  size_t frontier_neighbor_work) {
+  if (graph == NULL || graph->node_count == 0U) {
+    return GRAPHION_FRONTIER_MODE_SPARSE;
+  }
+
+  if (frontier_len * 100U >= graph->node_count * 20U) {
+    return GRAPHION_FRONTIER_MODE_DENSE;
+  }
+
+  if (graph->edge_count > 0U && frontier_neighbor_work * 100U >= graph->edge_count * 35U) {
+    return GRAPHION_FRONTIER_MODE_DENSE;
+  }
+
+  return GRAPHION_FRONTIER_MODE_SPARSE;
+}
+
 int graphion_bfs_levels(const graphion_csr_graph *graph,
                         uint32_t source,
                         int32_t *levels,

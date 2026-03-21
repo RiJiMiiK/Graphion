@@ -43,6 +43,7 @@ int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
 int test_graph_bfs_levels(void);
 int test_graph_optional_edge_data(void);
+int test_graph_frontier_mode_heuristics(void);
 int test_hypergraph_init_and_queries(void);
 
 static int should_run_test(const char *name, int argc, char **argv) {
@@ -112,6 +113,7 @@ int main(int argc, char **argv) {
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},
       {"graph_bfs_levels", test_graph_bfs_levels},
       {"graph_optional_edge_data", test_graph_optional_edge_data},
+      {"graph_frontier_mode_heuristics", test_graph_frontier_mode_heuristics},
       {"hypergraph_init_and_queries", test_hypergraph_init_and_queries},
   };
   const size_t count = sizeof(tests) / sizeof(tests[0]);

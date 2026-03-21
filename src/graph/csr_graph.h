@@ -15,6 +15,11 @@ typedef struct {
   const uint32_t *edge_attrs;
 } graphion_csr_graph;
 
+typedef enum {
+  GRAPHION_FRONTIER_MODE_SPARSE = 0,
+  GRAPHION_FRONTIER_MODE_DENSE = 1
+} graphion_frontier_mode;
+
 int graphion_csr_graph_init(graphion_csr_graph *graph,
                             size_t node_count,
                             size_t edge_count,
@@ -34,6 +39,9 @@ const int64_t *graphion_csr_graph_weights(const graphion_csr_graph *graph, uint3
 const uint32_t *graphion_csr_graph_edge_attrs(const graphion_csr_graph *graph, uint32_t node);
 int graphion_csr_graph_has_weights(const graphion_csr_graph *graph);
 int graphion_csr_graph_has_edge_attrs(const graphion_csr_graph *graph);
+graphion_frontier_mode graphion_csr_graph_recommend_frontier_mode(const graphion_csr_graph *graph,
+                                                                  size_t frontier_len,
+                                                                  size_t frontier_neighbor_work);
 
 int graphion_bfs_levels(const graphion_csr_graph *graph,
                         uint32_t source,
