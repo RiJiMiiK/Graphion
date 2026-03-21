@@ -98,7 +98,7 @@
 - [x] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
 - [x] User-facing hypergraph declarations with auto-indexed hyperedges and integer node lists.
 - [x] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
-- [ ] Builtin graph/hypergraph functions with user-facing semantics:
+- [x] Builtin graph/hypergraph functions with user-facing semantics:
   - `bfs(...)` returns visited node ids in BFS encounter order
   - `bfs_level(...)` returns only the number of BFS levels
   - incidence query builtins align with the future user-facing graph/hypergraph API
@@ -110,7 +110,11 @@
   - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
   - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
   - `print(H.hyperedge[id])` shows hyperedge id and member node count
-- [ ] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`).
+- [x] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`):
+  - user-facing `bfs(...)` is defined as BFS visit order
+  - user-facing `bfs_level(...)` is defined as BFS level count
+  - legacy VM opcode `bfs_levels` remains internal and is not the user-facing contract
+- [ ] In-memory lowering from `.gion` source semantics into VM execution, so optimized VM paths remain the real runtime backend.
 
 ## Milestone 0.6.1 (Language Surface Follow-Up)
 

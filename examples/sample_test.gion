@@ -23,6 +23,10 @@ print(G.node[1])
 print(G.edge[0])
 print(H.vertex[2])
 print(H.hyperedge[0])
+print(bfs(G, 1))
+print(bfs_level(G, 1))
+print(incident_count(H, 2))
+print(incident_sum(H, 2))
 
 def echo(value):
   print(value)

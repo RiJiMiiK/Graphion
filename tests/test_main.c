@@ -58,6 +58,9 @@ int test_interpreter_print_graph_node_value(void);
 int test_interpreter_print_graph_edge_value(void);
 int test_interpreter_print_hypergraph_node_value(void);
 int test_interpreter_print_hyperedge_value(void);
+int test_interpreter_bfs_builtin(void);
+int test_interpreter_print_bfs_builtin(void);
+int test_interpreter_incidence_builtins(void);
 int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
@@ -149,6 +152,9 @@ int main(int argc, char **argv) {
       {"interpreter_print_graph_edge_value", test_interpreter_print_graph_edge_value},
       {"interpreter_print_hypergraph_node_value", test_interpreter_print_hypergraph_node_value},
       {"interpreter_print_hyperedge_value", test_interpreter_print_hyperedge_value},
+      {"interpreter_bfs_builtin", test_interpreter_bfs_builtin},
+      {"interpreter_print_bfs_builtin", test_interpreter_print_bfs_builtin},
+      {"interpreter_incidence_builtins", test_interpreter_incidence_builtins},
       {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
