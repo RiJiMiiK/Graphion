@@ -76,6 +76,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Frontier VM primitives with bounded host-bound buffers: `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`.
 - CSR neighbor iteration opcodes with bounded frontier contracts: `neighbors_of` and `neighbors_expand`.
 - Hypergraph traversal opcodes with bounded frontier contracts: `incident_of` and `hyperedge_nodes_of`.
+- Optional CSR edge weights and edge attributes in the graph runtime, with backward-compatible topology-only initialization.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

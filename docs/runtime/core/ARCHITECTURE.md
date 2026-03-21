@@ -9,6 +9,7 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
 - `src/runtime/arena.*`: bump allocator for predictable low-overhead temporary allocations.
 - `src/vm/vm.*`: register-based VM scaffold with fixed-size register file.
 - `src/vm/hotpaths.s`: assembly hotpath entry point (disabled by default).
+- `src/graph/csr_graph.*`: CSR graph runtime with optional per-edge weights and edge attributes.
 
 ## VM model (current)
 
@@ -47,6 +48,18 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
     operate without dynamic allocation
   - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
   - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
+
+## Graph storage model (current)
+
+- CSR graphs keep mandatory topology in:
+  - `offsets`
+  - `neighbors`
+- CSR graphs may also expose optional per-edge side data:
+  - `weights` (`int64_t`)
+  - `edge_attrs` (`uint32_t`)
+- These side arrays are aligned by edge index with `neighbors`.
+- Existing graph algorithms remain valid when the optional arrays are absent.
+- Weighted/attribute-aware execution can build on the same CSR layout without a second graph format.
 
 ## Hotpath acceleration
 

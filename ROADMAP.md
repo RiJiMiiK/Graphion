@@ -72,7 +72,7 @@
 - [x] Frontier operations (`push/filter/map/reduce` style primitives).
 - [x] Neighbor iteration opcodes with bounded memory contracts.
 - [x] Hyperedge traversal primitives (node->edge and edge->node).
-- [ ] Optional weighted graph support and edge attributes.
+- [x] Optional weighted graph support and edge attributes.
 - [ ] Sparse/dense frontier switching heuristics.
 
 ## Milestone 0.6 (Frontend And Language Surface)
