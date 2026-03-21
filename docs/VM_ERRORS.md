@@ -9,6 +9,10 @@ This document defines the current Graphion error-model structure across:
 - bytecode decoding
 - VM load / execute path
 
+See also:
+
+- `docs/FAILURE_CLASSIFICATION.md` for decode/load/execute triage by phase
+
 The current implementation uses signed integer return codes, with `0` meaning
 success and negative values meaning failure.
 

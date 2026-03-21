@@ -65,7 +65,7 @@
 - [x] Deterministic repro workflow documentation (snapshot + fixture + environment capture).
 - [x] Named repro artifact policy for bug reports and CI failures.
 - [x] VM/ISA compatibility checklist for adding or changing opcodes.
-- [ ] Decode/load/execute failure classification table for debugging and tests.
+- [x] Decode/load/execute failure classification table for debugging and tests.
 
 ## Milestone 0.5 (Graph/Hypergraph Execution Model)
 

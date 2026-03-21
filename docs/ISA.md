@@ -10,6 +10,7 @@ See also:
 - `docs/VM_REPRO.md` for deterministic repro workflow
 - `docs/REPRO_ARTIFACTS.md` for named repro artifact policy
 - `docs/ISA_COMPATIBILITY_CHECKLIST.md` for opcode change review requirements
+- `docs/FAILURE_CLASSIFICATION.md` for decode/load/execute triage
 
 ## Encoding
 

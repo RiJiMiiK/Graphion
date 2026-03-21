@@ -171,6 +171,10 @@ If decode, load, and execute all disagree across reports:
 
 - reduce the case to one failing layer first
 
+Phase classification reference:
+
+- `docs/FAILURE_CLASSIFICATION.md`
+
 ## Relationship With Other Docs
 
 - `docs/ISA.md`: opcode contract
@@ -178,4 +182,5 @@ If decode, load, and execute all disagree across reports:
 - `docs/VM_ERRORS.md`: error-code interpretation
 - `docs/VM_SNAPSHOT.md`: snapshot format
 - `docs/REPRO_ARTIFACTS.md`: required repro artifact names and contents
+- `docs/FAILURE_CLASSIFICATION.md`: decode/load/execute phase classification
 - `docs/ASM_FALLBACK_POLICY.md`: asm parity and policy rules

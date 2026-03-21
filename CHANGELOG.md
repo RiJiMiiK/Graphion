@@ -94,6 +94,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Deterministic VM repro workflow documented with fixture, snapshot, and environment capture rules.
 - Named repro artifact policy documented for bug reports and CI failures.
 - VM/ISA compatibility checklist documented for opcode additions and semantic changes.
+- Decode/load/execute failure classification table documented for debugging and tests.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
