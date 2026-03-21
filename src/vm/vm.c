@@ -98,6 +98,8 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_FRONTIER_MAP_ADD_IMM:
       case GVM_OP_FRONTIER_REDUCE_SUM:
       case GVM_OP_FRONTIER_SWAP:
+      case GVM_OP_INCIDENT_OF:
+      case GVM_OP_HYPEREDGE_NODES_OF:
       case GVM_OP_BFS_LEVELS:
       case GVM_OP_INCIDENT_COUNT:
       case GVM_OP_HYPEREDGE_SIZE:
@@ -532,6 +534,74 @@ static int op_neighbors_expand(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_incident_of(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t node;
+  const uint32_t *hyperedges;
+  size_t count;
+  size_t i;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->hypergraph == NULL) {
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  node = (uint32_t)vm->regs[in->a];
+  if ((size_t)node >= vm->hypergraph->node_count) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  hyperedges = graphion_hypergraph_incident(vm->hypergraph, node);
+  count = graphion_hypergraph_incident_count(vm->hypergraph, node);
+  if (count > vm->frontier_capacity) {
+    vm->frontier_output_len = 0U;
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  vm->frontier_output_len = count;
+  for (i = 0U; i < count; ++i) {
+    vm->frontier_output[i] = hyperedges[i];
+  }
+  return GVM_OK;
+}
+
+static int op_hyperedge_nodes_of(graphion_vm *vm, const graphion_insn *in) {
+  uint32_t hyperedge;
+  const uint32_t *nodes;
+  size_t count;
+  size_t i;
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->hypergraph == NULL) {
+    return GVM_ERR_HYPERGRAPH_UNBOUND;
+  }
+  if (!frontier_is_bound(vm)) {
+    return GVM_ERR_FRONTIER_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
+  }
+  hyperedge = (uint32_t)vm->regs[in->a];
+  if ((size_t)hyperedge >= vm->hypergraph->hyperedge_count) {
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
+  }
+  nodes = graphion_hypergraph_hyperedge_nodes(vm->hypergraph, hyperedge);
+  count = graphion_hypergraph_hyperedge_size(vm->hypergraph, hyperedge);
+  if (count > vm->frontier_capacity) {
+    vm->frontier_output_len = 0U;
+    return GVM_ERR_FRONTIER_OVERFLOW;
+  }
+  vm->frontier_output_len = count;
+  for (i = 0U; i < count; ++i) {
+    vm->frontier_output[i] = nodes[i];
+  }
+  return GVM_OK;
+}
+
 static int op_nop(graphion_vm *vm, const graphion_insn *in) {
   (void)vm;
   (void)in;
@@ -702,6 +772,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_NEIGHBORS_EXPAND:
         rc = op_neighbors_expand(vm, &in);
         break;
+      case GVM_OP_INCIDENT_OF:
+        rc = op_incident_of(vm, &in);
+        break;
+      case GVM_OP_HYPEREDGE_NODES_OF:
+        rc = op_hyperedge_nodes_of(vm, &in);
+        break;
       case GVM_OP_BFS_LEVELS:
         rc = op_bfs_levels(vm, &in);
         break;
@@ -743,6 +819,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_FRONTIER_SWAP] = op_frontier_swap,
       [GVM_OP_NEIGHBORS_OF] = op_neighbors_of,
       [GVM_OP_NEIGHBORS_EXPAND] = op_neighbors_expand,
+      [GVM_OP_INCIDENT_OF] = op_incident_of,
+      [GVM_OP_HYPEREDGE_NODES_OF] = op_hyperedge_nodes_of,
       [GVM_OP_BFS_LEVELS] = op_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = op_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = op_hyperedge_size,
@@ -785,6 +863,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_FRONTIER_SWAP] = &&L_frontier_swap,
       [GVM_OP_NEIGHBORS_OF] = &&L_neighbors_of,
       [GVM_OP_NEIGHBORS_EXPAND] = &&L_neighbors_expand,
+      [GVM_OP_INCIDENT_OF] = &&L_incident_of,
+      [GVM_OP_HYPEREDGE_NODES_OF] = &&L_hyperedge_nodes_of,
       [GVM_OP_BFS_LEVELS] = &&L_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = &&L_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = &&L_hyperedge_size,
@@ -867,6 +947,18 @@ L_neighbors_of:
     continue;
 L_neighbors_expand:
     rc = op_neighbors_expand(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_incident_of:
+    rc = op_incident_of(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_hyperedge_nodes_of:
+    rc = op_hyperedge_nodes_of(vm, &in);
     if (rc != 0) {
       return rc;
     }

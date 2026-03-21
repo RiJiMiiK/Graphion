@@ -25,6 +25,8 @@ int test_vm_frontier_primitives(void);
 int test_vm_frontier_errors(void);
 int test_vm_neighbor_iteration_primitives(void);
 int test_vm_neighbor_iteration_errors(void);
+int test_vm_hyperedge_traversal_primitives(void);
+int test_vm_hyperedge_traversal_errors(void);
 int test_vm_snapshot_format(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
@@ -90,6 +92,8 @@ int main(int argc, char **argv) {
       {"vm_frontier_errors", test_vm_frontier_errors},
       {"vm_neighbor_iteration_primitives", test_vm_neighbor_iteration_primitives},
       {"vm_neighbor_iteration_errors", test_vm_neighbor_iteration_errors},
+      {"vm_hyperedge_traversal_primitives", test_vm_hyperedge_traversal_primitives},
+      {"vm_hyperedge_traversal_errors", test_vm_hyperedge_traversal_errors},
       {"vm_snapshot_format", test_vm_snapshot_format},
       {"vm_fastpath_shape_cache_load_flags", test_vm_fastpath_shape_cache_load_flags},
       {"vm_fastpath_shape_cache_same_pointer_content_change",

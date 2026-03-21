@@ -40,6 +40,8 @@ Instruction binary encoding is fixed to 7 bytes:
 - `GVM_OP_FRONTIER_SWAP (37)`: swap frontier input/output roles, write new input length to `r[a]`
 - `GVM_OP_NEIGHBORS_OF (38)`: write the neighbors of node `r[a]` to the frontier output buffer
 - `GVM_OP_NEIGHBORS_EXPAND (39)`: append neighbors of every node in the input frontier to the frontier output buffer, write output length to `r[a]`
+- `GVM_OP_INCIDENT_OF (40)`: write the incident hyperedges of node `r[a]` to the frontier output buffer
+- `GVM_OP_HYPEREDGE_NODES_OF (41)`: write the nodes of hyperedge `r[a]` to the frontier output buffer
 - `GVM_OP_BFS_LEVELS (16)`: source node in `r[a]`, visited count written to `r[b]`
 - `GVM_OP_INCIDENT_COUNT (17)`: node id in `r[a]`, incident hyperedge count to `r[b]`
 - `GVM_OP_HYPEREDGE_SIZE (18)`: hyperedge id in `r[a]`, size to `r[b]`
@@ -160,6 +162,24 @@ Notes:
 | State changes | output frontier becomes the concatenated adjacency lists of all input frontier nodes, preserving input-node order and per-node neighbor order |
 | Failure cases | `-3` invalid register, `-5` missing CSR binding, `-9` invalid node id in the input frontier, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
 
+### `GVM_OP_INCIDENT_OF (40)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | source node id in `r[a]` |
+| Outputs | writes all incident hyperedge ids of the node to the frontier output buffer |
+| State changes | output frontier becomes the incident hyperedge list of `r[a]` |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-9` invalid node id, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
+
+### `GVM_OP_HYPEREDGE_NODES_OF (41)`
+
+| Field | Value |
+| --- | --- |
+| Inputs | source hyperedge id in `r[a]` |
+| Outputs | writes all node ids of the hyperedge to the frontier output buffer |
+| State changes | output frontier becomes the node list of hyperedge `r[a]` |
+| Failure cases | `-3` invalid register, `-8` missing hypergraph binding, `-10` invalid hyperedge id, `-11` frontier buffers not bound, `-12` frontier capacity exceeded |
+
 ### `GVM_OP_BFS_LEVELS (16)`
 
 | Field | Value |
@@ -275,3 +295,5 @@ Current fixture coverage includes:
 - `GVM_OP_FRONTIER_SWAP`: exact input/output role swap without dynamic allocation.
 - `GVM_OP_NEIGHBORS_OF`: exact adjacency-list copy for the source node within the configured frontier capacity.
 - `GVM_OP_NEIGHBORS_EXPAND`: exact concatenation of adjacency lists for the input frontier while preserving encounter order.
+- `GVM_OP_INCIDENT_OF`: exact incident-hyperedge list copy for the source node within the configured frontier capacity.
+- `GVM_OP_HYPEREDGE_NODES_OF`: exact hyperedge-node list copy for the source hyperedge within the configured frontier capacity.

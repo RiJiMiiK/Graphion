@@ -151,6 +151,12 @@ Neighbor iteration opcodes also use graph VM codes:
 | `-9` | `GVM_ERR_INVALID_NODE_ID` | Invalid node id for node-to-hyperedge operations |
 | `-10` | `GVM_ERR_INVALID_HYPEREDGE_ID` | Invalid hyperedge id for hyperedge-to-node operations |
 
+Hypergraph traversal opcodes also use frontier-bound errors when they materialize
+output collections:
+
+- `GVM_OP_INCIDENT_OF` uses `GVM_ERR_HYPERGRAPH_UNBOUND`, `GVM_ERR_INVALID_NODE_ID`, and frontier-bound errors
+- `GVM_OP_HYPEREDGE_NODES_OF` uses `GVM_ERR_HYPERGRAPH_UNBOUND`, `GVM_ERR_INVALID_HYPEREDGE_ID`, and frontier-bound errors
+
 ### Frontier VM codes
 
 | Code | Symbol | Current meaning |

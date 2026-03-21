@@ -46,7 +46,7 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`
     operate without dynamic allocation
   - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
-  - future hyperedge traversal opcodes can layer on top of the same contract
+  - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
 
 ## Hotpath acceleration
 
