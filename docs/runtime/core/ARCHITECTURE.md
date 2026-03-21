@@ -35,10 +35,18 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
   - `src/vm/vm.h` exposes named `graphion_vm_result` values for load/run failures.
 - VM state snapshot format:
   - `graphion_vm_write_snapshot(...)` emits a versioned text dump for deterministic repro.
+  - snapshot output now includes frontier binding state and frontier lengths.
 - Deterministic repro workflow:
   - `docs/runtime/debugging/VM_REPRO.md` defines how to capture fixture + snapshot + environment.
 - Arithmetic overflow policy:
   - `ADD` uses explicit two's-complement wraparound semantics in the VM.
+- Frontier execution model:
+  - host binds input/output frontier buffers directly to the VM
+  - frontier capacity is explicit and fixed by the binding call
+  - `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`
+    operate without dynamic allocation
+  - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
+  - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
 
 ## Hotpath acceleration
 

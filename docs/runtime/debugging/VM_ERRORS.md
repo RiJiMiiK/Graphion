@@ -138,6 +138,11 @@ Arithmetic overflow currently does not raise a dedicated VM error:
 | `-6` | `GVM_ERR_INVALID_BFS_SOURCE` | Invalid BFS source register value or out-of-range node id |
 | `-7` | `GVM_ERR_BFS_RUNTIME` | CSR BFS kernel returned a runtime failure |
 
+Neighbor iteration opcodes also use graph VM codes:
+
+- `GVM_OP_NEIGHBORS_OF` uses `GVM_ERR_CSR_UNBOUND` and `GVM_ERR_INVALID_NODE_ID`
+- `GVM_OP_NEIGHBORS_EXPAND` uses `GVM_ERR_CSR_UNBOUND`, `GVM_ERR_INVALID_NODE_ID`, and frontier-bound errors
+
 ### Hypergraph VM codes
 
 | Code | Symbol | Current meaning |
@@ -145,6 +150,20 @@ Arithmetic overflow currently does not raise a dedicated VM error:
 | `-8` | `GVM_ERR_HYPERGRAPH_UNBOUND` | Required hypergraph runtime object is not bound |
 | `-9` | `GVM_ERR_INVALID_NODE_ID` | Invalid node id for node-to-hyperedge operations |
 | `-10` | `GVM_ERR_INVALID_HYPEREDGE_ID` | Invalid hyperedge id for hyperedge-to-node operations |
+
+Hypergraph traversal opcodes also use frontier-bound errors when they materialize
+output collections:
+
+- `GVM_OP_INCIDENT_OF` uses `GVM_ERR_HYPERGRAPH_UNBOUND`, `GVM_ERR_INVALID_NODE_ID`, and frontier-bound errors
+- `GVM_OP_HYPEREDGE_NODES_OF` uses `GVM_ERR_HYPERGRAPH_UNBOUND`, `GVM_ERR_INVALID_HYPEREDGE_ID`, and frontier-bound errors
+
+### Frontier VM codes
+
+| Code | Symbol | Current meaning |
+| --- | --- |
+| `-11` | `GVM_ERR_FRONTIER_UNBOUND` | Frontier input/output buffers are not bound |
+| `-12` | `GVM_ERR_FRONTIER_OVERFLOW` | Frontier output would exceed the configured capacity |
+| `-13` | `GVM_ERR_INVALID_FRONTIER_VALUE` | Frontier value, mapped result, or reduction result violated the documented range contract |
 
 ## Interpretation rule
 

@@ -11,6 +11,16 @@ static int valid_ir_opcode(uint8_t op) {
     case GIR_OP_HALT:
     case GIR_OP_MOV_IMM:
     case GIR_OP_ADD:
+    case GIR_OP_FRONTIER_CLEAR:
+    case GIR_OP_FRONTIER_PUSH:
+    case GIR_OP_FRONTIER_FILTER_LT_IMM:
+    case GIR_OP_FRONTIER_MAP_ADD_IMM:
+    case GIR_OP_FRONTIER_REDUCE_SUM:
+    case GIR_OP_FRONTIER_SWAP:
+    case GIR_OP_NEIGHBORS_OF:
+    case GIR_OP_NEIGHBORS_EXPAND:
+    case GIR_OP_INCIDENT_OF:
+    case GIR_OP_HYPEREDGE_NODES_OF:
     case GIR_OP_BFS_LEVELS:
     case GIR_OP_INCIDENT_COUNT:
     case GIR_OP_HYPEREDGE_SIZE:
