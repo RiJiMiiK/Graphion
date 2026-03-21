@@ -75,6 +75,14 @@
 - [x] Optional weighted graph support and edge attributes.
 - [x] Sparse/dense frontier switching heuristics.
 
+## Milestone 0.5.1 (Graph/Frontier Benchmark Stabilization)
+
+- [ ] Official benchmarks for frontier primitives.
+- [ ] Official benchmarks for CSR neighbor iteration primitives.
+- [ ] Official benchmarks for hypergraph traversal primitives.
+- [ ] Benchmark-backed calibration of sparse/dense frontier thresholds.
+- [ ] Frontier-mode reporting in benchmark outputs and docs.
+
 ## Milestone 0.6 (Frontend And Language Surface)
 
 - [ ] Lexer and parser for source language prototype.
