@@ -3,15 +3,10 @@
 #include "runtime/entry.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "compiler/ir.h"
-#include "parser/frontend.h"
-
 enum {
-  GENTRY_SOURCE_MAX = 16 * 1024,
-  GENTRY_PROGRAM_MAX = 1024
+  GENTRY_SOURCE_MAX = 16 * 1024
 };
 
 int graphion_source_path_is_gion(const char *path) {
@@ -54,15 +49,12 @@ static int read_source_file(const char *path, char *buffer, size_t capacity) {
   return GENTRY_OK;
 }
 
-int graphion_run_gion_path(const char *path, graphion_vm *vm) {
+int graphion_run_gion_path(const char *path, graphion_runtime_scope *scope) {
   char source[GENTRY_SOURCE_MAX];
-  graphion_ir_insn ir[GENTRY_PROGRAM_MAX];
-  graphion_insn program[GENTRY_PROGRAM_MAX];
-  size_t ir_count = 0U;
-  size_t program_count = 0U;
+  graphion_runtime_diagnostic diagnostic;
   int rc;
 
-  if (path == NULL || vm == NULL) {
+  if (path == NULL || scope == NULL) {
     return GENTRY_ERR_INVALID_ARG;
   }
   if (!graphion_source_path_is_gion(path)) {
@@ -72,21 +64,12 @@ int graphion_run_gion_path(const char *path, graphion_vm *vm) {
   if (rc != GENTRY_OK) {
     return rc;
   }
-  rc = graphion_parse_source_to_ir(source, ir, GENTRY_PROGRAM_MAX, &ir_count);
-  if (rc != GFE_OK) {
+  graphion_runtime_scope_init(scope);
+  rc = graphion_interpret_source(source, scope, &diagnostic);
+  if (rc == GINT_ERR_PARSE || rc == GINT_ERR_RESERVED_NAME) {
     return GENTRY_ERR_PARSE;
   }
-  rc = graphion_ir_lower_to_bytecode(ir, ir_count, program, GENTRY_PROGRAM_MAX, &program_count);
-  if (rc != GIR_OK) {
-    return GENTRY_ERR_LOWER;
-  }
-  graphion_vm_init(vm);
-  rc = graphion_vm_load(vm, program, program_count);
-  if (rc != GVM_OK) {
-    return GENTRY_ERR_LOAD;
-  }
-  rc = graphion_vm_run(vm);
-  if (rc != GVM_OK) {
+  if (rc != GINT_OK) {
     return GENTRY_ERR_RUN;
   }
   return GENTRY_OK;

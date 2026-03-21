@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 
-#include "vm/vm.h"
+#include "runtime/interpreter.h"
 
 typedef enum {
   GENTRY_OK = 0,
@@ -21,6 +21,6 @@ typedef enum {
 
 int graphion_source_path_is_gion(const char *path);
 
-int graphion_run_gion_path(const char *path, graphion_vm *vm);
+int graphion_run_gion_path(const char *path, graphion_runtime_scope *scope);
 
 #endif

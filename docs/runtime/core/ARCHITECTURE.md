@@ -9,9 +9,26 @@ Current source-program entry flow uses the `.gion` extension.
 ## Runtime layers
 
 - `src/runtime/arena.*`: bump allocator for predictable low-overhead temporary allocations.
+- `src/runtime/interpreter.*`: minimal interpreted-language runtime for dynamic scalar values and assignment.
 - `src/vm/vm.*`: register-based VM scaffold with fixed-size register file.
 - `src/vm/hotpaths.s`: assembly hotpath entry point (disabled by default).
 - `src/graph/csr_graph.*`: CSR graph runtime with optional per-edge weights and edge attributes.
+
+## Interpreted source model (current)
+
+- `.gion` programs currently execute through `src/runtime/entry.*`.
+- The current interpreted surface is intentionally minimal:
+  - dynamic variable assignment only
+  - no user-declared types
+  - supported scalar values:
+    - `int`
+    - `float`
+    - `bool`
+    - `string`
+- assignment expressions may reference an already-bound variable:
+  - `answer = 42`
+  - `copy = answer`
+- reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
 
 ## VM model (current)
 
@@ -31,8 +48,10 @@ Current source-program entry flow uses the `.gion` extension.
 - Bytecode parser:
   - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
 - Source entry flow:
-  - `src/runtime/entry.*` validates `.gion` source files, parses them into IR,
-    lowers to bytecode, loads the VM, and executes the program.
+  - `src/runtime/entry.*` validates `.gion` source files, reads source text, and executes
+    the current interpreted runtime.
+- Legacy VM-oriented parser flow:
+  - `src/parser/frontend.*` still exists for mnemonic/IR bridge coverage and internal VM tests.
 - ISA versioning and compatibility policy:
   - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:

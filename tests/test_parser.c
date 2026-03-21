@@ -6,6 +6,7 @@
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
 #include "runtime/entry.h"
+#include "runtime/interpreter.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -310,32 +311,123 @@ int test_gion_source_path_detection(void) {
   return 0;
 }
 
+static int expect_int_binding(const graphion_runtime_scope *scope, const char *name, int64_t expected) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_INT) {
+    return 0;
+  }
+  return value->int_value == expected;
+}
+
+static int expect_float_binding(const graphion_runtime_scope *scope, const char *name, double expected) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_FLOAT) {
+    return 0;
+  }
+  return value->float_value == expected;
+}
+
+static int expect_bool_binding(const graphion_runtime_scope *scope, const char *name, int expected) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_BOOL) {
+    return 0;
+  }
+  return value->bool_value == expected;
+}
+
+static int expect_string_binding(const graphion_runtime_scope *scope, const char *name, const char *expected) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_STRING) {
+    return 0;
+  }
+  return strcmp(value->string_value, expected) == 0;
+}
+
+int test_interpreter_dynamic_assignments(void) {
+  const char *source = "count = 7\n"
+                       "ratio = 3.5\n"
+                       "name = \"graphion\"\n"
+                       "ready = true\n"
+                       "copy = count\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  if (!expect_int_binding(&scope, "count", 7) || !expect_int_binding(&scope, "copy", 7)) {
+    return 2;
+  }
+  if (!expect_float_binding(&scope, "ratio", 3.5)) {
+    return 3;
+  }
+  if (!expect_string_binding(&scope, "name", "graphion")) {
+    return 4;
+  }
+  if (!expect_bool_binding(&scope, "ready", 1)) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_interpreter_rejects_declared_type_syntax(void) {
+  static const char *bad_sources[] = {
+      "int count = 7\n",
+      "let value = 3.5\n",
+  };
+  size_t i;
+  for (i = 0U; i < sizeof(bad_sources) / sizeof(bad_sources[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(bad_sources[i], &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return (int)(1 + i);
+    }
+    if (diagnostic.line != 1U) {
+      return (int)(10 + i);
+    }
+  }
+  return 0;
+}
+
 int test_gion_entry_flow_execution(void) {
   const char *path = "entry_flow_sample.gion";
-  graphion_vm vm;
+  graphion_runtime_scope scope;
+  const graphion_runtime_value *answer;
+  const graphion_runtime_value *copy;
   FILE *fp = fopen(path, "wb");
   int rc;
   if (fp == NULL) {
     return 1;
   }
-  if (fputs("mov r0, 7\nmov r1, 35\nadd r0, r1\nhalt\n", fp) < 0) {
+  if (fputs("answer = 42\ncopy = answer\n", fp) < 0) {
     fclose(fp);
     remove(path);
     return 2;
   }
   fclose(fp);
 
-  rc = graphion_run_gion_path(path, &vm);
+  rc = graphion_run_gion_path(path, &scope);
   remove(path);
   if (rc != GENTRY_OK) {
     return 3;
   }
-  if (!vm.halted || vm.regs[0] != 42) {
+  answer = graphion_runtime_scope_find(&scope, "answer");
+  copy = graphion_runtime_scope_find(&scope, "copy");
+  if (answer == NULL || answer->kind != GRAPHION_VALUE_INT || answer->int_value != 42) {
     return 4;
   }
-  rc = graphion_run_gion_path("entry_flow_sample.txt", &vm);
-  if (rc != GENTRY_ERR_EXTENSION) {
+  if (copy == NULL || copy->kind != GRAPHION_VALUE_INT || copy->int_value != 42) {
     return 5;
+  }
+  rc = graphion_run_gion_path("entry_flow_sample.txt", &scope);
+  if (rc != GENTRY_ERR_EXTENSION) {
+    return 6;
   }
   return 0;
 }

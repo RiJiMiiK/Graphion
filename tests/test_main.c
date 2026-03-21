@@ -42,6 +42,8 @@ int test_frontend_rejects_invalid_source(void);
 int test_frontend_source_to_vm_execution(void);
 int test_frontend_reference_graph_execution_examples(void);
 int test_gion_source_path_detection(void);
+int test_interpreter_dynamic_assignments(void);
+int test_interpreter_rejects_declared_type_syntax(void);
 int test_gion_entry_flow_execution(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
@@ -117,6 +119,8 @@ int main(int argc, char **argv) {
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
       {"frontend_reference_graph_execution_examples", test_frontend_reference_graph_execution_examples},
       {"gion_source_path_detection", test_gion_source_path_detection},
+      {"interpreter_dynamic_assignments", test_interpreter_dynamic_assignments},
+      {"interpreter_rejects_declared_type_syntax", test_interpreter_rejects_declared_type_syntax},
       {"gion_entry_flow_execution", test_gion_entry_flow_execution},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
