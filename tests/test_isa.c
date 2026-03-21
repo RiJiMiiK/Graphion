@@ -31,6 +31,11 @@ typedef struct {
   int bind_csr;
   int bind_hypergraph;
   int bind_frontier;
+  int expect_frontier_state;
+  size_t expected_frontier_input_len;
+  uint32_t expected_frontier_input[8];
+  size_t expected_frontier_output_len;
+  uint32_t expected_frontier_output[8];
 } isa_execute_fixture;
 
 static int regs_match(const int64_t *lhs, const int64_t *rhs, size_t count) {
@@ -48,6 +53,16 @@ static int insns_match(const graphion_insn *lhs, const graphion_insn *rhs, size_
   for (i = 0U; i < count; ++i) {
     if (lhs[i].op != rhs[i].op || lhs[i].a != rhs[i].a || lhs[i].b != rhs[i].b ||
         lhs[i].imm != rhs[i].imm) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static int frontier_match(const uint32_t *lhs, const uint32_t *rhs, size_t count) {
+  size_t i;
+  for (i = 0U; i < count; ++i) {
+    if (lhs[i] != rhs[i]) {
       return 0;
     }
   }
@@ -185,6 +200,21 @@ int test_isa_execute_golden_fixtures(void) {
       {GVM_OP_NEIGHBORS_EXPAND, 2U, 0U, 0},
       {GVM_OP_HALT, 0U, 0U, 0},
   };
+  static const graphion_insn program_neighbors_of[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 2},
+      {GVM_OP_NEIGHBORS_OF, 0U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  static const graphion_insn program_incident_of[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 1},
+      {GVM_OP_INCIDENT_OF, 0U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  static const graphion_insn program_hyperedge_nodes_of[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 1},
+      {GVM_OP_HYPEREDGE_NODES_OF, 0U, 0U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
   static const graphion_insn program_hyperedge_traversal[] = {
       {GVM_OP_MOV_IMM, 0U, 0U, 1},
       {GVM_OP_INCIDENT_OF, 0U, 0U, 0},
@@ -206,6 +236,11 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           0,
           0,
+          0,
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_invalid_register_mov_imm",
@@ -219,6 +254,11 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           0,
           0,
+          0,
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_unknown_opcode",
@@ -232,6 +272,11 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           0,
           0,
+          0,
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_bfs_levels",
@@ -245,6 +290,11 @@ int test_isa_execute_golden_fixtures(void) {
           1,
           0,
           0,
+          0,
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_hypergraph_incident_sum",
@@ -258,6 +308,11 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           1,
           0,
+          0,
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_frontier_pipeline",
@@ -271,6 +326,29 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           0,
           1,
+          1,
+          2U,
+          {2U, 5U, 0U, 0U, 0U, 0U, 0U, 0U},
+          0U,
+          {0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U},
+      },
+      {
+          "exec_neighbors_of_frontier",
+          program_neighbors_of,
+          sizeof(program_neighbors_of) / sizeof(program_neighbors_of[0]),
+          0,
+          0,
+          1,
+          3U,
+          {2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          1,
+          0,
+          1,
+          1,
+          4U,
+          {1U, 4U, 7U, 10U, 0U, 0U, 0U, 0U},
+          2U,
+          {0U, 3U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_neighbor_iteration",
@@ -284,6 +362,47 @@ int test_isa_execute_golden_fixtures(void) {
           1,
           0,
           1,
+          1,
+          2U,
+          {0U, 3U, 0U, 0U, 0U, 0U, 0U, 0U},
+          3U,
+          {1U, 2U, 1U, 0U, 0U, 0U, 0U, 0U},
+      },
+      {
+          "exec_incident_of_frontier",
+          program_incident_of,
+          sizeof(program_incident_of) / sizeof(program_incident_of[0]),
+          0,
+          0,
+          1,
+          3U,
+          {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          0,
+          1,
+          1,
+          1,
+          4U,
+          {1U, 4U, 7U, 10U, 0U, 0U, 0U, 0U},
+          2U,
+          {0U, 1U, 0U, 0U, 0U, 0U, 0U, 0U},
+      },
+      {
+          "exec_hyperedge_nodes_of_frontier",
+          program_hyperedge_nodes_of,
+          sizeof(program_hyperedge_nodes_of) / sizeof(program_hyperedge_nodes_of[0]),
+          0,
+          0,
+          1,
+          3U,
+          {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          0,
+          1,
+          1,
+          1,
+          4U,
+          {1U, 4U, 7U, 10U, 0U, 0U, 0U, 0U},
+          2U,
+          {1U, 3U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
       {
           "exec_hyperedge_traversal",
@@ -297,6 +416,11 @@ int test_isa_execute_golden_fixtures(void) {
           0,
           1,
           1,
+          1,
+          2U,
+          {0U, 1U, 0U, 0U, 0U, 0U, 0U, 0U},
+          2U,
+          {1U, 3U, 0U, 0U, 0U, 0U, 0U, 0U},
       },
   };
   const uint32_t csr_offsets[] = {0U, 2U, 3U, 5U, 6U};
@@ -372,25 +496,18 @@ int test_isa_execute_golden_fixtures(void) {
       if (!regs_match(vm.regs, fixtures[i].expected_regs, 16U)) {
         return (int)(150 + i);
       }
-      if (fixtures[i].bind_frontier) {
-        if (strcmp(fixtures[i].name, "exec_frontier_pipeline") == 0) {
-          if (vm.frontier_input_len != 2U || vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
-            return (int)(160 + i);
-          }
+      if (fixtures[i].expect_frontier_state) {
+        if (vm.frontier_input_len != fixtures[i].expected_frontier_input_len) {
+          return (int)(160 + i);
         }
-        if (strcmp(fixtures[i].name, "exec_neighbor_iteration") == 0) {
-          if (vm.frontier_output_len != 3U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 2U ||
-              vm.frontier_output[2] != 1U) {
-            return (int)(170 + i);
-          }
+        if (!frontier_match(vm.frontier_input, fixtures[i].expected_frontier_input, vm.frontier_input_len)) {
+          return (int)(170 + i);
         }
-        if (strcmp(fixtures[i].name, "exec_hyperedge_traversal") == 0) {
-          if (vm.frontier_input_len != 2U || vm.frontier_input[0] != 0U || vm.frontier_input[1] != 1U) {
-            return (int)(180 + i);
-          }
-          if (vm.frontier_output_len != 2U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 3U) {
-            return (int)(190 + i);
-          }
+        if (vm.frontier_output_len != fixtures[i].expected_frontier_output_len) {
+          return (int)(180 + i);
+        }
+        if (!frontier_match(vm.frontier_output, fixtures[i].expected_frontier_output, vm.frontier_output_len)) {
+          return (int)(190 + i);
         }
       }
     }
