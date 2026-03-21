@@ -66,10 +66,28 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Scripts index and categorized scripts layout (`scripts/README.md`).
 - Parser front-end skeleton (`source -> IR`) and IR lowering bridge (`IR -> VM bytecode`) with tests.
 - End-to-end parser bridge execution test (`source -> IR -> bytecode -> VM`) and IR v0 contract doc (`docs/IR.md`).
+- Cross-toolchain PGO pipeline doc, workflow, and local runner script (`docs/PGO.md`, `scripts/bench/run_pgo_pipeline.py`).
+- Dispatch-variant parity runner and extra VM edge-case tests for shape-cache / dispatch semantics.
+- Official optimization report generator and report doc for `baseline` vs `PGO`, including per-variant `vm_dispatch` sections.
+- Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.
+- Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
+- Named PGO corpus profiles and representative-workload policy documentation.
+- Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
+- Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
+- Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
+- Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.
+- Release-candidate PGO/non-PGO alert policy and dry-run workflow integration.
+- Release dry-run now surfaces PGO alerts in advisory mode on PRs and reserves blocking mode for manual candidate validation.
+- PGO profile artifact manifests and explicit cache invalidation rules.
+- Assembly-vs-C fallback parity and performance reporting policy with dedicated comparison runner.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.
+- VM arithmetic fastpath now includes an initial super-instruction fusion (`ADD` + `ADD` on same destination).
+- VM fastpath selection now uses a shape cache on `graphion_vm_load` to avoid repeated candidate scans.
+- VM dispatch now supports selectable variants (`switch`, `jumptable`, `computed-goto`) via `GRAPHION_VM_DISPATCH`.
 - VM dispatch performance improved and benchmark outputs extended with latency metrics (`ns_per_*`).
+- CMake now exposes a two-phase PGO mode (`OFF`, `GENERATE`, `USE`) for MSVC, GCC, and Clang.
 - Hypergraph benchmark hot loop optimized for lower overhead.
 - Repository scripts reorganized into purpose-based folders:
   - `scripts/bench`

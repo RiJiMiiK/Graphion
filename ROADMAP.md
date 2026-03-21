@@ -6,7 +6,7 @@
 - [x] Deterministic benchmark harness.
 - [x] Baseline safety/security CI.
 
-## Milestone 0.2 (Graph Primitives) [in progress]
+## Milestone 0.2 (Graph Primitives) [done]
 
 - [x] Runtime CSR/BFS core (`csr_graph` + `graphion_bfs_levels`) with tests.
 - [x] Graph-centric opcodes and kernels (`BFS_LEVELS`, incidence/size ops).
@@ -19,14 +19,29 @@
 - [x] End-to-end parser integration test (`source -> IR -> bytecode -> VM run`).
 - [x] IR v0 bridge contract document (`docs/IR.md`).
 
-## Milestone 0.3 (Optimization Pass) [in progress]
-
+## Milestone 0.3 (Optimization Pass) [done]
 - [x] Hotpath profiling pipeline (repeatable x100 snapshots).
-- [ ] Super-instruction experiments.
+- [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
 - [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
-- [ ] PGO pipeline (MSVC + GCC/Clang).
-- [ ] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study).
-- [ ] Fastpath specialization cache by bytecode shape.
+- [x] PGO pipeline (MSVC + GCC/Clang).
+- [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
+- [x] Fastpath specialization cache by bytecode shape.
+
+## Milestone 0.3.1 (Optimization Stabilization) [done]
+
+- [x] PGO training corpus review and representative-workload policy.
+- [x] Official before/after optimization reports (`baseline` vs `PGO`, per dispatch strategy where applicable).
+- [x] Optimization parity tests for dispatch variants and fastpath cache edge cases.
+- [x] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
+
+## Milestone 0.3.2 (Optimization Governance)
+
+- [x] Official PGO effectiveness thresholds per workload family.
+- [x] Cross-compiler optimization comparison policy (`MSVC` vs `GCC` vs `Clang`).
+- [x] Benchmark environment metadata enforcement in generated reports.
+- [x] PGO / non-PGO regression alert policy for release candidates.
+- [x] Assembly-vs-C fallback parity and performance reporting policy.
+- [x] Profile artifact hygiene and cache invalidation rules.
 
 ## Milestone 0.4 (VM + ISA Hardening)
 
