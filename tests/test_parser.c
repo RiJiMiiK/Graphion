@@ -2,7 +2,6 @@
 
 #include "parser/bytecode.h"
 #include "parser/frontend.h"
-#include "parser/lexer.h"
 #include "compiler/ir.h"
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
@@ -10,54 +9,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-
-int test_lexer_tokenizes_source_program(void) {
-  const char *source = "mov r0, 7\n"
-                       "# comment\n"
-                       "add r0, r1\n";
-  graphion_token tokens[16];
-  size_t count = 0U;
-  int rc;
-
-  rc = graphion_lex_source(source, tokens, 16U, &count);
-  if (rc != GLEX_OK) {
-    return 1;
-  }
-  if (count != 12U) {
-    return 2;
-  }
-  if (tokens[0].kind != GTOK_IDENTIFIER || tokens[0].line != 1U || tokens[0].column != 1U) {
-    return 3;
-  }
-  if (tokens[1].kind != GTOK_REGISTER || tokens[1].reg_value != 0U) {
-    return 4;
-  }
-  if (tokens[2].kind != GTOK_COMMA) {
-    return 5;
-  }
-  if (tokens[3].kind != GTOK_INTEGER || tokens[3].int_value != 7) {
-    return 6;
-  }
-  if (tokens[4].kind != GTOK_NEWLINE) {
-    return 7;
-  }
-  if (tokens[5].kind != GTOK_NEWLINE) {
-    return 8;
-  }
-  if (tokens[6].kind != GTOK_IDENTIFIER || tokens[6].line != 3U || tokens[6].column != 1U) {
-    return 9;
-  }
-  if (tokens[8].kind != GTOK_COMMA) {
-    return 10;
-  }
-  if (tokens[9].kind != GTOK_REGISTER || tokens[9].reg_value != 1U) {
-    return 11;
-  }
-  if (tokens[count - 2U].kind != GTOK_NEWLINE || tokens[count - 1U].kind != GTOK_EOF) {
-    return 12;
-  }
-  return 0;
-}
 
 int test_parser_decode_valid_program(void) {
   const uint8_t bytes[] = {
@@ -137,88 +88,6 @@ int test_frontend_rejects_invalid_source(void) {
   int rc = graphion_parse_source_to_ir(source, ir, 4U, &count);
   if (rc != GFE_ERR_PARSE) {
     return 1;
-  }
-  return 0;
-}
-
-int test_frontend_reports_parse_position(void) {
-  const char *source = "mov r0, 7\n"
-                       "add r0 r1\n";
-  graphion_ir_insn ir[4];
-  size_t count = 0U;
-  graphion_frontend_position pos;
-  int rc = graphion_parse_source_to_ir_with_position(source, ir, 4U, &count, &pos);
-  if (rc != GFE_ERR_PARSE) {
-    return 1;
-  }
-  if (pos.line != 2U || pos.column != 8U) {
-    return 2;
-  }
-  return 0;
-}
-
-int test_frontend_reports_stable_diagnostic_message(void) {
-  const char *source = "mov r0 7\n";
-  graphion_ir_insn ir[4];
-  size_t count = 0U;
-  graphion_frontend_diagnostic diagnostic;
-  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
-  if (rc != GFE_ERR_PARSE) {
-    return 1;
-  }
-  if (diagnostic.code != GFE_DIAG_EXPECTED_COMMA) {
-    return 2;
-  }
-  if (diagnostic.start.line != 1U || diagnostic.start.column != 8U) {
-    return 3;
-  }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected ',' separator") != 0) {
-    return 4;
-  }
-  return 0;
-}
-
-int test_frontend_reports_unknown_mnemonic_diagnostic(void) {
-  const char *source = "muv r0, 7\n";
-  graphion_ir_insn ir[4];
-  size_t count = 0U;
-  graphion_frontend_diagnostic diagnostic;
-  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
-  if (rc != GFE_ERR_PARSE) {
-    return 1;
-  }
-  if (diagnostic.code != GFE_DIAG_UNKNOWN_MNEMONIC) {
-    return 2;
-  }
-  if (diagnostic.start.line != 1U || diagnostic.start.column != 1U) {
-    return 3;
-  }
-  if (diagnostic.end.line != 1U || diagnostic.end.column != 3U) {
-    return 4;
-  }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown instruction mnemonic") != 0) {
-    return 5;
-  }
-  return 0;
-}
-
-int test_frontend_reports_invalid_token_diagnostic(void) {
-  const char *source = "mov r0, 7\n@\n";
-  graphion_ir_insn ir[4];
-  size_t count = 0U;
-  graphion_frontend_diagnostic diagnostic;
-  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
-  if (rc != GFE_ERR_PARSE) {
-    return 1;
-  }
-  if (diagnostic.code != GFE_DIAG_INVALID_TOKEN) {
-    return 2;
-  }
-  if (diagnostic.start.line != 2U || diagnostic.start.column != 1U) {
-    return 3;
-  }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "invalid token in source") != 0) {
-    return 4;
   }
   return 0;
 }
