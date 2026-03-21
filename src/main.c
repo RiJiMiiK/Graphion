@@ -6,8 +6,18 @@
 
 int main(int argc, char **argv) {
   graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
   int rc;
 
+  if (argc == 1) {
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("warmup = 1\n", &scope, &diagnostic);
+    if (rc != GINT_OK) {
+      fprintf(stderr, "error: interpreter warmup failed (rc=%d)\n", rc);
+      return 4;
+    }
+    return 0;
+  }
   if (argc != 2) {
     fprintf(stderr, "usage: graphion <program.gion>\n");
     return 1;
