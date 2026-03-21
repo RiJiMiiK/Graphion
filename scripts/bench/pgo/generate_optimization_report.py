@@ -49,6 +49,12 @@ BENCH_SPECS = [
         "throughput_key": "mteps",
     },
     {
+        "target": "graphion_bench_weighted_graph",
+        "benchmark": "weighted_neighbor_sums",
+        "latency_key": "ns_per_edge_data",
+        "throughput_key": "mteps",
+    },
+    {
         "target": "graphion_bench_hypergraph",
         "benchmark": "hypergraph_incidence",
         "latency_key": "ns_per_incidence",

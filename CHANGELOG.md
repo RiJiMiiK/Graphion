@@ -84,6 +84,8 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Frontier-sensitive benchmark outputs now report the recommended sparse/dense mode in collections and perf docs.
 - Automated `PERFORMANCE_RESULTS.md` refresh workflow added for Windows/Linux benchmark lanes with optional PR publication.
 - Frontier recommendation thresholds are now benchmark-backed, with calibrated `15%` node and `28%` edge-work cutovers plus a dedicated calibration report.
+- Weighted CSR execution opcodes now expose neighbor weight sums and edge-attribute sums in the VM, with dedicated coverage and error handling.
+- Official weighted CSR execution benchmark added and integrated into the performance and PGO collection pipelines.
 - Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
 - Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
 - Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.

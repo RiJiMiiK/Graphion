@@ -25,6 +25,8 @@ int test_vm_frontier_primitives(void);
 int test_vm_frontier_errors(void);
 int test_vm_neighbor_iteration_primitives(void);
 int test_vm_neighbor_iteration_errors(void);
+int test_vm_weighted_graph_opcodes(void);
+int test_vm_weighted_graph_opcode_errors(void);
 int test_vm_hyperedge_traversal_primitives(void);
 int test_vm_hyperedge_traversal_errors(void);
 int test_vm_snapshot_format(void);
@@ -94,6 +96,8 @@ int main(int argc, char **argv) {
       {"vm_frontier_errors", test_vm_frontier_errors},
       {"vm_neighbor_iteration_primitives", test_vm_neighbor_iteration_primitives},
       {"vm_neighbor_iteration_errors", test_vm_neighbor_iteration_errors},
+      {"vm_weighted_graph_opcodes", test_vm_weighted_graph_opcodes},
+      {"vm_weighted_graph_opcode_errors", test_vm_weighted_graph_opcode_errors},
       {"vm_hyperedge_traversal_primitives", test_vm_hyperedge_traversal_primitives},
       {"vm_hyperedge_traversal_errors", test_vm_hyperedge_traversal_errors},
       {"vm_snapshot_format", test_vm_snapshot_format},

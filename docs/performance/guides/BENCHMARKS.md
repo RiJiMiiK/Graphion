@@ -41,6 +41,7 @@ Run hypergraph sum benches directly:
 ./build-bench/graphion_bench_hypergraph_hyperedge_node_sum 500000
 ./build-bench/graphion_bench_frontier 300000
 ./build-bench/graphion_bench_neighbors 300000
+./build-bench/graphion_bench_weighted_graph 300000
 ./build-bench/graphion_bench_hypergraph_traversal 300000
 ./build-bench/graphion_bench_frontier_thresholds
 ```
@@ -160,6 +161,11 @@ Neighbor iteration runs also emit:
 - `frontier_neighbor_work`
 - `recommended_frontier_mode`
 - `ns_per_neighbor`
+
+Weighted graph runs also emit:
+
+- `edge_data_items_per_iteration`
+- `ns_per_edge_data`
 
 Hypergraph traversal runs also emit:
 

@@ -25,6 +25,8 @@ typedef enum {
   GVM_OP_NEIGHBORS_EXPAND = 39,
   GVM_OP_INCIDENT_OF = 40,
   GVM_OP_HYPEREDGE_NODES_OF = 41,
+  GVM_OP_NEIGHBOR_WEIGHT_SUM = 42,
+  GVM_OP_NEIGHBOR_ATTR_SUM = 43,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -46,7 +48,9 @@ typedef enum {
   GVM_ERR_INVALID_HYPEREDGE_ID = -10,
   GVM_ERR_FRONTIER_UNBOUND = -11,
   GVM_ERR_FRONTIER_OVERFLOW = -12,
-  GVM_ERR_INVALID_FRONTIER_VALUE = -13
+  GVM_ERR_INVALID_FRONTIER_VALUE = -13,
+  GVM_ERR_CSR_WEIGHTS_UNBOUND = -14,
+  GVM_ERR_CSR_EDGE_ATTRS_UNBOUND = -15
 } graphion_vm_result;
 
 typedef struct {
@@ -65,6 +69,7 @@ typedef struct {
   bool deterministic_mode;
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
+  bool weighted_sum_fastpath;
   const graphion_csr_graph *csr_graph;
   int32_t *bfs_levels;
   uint32_t *bfs_queue;

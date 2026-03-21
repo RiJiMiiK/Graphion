@@ -133,6 +133,10 @@ add_library(graphion_vm
 )
 graphion_enable_pgo(graphion_vm)
 
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set_source_files_properties(src/vm/vm.c PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
+endif()
+
 if(GRAPHION_VM_DISPATCH STREQUAL "switch")
   target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
 elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
@@ -267,6 +271,17 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_weighted_graph
+    benchmarks/bench_weighted_graph.c
+  )
+  target_link_libraries(graphion_bench_weighted_graph PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_weighted_graph)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
   add_executable(graphion_bench_frontier_thresholds

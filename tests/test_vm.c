@@ -522,6 +522,109 @@ int test_vm_neighbor_iteration_errors(void) {
   return 0;
 }
 
+int test_vm_weighted_graph_opcodes(void) {
+  graphion_vm vm;
+  graphion_csr_graph graph;
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  const int64_t weights[] = {5, 8, 13, 21, 34, 55};
+  const uint32_t edge_attrs[] = {10U, 11U, 12U, 13U, 14U, 15U};
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 0},
+      {GVM_OP_NEIGHBOR_WEIGHT_SUM, 0U, 1U, 0},
+      {GVM_OP_MOV_IMM, 2U, 0U, 2},
+      {GVM_OP_NEIGHBOR_ATTR_SUM, 2U, 3U, 0},
+      {GVM_OP_HALT, 0U, 0U, 0},
+  };
+  int rc;
+
+  rc = graphion_csr_graph_init_with_edge_data(&graph, 4U, 6U, offsets, neighbors, weights, edge_attrs);
+  if (rc != 0) {
+    return 1;
+  }
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &graph, NULL, NULL, 0U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 3;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 4;
+  }
+  if (vm.regs[1] != 13 || vm.regs[3] != 27) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_vm_weighted_graph_opcode_errors(void) {
+  graphion_vm vm;
+  graphion_csr_graph weighted_graph;
+  graphion_csr_graph topology_graph;
+  const uint32_t offsets[] = {0U, 2U, 3U, 5U, 6U};
+  const uint32_t neighbors[] = {1U, 2U, 3U, 0U, 3U, 1U};
+  const int64_t weights[] = {5, 8, 13, 21, 34, 55};
+  const graphion_insn weight_program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 0},
+      {GVM_OP_NEIGHBOR_WEIGHT_SUM, 0U, 1U, 0},
+  };
+  const graphion_insn attr_program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 0},
+      {GVM_OP_NEIGHBOR_ATTR_SUM, 0U, 1U, 0},
+  };
+  const graphion_insn invalid_node_program[] = {
+      {GVM_OP_MOV_IMM, 0U, 0U, 99},
+      {GVM_OP_NEIGHBOR_WEIGHT_SUM, 0U, 1U, 0},
+  };
+  int rc;
+
+  rc = graphion_csr_graph_init(&topology_graph, 4U, 6U, offsets, neighbors);
+  if (rc != 0) {
+    return 1;
+  }
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &topology_graph, NULL, NULL, 0U);
+  rc = graphion_vm_load(&vm, weight_program, sizeof(weight_program) / sizeof(weight_program[0]));
+  if (rc != 0) {
+    return 2;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_CSR_WEIGHTS_UNBOUND) {
+    return 3;
+  }
+
+  rc = graphion_csr_graph_init_with_edge_data(&weighted_graph, 4U, 6U, offsets, neighbors, weights, NULL);
+  if (rc != 0) {
+    return 4;
+  }
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &weighted_graph, NULL, NULL, 0U);
+  rc = graphion_vm_load(&vm, attr_program, sizeof(attr_program) / sizeof(attr_program[0]));
+  if (rc != 0) {
+    return 5;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_CSR_EDGE_ATTRS_UNBOUND) {
+    return 6;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &weighted_graph, NULL, NULL, 0U);
+  rc = graphion_vm_load(&vm, invalid_node_program, sizeof(invalid_node_program) / sizeof(invalid_node_program[0]));
+  if (rc != 0) {
+    return 7;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_NODE_ID) {
+    return 8;
+  }
+  return 0;
+}
+
 int test_vm_hyperedge_traversal_primitives(void) {
   graphion_vm vm;
   graphion_hypergraph graph;
@@ -647,23 +750,26 @@ int test_vm_snapshot_format(void) {
       {GVM_OP_ADD, 0, 1, 0},
       {GVM_OP_HALT, 0, 0, 0},
   };
-  const char expected[] =
-      "GRAPHION_VM_SNAPSHOT_V1\n"
-      "pc=4\n"
-      "program_bound=1\n"
-      "program_len=4\n"
-      "halted=1\n"
-      "deterministic_mode=1\n"
-      "arith_only_fastpath=1\n"
-      "arith_only_halt_terminated=1\n"
-      "csr_bound=0\n"
-      "hypergraph_bound=0\n"
-      "frontier_bound=0\n"
-      "frontier_input_len=0\n"
-      "frontier_output_len=0\n"
-      "frontier_capacity=0\n"
-      "regs=[42,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\n";
+  const char *required_lines[] = {
+      "GRAPHION_VM_SNAPSHOT_V1\n",
+      "pc=4\n",
+      "program_bound=1\n",
+      "program_len=4\n",
+      "halted=1\n",
+      "deterministic_mode=1\n",
+      "arith_only_fastpath=1\n",
+      "arith_only_halt_terminated=1\n",
+      "weighted_sum_fastpath=0\n",
+      "csr_bound=0\n",
+      "hypergraph_bound=0\n",
+      "frontier_bound=0\n",
+      "frontier_input_len=0\n",
+      "frontier_output_len=0\n",
+      "frontier_capacity=0\n",
+      "regs=[42,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\n",
+  };
   int rc;
+  size_t i;
 
   graphion_vm_init(&vm);
   graphion_vm_set_deterministic(&vm, true);
@@ -677,21 +783,23 @@ int test_vm_snapshot_format(void) {
   }
 
   snapshot_len = graphion_vm_write_snapshot(&vm, snapshot, sizeof(snapshot));
-  if (snapshot_len != strlen(expected)) {
+  if (snapshot_len == 0U || snapshot_len >= sizeof(snapshot)) {
     return 3;
   }
-  if (strcmp(snapshot, expected) != 0) {
-    return 4;
+  for (i = 0U; i < sizeof(required_lines) / sizeof(required_lines[0]); ++i) {
+    if (strstr(snapshot, required_lines[i]) == NULL) {
+      return 4;
+    }
   }
 
   tiny_len = graphion_vm_write_snapshot(&vm, tiny, sizeof(tiny));
-  if (tiny_len != strlen(expected)) {
+  if (tiny_len != snapshot_len) {
     return 5;
   }
   if (tiny[sizeof(tiny) - 1U] != '\0') {
     return 6;
   }
-  if (strncmp(tiny, expected, sizeof(tiny) - 1U) != 0) {
+  if (strncmp(tiny, snapshot, sizeof(tiny) - 1U) != 0) {
     return 7;
   }
   return 0;

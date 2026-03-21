@@ -7,12 +7,22 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#if defined(_M_X64) || defined(__x86_64__) || defined(__SSE2__)
+#include <immintrin.h>
+#define GRAPHION_SSE2_SUMS 1
+#endif
+
+#if defined(__AVX2__)
+#define GRAPHION_AVX2_SUMS 1
+#endif
+
 typedef struct {
   const graphion_insn *program;
   size_t program_len;
   size_t program_fingerprint;
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
+  bool weighted_sum_fastpath;
 } graphion_vm_shape_cache_entry;
 
 enum { GRAPHION_VM_SHAPE_CACHE_SIZE = 64 };
@@ -38,7 +48,8 @@ static size_t shape_cache_slot(const graphion_insn *program, size_t program_len)
 static int shape_cache_lookup(const graphion_insn *program,
                               size_t program_len,
                               bool *arith_only_fastpath,
-                              bool *arith_only_halt_terminated) {
+                              bool *arith_only_halt_terminated,
+                              bool *weighted_sum_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   const graphion_vm_shape_cache_entry e = g_shape_cache[slot];
   const size_t fingerprint = shape_cache_fingerprint(program, program_len);
@@ -47,19 +58,22 @@ static int shape_cache_lookup(const graphion_insn *program,
   }
   *arith_only_fastpath = e.arith_only_fastpath;
   *arith_only_halt_terminated = e.arith_only_halt_terminated;
+  *weighted_sum_fastpath = e.weighted_sum_fastpath;
   return 1;
 }
 
 static void shape_cache_store(const graphion_insn *program,
                               size_t program_len,
                               bool arith_only_fastpath,
-                              bool arith_only_halt_terminated) {
+                              bool arith_only_halt_terminated,
+                              bool weighted_sum_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   g_shape_cache[slot].program = program;
   g_shape_cache[slot].program_len = program_len;
   g_shape_cache[slot].program_fingerprint = shape_cache_fingerprint(program, program_len);
   g_shape_cache[slot].arith_only_fastpath = arith_only_fastpath;
   g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
+  g_shape_cache[slot].weighted_sum_fastpath = weighted_sum_fastpath;
 }
 
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
@@ -68,6 +82,138 @@ static int64_t wrap_add_i64(int64_t lhs, int64_t rhs) {
   const uint64_t ulhs = (uint64_t)lhs;
   const uint64_t urhs = (uint64_t)rhs;
   return (int64_t)(ulhs + urhs);
+}
+
+static uint64_t sum_weight_slice_wrap(const int64_t *values, size_t count) {
+#if defined(GRAPHION_AVX2_SUMS)
+  __m256i acc0 = _mm256_setzero_si256();
+  __m256i acc1 = _mm256_setzero_si256();
+  uint64_t lanes[4] = {0U, 0U, 0U, 0U};
+  size_t i = 0U;
+
+  for (; i + 8U <= count; i += 8U) {
+    const __m256i chunk0 = _mm256_loadu_si256((const __m256i *)(const void *)(values + i));
+    const __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(const void *)(values + i + 4U));
+    acc0 = _mm256_add_epi64(acc0, chunk0);
+    acc1 = _mm256_add_epi64(acc1, chunk1);
+  }
+  acc0 = _mm256_add_epi64(acc0, acc1);
+  for (; i + 4U <= count; i += 4U) {
+    const __m256i chunk = _mm256_loadu_si256((const __m256i *)(const void *)(values + i));
+    acc0 = _mm256_add_epi64(acc0, chunk);
+  }
+  _mm256_storeu_si256((__m256i *)(void *)lanes, acc0);
+  {
+    uint64_t sum = (lanes[0] + lanes[1]) + (lanes[2] + lanes[3]);
+    for (; i < count; ++i) {
+      sum += (uint64_t)values[i];
+    }
+    return sum;
+  }
+#elif defined(GRAPHION_SSE2_SUMS)
+  __m128i acc = _mm_setzero_si128();
+  uint64_t lanes[2] = {0U, 0U};
+  size_t i = 0U;
+
+  for (; i + 2U <= count; i += 2U) {
+    const __m128i chunk = _mm_loadu_si128((const __m128i *)(const void *)(values + i));
+    acc = _mm_add_epi64(acc, chunk);
+  }
+  _mm_storeu_si128((__m128i *)(void *)lanes, acc);
+  {
+    uint64_t sum = lanes[0] + lanes[1];
+    for (; i < count; ++i) {
+      sum += (uint64_t)values[i];
+    }
+    return sum;
+  }
+#else
+  uint64_t sum0 = 0U;
+  uint64_t sum1 = 0U;
+  uint64_t sum2 = 0U;
+  uint64_t sum3 = 0U;
+  size_t i = 0U;
+
+  for (; i + 4U <= count; i += 4U) {
+    sum0 += (uint64_t)values[i];
+    sum1 += (uint64_t)values[i + 1U];
+    sum2 += (uint64_t)values[i + 2U];
+    sum3 += (uint64_t)values[i + 3U];
+  }
+  for (; i < count; ++i) {
+    sum0 += (uint64_t)values[i];
+  }
+  return (sum0 + sum1) + (sum2 + sum3);
+#endif
+}
+
+static uint64_t sum_attr_slice_wrap(const uint32_t *values, size_t count) {
+#if defined(GRAPHION_AVX2_SUMS)
+  __m256i acc0 = _mm256_setzero_si256();
+  __m256i acc1 = _mm256_setzero_si256();
+  uint64_t lanes[4] = {0U, 0U, 0U, 0U};
+  size_t i = 0U;
+
+  for (; i + 8U <= count; i += 8U) {
+    const __m256i chunk = _mm256_loadu_si256((const __m256i *)(const void *)(values + i));
+    const __m128i lo = _mm256_castsi256_si128(chunk);
+    const __m128i hi = _mm256_extracti128_si256(chunk, 1);
+    acc0 = _mm256_add_epi64(acc0, _mm256_cvtepu32_epi64(lo));
+    acc1 = _mm256_add_epi64(acc1, _mm256_cvtepu32_epi64(hi));
+  }
+  acc0 = _mm256_add_epi64(acc0, acc1);
+  for (; i + 4U <= count; i += 4U) {
+    const __m128i chunk = _mm_loadu_si128((const __m128i *)(const void *)(values + i));
+    acc0 = _mm256_add_epi64(acc0, _mm256_cvtepu32_epi64(chunk));
+  }
+  _mm256_storeu_si256((__m256i *)(void *)lanes, acc0);
+  {
+    uint64_t sum = (lanes[0] + lanes[1]) + (lanes[2] + lanes[3]);
+    for (; i < count; ++i) {
+      sum += (uint64_t)values[i];
+    }
+    return sum;
+  }
+#elif defined(GRAPHION_SSE2_SUMS)
+  const __m128i zero = _mm_setzero_si128();
+  __m128i acc_lo = _mm_setzero_si128();
+  __m128i acc_hi = _mm_setzero_si128();
+  uint64_t lanes_lo[2] = {0U, 0U};
+  uint64_t lanes_hi[2] = {0U, 0U};
+  size_t i = 0U;
+
+  for (; i + 4U <= count; i += 4U) {
+    const __m128i chunk = _mm_loadu_si128((const __m128i *)(const void *)(values + i));
+    acc_lo = _mm_add_epi64(acc_lo, _mm_unpacklo_epi32(chunk, zero));
+    acc_hi = _mm_add_epi64(acc_hi, _mm_unpackhi_epi32(chunk, zero));
+  }
+  _mm_storeu_si128((__m128i *)(void *)lanes_lo, acc_lo);
+  _mm_storeu_si128((__m128i *)(void *)lanes_hi, acc_hi);
+  {
+    uint64_t sum = (lanes_lo[0] + lanes_lo[1]) + (lanes_hi[0] + lanes_hi[1]);
+    for (; i < count; ++i) {
+      sum += (uint64_t)values[i];
+    }
+    return sum;
+  }
+#else
+  uint64_t sum0 = 0U;
+  uint64_t sum1 = 0U;
+  uint64_t sum2 = 0U;
+  uint64_t sum3 = 0U;
+  size_t i = 0U;
+
+  for (; i + 4U <= count; i += 4U) {
+    sum0 += (uint64_t)values[i];
+    sum1 += (uint64_t)values[i + 1U];
+    sum2 += (uint64_t)values[i + 2U];
+    sum3 += (uint64_t)values[i + 3U];
+  }
+  for (; i < count; ++i) {
+    sum0 += (uint64_t)values[i];
+  }
+  return (sum0 + sum1) + (sum2 + sum3);
+#endif
 }
 
 static int is_arith_only_fastpath_candidate(const graphion_insn *program,
@@ -100,6 +246,8 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_FRONTIER_SWAP:
       case GVM_OP_INCIDENT_OF:
       case GVM_OP_HYPEREDGE_NODES_OF:
+      case GVM_OP_NEIGHBOR_WEIGHT_SUM:
+      case GVM_OP_NEIGHBOR_ATTR_SUM:
       case GVM_OP_BFS_LEVELS:
       case GVM_OP_INCIDENT_COUNT:
       case GVM_OP_HYPEREDGE_SIZE:
@@ -115,6 +263,34 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
     *halt_terminated = has_halt;
   }
   return 1;
+}
+
+static int is_weighted_sum_fastpath_candidate(const graphion_insn *program, size_t program_len) {
+  size_t i;
+  int has_weighted = 0;
+  for (i = 0U; i < program_len; ++i) {
+    const graphion_insn in = program[i];
+    switch (in.op) {
+      case GVM_OP_NOP:
+      case GVM_OP_HALT:
+        break;
+      case GVM_OP_MOV_IMM:
+        if (!is_valid_reg(in.a)) {
+          return 0;
+        }
+        break;
+      case GVM_OP_NEIGHBOR_WEIGHT_SUM:
+      case GVM_OP_NEIGHBOR_ATTR_SUM:
+        has_weighted = 1;
+        if (!is_valid_reg(in.a) || !is_valid_reg(in.b)) {
+          return 0;
+        }
+        break;
+      default:
+        return 0;
+    }
+  }
+  return has_weighted;
 }
 
 static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
@@ -204,6 +380,110 @@ static void run_arith_fastpath_c(graphion_vm *vm) {
 }
 #endif
 
+static int run_weighted_sum_fastpath_c(graphion_vm *vm) {
+  const graphion_csr_graph *graph = vm->csr_graph;
+  const graphion_insn *p = vm->program + vm->pc;
+  const graphion_insn *const end = vm->program + vm->program_len;
+  int64_t *const regs = vm->regs;
+
+  if (graph == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+
+  while (p < end) {
+    const graphion_insn in = *p++;
+    switch (in.op) {
+      case GVM_OP_NOP:
+        break;
+      case GVM_OP_HALT:
+        vm->halted = true;
+        vm->pc = (size_t)(p - vm->program);
+        return GVM_OK;
+      case GVM_OP_MOV_IMM:
+        if (p < end && p->a == in.a &&
+            (p->op == GVM_OP_NEIGHBOR_WEIGHT_SUM || p->op == GVM_OP_NEIGHBOR_ATTR_SUM)) {
+          const uint32_t node = (uint32_t)in.imm;
+          const size_t begin = (size_t)graph->offsets[node];
+          const size_t finish = (size_t)graph->offsets[node + 1U];
+          const size_t count = finish - begin;
+          const graphion_insn next = *p++;
+          if (in.imm < 0 || (size_t)node >= graph->node_count) {
+            vm->pc = (size_t)((p - vm->program) - 2U);
+            return GVM_ERR_INVALID_NODE_ID;
+          }
+          if (next.op == GVM_OP_NEIGHBOR_WEIGHT_SUM) {
+            if (graph->weights == NULL) {
+              vm->pc = (size_t)((p - vm->program) - 1U);
+              return GVM_ERR_CSR_WEIGHTS_UNBOUND;
+            }
+            regs[next.b] = (int64_t)sum_weight_slice_wrap(graph->weights + begin, count);
+          } else {
+            if (graph->edge_attrs == NULL) {
+              vm->pc = (size_t)((p - vm->program) - 1U);
+              return GVM_ERR_CSR_EDGE_ATTRS_UNBOUND;
+            }
+            regs[next.b] = (int64_t)sum_attr_slice_wrap(graph->edge_attrs + begin, count);
+          }
+          break;
+        }
+        regs[in.a] = (int64_t)in.imm;
+        break;
+      case GVM_OP_NEIGHBOR_WEIGHT_SUM: {
+        uint32_t node;
+        size_t begin;
+        size_t finish;
+        uint64_t sum;
+        if (graph->weights == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_CSR_WEIGHTS_UNBOUND;
+        }
+        if (regs[in.a] < 0) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_NODE_ID;
+        }
+        node = (uint32_t)regs[in.a];
+        if ((size_t)node >= graph->node_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_NODE_ID;
+        }
+        begin = (size_t)graph->offsets[node];
+        finish = (size_t)graph->offsets[node + 1U];
+        sum = sum_weight_slice_wrap(graph->weights + begin, finish - begin);
+        regs[in.b] = (int64_t)sum;
+      } break;
+      case GVM_OP_NEIGHBOR_ATTR_SUM: {
+        uint32_t node;
+        size_t begin;
+        size_t finish;
+        uint64_t sum;
+        if (graph->edge_attrs == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_CSR_EDGE_ATTRS_UNBOUND;
+        }
+        if (regs[in.a] < 0) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_NODE_ID;
+        }
+        node = (uint32_t)regs[in.a];
+        if ((size_t)node >= graph->node_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_NODE_ID;
+        }
+        begin = (size_t)graph->offsets[node];
+        finish = (size_t)graph->offsets[node + 1U];
+        sum = sum_attr_slice_wrap(graph->edge_attrs + begin, finish - begin);
+        regs[in.b] = (int64_t)sum;
+      } break;
+      default:
+        vm->pc = (size_t)(p - vm->program);
+        return GVM_ERR_UNKNOWN_OPCODE;
+    }
+  }
+
+  vm->pc = vm->program_len;
+  return GVM_OK;
+}
+
 #if defined(GRAPHION_ENABLE_ASM) && !defined(_MSC_VER)
 extern size_t graphion_vm_run_hotpath_arith_asm(int64_t *regs,
                                                 const graphion_insn *program,
@@ -258,6 +538,7 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->deterministic_mode = false;
   vm->arith_only_fastpath = false;
   vm->arith_only_halt_terminated = false;
+  vm->weighted_sum_fastpath = false;
   vm->csr_graph = NULL;
   vm->bfs_levels = NULL;
   vm->bfs_queue = NULL;
@@ -280,6 +561,7 @@ void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled) {
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len) {
   bool halt_terminated = false;
   bool arith_only_fastpath = false;
+  bool weighted_sum_fastpath = false;
   if (vm == NULL || program == NULL || program_len == 0U) {
     return GVM_ERR_INVALID_ARG;
   }
@@ -288,12 +570,15 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->pc = 0U;
   vm->halted = false;
 
-  if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated)) {
+  if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated,
+                          &weighted_sum_fastpath)) {
     arith_only_fastpath = is_arith_only_fastpath_candidate(program, program_len, &halt_terminated) != 0;
-    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated);
+    weighted_sum_fastpath = is_weighted_sum_fastpath_candidate(program, program_len) != 0;
+    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath);
   }
   vm->arith_only_fastpath = arith_only_fastpath;
   vm->arith_only_halt_terminated = halt_terminated;
+  vm->weighted_sum_fastpath = weighted_sum_fastpath;
   return 0;
 }
 
@@ -531,6 +816,66 @@ static int op_neighbors_expand(graphion_vm *vm, const graphion_insn *in) {
   }
   vm->frontier_output_len = out_len;
   vm->regs[in->a] = (int64_t)out_len;
+  return GVM_OK;
+}
+
+static int op_neighbor_weight_sum(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_csr_graph *graph;
+  uint32_t node;
+  size_t begin;
+  size_t end;
+  uint64_t sum;
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  graph = vm->csr_graph;
+  if (graph == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (graph->weights == NULL) {
+    return GVM_ERR_CSR_WEIGHTS_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  node = (uint32_t)vm->regs[in->a];
+  if ((size_t)node >= graph->node_count) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  begin = (size_t)graph->offsets[node];
+  end = (size_t)graph->offsets[node + 1U];
+  sum = sum_weight_slice_wrap(graph->weights + begin, end - begin);
+  vm->regs[in->b] = (int64_t)sum;
+  return GVM_OK;
+}
+
+static int op_neighbor_attr_sum(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_csr_graph *graph;
+  uint32_t node;
+  size_t begin;
+  size_t end;
+  uint64_t sum;
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  graph = vm->csr_graph;
+  if (graph == NULL) {
+    return GVM_ERR_CSR_UNBOUND;
+  }
+  if (graph->edge_attrs == NULL) {
+    return GVM_ERR_CSR_EDGE_ATTRS_UNBOUND;
+  }
+  if (vm->regs[in->a] < 0) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  node = (uint32_t)vm->regs[in->a];
+  if ((size_t)node >= graph->node_count) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  begin = (size_t)graph->offsets[node];
+  end = (size_t)graph->offsets[node + 1U];
+  sum = sum_attr_slice_wrap(graph->edge_attrs + begin, end - begin);
+  vm->regs[in->b] = (int64_t)sum;
   return GVM_OK;
 }
 
@@ -778,6 +1123,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_HYPEREDGE_NODES_OF:
         rc = op_hyperedge_nodes_of(vm, &in);
         break;
+      case GVM_OP_NEIGHBOR_WEIGHT_SUM:
+        rc = op_neighbor_weight_sum(vm, &in);
+        break;
+      case GVM_OP_NEIGHBOR_ATTR_SUM:
+        rc = op_neighbor_attr_sum(vm, &in);
+        break;
       case GVM_OP_BFS_LEVELS:
         rc = op_bfs_levels(vm, &in);
         break;
@@ -821,6 +1172,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_NEIGHBORS_EXPAND] = op_neighbors_expand,
       [GVM_OP_INCIDENT_OF] = op_incident_of,
       [GVM_OP_HYPEREDGE_NODES_OF] = op_hyperedge_nodes_of,
+      [GVM_OP_NEIGHBOR_WEIGHT_SUM] = op_neighbor_weight_sum,
+      [GVM_OP_NEIGHBOR_ATTR_SUM] = op_neighbor_attr_sum,
       [GVM_OP_BFS_LEVELS] = op_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = op_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = op_hyperedge_size,
@@ -865,6 +1218,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_NEIGHBORS_EXPAND] = &&L_neighbors_expand,
       [GVM_OP_INCIDENT_OF] = &&L_incident_of,
       [GVM_OP_HYPEREDGE_NODES_OF] = &&L_hyperedge_nodes_of,
+      [GVM_OP_NEIGHBOR_WEIGHT_SUM] = &&L_neighbor_weight_sum,
+      [GVM_OP_NEIGHBOR_ATTR_SUM] = &&L_neighbor_attr_sum,
       [GVM_OP_BFS_LEVELS] = &&L_bfs_levels,
       [GVM_OP_INCIDENT_COUNT] = &&L_incident_count,
       [GVM_OP_HYPEREDGE_SIZE] = &&L_hyperedge_size,
@@ -963,6 +1318,18 @@ L_hyperedge_nodes_of:
       return rc;
     }
     continue;
+L_neighbor_weight_sum:
+    rc = op_neighbor_weight_sum(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_neighbor_attr_sum:
+    rc = op_neighbor_attr_sum(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
 L_bfs_levels:
     rc = op_bfs_levels(vm, &in);
     if (rc != 0) {
@@ -1004,6 +1371,10 @@ L_hyperedge_node_sum:
 int graphion_vm_run(graphion_vm *vm) {
   if (vm == NULL || vm->program == NULL) {
     return GVM_ERR_INVALID_ARG;
+  }
+
+  if (vm->weighted_sum_fastpath) {
+    return run_weighted_sum_fastpath_c(vm);
   }
 
   if (vm->deterministic_mode) {
@@ -1055,6 +1426,8 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
   offset = appendf(buffer, buffer_size, offset, "arith_only_fastpath=%d\n", vm->arith_only_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "arith_only_halt_terminated=%d\n",
                    vm->arith_only_halt_terminated ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "weighted_sum_fastpath=%d\n",
+                   vm->weighted_sum_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "csr_bound=%d\n", vm->csr_graph != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "hypergraph_bound=%d\n", vm->hypergraph != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "frontier_bound=%d\n", frontier_is_bound(vm) ? 1 : 0);
