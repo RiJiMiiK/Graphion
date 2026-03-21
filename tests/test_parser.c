@@ -343,6 +343,35 @@ static int expect_string_binding(const graphion_runtime_scope *scope, const char
   return strcmp(value->string_value, expected) == 0;
 }
 
+static int expect_graph_binding(const graphion_runtime_scope *scope,
+                                const char *name,
+                                size_t expected_edge_count,
+                                size_t expected_node_count,
+                                int64_t first_source,
+                                int64_t first_target,
+                                int64_t second_source,
+                                int64_t second_target) {
+  const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH) {
+    return 0;
+  }
+  if (value->graph_edge_count != expected_edge_count) {
+    return 0;
+  }
+  if (value->graph_node_count != expected_node_count) {
+    return 0;
+  }
+  if (expected_edge_count >= 1U &&
+      (value->graph_edges[0].source != first_source || value->graph_edges[0].target != first_target)) {
+    return 0;
+  }
+  if (expected_edge_count >= 2U &&
+      (value->graph_edges[1].source != second_source || value->graph_edges[1].target != second_target)) {
+    return 0;
+  }
+  return 1;
+}
+
 int test_interpreter_dynamic_assignments(void) {
   const char *source = "count = 7\n"
                        "ratio = 3.5\n"
@@ -391,6 +420,43 @@ int test_interpreter_rejects_declared_type_syntax(void) {
     if (diagnostic.line != 1U) {
       return (int)(10 + i);
     }
+  }
+  return 0;
+}
+
+int test_interpreter_graph_declaration(void) {
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  2 -> 3\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  if (!expect_graph_binding(&scope, "G", 2U, 3U, 1, 2, 2, 3)) {
+    return 2;
+  }
+  return 0;
+}
+
+int test_interpreter_rejects_non_integer_graph_nodes(void) {
+  const char *source = "graph G:\n"
+                       "  alpha -> 2\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_ERR_PARSE) {
+    return 1;
+  }
+  if (diagnostic.line != 2U) {
+    return 2;
   }
   return 0;
 }
@@ -448,6 +514,58 @@ int test_interpreter_print_and_function_return(void) {
   output[read_len] = '\0';
   if (strcmp(output, "42\n42\n") != 0) {
     return 5;
+  }
+  return 0;
+}
+
+int test_interpreter_print_graph_summary(void) {
+  const char *path = "interpreter_graph_output.txt";
+  const char *source = "graph G:\n"
+                       "  1 -> 2\n"
+                       "  2 -> 3\n"
+                       "print(G)\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<graph name=G nodes=3 edges=2>\n") != 0) {
+    return 4;
   }
   return 0;
 }

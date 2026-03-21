@@ -10,15 +10,22 @@
 enum {
   GRAPHION_RUNTIME_BINDING_MAX = 128,
   GRAPHION_RUNTIME_NAME_MAX = 64,
-  GRAPHION_RUNTIME_STRING_MAX = 256
+  GRAPHION_RUNTIME_STRING_MAX = 256,
+  GRAPHION_RUNTIME_GRAPH_EDGE_MAX = 128
 };
+
+typedef struct {
+  int64_t source;
+  int64_t target;
+} graphion_runtime_graph_edge;
 
 typedef enum {
   GRAPHION_VALUE_NONE = 0,
   GRAPHION_VALUE_INT = 1,
   GRAPHION_VALUE_FLOAT = 2,
   GRAPHION_VALUE_BOOL = 3,
-  GRAPHION_VALUE_STRING = 4
+  GRAPHION_VALUE_STRING = 4,
+  GRAPHION_VALUE_GRAPH = 5
 } graphion_runtime_value_kind;
 
 typedef struct {
@@ -27,6 +34,10 @@ typedef struct {
   double float_value;
   int bool_value;
   char string_value[GRAPHION_RUNTIME_STRING_MAX];
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_runtime_graph_edge graph_edges[GRAPHION_RUNTIME_GRAPH_EDGE_MAX];
+  size_t graph_edge_count;
+  size_t graph_node_count;
 } graphion_runtime_value;
 
 typedef struct {

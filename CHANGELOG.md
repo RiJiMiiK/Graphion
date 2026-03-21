@@ -114,6 +114,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - `.gion` is now the source-file extension for interpreted Graphion programs, with a basic file-entry execution flow through the runtime interpreter.
 - Minimal interpreted `.gion` syntax for dynamic scalar variables and assignment, with no user-declared types.
 - Builtin `print(...)` and user-defined `def ...` / `return` support for the minimal interpreted `.gion` runtime.
+- User-facing `graph Name:` declarations with integer node ids and `a -> b` edge syntax in `.gion`.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

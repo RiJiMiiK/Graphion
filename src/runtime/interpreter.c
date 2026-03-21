@@ -36,6 +36,101 @@ typedef struct {
   size_t function_count;
 } graphion_program;
 
+static void set_diagnostic(graphion_runtime_diagnostic *diagnostic,
+                           size_t line,
+                           size_t column,
+                           const char *message);
+static void trim_in_place(char *s);
+static int is_valid_identifier(const char *name);
+static int is_reserved_name(const char *name);
+static int parse_int_literal(const char *token, graphion_runtime_value *value);
+
+static int parse_graph_header(const char *text,
+                              char *name_out,
+                              graphion_runtime_diagnostic *diagnostic,
+                              size_t line_no) {
+  size_t name_len;
+  const char *cursor;
+  if (strncmp(text, "graph ", 6U) != 0) {
+    return 0;
+  }
+  cursor = text + 6U;
+  name_len = strlen(cursor);
+  if (name_len == 0U || cursor[name_len - 1U] != ':') {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph declaration");
+    return GINT_ERR_PARSE;
+  }
+  if (name_len >= GRAPHION_RUNTIME_NAME_MAX) {
+    set_diagnostic(diagnostic, line_no, 1U, "graph name too long");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(name_out, cursor, name_len - 1U);
+  name_out[name_len - 1U] = '\0';
+  trim_in_place(name_out);
+  if (!is_valid_identifier(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph name");
+    return GINT_ERR_PARSE;
+  }
+  if (is_reserved_name(name_out)) {
+    set_diagnostic(diagnostic, line_no, 1U, "reserved name cannot be used as a graph");
+    return GINT_ERR_RESERVED_NAME;
+  }
+  return GINT_OK;
+}
+
+static int parse_graph_edge(const char *text,
+                            graphion_runtime_graph_edge *edge,
+                            graphion_runtime_diagnostic *diagnostic,
+                            size_t line_no) {
+  const char *arrow;
+  char lhs[GRAPHION_RUNTIME_NAME_MAX];
+  char rhs[GRAPHION_RUNTIME_NAME_MAX];
+  size_t lhs_len;
+  size_t rhs_len;
+  graphion_runtime_value source_value;
+  graphion_runtime_value target_value;
+
+  if (text == NULL || edge == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  arrow = strstr(text, "->");
+  if (arrow == NULL) {
+    set_diagnostic(diagnostic, line_no, 1U, "expected graph edge using a -> b syntax");
+    return GINT_ERR_PARSE;
+  }
+  lhs_len = (size_t)(arrow - text);
+  rhs_len = strlen(arrow + 2U);
+  if (lhs_len == 0U || lhs_len >= sizeof(lhs) || rhs_len == 0U || rhs_len >= sizeof(rhs)) {
+    set_diagnostic(diagnostic, line_no, 1U, "invalid graph edge");
+    return GINT_ERR_PARSE;
+  }
+  memcpy(lhs, text, lhs_len);
+  lhs[lhs_len] = '\0';
+  memcpy(rhs, arrow + 2U, rhs_len + 1U);
+  trim_in_place(lhs);
+  trim_in_place(rhs);
+  if (!parse_int_literal(lhs, &source_value) || !parse_int_literal(rhs, &target_value)) {
+    set_diagnostic(diagnostic, line_no, 1U, "graph node ids must be integers");
+    return GINT_ERR_PARSE;
+  }
+  edge->source = source_value.int_value;
+  edge->target = target_value.int_value;
+  return GINT_OK;
+}
+
+static int graph_contains_node(const graphion_runtime_value *graph, int64_t node_id) {
+  size_t i;
+  if (graph == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < graph->graph_edge_count; ++i) {
+    if (graph->graph_edges[i].source == node_id || graph->graph_edges[i].target == node_id) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -419,6 +514,17 @@ static int index_functions(graphion_program *program, graphion_runtime_diagnosti
     graphion_runtime_function function;
     int rc;
     if (strncmp(line->text, "def ", 4U) != 0) {
+      if (strncmp(line->text, "graph ", 6U) == 0) {
+        if (line->indent != 0U) {
+          set_diagnostic(diagnostic, line->line_no, 1U, "nested graph declarations are not supported");
+          return GINT_ERR_PARSE;
+        }
+        ++i;
+        while (i < program->line_count && program->lines[i].indent > line->indent) {
+          ++i;
+        }
+        continue;
+      }
       if (line->indent != 0U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "unexpected indentation outside function body");
         return GINT_ERR_PARSE;
@@ -583,6 +689,13 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
       break;
     case GRAPHION_VALUE_STRING:
       fprintf(output, "%s\n", value->string_value);
+      break;
+    case GRAPHION_VALUE_GRAPH:
+      fprintf(output,
+              "<graph name=%s nodes=%zu edges=%zu>\n",
+              value->graph_name,
+              value->graph_node_count,
+              value->graph_edge_count);
       break;
     default:
       fprintf(output, "none\n");
@@ -813,6 +926,49 @@ static int execute_block(const graphion_program *program,
   while (i < end) {
     const graphion_source_line *line = &program->lines[i];
     int rc;
+    if (line->indent == 0U && strncmp(line->text, "graph ", 6U) == 0) {
+      graphion_runtime_value graph_value;
+      char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+      size_t body_end = i + 1U;
+      rc = parse_graph_header(line->text, graph_name, diagnostic, line->line_no);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      memset(&graph_value, 0, sizeof(graph_value));
+      graph_value.kind = GRAPHION_VALUE_GRAPH;
+      memcpy(graph_value.graph_name, graph_name, strlen(graph_name) + 1U);
+      while (body_end < end && program->lines[body_end].indent > line->indent) {
+        graphion_runtime_graph_edge edge;
+        if (graph_value.graph_edge_count >= GRAPHION_RUNTIME_GRAPH_EDGE_MAX) {
+          set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "graph edge capacity exceeded");
+          return GINT_ERR_CAPACITY;
+        }
+        rc = parse_graph_edge(program->lines[body_end].text, &edge, diagnostic, program->lines[body_end].line_no);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (!graph_contains_node(&graph_value, edge.source)) {
+          graph_value.graph_node_count += 1U;
+        }
+        if (!graph_contains_node(&graph_value, edge.target)) {
+          graph_value.graph_node_count += 1U;
+        }
+        graph_value.graph_edges[graph_value.graph_edge_count] = edge;
+        graph_value.graph_edge_count += 1U;
+        body_end += 1U;
+      }
+      if (body_end == i + 1U) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "graph body cannot be empty");
+        return GINT_ERR_PARSE;
+      }
+      rc = assign_value(global_scope, graph_name, &graph_value);
+      if (rc != GINT_OK) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        return rc;
+      }
+      i = body_end;
+      continue;
+    }
     if (line->indent == 0U && strncmp(line->text, "def ", 4U) == 0) {
       const graphion_runtime_function *function = find_function(program, line->text + 4U);
       size_t skip_to = i + 1U;

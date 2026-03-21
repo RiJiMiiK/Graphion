@@ -4,11 +4,16 @@ name = "graphion"
 ready = true
 copy = count
 
+graph G:
+  1 -> 2
+  2 -> 3
+
 print(count)
 print(ratio)
 print(name)
 print(ready)
 print(copy)
+print(G)
 
 def echo(value):
   print(value)

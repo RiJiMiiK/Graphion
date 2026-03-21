@@ -22,6 +22,7 @@ Current source-program entry flow uses the `.gion` extension.
   - builtin `print(...)`
   - top-level user-defined functions via `def name(...):`
   - `return` inside function bodies
+  - top-level `graph Name:` declarations
   - no user-declared types
   - supported scalar values:
     - `int`
@@ -31,14 +32,28 @@ Current source-program entry flow uses the `.gion` extension.
 - assignment expressions may reference an already-bound variable:
   - `answer = 42`
   - `copy = answer`
+- graph declarations currently support integer node ids only:
+  - `graph G:`
+  - `  1 -> 2`
+  - `  2 -> 3`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
 - `print(...)` writes scalar runtime values to the configured interpreter output stream.
+- printable graph-oriented runtime values are part of the intended user-facing model:
+  - `print(graph)` should show graph name, node count, and edge count
+  - `print(node)` should show node id/name and neighbor count
+  - `print(edge)` should show source, target, reserved `weight` when present, and other attributes
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
 - the current function model is intentionally narrow:
   - top-level definitions only
   - no nested `def`
   - local function scope with fallback reads from the global scope
+- the current graph declaration model is also intentionally narrow:
+  - top-level declarations only
+  - integer node ids only
+  - no graph attributes yet
+  - only `graph` summary printing is implemented today; `node` and `edge` printable values
+    will land with the future user-facing graph API
 
 ## VM model (current)
 
