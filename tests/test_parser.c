@@ -505,6 +505,106 @@ int test_interpreter_hypergraph_declaration(void) {
   return 0;
 }
 
+int test_interpreter_graph_scalar_attributes(void) {
+  const char *source = "graph G:\n"
+                       "  1 -> 2 [weight=7, color=\"red\", active=true, rank=3]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *value;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  value = graphion_runtime_scope_find(&scope, "G");
+  if (value == NULL || value->kind != GRAPHION_VALUE_GRAPH || value->graph_value == NULL) {
+    return 2;
+  }
+  if (!value->graph_value->edges[0].has_weight || value->graph_value->edges[0].weight != 7.0) {
+    return 3;
+  }
+  if (value->graph_value->edges[0].attribute_count != 3U) {
+    return 4;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[0].name, "color") != 0 ||
+      value->graph_value->edges[0].attributes[0].kind != GRAPHION_ATTRIBUTE_STRING ||
+      strcmp(value->graph_value->edges[0].attributes[0].string_value, "red") != 0) {
+    return 5;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[1].name, "active") != 0 ||
+      value->graph_value->edges[0].attributes[1].kind != GRAPHION_ATTRIBUTE_BOOL ||
+      value->graph_value->edges[0].attributes[1].bool_value != 1) {
+    return 6;
+  }
+  if (strcmp(value->graph_value->edges[0].attributes[2].name, "rank") != 0 ||
+      value->graph_value->edges[0].attributes[2].kind != GRAPHION_ATTRIBUTE_INT ||
+      value->graph_value->edges[0].attributes[2].int_value != 3) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_interpreter_hypergraph_scalar_attributes(void) {
+  const char *source = "hypergraph H:\n"
+                       "  e1: [1, 2, 3] [weight=2.5, label=\"core\", enabled=false]\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *value;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source(source, &scope, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  value = graphion_runtime_scope_find(&scope, "H");
+  if (value == NULL || value->kind != GRAPHION_VALUE_HYPERGRAPH || value->hypergraph_value == NULL) {
+    return 2;
+  }
+  if (!value->hypergraph_value->hyperedges[0].has_weight ||
+      value->hypergraph_value->hyperedges[0].weight != 2.5) {
+    return 3;
+  }
+  if (value->hypergraph_value->hyperedges[0].attribute_count != 2U) {
+    return 4;
+  }
+  if (strcmp(value->hypergraph_value->hyperedges[0].attributes[0].name, "label") != 0 ||
+      value->hypergraph_value->hyperedges[0].attributes[0].kind != GRAPHION_ATTRIBUTE_STRING ||
+      strcmp(value->hypergraph_value->hyperedges[0].attributes[0].string_value, "core") != 0) {
+    return 5;
+  }
+  if (strcmp(value->hypergraph_value->hyperedges[0].attributes[1].name, "enabled") != 0 ||
+      value->hypergraph_value->hyperedges[0].attributes[1].kind != GRAPHION_ATTRIBUTE_BOOL ||
+      value->hypergraph_value->hyperedges[0].attributes[1].bool_value != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_interpreter_rejects_invalid_weight_type(void) {
+  static const char *bad_sources[] = {
+      "graph G:\n  1 -> 2 [weight=\"heavy\"]\n",
+      "hypergraph H:\n  e1: [1, 2] [weight=true]\n",
+  };
+  size_t i;
+  for (i = 0U; i < sizeof(bad_sources) / sizeof(bad_sources[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(bad_sources[i], &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return (int)(1 + i);
+    }
+    if (diagnostic.line != 2U) {
+      return (int)(10 + i);
+    }
+  }
+  return 0;
+}
+
 int test_interpreter_rejects_non_integer_hypergraph_nodes(void) {
   const char *source = "hypergraph H:\n"
                        "  e1: [1, alpha]\n";

@@ -116,6 +116,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Builtin `print(...)` and user-defined `def ...` / `return` support for the minimal interpreted `.gion` runtime.
 - User-facing `graph Name:` declarations with integer node ids and `a -> b` edge syntax in `.gion`.
 - User-facing `hypergraph Name:` declarations with explicit hyperedge ids and integer node lists in `.gion`.
+- Scalar graph and hypergraph declaration attributes now support `int`, `float`, `string`, and `bool`, with reserved `weight` normalized to float.
 
 ### Changed
 - VM arithmetic fastpath refined with halt-terminated specialization.

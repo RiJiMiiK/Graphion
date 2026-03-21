@@ -97,7 +97,7 @@
 - [x] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
 - [x] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
 - [x] User-facing hypergraph declarations with explicit hyperedge ids and integer node lists.
-- [ ] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
+- [x] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
 - [ ] Builtin graph/hypergraph functions with user-facing semantics:
   - `bfs(...)` returns visited node ids in BFS encounter order
   - `bfs_level(...)` returns only the number of BFS levels

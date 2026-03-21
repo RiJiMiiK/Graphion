@@ -48,6 +48,9 @@ int test_interpreter_graph_declaration(void);
 int test_interpreter_rejects_non_integer_graph_nodes(void);
 int test_interpreter_hypergraph_declaration(void);
 int test_interpreter_rejects_non_integer_hypergraph_nodes(void);
+int test_interpreter_graph_scalar_attributes(void);
+int test_interpreter_hypergraph_scalar_attributes(void);
+int test_interpreter_rejects_invalid_weight_type(void);
 int test_interpreter_print_and_function_return(void);
 int test_interpreter_print_graph_summary(void);
 int test_interpreter_print_hypergraph_summary(void);
@@ -132,6 +135,9 @@ int main(int argc, char **argv) {
       {"interpreter_rejects_non_integer_graph_nodes", test_interpreter_rejects_non_integer_graph_nodes},
       {"interpreter_hypergraph_declaration", test_interpreter_hypergraph_declaration},
       {"interpreter_rejects_non_integer_hypergraph_nodes", test_interpreter_rejects_non_integer_hypergraph_nodes},
+      {"interpreter_graph_scalar_attributes", test_interpreter_graph_scalar_attributes},
+      {"interpreter_hypergraph_scalar_attributes", test_interpreter_hypergraph_scalar_attributes},
+      {"interpreter_rejects_invalid_weight_type", test_interpreter_rejects_invalid_weight_type},
       {"interpreter_print_and_function_return", test_interpreter_print_and_function_return},
       {"interpreter_print_graph_summary", test_interpreter_print_graph_summary},
       {"interpreter_print_hypergraph_summary", test_interpreter_print_hypergraph_summary},

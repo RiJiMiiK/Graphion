@@ -43,7 +43,10 @@ static void set_diagnostic(graphion_runtime_diagnostic *diagnostic,
 static void trim_in_place(char *s);
 static int is_valid_identifier(const char *name);
 static int is_reserved_name(const char *name);
+static int parse_string_literal(const char *token, graphion_runtime_value *value);
+static int parse_bool_literal(const char *token, graphion_runtime_value *value);
 static int parse_int_literal(const char *token, graphion_runtime_value *value);
+static int parse_float_literal(const char *token, graphion_runtime_value *value);
 
 static int parse_graph_header(const char *text,
                               char *name_out,
@@ -116,6 +119,7 @@ static int parse_graph_edge(const char *text,
                             graphion_runtime_diagnostic *diagnostic,
                             size_t line_no) {
   const char *arrow;
+  const char *attrs;
   char lhs[GRAPHION_RUNTIME_NAME_MAX];
   char rhs[GRAPHION_RUNTIME_NAME_MAX];
   size_t lhs_len;
@@ -131,15 +135,18 @@ static int parse_graph_edge(const char *text,
     set_diagnostic(diagnostic, line_no, 1U, "expected graph edge using a -> b syntax");
     return GINT_ERR_PARSE;
   }
+  attrs = strchr(arrow + 2U, '[');
   lhs_len = (size_t)(arrow - text);
-  rhs_len = strlen(arrow + 2U);
+  rhs_len = attrs != NULL ? (size_t)(attrs - (arrow + 2U)) : strlen(arrow + 2U);
   if (lhs_len == 0U || lhs_len >= sizeof(lhs) || rhs_len == 0U || rhs_len >= sizeof(rhs)) {
     set_diagnostic(diagnostic, line_no, 1U, "invalid graph edge");
     return GINT_ERR_PARSE;
   }
+  memset(edge, 0, sizeof(*edge));
   memcpy(lhs, text, lhs_len);
   lhs[lhs_len] = '\0';
-  memcpy(rhs, arrow + 2U, rhs_len + 1U);
+  memcpy(rhs, arrow + 2U, rhs_len);
+  rhs[rhs_len] = '\0';
   trim_in_place(lhs);
   trim_in_place(rhs);
   if (!parse_int_literal(lhs, &source_value) || !parse_int_literal(rhs, &target_value)) {
@@ -148,6 +155,102 @@ static int parse_graph_edge(const char *text,
   }
   edge->source = source_value.int_value;
   edge->target = target_value.int_value;
+  if (attrs != NULL) {
+    const char *close_bracket = strrchr(attrs, ']');
+    char attrs_buf[GINT_LINE_MAX];
+    size_t attrs_len;
+    size_t start = 0U;
+    size_t i = 0U;
+    int in_string = 0;
+    if (close_bracket == NULL || close_bracket < attrs) {
+      set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute list");
+      return GINT_ERR_PARSE;
+    }
+    attrs_len = (size_t)(close_bracket - attrs - 1);
+    if (attrs_len >= sizeof(attrs_buf)) {
+      set_diagnostic(diagnostic, line_no, 1U, "graph attribute list too long");
+      return GINT_ERR_PARSE;
+    }
+    memcpy(attrs_buf, attrs + 1U, attrs_len);
+    attrs_buf[attrs_len] = '\0';
+    trim_in_place(attrs_buf);
+    if (attrs_buf[0] != '\0') {
+      while (1) {
+        const char current = attrs_buf[i];
+        if (current == '"' && (i == 0U || attrs_buf[i - 1U] != '\\')) {
+          in_string = !in_string;
+        }
+        if (!in_string && (current == ',' || current == '\0')) {
+          char entry[GINT_LINE_MAX];
+          char *eq;
+          size_t entry_len = i - start;
+          graphion_runtime_attribute attribute;
+          if (entry_len == 0U || entry_len >= sizeof(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute entry");
+            return GINT_ERR_PARSE;
+          }
+          if (edge->attribute_count >= GRAPHION_RUNTIME_ATTRIBUTE_MAX) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attribute capacity exceeded");
+            return GINT_ERR_CAPACITY;
+          }
+          memcpy(entry, attrs_buf + start, entry_len);
+          entry[entry_len] = '\0';
+          trim_in_place(entry);
+          eq = strchr(entry, '=');
+          if (eq == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attributes must use key=value syntax");
+            return GINT_ERR_PARSE;
+          }
+          memset(&attribute, 0, sizeof(attribute));
+          *eq = '\0';
+          trim_in_place(entry);
+          trim_in_place(eq + 1U);
+          if (!is_valid_identifier(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid graph attribute name");
+            return GINT_ERR_PARSE;
+          }
+          memcpy(attribute.name, entry, strlen(entry) + 1U);
+          if (strcmp(attribute.name, "weight") == 0) {
+            graphion_runtime_value weight_value;
+            if (!parse_float_literal(eq + 1U, &weight_value) && !parse_int_literal(eq + 1U, &weight_value)) {
+              set_diagnostic(diagnostic, line_no, 1U, "weight must be numeric");
+              return GINT_ERR_PARSE;
+            }
+            edge->has_weight = 1;
+            edge->weight = weight_value.kind == GRAPHION_VALUE_FLOAT ? weight_value.float_value
+                                                                     : (double)weight_value.int_value;
+          } else if (parse_string_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_STRING;
+            memcpy(attribute.string_value, source_value.string_value, strlen(source_value.string_value) + 1U);
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_bool_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_BOOL;
+            attribute.bool_value = source_value.bool_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_float_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_FLOAT;
+            attribute.float_value = source_value.float_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else if (parse_int_literal(eq + 1U, &source_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_INT;
+            attribute.int_value = source_value.int_value;
+            edge->attributes[edge->attribute_count++] = attribute;
+          } else {
+            set_diagnostic(diagnostic, line_no, 1U, "graph attributes must be scalar values");
+            return GINT_ERR_PARSE;
+          }
+          if (current == '\0') {
+            break;
+          }
+          start = i + 1U;
+        }
+        if (current == '\0') {
+          break;
+        }
+        ++i;
+      }
+    }
+  }
   return GINT_OK;
 }
 
@@ -187,6 +290,7 @@ static int parse_hyperedge_line(const char *text,
   const char *colon;
   const char *open_bracket;
   const char *close_bracket;
+  const char *attrs;
   size_t name_len;
   char nodes_buf[GINT_LINE_MAX];
   size_t start = 0U;
@@ -197,7 +301,8 @@ static int parse_hyperedge_line(const char *text,
   }
   colon = strchr(text, ':');
   open_bracket = strchr(text, '[');
-  close_bracket = strrchr(text, ']');
+  close_bracket = open_bracket != NULL ? strchr(open_bracket + 1U, ']') : NULL;
+  attrs = close_bracket != NULL ? strchr(close_bracket + 1U, '[') : NULL;
   if (colon == NULL || open_bracket == NULL || close_bracket == NULL ||
       colon > open_bracket || close_bracket < open_bracket) {
     set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge declaration");
@@ -259,6 +364,102 @@ static int parse_hyperedge_line(const char *text,
       break;
     }
     ++i;
+  }
+  if (attrs != NULL) {
+    const char *attrs_close = strrchr(attrs, ']');
+    char attrs_buf[GINT_LINE_MAX];
+    size_t attrs_len;
+    start = 0U;
+    i = 0U;
+    if (attrs_close == NULL || attrs_close < attrs) {
+      set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute list");
+      return GINT_ERR_PARSE;
+    }
+    attrs_len = (size_t)(attrs_close - attrs - 1);
+    if (attrs_len >= sizeof(attrs_buf)) {
+      set_diagnostic(diagnostic, line_no, 1U, "hyperedge attribute list too long");
+      return GINT_ERR_PARSE;
+    }
+    memcpy(attrs_buf, attrs + 1U, attrs_len);
+    attrs_buf[attrs_len] = '\0';
+    trim_in_place(attrs_buf);
+    if (attrs_buf[0] != '\0') {
+      int in_string = 0;
+      while (1) {
+        const char current = attrs_buf[i];
+        if (current == '"' && (i == 0U || attrs_buf[i - 1U] != '\\')) {
+          in_string = !in_string;
+        }
+        if (!in_string && (current == ',' || current == '\0')) {
+          char entry[GINT_LINE_MAX];
+          char *eq;
+          size_t entry_len = i - start;
+          graphion_runtime_attribute attribute;
+          graphion_runtime_value parsed_value;
+          if (entry_len == 0U || entry_len >= sizeof(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute entry");
+            return GINT_ERR_PARSE;
+          }
+          if (hyperedge->attribute_count >= GRAPHION_RUNTIME_ATTRIBUTE_MAX) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attribute capacity exceeded");
+            return GINT_ERR_CAPACITY;
+          }
+          memcpy(entry, attrs_buf + start, entry_len);
+          entry[entry_len] = '\0';
+          trim_in_place(entry);
+          eq = strchr(entry, '=');
+          if (eq == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attributes must use key=value syntax");
+            return GINT_ERR_PARSE;
+          }
+          memset(&attribute, 0, sizeof(attribute));
+          *eq = '\0';
+          trim_in_place(entry);
+          trim_in_place(eq + 1U);
+          if (!is_valid_identifier(entry)) {
+            set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge attribute name");
+            return GINT_ERR_PARSE;
+          }
+          memcpy(attribute.name, entry, strlen(entry) + 1U);
+          if (strcmp(attribute.name, "weight") == 0) {
+            if (!parse_float_literal(eq + 1U, &parsed_value) && !parse_int_literal(eq + 1U, &parsed_value)) {
+              set_diagnostic(diagnostic, line_no, 1U, "weight must be numeric");
+              return GINT_ERR_PARSE;
+            }
+            hyperedge->has_weight = 1;
+            hyperedge->weight = parsed_value.kind == GRAPHION_VALUE_FLOAT ? parsed_value.float_value
+                                                                          : (double)parsed_value.int_value;
+          } else if (parse_string_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_STRING;
+            memcpy(attribute.string_value, parsed_value.string_value, strlen(parsed_value.string_value) + 1U);
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_bool_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_BOOL;
+            attribute.bool_value = parsed_value.bool_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_float_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_FLOAT;
+            attribute.float_value = parsed_value.float_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else if (parse_int_literal(eq + 1U, &parsed_value)) {
+            attribute.kind = GRAPHION_ATTRIBUTE_INT;
+            attribute.int_value = parsed_value.int_value;
+            hyperedge->attributes[hyperedge->attribute_count++] = attribute;
+          } else {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge attributes must be scalar values");
+            return GINT_ERR_PARSE;
+          }
+          if (current == '\0') {
+            break;
+          }
+          start = i + 1U;
+        }
+        if (current == '\0') {
+          break;
+        }
+        ++i;
+      }
+    }
   }
   return GINT_OK;
 }

@@ -36,11 +36,17 @@ Current source-program entry flow uses the `.gion` extension.
 - graph declarations currently support integer node ids only:
   - `graph G:`
   - `  1 -> 2`
-  - `  2 -> 3`
+  - `  2 -> 3 [weight=7, color="red", active=true]`
 - hypergraph declarations currently support explicit hyperedge ids and integer node lists:
   - `hypergraph H:`
   - `  e1: [1, 2, 3]`
-  - `  e2: [2, 4]`
+  - `  e2: [2, 4] [weight=2.5, label="core"]`
+- declaration attributes are currently restricted to scalar values only:
+  - `int`
+  - `float`
+  - `string`
+  - `bool`
+- `weight` is reserved and normalized to a runtime float whether written as `7` or `7.0`
 - function calls may appear in assignment expressions:
   - `answer = echo(42)`
 - `print(...)` writes scalar runtime values to the configured interpreter output stream.
