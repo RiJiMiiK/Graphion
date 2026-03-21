@@ -12,9 +12,9 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from bench_paths import OPTIMIZATION_REPORT_JSON, OPTIMIZATION_REPORT_MD
 from pgo_artifacts import profile_manifest, reset_profile_dir
 from pgo_corpus import corpus_profile_names, coverage_classes, expanded_workloads
-from report_metadata import base_metadata, validate_metadata
 from pgo_thresholds import evaluate_speedup, threshold_for, threshold_rows
 from report_metadata import base_metadata, validate_metadata
 
@@ -532,8 +532,8 @@ def render_markdown(payload: dict[str, object]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate an official Graphion optimization report (baseline vs PGO).")
     parser.add_argument("--build-root", default="build-optimization-report", help="Directory root used for report builds")
-    parser.add_argument("--output-json", default="benchmarks/results/optimization/optimization_report_latest.json", help="JSON report output path")
-    parser.add_argument("--output-md", default="docs/performance/reports/OPTIMIZATION_REPORTS.md", help="Markdown report output path")
+    parser.add_argument("--output-json", default=str(OPTIMIZATION_REPORT_JSON), help="JSON report output path")
+    parser.add_argument("--output-md", default=str(OPTIMIZATION_REPORT_MD), help="Markdown report output path")
     parser.add_argument("--platform-label", default="", help="Human-readable platform label used in the report metadata")
     parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--build-type", default="Release", help="CMAKE_BUILD_TYPE for single-config generators")

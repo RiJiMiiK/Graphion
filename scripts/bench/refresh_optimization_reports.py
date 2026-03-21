@@ -6,6 +6,14 @@ import pathlib
 import subprocess
 import tempfile
 
+from bench_paths import (
+    OPTIMIZATION_LINUX_JSON,
+    OPTIMIZATION_REPORT_JSON,
+    OPTIMIZATION_REPORT_MD,
+    OPTIMIZATION_WINDOWS_JSON,
+    SMOKE_RESULTS_DIR,
+)
+
 
 def run(cmd: list[str]) -> None:
     print("+", " ".join(cmd))
@@ -25,10 +33,10 @@ def main() -> int:
     parser.add_argument("--skip-windows", action="store_true", help="Skip Windows report generation")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/optimization/optimization_report_windows.json")
-    linux_json = pathlib.Path("benchmarks/results/optimization/optimization_report_linux.json")
+    windows_json = OPTIMIZATION_WINDOWS_JSON
+    linux_json = OPTIMIZATION_LINUX_JSON
     input_jsons: list[str] = []
-    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-opt-report-", dir="benchmarks/results/smoke"))
+    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-opt-report-", dir=str(SMOKE_RESULTS_DIR)))
     windows_md = temp_root / "optimization_report_windows.md"
     linux_md = temp_root / "optimization_report_linux.md"
 
@@ -83,9 +91,9 @@ def main() -> int:
         "python",
         "scripts/bench/render_optimization_reports.py",
         "--output-md",
-        "docs/performance/reports/OPTIMIZATION_REPORTS.md",
+        str(OPTIMIZATION_REPORT_MD),
         "--output-json",
-        "benchmarks/results/optimization/optimization_report_latest.json",
+        str(OPTIMIZATION_REPORT_JSON),
     ]
     for path in input_jsons:
         render_cmd.extend(["--input-json", path])

@@ -6,6 +6,14 @@ import pathlib
 import subprocess
 import sys
 
+from bench_paths import (
+    DISPATCH_LINUX_JSON,
+    DISPATCH_WINDOWS_JSON,
+    PERFORMANCE_LINUX_JSON,
+    PERFORMANCE_RUST_JSON,
+    PERFORMANCE_WINDOWS_JSON,
+)
+
 
 def run(cmd: list[str]) -> None:
     print("+", " ".join(cmd))
@@ -27,11 +35,11 @@ def main() -> int:
     parser.add_argument("--dispatch-build-root", default="", help="Optional build root prefix for dispatch-variant study")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/performance/windows_100x_latest.json")
-    linux_json = pathlib.Path("benchmarks/results/performance/linux_100x_latest.json")
-    rust_json = pathlib.Path("benchmarks/results/performance/rust_100x_latest.json")
-    dispatch_windows_json = pathlib.Path("benchmarks/results/performance/dispatch_variants_windows.json")
-    dispatch_linux_json = pathlib.Path("benchmarks/results/performance/dispatch_variants.json")
+    windows_json = PERFORMANCE_WINDOWS_JSON
+    linux_json = PERFORMANCE_LINUX_JSON
+    rust_json = PERFORMANCE_RUST_JSON
+    dispatch_windows_json = DISPATCH_WINDOWS_JSON
+    dispatch_linux_json = DISPATCH_LINUX_JSON
 
     if not args.skip_windows:
         run([

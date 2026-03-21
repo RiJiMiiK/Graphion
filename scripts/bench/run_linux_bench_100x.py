@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import json
-import pathlib
 import statistics
 import subprocess
+
+from bench_paths import PERFORMANCE_LINUX_JSON
 
 
 def main() -> int:
@@ -35,7 +36,7 @@ def main() -> int:
         }
     )
 
-  out_path = pathlib.Path("benchmarks/results/performance/linux_100x_latest.json")
+  out_path = PERFORMANCE_LINUX_JSON
   out_path.parent.mkdir(parents=True, exist_ok=True)
   out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
   print(json.dumps(rows, indent=2))

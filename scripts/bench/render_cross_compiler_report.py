@@ -6,6 +6,7 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from bench_paths import CROSS_COMPILER_REPORT_JSON, CROSS_COMPILER_REPORT_MD
 from report_metadata import validate_metadata
 
 
@@ -148,8 +149,8 @@ def render_markdown(payloads: list[dict[str, object]]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render the cross-compiler optimization governance report.")
     parser.add_argument("--input-json", action="append", required=True, help="Input optimization report JSON (repeatable)")
-    parser.add_argument("--output-md", default="docs/performance/reports/CROSS_COMPILER_REPORT.md", help="Output Markdown path")
-    parser.add_argument("--output-json", default="benchmarks/results/cross-compiler/cross_compiler_report_latest.json", help="Output merged JSON path")
+    parser.add_argument("--output-md", default=str(CROSS_COMPILER_REPORT_MD), help="Output Markdown path")
+    parser.add_argument("--output-json", default=str(CROSS_COMPILER_REPORT_JSON), help="Output merged JSON path")
     args = parser.parse_args()
 
     payloads = [load_payload(pathlib.Path(path)) for path in args.input_json]

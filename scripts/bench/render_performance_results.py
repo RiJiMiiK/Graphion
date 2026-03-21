@@ -6,6 +6,7 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from bench_paths import PERFORMANCE_RESULTS_MD
 from report_metadata import validate_metadata
 
 
@@ -170,7 +171,7 @@ def main() -> int:
     parser.add_argument("--rust-json", default="", help="Rust benchmark JSON")
     parser.add_argument("--dispatch-windows-json", required=True, help="Windows dispatch variants JSON")
     parser.add_argument("--dispatch-linux-json", required=True, help="Linux dispatch variants JSON")
-    parser.add_argument("--output", default="docs/performance/reports/PERFORMANCE_RESULTS.md", help="Output markdown path")
+    parser.add_argument("--output", default=str(PERFORMANCE_RESULTS_MD), help="Output markdown path")
     args = parser.parse_args()
 
     windows_meta, windows_rows = load_rows(pathlib.Path(args.windows_json), ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])

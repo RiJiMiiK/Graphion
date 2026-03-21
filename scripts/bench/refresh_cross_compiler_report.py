@@ -6,6 +6,15 @@ import pathlib
 import subprocess
 import tempfile
 
+from bench_paths import (
+    CROSS_COMPILER_LINUX_CLANG_JSON,
+    CROSS_COMPILER_LINUX_GCC_JSON,
+    CROSS_COMPILER_REPORT_JSON,
+    CROSS_COMPILER_REPORT_MD,
+    CROSS_COMPILER_WINDOWS_JSON,
+    SMOKE_RESULTS_DIR,
+)
+
 
 def run(cmd: list[str]) -> None:
     print("+", " ".join(cmd))
@@ -28,11 +37,11 @@ def main() -> int:
     parser.add_argument("--skip-linux-clang", action="store_true", help="Skip the Linux Docker Clang lane")
     args = parser.parse_args()
 
-    windows_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_windows_msvc.json")
-    linux_gcc_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_linux_gcc.json")
-    linux_clang_json = pathlib.Path("benchmarks/results/cross-compiler/cross_compiler_linux_clang.json")
+    windows_json = CROSS_COMPILER_WINDOWS_JSON
+    linux_gcc_json = CROSS_COMPILER_LINUX_GCC_JSON
+    linux_clang_json = CROSS_COMPILER_LINUX_CLANG_JSON
     input_jsons: list[str] = []
-    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-cross-compiler-", dir="benchmarks/results/smoke"))
+    temp_root = pathlib.Path(tempfile.mkdtemp(prefix="graphion-cross-compiler-", dir=str(SMOKE_RESULTS_DIR)))
     windows_md = temp_root / "cross_compiler_windows.md"
     gcc_md = temp_root / "cross_compiler_gcc.md"
     clang_md = temp_root / "cross_compiler_clang.md"
@@ -132,9 +141,9 @@ def main() -> int:
         "python",
         "scripts/bench/render_cross_compiler_report.py",
         "--output-md",
-        "docs/performance/reports/CROSS_COMPILER_REPORT.md",
+        str(CROSS_COMPILER_REPORT_MD),
         "--output-json",
-        "benchmarks/results/cross-compiler/cross_compiler_report_latest.json",
+        str(CROSS_COMPILER_REPORT_JSON),
     ]
     for path in input_jsons:
         render_cmd.extend(["--input-json", path])

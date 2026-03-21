@@ -6,6 +6,7 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
+from bench_paths import OPTIMIZATION_REPORT_JSON, OPTIMIZATION_REPORT_MD
 from report_metadata import validate_metadata
 
 
@@ -175,8 +176,8 @@ def render_markdown(payloads: list[dict[str, object]]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render a unified optimization report from per-platform JSON artifacts.")
     parser.add_argument("--input-json", action="append", required=True, help="Input optimization report JSON (repeatable)")
-    parser.add_argument("--output-md", default="docs/performance/reports/OPTIMIZATION_REPORTS.md", help="Output Markdown path")
-    parser.add_argument("--output-json", default="benchmarks/results/optimization/optimization_report_latest.json", help="Output merged JSON path")
+    parser.add_argument("--output-md", default=str(OPTIMIZATION_REPORT_MD), help="Output Markdown path")
+    parser.add_argument("--output-json", default=str(OPTIMIZATION_REPORT_JSON), help="Output merged JSON path")
     args = parser.parse_args()
 
     payloads = [load_payload(pathlib.Path(path)) for path in args.input_json]

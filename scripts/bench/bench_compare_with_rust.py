@@ -7,6 +7,8 @@ import pathlib
 import subprocess
 import sys
 
+from bench_paths import PERFORMANCE_LATEST_JSON
+
 
 def load_json(path: pathlib.Path) -> dict:
   return json.loads(path.read_text(encoding="utf-8"))
@@ -22,7 +24,7 @@ def parse_last_json_line(stdout: str) -> dict:
 
 def main() -> int:
   parser = argparse.ArgumentParser(description="Compare Graphion VM benchmark to optional Rust benchmark.")
-  parser.add_argument("--vm-json", default="benchmarks/results/performance/latest.json", help="Path to VM benchmark JSON")
+  parser.add_argument("--vm-json", default=str(PERFORMANCE_LATEST_JSON), help="Path to VM benchmark JSON")
   parser.add_argument(
       "--rust-json",
       default="",

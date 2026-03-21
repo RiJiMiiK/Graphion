@@ -9,6 +9,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from bench_paths import ASM_FALLBACK_JSON, ASM_FALLBACK_MD
+
 
 BENCH_SPECS = [
     {
@@ -180,8 +182,8 @@ def main() -> int:
     parser.add_argument("--build-type", default="Release", help="CMAKE_BUILD_TYPE for single-config generators")
     parser.add_argument("--iterations", type=int, default=500000, help="Iterations per benchmark run")
     parser.add_argument("--runs", type=int, default=20, help="Runs per benchmark")
-    parser.add_argument("--output-json", default="benchmarks/results/asm/asm_fallback_report_latest.json", help="JSON output path")
-    parser.add_argument("--output-md", default="docs/performance/reports/ASM_FALLBACK_REPORT.md", help="Markdown output path")
+    parser.add_argument("--output-json", default=str(ASM_FALLBACK_JSON), help="JSON output path")
+    parser.add_argument("--output-md", default=str(ASM_FALLBACK_MD), help="Markdown output path")
     parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=clang")
     args = parser.parse_args()
 

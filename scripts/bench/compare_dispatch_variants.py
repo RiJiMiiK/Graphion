@@ -7,6 +7,7 @@ import pathlib
 import subprocess
 import sys
 
+from bench_paths import DISPATCH_LINUX_JSON
 from report_metadata import base_metadata, validate_metadata
 
 
@@ -27,7 +28,7 @@ def main() -> int:
   parser = argparse.ArgumentParser(description="Compare VM dispatch variants on vm_dispatch benchmark.")
   parser.add_argument("--iterations", type=int, default=500000)
   parser.add_argument("--runs", type=int, default=10)
-  parser.add_argument("--output", default="benchmarks/results/performance/dispatch_variants.json")
+  parser.add_argument("--output", default=str(DISPATCH_LINUX_JSON))
   parser.add_argument(
       "--cmake-arg",
       action="append",
