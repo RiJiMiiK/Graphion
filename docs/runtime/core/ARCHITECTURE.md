@@ -37,10 +37,10 @@ Current source-program entry flow uses the `.gion` extension.
   - `graph G:`
   - `  1 -> 2`
   - `  2 -> 3 [weight=7, color="red", active=true]`
-- hypergraph declarations currently support explicit hyperedge ids and integer node lists:
+- hypergraph declarations currently support auto-indexed hyperedges and integer node lists:
   - `hypergraph H:`
-  - `  e1: [1, 2, 3]`
-  - `  e2: [2, 4] [weight=2.5, label="core"]`
+  - `  [1, 2, 3]`
+  - `  [2, 4] [weight=2.5, label="core"]`
 - declaration attributes are currently restricted to scalar values only:
   - `int`
   - `float`
@@ -55,8 +55,8 @@ Current source-program entry flow uses the `.gion` extension.
   - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
   - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
   - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
-  - `print(node)` should show node id/name and incident hyperedge count for hypergraph nodes
-  - `print(hyperedge)` should show hyperedge id and member node count
+  - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
+  - `print(H.hyperedge[id])` shows hyperedge id and member node count
 - reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
 - the current function model is intentionally narrow:
   - top-level definitions only
@@ -71,8 +71,10 @@ Current source-program entry flow uses the `.gion` extension.
     - `print(G.node[id])` -> node id and neighbor count
     - `print(G.edge[id])` -> edge endpoints, optional weight, and scalar attributes
     - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
+    - `print(H.vertex[id])` -> vertex id and incident hyperedge count
+    - `print(H.hyperedge[id])` -> hyperedge id and member node count
   - graph edge ids are implicit and auto-increment by declaration order
-  - `hyperedge` printable values will land with the future user-facing graph API
+  - hypergraph hyperedge ids are implicit and auto-increment by declaration order
 
 ## VM model (current)
 

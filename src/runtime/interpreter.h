@@ -76,6 +76,16 @@ typedef struct {
   const graphion_runtime_graph_edge *edge;
 } graphion_runtime_graph_edge_value;
 
+typedef struct {
+  int64_t id;
+  const graphion_runtime_hypergraph_value *hypergraph;
+} graphion_runtime_hypergraph_node_value;
+
+typedef struct {
+  const graphion_runtime_hypergraph_value *hypergraph;
+  const graphion_runtime_hyperedge *hyperedge;
+} graphion_runtime_hyperedge_value;
+
 typedef enum {
   GRAPHION_VALUE_NONE = 0,
   GRAPHION_VALUE_INT = 1,
@@ -85,7 +95,9 @@ typedef enum {
   GRAPHION_VALUE_GRAPH = 5,
   GRAPHION_VALUE_HYPERGRAPH = 6,
   GRAPHION_VALUE_GRAPH_NODE = 7,
-  GRAPHION_VALUE_GRAPH_EDGE = 8
+  GRAPHION_VALUE_GRAPH_EDGE = 8,
+  GRAPHION_VALUE_HYPERGRAPH_NODE = 9,
+  GRAPHION_VALUE_HYPEREDGE = 10
 } graphion_runtime_value_kind;
 
 typedef struct {
@@ -98,6 +110,8 @@ typedef struct {
   graphion_runtime_hypergraph_value *hypergraph_value;
   graphion_runtime_graph_node_value graph_node_value;
   graphion_runtime_graph_edge_value graph_edge_value;
+  graphion_runtime_hypergraph_node_value hypergraph_node_value;
+  graphion_runtime_hyperedge_value hyperedge_value;
 } graphion_runtime_value;
 
 typedef struct {

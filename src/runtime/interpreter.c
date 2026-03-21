@@ -283,15 +283,39 @@ static int hypergraph_contains_node(const graphion_runtime_value *hypergraph, in
   return 0;
 }
 
+static size_t hypergraph_incident_count(const graphion_runtime_hypergraph_value *hypergraph, int64_t node_id) {
+  size_t i;
+  size_t j;
+  size_t count = 0U;
+  if (hypergraph == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    for (j = 0U; j < hypergraph->hyperedges[i].node_count; ++j) {
+      if (hypergraph->hyperedges[i].nodes[j] == node_id) {
+        count += 1U;
+        break;
+      }
+    }
+  }
+  return count;
+}
+
+static const graphion_runtime_hyperedge *find_hyperedge_by_id(const graphion_runtime_hypergraph_value *hypergraph,
+                                                              int64_t hyperedge_id) {
+  if (hypergraph == NULL || hyperedge_id < 0 || (size_t)hyperedge_id >= hypergraph->hyperedge_count) {
+    return NULL;
+  }
+  return &hypergraph->hyperedges[hyperedge_id];
+}
+
 static int parse_hyperedge_line(const char *text,
                                 graphion_runtime_hyperedge *hyperedge,
                                 graphion_runtime_diagnostic *diagnostic,
                                 size_t line_no) {
-  const char *colon;
   const char *open_bracket;
   const char *close_bracket;
   const char *attrs;
-  size_t name_len;
   char nodes_buf[GINT_LINE_MAX];
   size_t start = 0U;
   size_t i = 0U;
@@ -299,28 +323,14 @@ static int parse_hyperedge_line(const char *text,
   if (text == NULL || hyperedge == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
-  colon = strchr(text, ':');
   open_bracket = strchr(text, '[');
   close_bracket = open_bracket != NULL ? strchr(open_bracket + 1U, ']') : NULL;
   attrs = close_bracket != NULL ? strchr(close_bracket + 1U, '[') : NULL;
-  if (colon == NULL || open_bracket == NULL || close_bracket == NULL ||
-      colon > open_bracket || close_bracket < open_bracket) {
+  if (open_bracket == NULL || close_bracket == NULL || close_bracket < open_bracket) {
     set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge declaration");
     return GINT_ERR_PARSE;
   }
-  name_len = (size_t)(colon - text);
-  if (name_len == 0U || name_len >= GRAPHION_RUNTIME_NAME_MAX) {
-    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge name");
-    return GINT_ERR_PARSE;
-  }
   memset(hyperedge, 0, sizeof(*hyperedge));
-  memcpy(hyperedge->name, text, name_len);
-  hyperedge->name[name_len] = '\0';
-  trim_in_place(hyperedge->name);
-  if (!is_valid_identifier(hyperedge->name)) {
-    set_diagnostic(diagnostic, line_no, 1U, "invalid hyperedge name");
-    return GINT_ERR_PARSE;
-  }
   if ((size_t)(close_bracket - open_bracket - 1) >= sizeof(nodes_buf)) {
     set_diagnostic(diagnostic, line_no, 1U, "hyperedge node list too long");
     return GINT_ERR_PARSE;
@@ -1155,6 +1165,18 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
       }
       fprintf(output, ">\n");
       break;
+    case GRAPHION_VALUE_HYPERGRAPH_NODE:
+      fprintf(output,
+              "<vertex id=%lld hyperedges=%zu>\n",
+              (long long)value->hypergraph_node_value.id,
+              hypergraph_incident_count(value->hypergraph_node_value.hypergraph, value->hypergraph_node_value.id));
+      break;
+    case GRAPHION_VALUE_HYPEREDGE:
+      fprintf(output,
+              "<hyperedge id=%s members=%zu>\n",
+              value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->name : "",
+              value->hyperedge_value.hyperedge != NULL ? value->hyperedge_value.hyperedge->node_count : 0U);
+      break;
     default:
       fprintf(output, "none\n");
       break;
@@ -1268,50 +1290,94 @@ static int eval_expression(const char *expr,
     char member_name[GRAPHION_RUNTIME_NAME_MAX];
     char index_expr[GINT_LINE_MAX];
     if (split_graph_member_access(expr, graph_name, member_name, index_expr)) {
-      const graphion_runtime_value *graph_value = find_value(local_scope, global_scope, graph_name);
+      const graphion_runtime_value *container_value = find_value(local_scope, global_scope, graph_name);
       graphion_runtime_value index_value;
       int rc;
-      if (graph_value == NULL || graph_value->kind != GRAPHION_VALUE_GRAPH || graph_value->graph_value == NULL) {
-        set_diagnostic(diagnostic, line_no, 1U, "graph member access expects a graph value");
+      if (container_value == NULL ||
+          (container_value->kind != GRAPHION_VALUE_GRAPH && container_value->kind != GRAPHION_VALUE_HYPERGRAPH)) {
+        set_diagnostic(diagnostic, line_no, 1U, "member access expects a graph or hypergraph value");
         return GINT_ERR_CALL;
       }
-      rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
-      if (rc != GINT_OK) {
-        return rc;
+      if (container_value->kind == GRAPHION_VALUE_GRAPH) {
+        rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (strcmp(member_name, "node") == 0) {
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph node index must be an integer");
+            return GINT_ERR_CALL;
+          }
+          if (!graph_contains_node(container_value, index_value.int_value)) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph node not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_GRAPH_NODE;
+          value->graph_node_value.id = index_value.int_value;
+          value->graph_node_value.graph = container_value->graph_value;
+          return GINT_OK;
+        }
+        if (strcmp(member_name, "edge") == 0) {
+          const graphion_runtime_graph_edge *edge_value;
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph edge id must be an integer");
+            return GINT_ERR_CALL;
+          }
+          edge_value = find_graph_edge_by_id(container_value->graph_value, index_value.int_value);
+          if (edge_value == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "graph edge not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_GRAPH_EDGE;
+          value->graph_edge_value.graph = container_value->graph_value;
+          value->graph_edge_value.edge = edge_value;
+          return GINT_OK;
+        }
+      } else if (container_value->kind == GRAPHION_VALUE_HYPERGRAPH) {
+        if (strcmp(member_name, "vertex") == 0) {
+          rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex index must be an integer");
+            return GINT_ERR_CALL;
+          }
+          if (!hypergraph_contains_node(container_value, index_value.int_value)) {
+            set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_HYPERGRAPH_NODE;
+          value->hypergraph_node_value.id = index_value.int_value;
+          value->hypergraph_node_value.hypergraph = container_value->hypergraph_value;
+          return GINT_OK;
+        }
+        if (strcmp(member_name, "hyperedge") == 0) {
+          const graphion_runtime_hyperedge *hyperedge_value;
+          rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          if (index_value.kind != GRAPHION_VALUE_INT) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge id must be an integer");
+            return GINT_ERR_CALL;
+          }
+          hyperedge_value = find_hyperedge_by_id(container_value->hypergraph_value, index_value.int_value);
+          if (hyperedge_value == NULL) {
+            set_diagnostic(diagnostic, line_no, 1U, "hyperedge not found");
+            return GINT_ERR_CALL;
+          }
+          memset(value, 0, sizeof(*value));
+          value->kind = GRAPHION_VALUE_HYPEREDGE;
+          value->hyperedge_value.hypergraph = container_value->hypergraph_value;
+          value->hyperedge_value.hyperedge = hyperedge_value;
+          return GINT_OK;
+        }
       }
-      if (strcmp(member_name, "node") == 0) {
-        if (index_value.kind != GRAPHION_VALUE_INT) {
-          set_diagnostic(diagnostic, line_no, 1U, "graph node index must be an integer");
-          return GINT_ERR_CALL;
-        }
-        if (!graph_contains_node(graph_value, index_value.int_value)) {
-          set_diagnostic(diagnostic, line_no, 1U, "graph node not found");
-          return GINT_ERR_CALL;
-        }
-        memset(value, 0, sizeof(*value));
-        value->kind = GRAPHION_VALUE_GRAPH_NODE;
-        value->graph_node_value.id = index_value.int_value;
-        value->graph_node_value.graph = graph_value->graph_value;
-        return GINT_OK;
-      }
-      if (strcmp(member_name, "edge") == 0) {
-        const graphion_runtime_graph_edge *edge_value;
-        if (index_value.kind != GRAPHION_VALUE_INT) {
-          set_diagnostic(diagnostic, line_no, 1U, "graph edge id must be an integer");
-          return GINT_ERR_CALL;
-        }
-        edge_value = find_graph_edge_by_id(graph_value->graph_value, index_value.int_value);
-        if (edge_value == NULL) {
-          set_diagnostic(diagnostic, line_no, 1U, "graph edge not found");
-          return GINT_ERR_CALL;
-        }
-        memset(value, 0, sizeof(*value));
-        value->kind = GRAPHION_VALUE_GRAPH_EDGE;
-        value->graph_edge_value.graph = graph_value->graph_value;
-        value->graph_edge_value.edge = edge_value;
-        return GINT_OK;
-      }
-      set_diagnostic(diagnostic, line_no, 1U, "unknown graph member access");
+      set_diagnostic(diagnostic, line_no, 1U, "unknown graph or hypergraph member access");
       return GINT_ERR_CALL;
     }
   }
@@ -1515,6 +1581,7 @@ static int execute_block(const graphion_program *program,
         if (rc != GINT_OK) {
           return rc;
         }
+        snprintf(hyperedge.name, sizeof(hyperedge.name), "%zu", hypergraph_payload->hyperedge_count);
         for (node_index = 0U; node_index < hyperedge.node_count; ++node_index) {
           if (!hypergraph_contains_node(&hypergraph_value, hyperedge.nodes[node_index])) {
             hypergraph_payload->node_count += 1U;

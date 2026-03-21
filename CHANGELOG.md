@@ -82,6 +82,10 @@ The format follows Keep a Changelog and Semantic Versioning.
   - `print(graph)` summary
   - `print(G.node[id])`
   - `print(G.edge[id])`
+- Printable hypergraph runtime values in `.gion`:
+  - `print(hypergraph)` summary
+  - `print(H.vertex[id])`
+  - `print(H.hyperedge[id])`
 - Official frontier primitive benchmark added and integrated into the performance collection pipeline.
 - Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
 - Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
@@ -119,7 +123,7 @@ The format follows Keep a Changelog and Semantic Versioning.
 - Minimal interpreted `.gion` syntax for dynamic scalar variables and assignment, with no user-declared types.
 - Builtin `print(...)` and user-defined `def ...` / `return` support for the minimal interpreted `.gion` runtime.
 - User-facing `graph Name:` declarations with integer node ids and `a -> b` edge syntax in `.gion`.
-- User-facing `hypergraph Name:` declarations with explicit hyperedge ids and integer node lists in `.gion`.
+- User-facing `hypergraph Name:` declarations with auto-indexed hyperedges and integer node lists in `.gion`.
 - Scalar graph and hypergraph declaration attributes now support `int`, `float`, `string`, and `bool`, with reserved `weight` normalized to float.
 
 ### Changed

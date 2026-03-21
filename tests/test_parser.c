@@ -488,8 +488,8 @@ int test_interpreter_rejects_non_integer_graph_nodes(void) {
 
 int test_interpreter_hypergraph_declaration(void) {
   const char *source = "hypergraph H:\n"
-                       "  e1: [1, 2, 3]\n"
-                       "  e2: [2, 4]\n";
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   int rc;
@@ -499,7 +499,7 @@ int test_interpreter_hypergraph_declaration(void) {
   if (rc != GINT_OK) {
     return 1;
   }
-  if (!expect_hypergraph_binding(&scope, "H", 2U, 4U, "e1", 3U)) {
+  if (!expect_hypergraph_binding(&scope, "H", 2U, 4U, "0", 3U)) {
     return 2;
   }
   return 0;
@@ -548,7 +548,7 @@ int test_interpreter_graph_scalar_attributes(void) {
 
 int test_interpreter_hypergraph_scalar_attributes(void) {
   const char *source = "hypergraph H:\n"
-                       "  e1: [1, 2, 3] [weight=2.5, label=\"core\", enabled=false]\n";
+                       "  [1, 2, 3] [weight=2.5, label=\"core\", enabled=false]\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *value;
@@ -586,7 +586,7 @@ int test_interpreter_hypergraph_scalar_attributes(void) {
 int test_interpreter_rejects_invalid_weight_type(void) {
   static const char *bad_sources[] = {
       "graph G:\n  1 -> 2 [weight=\"heavy\"]\n",
-      "hypergraph H:\n  e1: [1, 2] [weight=true]\n",
+      "hypergraph H:\n  [1, 2] [weight=true]\n",
   };
   size_t i;
   for (i = 0U; i < sizeof(bad_sources) / sizeof(bad_sources[0]); ++i) {
@@ -607,7 +607,7 @@ int test_interpreter_rejects_invalid_weight_type(void) {
 
 int test_interpreter_rejects_non_integer_hypergraph_nodes(void) {
   const char *source = "hypergraph H:\n"
-                       "  e1: [1, alpha]\n";
+                       "  [1, alpha]\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   int rc;
@@ -735,8 +735,8 @@ int test_interpreter_print_graph_summary(void) {
 int test_interpreter_print_hypergraph_summary(void) {
   const char *path = "interpreter_hypergraph_output.txt";
   const char *source = "hypergraph H:\n"
-                       "  e1: [1, 2, 3]\n"
-                       "  e2: [2, 4]\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n"
                        "print(H)\n";
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -882,6 +882,108 @@ int test_interpreter_print_graph_edge_value(void) {
   remove(path);
   output[read_len] = '\0';
   if (strcmp(output, "<edge 1->2 weight=7 color=\"red\" active=true rank=3>\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_interpreter_print_hypergraph_node_value(void) {
+  const char *path = "interpreter_hypergraph_node_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3]\n"
+                       "  [2, 4]\n"
+                       "print(H.vertex[2])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<vertex id=2 hyperedges=2>\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_interpreter_print_hyperedge_value(void) {
+  const char *path = "interpreter_hyperedge_output.txt";
+  const char *source = "hypergraph H:\n"
+                       "  [1, 2, 3] [weight=2.5, label=\"core\"]\n"
+                       "  [2, 4] [enabled=false]\n"
+                       "print(H.hyperedge[0])\n";
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    return 3;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "<hyperedge id=0 members=3>\n") != 0) {
     return 4;
   }
   return 0;

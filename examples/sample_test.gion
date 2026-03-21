@@ -9,8 +9,8 @@ graph G:
   2 -> 3 [rank=2]
 
 hypergraph H:
-  e1: [1, 2, 3] [weight=2.5, label="core"]
-  e2: [2, 4] [enabled=false]
+  [1, 2, 3] [weight=2.5, label="core"]
+  [2, 4] [enabled=false]
 
 print(count)
 print(ratio)
@@ -21,6 +21,8 @@ print(G)
 print(H)
 print(G.node[1])
 print(G.edge[0])
+print(H.vertex[2])
+print(H.hyperedge[0])
 
 def echo(value):
   print(value)
