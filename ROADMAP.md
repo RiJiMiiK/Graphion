@@ -95,7 +95,7 @@
 - [x] Lexer and parser for source language prototype.
 - [x] AST + lowering to bytecode.
 - [x] Diagnostics with line/column spans and stable error messages.
-- [ ] Minimal standard library for graph/hypergraph operations.
+- [x] Minimal standard library for graph/hypergraph operations.
 - [ ] Examples and reference programs for BFS, centrality, and incidence queries.
 
 ## Milestone 0.7 (Runtime And Memory)

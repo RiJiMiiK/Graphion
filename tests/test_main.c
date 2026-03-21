@@ -48,6 +48,9 @@ int test_frontend_reports_unknown_mnemonic_diagnostic(void);
 int test_frontend_reports_invalid_token_diagnostic(void);
 int test_frontend_source_to_vm_execution(void);
 int test_frontend_reference_graph_execution_examples(void);
+int test_stdlib_catalog_lookup(void);
+int test_stdlib_programs_lower_to_ir(void);
+int test_stdlib_lower_reports_unknown_program(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -128,6 +131,9 @@ int main(int argc, char **argv) {
       {"frontend_reports_invalid_token_diagnostic", test_frontend_reports_invalid_token_diagnostic},
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
       {"frontend_reference_graph_execution_examples", test_frontend_reference_graph_execution_examples},
+      {"stdlib_catalog_lookup", test_stdlib_catalog_lookup},
+      {"stdlib_programs_lower_to_ir", test_stdlib_programs_lower_to_ir},
+      {"stdlib_lower_reports_unknown_program", test_stdlib_lower_reports_unknown_program},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

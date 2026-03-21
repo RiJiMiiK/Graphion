@@ -4,6 +4,7 @@
 #include "parser/ast.h"
 #include "parser/frontend.h"
 #include "parser/lexer.h"
+#include "parser/stdlib.h"
 #include "compiler/ir.h"
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
@@ -489,5 +490,76 @@ int test_frontend_reference_graph_execution_examples(void) {
     }
   }
 
+  return 0;
+}
+
+int test_stdlib_catalog_lookup(void) {
+  const graphion_stdlib_program *program;
+  if (graphion_stdlib_program_count() < 8U) {
+    return 1;
+  }
+  program = graphion_stdlib_find_program("graph.bfs.levels");
+  if (program == NULL) {
+    return 2;
+  }
+  if (!program->requires_csr || program->requires_hypergraph || program->requires_frontier) {
+    return 3;
+  }
+  if (program->source == NULL || strcmp(program->source, "bfs_levels r0, r1\nhalt\n") != 0) {
+    return 4;
+  }
+  program = graphion_stdlib_find_program("hypergraph.hyperedge.materialize_nodes");
+  if (program == NULL || !program->requires_hypergraph || !program->requires_frontier) {
+    return 5;
+  }
+  if (graphion_stdlib_find_program("missing.program") != NULL) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_stdlib_programs_lower_to_ir(void) {
+  size_t i;
+  for (i = 0U; i < graphion_stdlib_program_count(); ++i) {
+    const graphion_stdlib_program *program = graphion_stdlib_program_at(i);
+    graphion_ir_insn ir[8];
+    size_t count = 0U;
+    graphion_frontend_diagnostic diagnostic;
+    int rc;
+
+    if (program == NULL || program->name == NULL || program->source == NULL || program->description == NULL) {
+      return (int)(10 + i);
+    }
+    rc = graphion_stdlib_lower_program_to_ir(program->name, ir, 8U, &count, &diagnostic);
+    if (rc != GFE_OK) {
+      return (int)(30 + i);
+    }
+    if (count != 2U) {
+      return (int)(50 + i);
+    }
+    if (ir[1].op != GIR_OP_HALT) {
+      return (int)(70 + i);
+    }
+  }
+  return 0;
+}
+
+int test_stdlib_lower_reports_unknown_program(void) {
+  graphion_ir_insn ir[4];
+  size_t count = 99U;
+  graphion_frontend_diagnostic diagnostic;
+  int rc = graphion_stdlib_lower_program_to_ir("graph.unknown", ir, 4U, &count, &diagnostic);
+  if (rc != GFE_ERR_INVALID_ARG) {
+    return 1;
+  }
+  if (count != 0U) {
+    return 2;
+  }
+  if (diagnostic.code != GFE_DIAG_INVALID_ARGUMENT) {
+    return 3;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown stdlib program") != 0) {
+    return 4;
+  }
   return 0;
 }
