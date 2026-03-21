@@ -47,10 +47,10 @@ int test_lexer_tokenizes_source_program(void) {
   if (tokens[6].kind != GTOK_IDENTIFIER || tokens[6].line != 3U || tokens[6].column != 1U) {
     return 9;
   }
-  if (tokens[9].kind != GTOK_COMMA) {
+  if (tokens[8].kind != GTOK_COMMA) {
     return 10;
   }
-  if (tokens[10].kind != GTOK_REGISTER || tokens[10].reg_value != 1U) {
+  if (tokens[9].kind != GTOK_REGISTER || tokens[9].reg_value != 1U) {
     return 11;
   }
   if (tokens[count - 2U].kind != GTOK_NEWLINE || tokens[count - 1U].kind != GTOK_EOF) {
@@ -153,6 +153,72 @@ int test_frontend_reports_parse_position(void) {
   }
   if (pos.line != 2U || pos.column != 8U) {
     return 2;
+  }
+  return 0;
+}
+
+int test_frontend_reports_stable_diagnostic_message(void) {
+  const char *source = "mov r0 7\n";
+  graphion_ir_insn ir[4];
+  size_t count = 0U;
+  graphion_frontend_diagnostic diagnostic;
+  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
+  if (rc != GFE_ERR_PARSE) {
+    return 1;
+  }
+  if (diagnostic.code != GFE_DIAG_EXPECTED_COMMA) {
+    return 2;
+  }
+  if (diagnostic.start.line != 1U || diagnostic.start.column != 8U) {
+    return 3;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected ',' separator") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_frontend_reports_unknown_mnemonic_diagnostic(void) {
+  const char *source = "muv r0, 7\n";
+  graphion_ir_insn ir[4];
+  size_t count = 0U;
+  graphion_frontend_diagnostic diagnostic;
+  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
+  if (rc != GFE_ERR_PARSE) {
+    return 1;
+  }
+  if (diagnostic.code != GFE_DIAG_UNKNOWN_MNEMONIC) {
+    return 2;
+  }
+  if (diagnostic.start.line != 1U || diagnostic.start.column != 1U) {
+    return 3;
+  }
+  if (diagnostic.end.line != 1U || diagnostic.end.column != 3U) {
+    return 4;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown instruction mnemonic") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_frontend_reports_invalid_token_diagnostic(void) {
+  const char *source = "mov r0, 7\n@\n";
+  graphion_ir_insn ir[4];
+  size_t count = 0U;
+  graphion_frontend_diagnostic diagnostic;
+  int rc = graphion_parse_source_to_ir_with_diagnostic(source, ir, 4U, &count, &diagnostic);
+  if (rc != GFE_ERR_PARSE) {
+    return 1;
+  }
+  if (diagnostic.code != GFE_DIAG_INVALID_TOKEN) {
+    return 2;
+  }
+  if (diagnostic.start.line != 2U || diagnostic.start.column != 1U) {
+    return 3;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "invalid token in source") != 0) {
+    return 4;
   }
   return 0;
 }

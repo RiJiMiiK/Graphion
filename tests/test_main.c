@@ -41,6 +41,9 @@ int test_lexer_tokenizes_source_program(void);
 int test_frontend_parse_and_ir_lowering(void);
 int test_frontend_rejects_invalid_source(void);
 int test_frontend_reports_parse_position(void);
+int test_frontend_reports_stable_diagnostic_message(void);
+int test_frontend_reports_unknown_mnemonic_diagnostic(void);
+int test_frontend_reports_invalid_token_diagnostic(void);
 int test_frontend_source_to_vm_execution(void);
 int test_frontend_reference_graph_execution_examples(void);
 int test_isa_decode_golden_fixtures(void);
@@ -116,6 +119,9 @@ int main(int argc, char **argv) {
       {"frontend_parse_and_ir_lowering", test_frontend_parse_and_ir_lowering},
       {"frontend_rejects_invalid_source", test_frontend_rejects_invalid_source},
       {"frontend_reports_parse_position", test_frontend_reports_parse_position},
+      {"frontend_reports_stable_diagnostic_message", test_frontend_reports_stable_diagnostic_message},
+      {"frontend_reports_unknown_mnemonic_diagnostic", test_frontend_reports_unknown_mnemonic_diagnostic},
+      {"frontend_reports_invalid_token_diagnostic", test_frontend_reports_invalid_token_diagnostic},
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
       {"frontend_reference_graph_execution_examples", test_frontend_reference_graph_execution_examples},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},

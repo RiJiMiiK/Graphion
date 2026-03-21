@@ -119,10 +119,12 @@ static int lex_identifier_or_register(const char *source,
                     0U);
 }
 
-int graphion_lex_source(const char *source,
-                        graphion_token *out_tokens,
-                        size_t out_capacity,
-                        size_t *out_count) {
+int graphion_lex_source_with_position(const char *source,
+                                      graphion_token *out_tokens,
+                                      size_t out_capacity,
+                                      size_t *out_count,
+                                      size_t *error_line,
+                                      size_t *error_column) {
   size_t offset = 0U;
   size_t count = 0U;
   size_t line = 1U;
@@ -131,6 +133,12 @@ int graphion_lex_source(const char *source,
 
   if (source == NULL || out_tokens == NULL || out_count == NULL) {
     return GLEX_ERR_INVALID_ARG;
+  }
+  if (error_line != NULL) {
+    *error_line = 0U;
+  }
+  if (error_column != NULL) {
+    *error_column = 0U;
   }
 
   while (source[offset] != '\0') {
@@ -200,6 +208,12 @@ int graphion_lex_source(const char *source,
       column += consumed;
       continue;
     }
+    if (error_line != NULL) {
+      *error_line = line;
+    }
+    if (error_column != NULL) {
+      *error_column = column;
+    }
     return GLEX_ERR_TOKEN;
   }
 
@@ -209,4 +223,11 @@ int graphion_lex_source(const char *source,
   }
   *out_count = count;
   return GLEX_OK;
+}
+
+int graphion_lex_source(const char *source,
+                        graphion_token *out_tokens,
+                        size_t out_capacity,
+                        size_t *out_count) {
+  return graphion_lex_source_with_position(source, out_tokens, out_capacity, out_count, NULL, NULL);
 }

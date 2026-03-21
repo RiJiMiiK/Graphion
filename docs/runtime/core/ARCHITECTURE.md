@@ -33,6 +33,8 @@ Graphion is a graph/hypergraph-focused language project. Current implementation 
     registers, integers, commas, and newlines.
   - `src/parser/frontend.*` now parses from that token stream instead of direct
     line splitting.
+  - parser diagnostics now expose stable error codes, messages, and line/column
+    spans via `graphion_parse_source_to_ir_with_diagnostic(...)`.
 - ISA versioning and compatibility policy:
   - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
 - Structured error model:

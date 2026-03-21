@@ -28,6 +28,40 @@ typedef struct {
   size_t index;
 } parser_cursor;
 
+static void clear_diagnostic(graphion_frontend_diagnostic *diagnostic) {
+  if (diagnostic == NULL) {
+    return;
+  }
+  diagnostic->code = GFE_DIAG_NONE;
+  diagnostic->start.line = 0U;
+  diagnostic->start.column = 0U;
+  diagnostic->end.line = 0U;
+  diagnostic->end.column = 0U;
+  diagnostic->message = NULL;
+}
+
+static void fill_diagnostic(graphion_frontend_diagnostic *diagnostic,
+                            int code,
+                            const graphion_token *tok,
+                            const char *message) {
+  if (diagnostic == NULL) {
+    return;
+  }
+  diagnostic->code = code;
+  diagnostic->message = message;
+  if (tok == NULL) {
+    diagnostic->start.line = 0U;
+    diagnostic->start.column = 0U;
+    diagnostic->end.line = 0U;
+    diagnostic->end.column = 0U;
+    return;
+  }
+  diagnostic->start.line = tok->line;
+  diagnostic->start.column = tok->column;
+  diagnostic->end.line = tok->line;
+  diagnostic->end.column = tok->column + (tok->length > 0U ? (tok->length - 1U) : 0U);
+}
+
 static int streq_token_icase(const char *source, const graphion_token *tok, const char *literal) {
   size_t i = 0U;
   if (tok->kind != GTOK_IDENTIFIER) {
@@ -102,10 +136,14 @@ static void set_error_pos(graphion_frontend_position *error_pos, const graphion_
 static int expect_token_kind(parser_cursor *cursor,
                              uint8_t kind,
                              graphion_frontend_position *error_pos,
+                             graphion_frontend_diagnostic *diagnostic,
+                             int diagnostic_code,
+                             const char *diagnostic_message,
                              const graphion_token **out_tok) {
   const graphion_token *tok = peek_token(cursor);
   if (tok == NULL || tok->kind != kind) {
     set_error_pos(error_pos, tok);
+    fill_diagnostic(diagnostic, diagnostic_code, tok, diagnostic_message);
     return GFE_ERR_PARSE;
   }
   if (out_tok != NULL) {
@@ -126,20 +164,28 @@ static void skip_newlines(parser_cursor *cursor) {
 static int parse_instruction(const char *source,
                              parser_cursor *cursor,
                              graphion_ir_insn *insn,
-                             graphion_frontend_position *error_pos) {
+                             graphion_frontend_position *error_pos,
+                             graphion_frontend_diagnostic *diagnostic) {
   const graphion_token *mnemonic_tok = NULL;
   const graphion_token *a_tok = NULL;
   const graphion_token *b_tok = NULL;
   const op_spec *spec;
   int rc;
 
-  rc = expect_token_kind(cursor, GTOK_IDENTIFIER, error_pos, &mnemonic_tok);
+  rc = expect_token_kind(cursor,
+                         GTOK_IDENTIFIER,
+                         error_pos,
+                         diagnostic,
+                         GFE_DIAG_EXPECTED_MNEMONIC,
+                         "expected instruction mnemonic",
+                         &mnemonic_tok);
   if (rc != GFE_OK) {
     return rc;
   }
   spec = find_op_spec(source, mnemonic_tok);
   if (spec == NULL) {
     set_error_pos(error_pos, mnemonic_tok);
+    fill_diagnostic(diagnostic, GFE_DIAG_UNKNOWN_MNEMONIC, mnemonic_tok, "unknown instruction mnemonic");
     return GFE_ERR_PARSE;
   }
 
@@ -152,19 +198,37 @@ static int parse_instruction(const char *source,
     return GFE_OK;
   }
 
-  rc = expect_token_kind(cursor, GTOK_REGISTER, error_pos, &a_tok);
+  rc = expect_token_kind(cursor,
+                         GTOK_REGISTER,
+                         error_pos,
+                         diagnostic,
+                         GFE_DIAG_EXPECTED_REGISTER,
+                         "expected register operand",
+                         &a_tok);
   if (rc != GFE_OK) {
     return rc;
   }
   insn->a = a_tok->reg_value;
 
-  rc = expect_token_kind(cursor, GTOK_COMMA, error_pos, NULL);
+  rc = expect_token_kind(cursor,
+                         GTOK_COMMA,
+                         error_pos,
+                         diagnostic,
+                         GFE_DIAG_EXPECTED_COMMA,
+                         "expected ',' separator",
+                         NULL);
   if (rc != GFE_OK) {
     return rc;
   }
 
   if (spec->kind == OP_KIND_REG_IMM) {
-    rc = expect_token_kind(cursor, GTOK_INTEGER, error_pos, &b_tok);
+    rc = expect_token_kind(cursor,
+                           GTOK_INTEGER,
+                           error_pos,
+                           diagnostic,
+                           GFE_DIAG_EXPECTED_IMMEDIATE,
+                           "expected immediate operand",
+                           &b_tok);
     if (rc != GFE_OK) {
       return rc;
     }
@@ -172,7 +236,13 @@ static int parse_instruction(const char *source,
     return GFE_OK;
   }
 
-  rc = expect_token_kind(cursor, GTOK_REGISTER, error_pos, &b_tok);
+  rc = expect_token_kind(cursor,
+                         GTOK_REGISTER,
+                         error_pos,
+                         diagnostic,
+                         GFE_DIAG_EXPECTED_REGISTER,
+                         "expected register operand",
+                         &b_tok);
   if (rc != GFE_OK) {
     return rc;
   }
@@ -180,33 +250,54 @@ static int parse_instruction(const char *source,
   return GFE_OK;
 }
 
-int graphion_parse_source_to_ir_with_position(const char *source,
-                                              graphion_ir_insn *out_ir,
-                                              size_t out_capacity,
-                                              size_t *out_count,
-                                              graphion_frontend_position *error_pos) {
+int graphion_parse_source_to_ir_with_diagnostic(const char *source,
+                                                graphion_ir_insn *out_ir,
+                                                size_t out_capacity,
+                                                size_t *out_count,
+                                                graphion_frontend_diagnostic *diagnostic) {
   graphion_token tokens[GFE_TOKEN_CAPACITY];
   size_t token_count = 0U;
   parser_cursor cursor;
   size_t produced = 0U;
+  size_t lex_error_line = 0U;
+  size_t lex_error_column = 0U;
   int rc;
 
   if (source == NULL || out_ir == NULL || out_count == NULL) {
+    clear_diagnostic(diagnostic);
+    if (diagnostic != NULL) {
+      diagnostic->code = GFE_DIAG_INVALID_ARGUMENT;
+      diagnostic->message = "invalid parser arguments";
+    }
     return GFE_ERR_INVALID_ARG;
   }
-  if (error_pos != NULL) {
-    error_pos->line = 0U;
-    error_pos->column = 0U;
-  }
+  clear_diagnostic(diagnostic);
 
-  rc = graphion_lex_source(source, tokens, GFE_TOKEN_CAPACITY, &token_count);
+  rc = graphion_lex_source_with_position(source,
+                                         tokens,
+                                         GFE_TOKEN_CAPACITY,
+                                         &token_count,
+                                         &lex_error_line,
+                                         &lex_error_column);
   if (rc == GLEX_ERR_CAPACITY) {
+    if (diagnostic != NULL) {
+      diagnostic->code = GFE_DIAG_SOURCE_TOO_LARGE;
+      diagnostic->start.line = 0U;
+      diagnostic->start.column = 0U;
+      diagnostic->end.line = 0U;
+      diagnostic->end.column = 0U;
+      diagnostic->message = "source token stream exceeded parser capacity";
+    }
     return GFE_ERR_CAPACITY;
   }
   if (rc != GLEX_OK) {
-    if (error_pos != NULL && token_count > 0U) {
-      error_pos->line = tokens[token_count - 1U].line;
-      error_pos->column = tokens[token_count - 1U].column;
+    if (diagnostic != NULL) {
+      diagnostic->code = GFE_DIAG_INVALID_TOKEN;
+      diagnostic->start.line = lex_error_line;
+      diagnostic->start.column = lex_error_column;
+      diagnostic->end.line = lex_error_line;
+      diagnostic->end.column = lex_error_column;
+      diagnostic->message = "invalid token in source";
     }
     return GFE_ERR_PARSE;
   }
@@ -224,15 +315,18 @@ int graphion_parse_source_to_ir_with_position(const char *source,
       return GFE_ERR_CAPACITY;
     }
 
-    rc = parse_instruction(source, &cursor, &insn, error_pos);
+    rc = parse_instruction(source, &cursor, &insn, diagnostic != NULL ? &diagnostic->start : NULL, diagnostic);
     if (rc != GFE_OK) {
+      if (diagnostic != NULL && diagnostic->end.line == 0U) {
+        diagnostic->end = diagnostic->start;
+      }
       return rc;
     }
     out_ir[produced++] = insn;
 
     tok = peek_token(&cursor);
     if (tok != NULL && tok->kind != GTOK_NEWLINE && tok->kind != GTOK_EOF) {
-      set_error_pos(error_pos, tok);
+      fill_diagnostic(diagnostic, GFE_DIAG_EXPECTED_LINE_END, tok, "expected end of line after instruction");
       return GFE_ERR_PARSE;
     }
     skip_newlines(&cursor);
@@ -242,9 +336,23 @@ int graphion_parse_source_to_ir_with_position(const char *source,
   return GFE_OK;
 }
 
+int graphion_parse_source_to_ir_with_position(const char *source,
+                                              graphion_ir_insn *out_ir,
+                                              size_t out_capacity,
+                                              size_t *out_count,
+                                              graphion_frontend_position *error_pos) {
+  graphion_frontend_diagnostic diagnostic;
+  int rc = graphion_parse_source_to_ir_with_diagnostic(source, out_ir, out_capacity, out_count, &diagnostic);
+  if (error_pos != NULL) {
+    error_pos->line = diagnostic.start.line;
+    error_pos->column = diagnostic.start.column;
+  }
+  return rc;
+}
+
 int graphion_parse_source_to_ir(const char *source,
                                 graphion_ir_insn *out_ir,
                                 size_t out_capacity,
                                 size_t *out_count) {
-  return graphion_parse_source_to_ir_with_position(source, out_ir, out_capacity, out_count, NULL);
+  return graphion_parse_source_to_ir_with_diagnostic(source, out_ir, out_capacity, out_count, NULL);
 }

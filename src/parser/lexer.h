@@ -37,4 +37,11 @@ int graphion_lex_source(const char *source,
                         size_t out_capacity,
                         size_t *out_count);
 
+int graphion_lex_source_with_position(const char *source,
+                                      graphion_token *out_tokens,
+                                      size_t out_capacity,
+                                      size_t *out_count,
+                                      size_t *error_line,
+                                      size_t *error_column);
+
 #endif
