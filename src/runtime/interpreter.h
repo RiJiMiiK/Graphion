@@ -108,6 +108,8 @@ typedef struct {
   char string_value[GRAPHION_RUNTIME_STRING_MAX];
   graphion_runtime_graph_value *graph_value;
   graphion_runtime_hypergraph_value *hypergraph_value;
+  int owns_graph_value;
+  int owns_hypergraph_value;
   graphion_runtime_graph_node_value graph_node_value;
   graphion_runtime_graph_edge_value graph_edge_value;
   graphion_runtime_hypergraph_node_value hypergraph_node_value;
@@ -142,6 +144,7 @@ typedef enum {
 } graphion_interpreter_result;
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope);
+void graphion_runtime_scope_dispose(graphion_runtime_scope *scope);
 
 const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime_scope *scope,
                                                           const char *name);

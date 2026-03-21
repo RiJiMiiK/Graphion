@@ -583,9 +583,46 @@ static graphion_runtime_binding *find_binding_mut(graphion_runtime_scope *scope,
   return NULL;
 }
 
+static void graphion_runtime_value_dispose(graphion_runtime_value *value) {
+  if (value == NULL) {
+    return;
+  }
+  if (value->owns_graph_value != 0 && value->graph_value != NULL) {
+    free(value->graph_value);
+  }
+  if (value->owns_hypergraph_value != 0 && value->hypergraph_value != NULL) {
+    free(value->hypergraph_value);
+  }
+  memset(value, 0, sizeof(*value));
+}
+
+static void copy_runtime_value(graphion_runtime_value *dst,
+                               const graphion_runtime_value *src,
+                               int take_ownership) {
+  if (dst == NULL || src == NULL) {
+    return;
+  }
+  *dst = *src;
+  if (take_ownership == 0) {
+    dst->owns_graph_value = 0;
+    dst->owns_hypergraph_value = 0;
+  }
+}
+
 void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
   if (scope == NULL) {
     return;
+  }
+  memset(scope, 0, sizeof(*scope));
+}
+
+void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
+  size_t i;
+  if (scope == NULL) {
+    return;
+  }
+  for (i = 0U; i < scope->count; ++i) {
+    graphion_runtime_value_dispose(&scope->bindings[i].value);
   }
   memset(scope, 0, sizeof(*scope));
 }
@@ -617,7 +654,8 @@ static const graphion_runtime_value *find_value(const graphion_runtime_scope *lo
 static int assign_value(graphion_runtime_scope *scope, const char *name, const graphion_runtime_value *value) {
   graphion_runtime_binding *binding = find_binding_mut(scope, name);
   if (binding != NULL) {
-    binding->value = *value;
+    graphion_runtime_value_dispose(&binding->value);
+    copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
     return GINT_OK;
   }
   if (scope->count >= GRAPHION_RUNTIME_BINDING_MAX) {
@@ -626,7 +664,7 @@ static int assign_value(graphion_runtime_scope *scope, const char *name, const g
   binding = &scope->bindings[scope->count];
   memset(binding, 0, sizeof(*binding));
   memcpy(binding->name, name, strlen(name) + 1U);
-  binding->value = *value;
+  copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
   scope->count += 1U;
   return GINT_OK;
 }
@@ -1240,11 +1278,13 @@ static int call_function(const graphion_program *program,
   for (i = 0U; i < arg_count; ++i) {
     rc = eval_expression(args[i], program, global_scope, caller_scope, diagnostic, output, line_no, &arg_values[i]);
     if (rc != GINT_OK) {
+      graphion_runtime_scope_dispose(&local_scope);
       return rc;
     }
     rc = assign_value(&local_scope, function->params[i], &arg_values[i]);
     if (rc != GINT_OK) {
       set_diagnostic(diagnostic, line_no, 1U, "runtime scope capacity exceeded");
+      graphion_runtime_scope_dispose(&local_scope);
       return rc;
     }
   }
@@ -1260,6 +1300,7 @@ static int call_function(const graphion_program *program,
                      &did_return,
                      &return_value);
   if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&local_scope);
     return rc;
   }
   if (did_return) {
@@ -1268,6 +1309,7 @@ static int call_function(const graphion_program *program,
     memset(value, 0, sizeof(*value));
     value->kind = GRAPHION_VALUE_NONE;
   }
+  graphion_runtime_scope_dispose(&local_scope);
   return GINT_OK;
 }
 
@@ -1407,7 +1449,7 @@ static int eval_expression(const char *expr,
     set_diagnostic(diagnostic, line_no, 1U, "unknown variable in expression");
     return GINT_ERR_UNKNOWN_VARIABLE;
   }
-  *value = *existing;
+  copy_runtime_value(value, existing, 0);
   return GINT_OK;
 }
 
@@ -1519,15 +1561,18 @@ static int execute_block(const graphion_program *program,
         return GINT_ERR_CAPACITY;
       }
       graph_value.graph_value = graph_payload;
+      graph_value.owns_graph_value = 1;
       memcpy(graph_payload->name, graph_name, strlen(graph_name) + 1U);
       while (body_end < end && program->lines[body_end].indent > line->indent) {
         graphion_runtime_graph_edge edge;
         if (graph_payload->edge_count >= GRAPHION_RUNTIME_GRAPH_EDGE_MAX) {
           set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "graph edge capacity exceeded");
+          graphion_runtime_value_dispose(&graph_value);
           return GINT_ERR_CAPACITY;
         }
         rc = parse_graph_edge(program->lines[body_end].text, &edge, diagnostic, program->lines[body_end].line_no);
         if (rc != GINT_OK) {
+          graphion_runtime_value_dispose(&graph_value);
           return rc;
         }
         if (!graph_contains_node(&graph_value, edge.source)) {
@@ -1542,11 +1587,13 @@ static int execute_block(const graphion_program *program,
       }
       if (body_end == i + 1U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "graph body cannot be empty");
+        graphion_runtime_value_dispose(&graph_value);
         return GINT_ERR_PARSE;
       }
       rc = assign_value(global_scope, graph_name, &graph_value);
       if (rc != GINT_OK) {
         set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        graphion_runtime_value_dispose(&graph_value);
         return rc;
       }
       i = body_end;
@@ -1569,16 +1616,19 @@ static int execute_block(const graphion_program *program,
         return GINT_ERR_CAPACITY;
       }
       hypergraph_value.hypergraph_value = hypergraph_payload;
+      hypergraph_value.owns_hypergraph_value = 1;
       memcpy(hypergraph_payload->name, hypergraph_name, strlen(hypergraph_name) + 1U);
       while (body_end < end && program->lines[body_end].indent > line->indent) {
         graphion_runtime_hyperedge hyperedge;
         size_t node_index;
         if (hypergraph_payload->hyperedge_count >= GRAPHION_RUNTIME_HYPEREDGE_MAX) {
           set_diagnostic(diagnostic, program->lines[body_end].line_no, 1U, "hyperedge capacity exceeded");
+          graphion_runtime_value_dispose(&hypergraph_value);
           return GINT_ERR_CAPACITY;
         }
         rc = parse_hyperedge_line(program->lines[body_end].text, &hyperedge, diagnostic, program->lines[body_end].line_no);
         if (rc != GINT_OK) {
+          graphion_runtime_value_dispose(&hypergraph_value);
           return rc;
         }
         snprintf(hyperedge.name, sizeof(hyperedge.name), "%zu", hypergraph_payload->hyperedge_count);
@@ -1593,11 +1643,13 @@ static int execute_block(const graphion_program *program,
       }
       if (body_end == i + 1U) {
         set_diagnostic(diagnostic, line->line_no, 1U, "hypergraph body cannot be empty");
+        graphion_runtime_value_dispose(&hypergraph_value);
         return GINT_ERR_PARSE;
       }
       rc = assign_value(global_scope, hypergraph_name, &hypergraph_value);
       if (rc != GINT_OK) {
         set_diagnostic(diagnostic, line->line_no, 1U, "runtime scope capacity exceeded");
+        graphion_runtime_value_dispose(&hypergraph_value);
         return rc;
       }
       i = body_end;
