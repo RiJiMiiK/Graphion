@@ -1,92 +1,36 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
+import json
 import pathlib
+import statistics
+import subprocess
 import sys
 
 SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(SCRIPT_BENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
-import argparse
-import json
-import statistics
-import subprocess
 
 from report_metadata import base_metadata, validate_metadata
 
 
-BENCH_SPECS = [
-    {
-        "benchmark": "frontier_primitives",
-        "target": "graphion_bench_frontier",
-        "iterations": 300000,
-        "latency_key": "ns_per_frontier_item",
-        "throughput_key": "mips",
-    },
-    {
+BENCH_SPECS = {
+    "vm": {
         "benchmark": "vm_dispatch",
         "target": "graphion_bench",
         "iterations": 500000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
-    {
-        "benchmark": "bfs_levels",
-        "target": "graphion_bench_bfs",
-        "iterations": 200000,
-        "latency_key": "ns_per_edge",
-        "throughput_key": "mteps",
+    "gion": {
+        "benchmark": "gion_stage1",
+        "target": "graphion_bench_gion_stage1",
+        "iterations": 20000,
+        "latency_key": "ns_per_operation",
+        "throughput_key": "mops",
     },
-    {
-        "benchmark": "neighbor_iteration",
-        "target": "graphion_bench_neighbors",
-        "iterations": 300000,
-        "latency_key": "ns_per_neighbor",
-        "throughput_key": "mteps",
-    },
-    {
-        "benchmark": "weighted_neighbor_sums",
-        "target": "graphion_bench_weighted_graph",
-        "iterations": 300000,
-        "latency_key": "ns_per_edge_data",
-        "throughput_key": "mteps",
-    },
-    {
-        "benchmark": "hypergraph_incidence",
-        "target": "graphion_bench_hypergraph",
-        "iterations": 500000,
-        "latency_key": "ns_per_incidence",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "hypergraph_traversal",
-        "target": "graphion_bench_hypergraph_traversal",
-        "iterations": 300000,
-        "latency_key": "ns_per_membership",
-        "throughput_key": "mteps",
-    },
-    {
-        "benchmark": "hypergraph_incident_sum",
-        "target": "graphion_bench_hypergraph_incident_sum",
-        "iterations": 500000,
-        "latency_key": "ns_per_call",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "hypergraph_hyperedge_node_sum",
-        "target": "graphion_bench_hypergraph_hyperedge_node_sum",
-        "iterations": 500000,
-        "latency_key": "ns_per_call",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "vm_graph_ops",
-        "target": "graphion_bench_vm_graph",
-        "iterations": 300000,
-        "latency_key": "ns_per_instruction",
-        "throughput_key": "mips",
-    },
-]
+}
 
 
 def exe_path(build_dir: pathlib.Path, target: str, config: str) -> pathlib.Path:
@@ -132,28 +76,15 @@ def average_payloads(
         "latency_key": latency_key,
         "throughput_key": throughput_key,
     }
-    for key in (
-        "iterations",
-        "frontier_items_per_iteration",
-        "instructions_per_iteration",
-        "edges_per_iteration",
-        "neighbors_per_iteration",
-        "edge_data_items_per_iteration",
-        "frontier_len",
-        "frontier_neighbor_work",
-        "recommended_frontier_mode",
-        "memberships_per_iteration",
-        "incidence_per_iteration",
-        "calls_per_iteration",
-        "typed_value_ops_per_iteration",
-    ):
+    for key in ("iterations", "instructions_per_iteration", "source_ops_per_iteration", "typed_value_ops_per_iteration"):
         if key in sample:
             result[key] = sample[key]
     return result
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Collect Graphion benchmark averages from a built tree.")
+    parser = argparse.ArgumentParser(description="Collect the stage-1 Graphion lanes (VM or .gion).")
+    parser.add_argument("--mode", choices=sorted(BENCH_SPECS.keys()), required=True, help="Stage-1 lane to collect")
     parser.add_argument("--build-dir", required=True, help="CMake build directory")
     parser.add_argument("--config", default="Release", help="Build configuration")
     parser.add_argument("--runs", type=int, default=100, help="Number of runs per benchmark")
@@ -163,30 +94,30 @@ def main() -> int:
     parser.add_argument("--output", required=True, help="Output JSON path")
     args = parser.parse_args()
 
+    spec = BENCH_SPECS[args.mode]
     build_dir = pathlib.Path(args.build_dir)
-    rows: list[dict[str, object]] = []
+    exe = exe_path(build_dir, str(spec["target"]), args.config)
+    if not exe.exists():
+        raise FileNotFoundError(f"missing benchmark binary: {exe}")
 
-    for spec in BENCH_SPECS:
-        exe = exe_path(build_dir, spec["target"], args.config)
-        if not exe.exists():
-            raise FileNotFoundError(f"missing benchmark binary: {exe}")
-        payloads = [run_benchmark(exe, int(spec["iterations"])) for _ in range(args.runs)]
-        rows.append(
-            average_payloads(
-                str(spec["benchmark"]),
-                payloads,
-                str(spec["latency_key"]),
-                str(spec["throughput_key"]),
-                args.platform_label,
-            )
+    payloads = [run_benchmark(exe, int(spec["iterations"])) for _ in range(args.runs)]
+    rows = [
+        average_payloads(
+            str(spec["benchmark"]),
+            payloads,
+            str(spec["latency_key"]),
+            str(spec["throughput_key"]),
+            args.platform_label,
         )
+    ]
 
     payload = {
         "metadata": base_metadata(
             args.platform_label,
             args.runs,
             {
-                "report_kind": "performance-lane",
+                "report_kind": "stage1-lane",
+                "lane_kind": args.mode,
                 "compiler_kind": args.compiler_kind,
                 "asm_enabled": args.asm_enabled == "on",
                 "config": args.config,
@@ -195,7 +126,7 @@ def main() -> int:
         ),
         "rows": rows,
     }
-    validate_metadata(payload["metadata"], "collect_graphion_benchmarks", ["report_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
+    validate_metadata(payload["metadata"], "collect_stage1_graphion_benchmarks", ["report_kind", "lane_kind", "compiler_kind", "asm_enabled", "config", "build_dir"])
 
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

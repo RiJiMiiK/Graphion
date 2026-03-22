@@ -121,6 +121,7 @@ def average_payloads(
         "memberships_per_iteration",
         "incidence_per_iteration",
         "calls_per_iteration",
+        "typed_value_ops_per_iteration",
     ):
         if key in sample:
             result[key] = sample[key]

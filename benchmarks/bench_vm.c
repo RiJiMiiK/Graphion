@@ -6,6 +6,18 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void bench_set_value_int(graphion_vm_value *value, int64_t number) {
+  value->kind = GVM_VALUE_INT;
+  value->as.int_value = number;
+}
+
+static void bench_set_value_string(graphion_vm_value *value, const char *text) {
+  value->kind = GVM_VALUE_STRING;
+  value->as.string_value = text;
+}
+
 static double now_seconds(void) {
 #if defined(TIME_UTC)
   struct timespec ts;
@@ -18,13 +30,15 @@ static double now_seconds(void) {
 
 int main(int argc, char **argv) {
   graphion_vm vm;
+  graphion_vm_value const_pool[4];
+  graphion_vm_value globals[2];
   const graphion_insn program[] = {
-      {GVM_OP_MOV_IMM, 0, 0, 1},   {GVM_OP_MOV_IMM, 1, 0, 2}, {GVM_OP_ADD, 0, 1, 0},
-      {GVM_OP_MOV_IMM, 2, 0, 10},  {GVM_OP_ADD, 0, 2, 0},      {GVM_OP_MOV_IMM, 3, 0, 4},
-      {GVM_OP_ADD, 0, 3, 0},       {GVM_OP_MOV_IMM, 4, 0, 5},  {GVM_OP_ADD, 0, 4, 0},
-      {GVM_OP_MOV_IMM, 5, 0, 20},  {GVM_OP_ADD, 0, 5, 0},      {GVM_OP_MOV_IMM, 6, 0, 1},
-      {GVM_OP_ADD, 0, 6, 0},       {GVM_OP_MOV_IMM, 7, 0, 8},  {GVM_OP_ADD, 0, 7, 0},
-      {GVM_OP_MOV_IMM, 8, 0, 100}, {GVM_OP_ADD, 0, 8, 0},      {GVM_OP_HALT, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 0, 0, 0},   {GVM_OP_STORE_GLOBAL, 0, 0, 0}, {GVM_OP_LOAD_GLOBAL, 1, 0, 0},
+      {GVM_OP_LOAD_CONST, 2, 0, 1},   {GVM_OP_ADD, 1, 2, 0},          {GVM_OP_STORE_GLOBAL, 1, 0, 0},
+      {GVM_OP_LOAD_GLOBAL, 3, 0, 0},  {GVM_OP_MOV, 4, 3, 0},          {GVM_OP_LOAD_CONST, 5, 0, 2},
+      {GVM_OP_ADD, 4, 5, 0},          {GVM_OP_STORE_GLOBAL, 4, 0, 0}, {GVM_OP_LOAD_CONST, 6, 0, 3},
+      {GVM_OP_STORE_GLOBAL, 6, 0, 1}, {GVM_OP_LOAD_GLOBAL, 7, 0, 0},  {GVM_OP_MOV, 8, 7, 0},
+      {GVM_OP_HALT, 0, 0, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
   long iterations = 500000;
@@ -45,7 +59,18 @@ int main(int argc, char **argv) {
     }
   }
 
+  bench_set_value_int(&const_pool[0], 1);
+  bench_set_value_int(&const_pool[1], 2);
+  bench_set_value_int(&const_pool[2], 10);
+  bench_set_value_string(&const_pool[3], "graphion");
+  globals[0].kind = GVM_VALUE_INT;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
   graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 4U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
   rc = graphion_vm_load(&vm, program, instruction_count);
   if (rc != 0) {
     fprintf(stderr, "load failed rc=%d\n", rc);
@@ -54,6 +79,10 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
+    globals[0].kind = GVM_VALUE_INT;
+    globals[0].as.int_value = 0;
+    globals[1].kind = GVM_VALUE_NONE;
+    globals[1].as.int_value = 0;
     vm.pc = 0U;
     vm.halted = false;
     rc = graphion_vm_run(&vm);
@@ -61,7 +90,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "run failed rc=%d\n", rc);
       return 4;
     }
-    checksum += (uint64_t)vm.regs[0];
+    checksum += (uint64_t)BENCH_REG_I(vm, 8);
   }
   end = now_seconds();
 
@@ -73,7 +102,8 @@ int main(int argc, char **argv) {
   ns_per_instruction = (seconds * 1000000000.0) / ((double)iterations * (double)instruction_count);
 
   printf("{\"benchmark\":\"vm_dispatch\",\"iterations\":%ld,\"instructions_per_iteration\":%zu,"
-         "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,\"checksum\":%llu}\n",
-         iterations, instruction_count, seconds, mips, ns_per_instruction, (unsigned long long)checksum);
+         "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,"
+         "\"typed_value_ops_per_iteration\":%d,\"checksum\":%llu}\n",
+         iterations, instruction_count, seconds, mips, ns_per_instruction, 15, (unsigned long long)checksum);
   return 0;
 }

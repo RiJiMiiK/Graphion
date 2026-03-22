@@ -13,6 +13,10 @@ struct VmInsn {
 
 const OP_MOV_IMM: u8 = 2;
 const OP_ADD: u8 = 3;
+const OP_MOV: u8 = 4;
+const OP_LOAD_CONST: u8 = 5;
+const OP_LOAD_GLOBAL: u8 = 6;
+const OP_STORE_GLOBAL: u8 = 7;
 const OP_HALT: u8 = 1;
 const OP_BFS_LEVELS: u8 = 16;
 const OP_INCIDENT_COUNT: u8 = 17;
@@ -44,6 +48,20 @@ struct HyperGraph<'a> {
     hyperedge_offsets: &'a [u32],
 }
 
+#[derive(Clone, Copy)]
+enum VmValue {
+    None,
+    Int(i64),
+    String(&'static str),
+}
+
+fn value_as_int(value: VmValue) -> i64 {
+    match value {
+        VmValue::Int(number) => number,
+        _ => panic!("type mismatch"),
+    }
+}
+
 #[inline(never)]
 fn hypergraph_incident_sum(hg: &HyperGraph<'_>, node: usize) -> u64 {
     let b = hg.node_offsets[node] as usize;
@@ -72,49 +90,67 @@ fn hypergraph_hyperedge_node_sum(
 
 fn vm_dispatch(iterations: u64) {
     let program = [
-        VmInsn { op: OP_MOV_IMM, a: 0, b: 0, imm: 1 },
-        VmInsn { op: OP_MOV_IMM, a: 1, b: 0, imm: 2 },
-        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 2, b: 0, imm: 10 },
-        VmInsn { op: OP_ADD, a: 0, b: 2, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 3, b: 0, imm: 4 },
-        VmInsn { op: OP_ADD, a: 0, b: 3, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 4, b: 0, imm: 5 },
-        VmInsn { op: OP_ADD, a: 0, b: 4, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 5, b: 0, imm: 20 },
-        VmInsn { op: OP_ADD, a: 0, b: 5, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 6, b: 0, imm: 1 },
-        VmInsn { op: OP_ADD, a: 0, b: 6, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 7, b: 0, imm: 8 },
-        VmInsn { op: OP_ADD, a: 0, b: 7, imm: 0 },
-        VmInsn { op: OP_MOV_IMM, a: 8, b: 0, imm: 100 },
-        VmInsn { op: OP_ADD, a: 0, b: 8, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 1, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 2, b: 0, imm: 1 },
+        VmInsn { op: OP_ADD, a: 1, b: 2, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 1, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 3, b: 0, imm: 0 },
+        VmInsn { op: OP_MOV, a: 4, b: 3, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 5, b: 0, imm: 2 },
+        VmInsn { op: OP_ADD, a: 4, b: 5, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 4, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 6, b: 0, imm: 3 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 6, b: 0, imm: 1 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 7, b: 0, imm: 0 },
+        VmInsn { op: OP_MOV, a: 8, b: 7, imm: 0 },
         VmInsn { op: OP_HALT, a: 0, b: 0, imm: 0 },
+    ];
+    let const_pool = [
+        VmValue::Int(1),
+        VmValue::Int(2),
+        VmValue::Int(10),
+        VmValue::String("graphion"),
     ];
 
     let start = Instant::now();
     let mut checksum: u64 = 0;
     for _ in 0..iterations {
-        let mut regs = [0_i64; 16];
+        let mut regs = [VmValue::Int(0); 16];
+        let mut globals = [VmValue::Int(0), VmValue::None];
         let mut pc = 0usize;
         loop {
             let insn = program[pc];
             pc += 1;
             match insn.op {
-                OP_MOV_IMM => regs[insn.a as usize] = i64::from(insn.imm),
-                OP_ADD => regs[insn.a as usize] += regs[insn.b as usize],
+                OP_MOV_IMM => regs[insn.a as usize] = VmValue::Int(i64::from(insn.imm)),
+                OP_ADD => {
+                    let lhs = value_as_int(regs[insn.a as usize]);
+                    let rhs = value_as_int(regs[insn.b as usize]);
+                    regs[insn.a as usize] = VmValue::Int(lhs.wrapping_add(rhs));
+                }
+                OP_MOV => regs[insn.a as usize] = regs[insn.b as usize],
+                OP_LOAD_CONST => regs[insn.a as usize] = const_pool[insn.imm as usize],
+                OP_LOAD_GLOBAL => regs[insn.a as usize] = globals[insn.imm as usize],
+                OP_STORE_GLOBAL => globals[insn.imm as usize] = regs[insn.a as usize],
                 OP_HALT => break,
                 _ => panic!("invalid opcode"),
             }
         }
-        checksum = checksum.wrapping_add(regs[0] as u64);
+        if let VmValue::String(text) = globals[1] {
+            black_box(text);
+        } else {
+            panic!("global string lost");
+        }
+        checksum = checksum.wrapping_add(value_as_int(regs[8]) as u64);
     }
     black_box(checksum);
     let secs = start.elapsed().as_secs_f64().max(1e-9);
     let mips = (iterations as f64 * program.len() as f64 / secs) / 1_000_000.0;
     let ns_per_instruction = (secs * 1_000_000_000.0) / (iterations as f64 * program.len() as f64);
     println!(
-        "{{\"benchmark\":\"vm_dispatch\",\"iterations\":{},\"instructions_per_iteration\":{},\"seconds\":{:.6},\"mips\":{:.3},\"ns_per_instruction\":{:.3},\"checksum\":{}}}",
+        "{{\"benchmark\":\"vm_dispatch\",\"iterations\":{},\"instructions_per_iteration\":{},\"seconds\":{:.6},\"mips\":{:.3},\"ns_per_instruction\":{:.3},\"typed_value_ops_per_iteration\":15,\"checksum\":{}}}",
         iterations,
         program.len(),
         secs,

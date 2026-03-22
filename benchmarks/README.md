@@ -17,8 +17,20 @@ Benchmark scope is intentionally split:
 - some binaries measure raw kernels directly (`bench_bfs.c`, `bench_hypergraph*.c`)
 - some binaries measure VM execution (`bench_vm.c`, `bench_vm_graph.c`)
 
+`bench_vm.c` now tracks the first typed-value VM baseline:
+- it exercises `GVM_OP_LOAD_CONST`
+- it exercises `GVM_OP_STORE_GLOBAL`
+- it exercises `GVM_OP_LOAD_GLOBAL`
+- it exercises `GVM_OP_MOV`
+- it keeps one integer `ADD` in the mix so typed arithmetic still stays measured
+
 `bench_vm_graph.c` is the coherence check for the current `.gion -> VM` backend path:
 - it exercises `GVM_OP_BFS_LEVEL_COUNT`
 - it exercises `GVM_OP_BFS_ORDER`
 - it exercises `GVM_OP_INCIDENT_COUNT`
 - it exercises `GVM_OP_INCIDENT_SUM`
+
+`bench_gion_stage1.c` is the stage-1 `.gion` lane:
+- it interprets the checked-in workload in `benchmarks/workloads/stage1_values.gion`
+- it measures the end-to-end `.gion` cost separately from the direct VM lane
+- it feeds the dedicated stage-1 comparison table in `docs/performance/reports/STAGE1_COMPARISON.md`

@@ -10,6 +10,16 @@
 #include <string.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void bench_reset_regs(graphion_vm *vm) {
+  size_t i;
+  for (i = 0U; i < (sizeof(vm->regs) / sizeof(vm->regs[0])); ++i) {
+    vm->regs[i].kind = GVM_VALUE_INT;
+    vm->regs[i].as.int_value = 0;
+  }
+}
+
 static double now_seconds(void) {
 #if defined(TIME_UTC)
   struct timespec ts;
@@ -81,14 +91,14 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    memset(vm.regs, 0, sizeof(vm.regs));
+    bench_reset_regs(&vm);
     vm.pc = 0U;
     vm.halted = false;
     rc = graphion_vm_run(&vm);
     if (rc != 0) {
       return 6;
     }
-    checksum += (uint64_t)vm.regs[7];
+    checksum += (uint64_t)BENCH_REG_I(vm, 7);
   }
   end = now_seconds();
 

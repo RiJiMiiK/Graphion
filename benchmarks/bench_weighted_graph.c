@@ -7,6 +7,16 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void bench_reset_regs(graphion_vm *vm) {
+  size_t i;
+  for (i = 0U; i < (sizeof(vm->regs) / sizeof(vm->regs[0])); ++i) {
+    vm->regs[i].kind = GVM_VALUE_INT;
+    vm->regs[i].as.int_value = 0;
+  }
+}
+
 static double now_seconds(void) {
 #if defined(TIME_UTC)
   struct timespec ts;
@@ -97,9 +107,7 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (long i = 0; i < iterations; ++i) {
-    for (size_t reg = 0U; reg < (sizeof(vm.regs) / sizeof(vm.regs[0])); ++reg) {
-      vm.regs[reg] = 0;
-    }
+    bench_reset_regs(&vm);
     vm.pc = 0U;
     vm.halted = false;
     rc = graphion_vm_run(&vm);
@@ -107,8 +115,9 @@ int main(int argc, char **argv) {
       fprintf(stderr, "run failed rc=%d\n", rc);
       return 5;
     }
-    checksum += (uint64_t)(vm.regs[1] + vm.regs[3] + vm.regs[5] + vm.regs[7] + vm.regs[9] +
-                           vm.regs[11] + vm.regs[13] + vm.regs[15]);
+    checksum += (uint64_t)(BENCH_REG_I(vm, 1) + BENCH_REG_I(vm, 3) + BENCH_REG_I(vm, 5) +
+                           BENCH_REG_I(vm, 7) + BENCH_REG_I(vm, 9) + BENCH_REG_I(vm, 11) +
+                           BENCH_REG_I(vm, 13) + BENCH_REG_I(vm, 15));
   }
   end = now_seconds();
 

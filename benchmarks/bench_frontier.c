@@ -8,6 +8,16 @@
 #include <string.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void bench_reset_regs(graphion_vm *vm) {
+  size_t i;
+  for (i = 0U; i < (sizeof(vm->regs) / sizeof(vm->regs[0])); ++i) {
+    vm->regs[i].kind = GVM_VALUE_INT;
+    vm->regs[i].as.int_value = 0;
+  }
+}
+
 enum {
   FRONTIER_INPUT_LEN = 64,
   FRONTIER_CAPACITY = 64,
@@ -70,7 +80,7 @@ int main(int argc, char **argv) {
       frontier_a[j] = (uint32_t)j;
       frontier_b[j] = 0U;
     }
-    memset(vm.regs, 0, sizeof(vm.regs));
+    bench_reset_regs(&vm);
     vm.pc = 0U;
     vm.halted = false;
     graphion_vm_bind_frontier(&vm, frontier_a, FRONTIER_INPUT_LEN, frontier_b, FRONTIER_CAPACITY);
@@ -79,7 +89,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "run failed rc=%d\n", rc);
       return 4;
     }
-    checksum += (uint64_t)vm.regs[4];
+    checksum += (uint64_t)BENCH_REG_I(vm, 4);
   }
   end = now_seconds();
 
