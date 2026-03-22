@@ -6,6 +6,23 @@
 #include <limits.h>
 #include <string.h>
 
+#define TEST_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void test_set_reg_i(graphion_vm *vm, uint8_t reg, int64_t value) {
+  vm->regs[reg].kind = GVM_VALUE_INT;
+  vm->regs[reg].as.int_value = value;
+}
+
+static void test_set_value_float(graphion_vm_value *value, double number) {
+  value->kind = GVM_VALUE_FLOAT;
+  value->as.float_value = number;
+}
+
+static void test_set_value_string(graphion_vm_value *value, const char *text) {
+  value->kind = GVM_VALUE_STRING;
+  value->as.string_value = text;
+}
+
 static int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t len) {
   int rc;
   graphion_vm_init(vm);
@@ -38,7 +55,7 @@ int test_vm_addition_program(void) {
   if (!vm.halted) {
     return 3;
   }
-  if (vm.regs[0] != 42) {
+  if (TEST_REG_I(vm, 0) != 42) {
     return 4;
   }
   return 0;
@@ -61,6 +78,124 @@ int test_vm_invalid_register_fails(void) {
   if (rc != GVM_ERR_INVALID_MOV_IMM_REG) {
     return 2;
   }
+  return 0;
+}
+
+int test_vm_typed_register_defaults(void) {
+  graphion_vm vm;
+  size_t i;
+
+  graphion_vm_init(&vm);
+  for (i = 0U; i < 16U; ++i) {
+    if (vm.regs[i].kind != GVM_VALUE_INT || vm.regs[i].as.int_value != 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int test_vm_value_movement_and_globals(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[2];
+  const graphion_insn program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_GLOBAL, 1, 0, 0},
+      {GVM_OP_MOV, 2, 1, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 1},
+      {GVM_OP_STORE_GLOBAL, 3, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 3.5);
+  test_set_value_string(&const_pool[1], "graphion");
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (!vm.halted) {
+    return 3;
+  }
+  if (globals[0].kind != GVM_VALUE_FLOAT || globals[0].as.float_value != 3.5) {
+    return 4;
+  }
+  if (vm.regs[1].kind != GVM_VALUE_FLOAT || vm.regs[1].as.float_value != 3.5) {
+    return 5;
+  }
+  if (vm.regs[2].kind != GVM_VALUE_FLOAT || vm.regs[2].as.float_value != 3.5) {
+    return 6;
+  }
+  if (globals[1].kind != GVM_VALUE_STRING || strcmp(globals[1].as.string_value, "graphion") != 0) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_vm_typed_value_errors(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[1];
+  graphion_vm_value globals[1];
+  const graphion_insn bad_const_program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 1},
+  };
+  const graphion_insn bad_global_program[] = {
+      {GVM_OP_STORE_GLOBAL, 0, 0, 2},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 1.25);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 1U);
+  rc = graphion_vm_load(&vm, bad_const_program, sizeof(bad_const_program) / sizeof(bad_const_program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_CONST_INDEX) {
+    return 2;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  rc = graphion_vm_load(&vm, bad_global_program, sizeof(bad_global_program) / sizeof(bad_global_program[0]));
+  if (rc != 0) {
+    return 3;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_GLOBAL_INDEX) {
+    return 4;
+  }
+
+  graphion_vm_init(&vm);
+  test_set_reg_i(&vm, 0U, 7);
+  vm.regs[1].kind = GVM_VALUE_FLOAT;
+  vm.regs[1].as.float_value = 2.0;
+  rc = graphion_vm_load(&vm, (const graphion_insn[]){{GVM_OP_ADD, 0, 1, 0}}, 1U);
+  if (rc != 0) {
+    return 5;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_TYPE_MISMATCH) {
+    return 6;
+  }
+
   return 0;
 }
 
@@ -92,7 +227,7 @@ int test_vm_bfs_levels_opcode(void) {
   if (rc != 0) {
     return 3;
   }
-  if (vm.regs[1] != 4) {
+  if (TEST_REG_I(vm, 1) != 4) {
     return 4;
   }
   return 0;
@@ -126,7 +261,7 @@ int test_vm_bfs_level_count_opcode(void) {
   if (rc != 0) {
     return 3;
   }
-  if (vm.regs[1] != 3) {
+  if (TEST_REG_I(vm, 1) != 3) {
     return 4;
   }
   return 0;
@@ -162,7 +297,7 @@ int test_vm_bfs_order_opcode(void) {
   if (rc != 0) {
     return 3;
   }
-  if (vm.regs[1] != 4 || vm.frontier_output_len != 4U) {
+  if (TEST_REG_I(vm, 1) != 4 || vm.frontier_output_len != 4U) {
     return 4;
   }
   if (vm.frontier_output[0] != 0U || vm.frontier_output[1] != 1U || vm.frontier_output[2] != 2U ||
@@ -205,7 +340,7 @@ int test_vm_hypergraph_opcodes(void) {
   if (rc != 0) {
     return 3;
   }
-  if (vm.regs[1] != 2 || vm.regs[3] != 3 || vm.regs[4] != 1 || vm.regs[5] != 3) {
+  if (TEST_REG_I(vm, 1) != 2 || TEST_REG_I(vm, 3) != 3 || TEST_REG_I(vm, 4) != 1 || TEST_REG_I(vm, 5) != 3) {
     return 4;
   }
   return 0;
@@ -232,10 +367,10 @@ int test_vm_superinstruction_add_pair_semantics(void) {
   if (!vm.halted) {
     return 3;
   }
-  if (vm.regs[0] != 6) {
+  if (TEST_REG_I(vm, 0) != 6) {
     return 4;
   }
-  if (vm.regs[3] != 12) {
+  if (TEST_REG_I(vm, 3) != 12) {
     return 5;
   }
   return 0;
@@ -262,16 +397,16 @@ int test_vm_superinstruction_movimm_add_semantics(void) {
   if (!vm.halted) {
     return 3;
   }
-  if (vm.regs[0] != 7) {
+  if (TEST_REG_I(vm, 0) != 7) {
     return 4;
   }
-  if (vm.regs[1] != 5) {
+  if (TEST_REG_I(vm, 1) != 5) {
     return 5;
   }
-  if (vm.regs[2] != 6) {
+  if (TEST_REG_I(vm, 2) != 6) {
     return 6;
   }
-  if (vm.regs[3] != -2) {
+  if (TEST_REG_I(vm, 3) != -2) {
     return 7;
   }
   return 0;
@@ -306,7 +441,7 @@ int test_vm_deterministic_mode_toggle(void) {
   if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
     return 5;
   }
-  if (vm.regs[0] != 42 || vm.regs[1] != 35) {
+  if (TEST_REG_I(vm, 0) != 42 || TEST_REG_I(vm, 1) != 35) {
     return 6;
   }
 
@@ -341,7 +476,7 @@ int test_vm_deterministic_mode_unknown_opcode(void) {
   if (vm.pc != 2U) {
     return 4;
   }
-  if (vm.regs[0] != 7) {
+  if (TEST_REG_I(vm, 0) != 7) {
     return 5;
   }
   return 0;
@@ -382,7 +517,7 @@ int test_vm_deterministic_mode_graph_semantics(void) {
   if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
     return 5;
   }
-  if (vm.regs[1] != 4) {
+  if (TEST_REG_I(vm, 1) != 4) {
     return 6;
   }
   return 0;
@@ -398,7 +533,7 @@ int test_vm_add_wraparound_semantics(void) {
   int rc;
 
   graphion_vm_init(&vm);
-  vm.regs[0] = INT64_MAX;
+  test_set_reg_i(&vm, 0U, INT64_MAX);
   rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != 0) {
     return 1;
@@ -407,7 +542,7 @@ int test_vm_add_wraparound_semantics(void) {
   if (rc != 0) {
     return 2;
   }
-  if (vm.regs[0] != INT64_MIN) {
+  if (TEST_REG_I(vm, 0) != INT64_MIN) {
     return 3;
   }
   if (!vm.halted) {
@@ -444,8 +579,8 @@ int test_vm_frontier_primitives(void) {
   if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
     return 3;
   }
-  if (vm.regs[0] != 0 || vm.regs[1] != 2 || vm.regs[2] != 2 || vm.regs[3] != 2 || vm.regs[4] != 2 ||
-      vm.regs[5] != 7) {
+  if (TEST_REG_I(vm, 0) != 0 || TEST_REG_I(vm, 1) != 2 || TEST_REG_I(vm, 2) != 2 || TEST_REG_I(vm, 3) != 2 ||
+      TEST_REG_I(vm, 4) != 2 || TEST_REG_I(vm, 5) != 7) {
     return 4;
   }
   if (vm.frontier_input_len != 2U || vm.frontier_output_len != 0U) {
@@ -543,7 +678,7 @@ int test_vm_neighbor_iteration_primitives(void) {
       vm.frontier_output[2] != 1U) {
     return 5;
   }
-  if (vm.regs[1] != 2 || vm.regs[2] != 3) {
+  if (TEST_REG_I(vm, 1) != 2 || TEST_REG_I(vm, 2) != 3) {
     return 6;
   }
   return 0;
@@ -629,7 +764,7 @@ int test_vm_weighted_graph_opcodes(void) {
   if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
     return 4;
   }
-  if (vm.regs[1] != 13 || vm.regs[3] != 27) {
+  if (TEST_REG_I(vm, 1) != 13 || TEST_REG_I(vm, 3) != 27) {
     return 5;
   }
   return 0;
@@ -749,7 +884,7 @@ int test_vm_hyperedge_traversal_primitives(void) {
   if (vm.frontier_output_len != 2U || vm.frontier_output[0] != 1U || vm.frontier_output[1] != 3U) {
     return 6;
   }
-  if (vm.regs[1] != 2 || vm.regs[2] != 1) {
+  if (TEST_REG_I(vm, 1) != 2 || TEST_REG_I(vm, 2) != 1) {
     return 7;
   }
   return 0;
@@ -834,6 +969,10 @@ int test_vm_snapshot_format(void) {
       "arith_only_fastpath=1\n",
       "arith_only_halt_terminated=1\n",
       "weighted_sum_fastpath=0\n",
+      "const_bound=0\n",
+      "const_count=0\n",
+      "globals_bound=0\n",
+      "global_count=0\n",
       "csr_bound=0\n",
       "hypergraph_bound=0\n",
       "frontier_bound=0\n",
@@ -986,7 +1125,7 @@ int test_vm_dispatch_variant_edge_semantics(void) {
   if (rc != 0) {
     return 1;
   }
-  if (!vm.halted || vm.regs[0] != 5 || vm.pc != 2U) {
+  if (!vm.halted || TEST_REG_I(vm, 0) != 5 || vm.pc != 2U) {
     return 2;
   }
 
@@ -994,7 +1133,7 @@ int test_vm_dispatch_variant_edge_semantics(void) {
   if (rc != -4) {
     return 3;
   }
-  if (vm.halted || vm.pc != 2U || vm.regs[0] != 5) {
+  if (vm.halted || vm.pc != 2U || TEST_REG_I(vm, 0) != 5) {
     return 4;
   }
 

@@ -13,6 +13,9 @@ typedef struct {
 
 int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
+int test_vm_typed_register_defaults(void);
+int test_vm_value_movement_and_globals(void);
+int test_vm_typed_value_errors(void);
 int test_vm_bfs_levels_opcode(void);
 int test_vm_bfs_level_count_opcode(void);
 int test_vm_bfs_order_opcode(void);
@@ -110,6 +113,9 @@ int main(int argc, char **argv) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
+      {"vm_typed_register_defaults", test_vm_typed_register_defaults},
+      {"vm_value_movement_and_globals", test_vm_value_movement_and_globals},
+      {"vm_typed_value_errors", test_vm_typed_value_errors},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
       {"vm_bfs_level_count_opcode", test_vm_bfs_level_count_opcode},
       {"vm_bfs_order_opcode", test_vm_bfs_order_opcode},

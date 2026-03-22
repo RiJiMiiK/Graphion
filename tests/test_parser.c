@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define TEST_VM_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
 int test_parser_decode_valid_program(void) {
   const uint8_t bytes[] = {
       GVM_OP_MOV_IMM, 0, 0, 7, 0, 0, 0,   GVM_OP_MOV_IMM, 1, 0, 35, 0, 0, 0,
@@ -125,7 +127,7 @@ int test_frontend_source_to_vm_execution(void) {
   if (rc != 0) {
     return 4;
   }
-  if (!vm.halted || vm.regs[0] != 42) {
+  if (!vm.halted || TEST_VM_REG_I(vm, 0) != 42) {
     return 5;
   }
   return 0;
@@ -270,8 +272,10 @@ int test_frontend_reference_graph_execution_examples(void) {
     if (rc != 0 || !vm.halted) {
       return (int)(50 + i);
     }
-    if (vm.regs[0] != examples[i].expected_regs[0] || vm.regs[1] != examples[i].expected_regs[1] ||
-        vm.regs[2] != examples[i].expected_regs[2] || vm.regs[3] != examples[i].expected_regs[3]) {
+    if (TEST_VM_REG_I(vm, 0) != examples[i].expected_regs[0] ||
+        TEST_VM_REG_I(vm, 1) != examples[i].expected_regs[1] ||
+        TEST_VM_REG_I(vm, 2) != examples[i].expected_regs[2] ||
+        TEST_VM_REG_I(vm, 3) != examples[i].expected_regs[3]) {
       return (int)(60 + i);
     }
     if (vm.frontier_input_len != examples[i].expected_frontier_input_len) {

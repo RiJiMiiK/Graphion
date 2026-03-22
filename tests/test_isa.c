@@ -38,10 +38,10 @@ typedef struct {
   uint32_t expected_frontier_output[8];
 } isa_execute_fixture;
 
-static int regs_match(const int64_t *lhs, const int64_t *rhs, size_t count) {
+static int vm_regs_match(const graphion_vm_value *lhs, const int64_t *rhs, size_t count) {
   size_t i;
   for (i = 0U; i < count; ++i) {
-    if (lhs[i] != rhs[i]) {
+    if (lhs[i].kind != GVM_VALUE_INT || lhs[i].as.int_value != rhs[i]) {
       return 0;
     }
   }
@@ -493,7 +493,7 @@ int test_isa_execute_golden_fixtures(void) {
       if (vm.pc != fixtures[i].expected_pc) {
         return (int)(140 + i);
       }
-      if (!regs_match(vm.regs, fixtures[i].expected_regs, 16U)) {
+      if (!vm_regs_match(vm.regs, fixtures[i].expected_regs, 16U)) {
         return (int)(150 + i);
       }
       if (fixtures[i].expect_frontier_state) {

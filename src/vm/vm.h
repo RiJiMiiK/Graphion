@@ -15,6 +15,10 @@ typedef enum {
   GVM_OP_HALT = 1,
   GVM_OP_MOV_IMM = 2,
   GVM_OP_ADD = 3,
+  GVM_OP_MOV = 4,
+  GVM_OP_LOAD_CONST = 5,
+  GVM_OP_LOAD_GLOBAL = 6,
+  GVM_OP_STORE_GLOBAL = 7,
   GVM_OP_FRONTIER_CLEAR = 32,
   GVM_OP_FRONTIER_PUSH = 33,
   GVM_OP_FRONTIER_FILTER_LT_IMM = 34,
@@ -52,8 +56,36 @@ typedef enum {
   GVM_ERR_FRONTIER_OVERFLOW = -12,
   GVM_ERR_INVALID_FRONTIER_VALUE = -13,
   GVM_ERR_CSR_WEIGHTS_UNBOUND = -14,
-  GVM_ERR_CSR_EDGE_ATTRS_UNBOUND = -15
+  GVM_ERR_CSR_EDGE_ATTRS_UNBOUND = -15,
+  GVM_ERR_TYPE_MISMATCH = -16,
+  GVM_ERR_CONST_UNBOUND = -17,
+  GVM_ERR_GLOBALS_UNBOUND = -18,
+  GVM_ERR_INVALID_CONST_INDEX = -19,
+  GVM_ERR_INVALID_GLOBAL_INDEX = -20
 } graphion_vm_result;
+
+typedef enum {
+  GVM_VALUE_NONE = 0,
+  GVM_VALUE_INT = 1,
+  GVM_VALUE_FLOAT = 2,
+  GVM_VALUE_BOOL = 3,
+  GVM_VALUE_STRING = 4,
+  GVM_VALUE_GRAPH_REF = 5,
+  GVM_VALUE_HYPERGRAPH_REF = 6,
+  GVM_VALUE_INT_SEQUENCE_REF = 7
+} graphion_vm_value_kind;
+
+typedef struct {
+  uint8_t kind;
+  uint8_t reserved[7];
+  union {
+    int64_t int_value;
+    double float_value;
+    int bool_value;
+    const char *string_value;
+    const void *ref_value;
+  } as;
+} graphion_vm_value;
 
 typedef struct {
   uint8_t op;
@@ -63,7 +95,7 @@ typedef struct {
 } graphion_insn;
 
 typedef struct {
-  int64_t regs[16];
+  graphion_vm_value regs[16];
   const graphion_insn *program;
   size_t program_len;
   size_t pc;
@@ -72,6 +104,10 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
+  const graphion_vm_value *const_pool;
+  size_t const_count;
+  graphion_vm_value *globals;
+  size_t global_count;
   const graphion_csr_graph *csr_graph;
   int32_t *bfs_levels;
   uint32_t *bfs_queue;
@@ -92,6 +128,8 @@ void graphion_vm_bind_csr(graphion_vm *vm,
                           int32_t *bfs_levels,
                           uint32_t *bfs_queue,
                           size_t bfs_capacity);
+void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_pool, size_t const_count);
+void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_t global_count);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);
 void graphion_vm_bind_frontier(graphion_vm *vm,
                                uint32_t *input,
