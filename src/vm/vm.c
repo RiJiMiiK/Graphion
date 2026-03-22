@@ -23,6 +23,7 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
+  bool value_move_fastpath;
 } graphion_vm_shape_cache_entry;
 
 enum { GRAPHION_VM_SHAPE_CACHE_SIZE = 64 };
@@ -49,7 +50,8 @@ static int shape_cache_lookup(const graphion_insn *program,
                               size_t program_len,
                               bool *arith_only_fastpath,
                               bool *arith_only_halt_terminated,
-                              bool *weighted_sum_fastpath) {
+                              bool *weighted_sum_fastpath,
+                              bool *value_move_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   const graphion_vm_shape_cache_entry e = g_shape_cache[slot];
   const size_t fingerprint = shape_cache_fingerprint(program, program_len);
@@ -59,6 +61,7 @@ static int shape_cache_lookup(const graphion_insn *program,
   *arith_only_fastpath = e.arith_only_fastpath;
   *arith_only_halt_terminated = e.arith_only_halt_terminated;
   *weighted_sum_fastpath = e.weighted_sum_fastpath;
+  *value_move_fastpath = e.value_move_fastpath;
   return 1;
 }
 
@@ -66,7 +69,8 @@ static void shape_cache_store(const graphion_insn *program,
                               size_t program_len,
                               bool arith_only_fastpath,
                               bool arith_only_halt_terminated,
-                              bool weighted_sum_fastpath) {
+                              bool weighted_sum_fastpath,
+                              bool value_move_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   g_shape_cache[slot].program = program;
   g_shape_cache[slot].program_len = program_len;
@@ -74,6 +78,7 @@ static void shape_cache_store(const graphion_insn *program,
   g_shape_cache[slot].arith_only_fastpath = arith_only_fastpath;
   g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
   g_shape_cache[slot].weighted_sum_fastpath = weighted_sum_fastpath;
+  g_shape_cache[slot].value_move_fastpath = value_move_fastpath;
 }
 
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
@@ -362,6 +367,135 @@ static int is_weighted_sum_fastpath_candidate(const graphion_insn *program, size
   return has_weighted;
 }
 
+static int is_value_move_fastpath_candidate(const graphion_insn *program, size_t program_len) {
+  size_t i;
+  int has_value_ops = 0;
+  for (i = 0U; i < program_len; ++i) {
+    const graphion_insn in = program[i];
+    switch (in.op) {
+      case GVM_OP_NOP:
+      case GVM_OP_HALT:
+        break;
+      case GVM_OP_ADD:
+        if (!is_valid_reg(in.a) || !is_valid_reg(in.b)) {
+          return 0;
+        }
+        break;
+      case GVM_OP_MOV:
+        has_value_ops = 1;
+        if (!is_valid_reg(in.a) || !is_valid_reg(in.b)) {
+          return 0;
+        }
+        break;
+      case GVM_OP_LOAD_CONST:
+      case GVM_OP_LOAD_GLOBAL:
+      case GVM_OP_STORE_GLOBAL:
+        has_value_ops = 1;
+        if (!is_valid_reg(in.a)) {
+          return 0;
+        }
+        break;
+      default:
+        return 0;
+    }
+  }
+  return has_value_ops;
+}
+
+static int validate_value_move_program_indices(const graphion_vm *vm) {
+  size_t i;
+  if (vm == NULL || vm->program == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < vm->program_len; ++i) {
+    const graphion_insn in = vm->program[i];
+    switch (in.op) {
+      case GVM_OP_LOAD_CONST:
+        if (vm->const_pool == NULL || in.imm < 0 || (size_t)in.imm >= vm->const_count) {
+          return 0;
+        }
+        break;
+      case GVM_OP_LOAD_GLOBAL:
+      case GVM_OP_STORE_GLOBAL:
+        if (vm->globals == NULL || in.imm < 0 || (size_t)in.imm >= vm->global_count) {
+          return 0;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return 1;
+}
+
+static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
+  uint8_t reg_kinds[16];
+  uint8_t global_kinds[256];
+  size_t global_count;
+  size_t i;
+
+  if (vm == NULL || vm->program == NULL || vm->program_len == 0U) {
+    return 0;
+  }
+  if (vm->globals == NULL || vm->const_pool == NULL) {
+    return 0;
+  }
+  global_count = vm->global_count;
+  if (global_count > (sizeof(global_kinds) / sizeof(global_kinds[0]))) {
+    return 0;
+  }
+
+  for (i = 0U; i < 16U; ++i) {
+    reg_kinds[i] = GVM_VALUE_INT;
+  }
+  for (i = 0U; i < global_count; ++i) {
+    global_kinds[i] = vm->globals[i].kind;
+  }
+
+  for (i = 0U; i < vm->program_len; ++i) {
+    const graphion_insn in = vm->program[i];
+    switch (in.op) {
+      case GVM_OP_NOP:
+      case GVM_OP_HALT:
+        break;
+      case GVM_OP_MOV:
+        reg_kinds[in.a] = reg_kinds[in.b];
+        break;
+      case GVM_OP_LOAD_CONST:
+        reg_kinds[in.a] = vm->const_pool[(size_t)in.imm].kind;
+        break;
+      case GVM_OP_LOAD_GLOBAL:
+        reg_kinds[in.a] = global_kinds[(size_t)in.imm];
+        break;
+      case GVM_OP_STORE_GLOBAL:
+        global_kinds[(size_t)in.imm] = reg_kinds[in.a];
+        break;
+      case GVM_OP_ADD:
+        if (reg_kinds[in.a] != GVM_VALUE_INT || reg_kinds[in.b] != GVM_VALUE_INT) {
+          return 0;
+        }
+        reg_kinds[in.a] = GVM_VALUE_INT;
+        break;
+      default:
+        return 0;
+    }
+  }
+  return 1;
+}
+
+static void refresh_value_move_validation(graphion_vm *vm) {
+  if (vm == NULL || !vm->value_move_fastpath || vm->program == NULL || vm->program_len == 0U) {
+    if (vm != NULL) {
+      vm->value_move_indices_valid = false;
+      vm->value_move_int_add_safe = false;
+    }
+    return;
+  }
+  vm->value_move_indices_valid = validate_value_move_program_indices(vm) != 0;
+  vm->value_move_int_add_safe =
+      vm->value_move_indices_valid ? (validate_value_move_program_int_add_safety(vm) != 0) : false;
+}
+
 static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
   const graphion_insn *p = vm->program + vm->pc;
   const graphion_insn *const end = vm->program + vm->program_len;
@@ -572,6 +706,187 @@ static int run_weighted_sum_fastpath_c(graphion_vm *vm) {
   return GVM_OK;
 }
 
+static int run_value_move_fastpath_c(graphion_vm *vm) {
+  const graphion_insn *p;
+  const graphion_insn *const end = vm->program + vm->program_len;
+  graphion_vm_value *regs;
+  const graphion_vm_value *const_pool;
+  graphion_vm_value *globals;
+  const size_t const_count = vm->const_count;
+  const size_t global_count = vm->global_count;
+
+  if (vm == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+
+  regs = vm->regs;
+  const_pool = vm->const_pool;
+  globals = vm->globals;
+  p = vm->program + vm->pc;
+  while (p < end) {
+    const graphion_insn in = *p++;
+    switch (in.op) {
+      case GVM_OP_NOP:
+        break;
+      case GVM_OP_HALT:
+        vm->halted = true;
+        vm->pc = (size_t)(p - vm->program);
+        return GVM_OK;
+      case GVM_OP_MOV:
+        regs[in.a] = regs[in.b];
+        break;
+      case GVM_OP_LOAD_CONST:
+        if (const_pool == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_CONST_UNBOUND;
+        }
+        if (in.imm < 0 || (size_t)in.imm >= const_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_CONST_INDEX;
+        }
+        regs[in.a] = const_pool[(size_t)in.imm];
+        break;
+      case GVM_OP_LOAD_GLOBAL:
+        if (globals == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_GLOBALS_UNBOUND;
+        }
+        if (in.imm < 0 || (size_t)in.imm >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        regs[in.a] = globals[(size_t)in.imm];
+        break;
+      case GVM_OP_STORE_GLOBAL:
+        if (globals == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_GLOBALS_UNBOUND;
+        }
+        if (in.imm < 0 || (size_t)in.imm >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        globals[(size_t)in.imm] = regs[in.a];
+        break;
+      case GVM_OP_ADD:
+        if (regs[in.a].kind != GVM_VALUE_INT || regs[in.b].kind != GVM_VALUE_INT) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_TYPE_MISMATCH;
+        }
+        regs[in.a].as.int_value = wrap_add_i64(regs[in.a].as.int_value, regs[in.b].as.int_value);
+        break;
+      default:
+        vm->pc = (size_t)((p - vm->program) - 1U);
+        return GVM_ERR_UNKNOWN_OPCODE;
+    }
+  }
+  vm->pc = vm->program_len;
+  return GVM_OK;
+}
+
+static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
+  const graphion_insn *p;
+  const graphion_insn *const end = vm->program + vm->program_len;
+  graphion_vm_value *regs;
+  const graphion_vm_value *const_pool;
+  graphion_vm_value *globals;
+
+  if (vm == NULL || vm->const_pool == NULL || vm->globals == NULL) {
+    return vm == NULL ? GVM_ERR_INVALID_ARG
+                      : (vm->const_pool == NULL ? GVM_ERR_CONST_UNBOUND : GVM_ERR_GLOBALS_UNBOUND);
+  }
+
+  regs = vm->regs;
+  const_pool = vm->const_pool;
+  globals = vm->globals;
+  p = vm->program + vm->pc;
+  while (p < end) {
+    const graphion_insn in = *p++;
+    switch (in.op) {
+      case GVM_OP_NOP:
+        break;
+      case GVM_OP_HALT:
+        vm->halted = true;
+        vm->pc = (size_t)(p - vm->program);
+        return GVM_OK;
+      case GVM_OP_MOV:
+        if (vm->value_move_int_add_safe && p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_ADD && next.b == in.a) {
+            regs[in.a] = regs[in.b];
+            regs[next.a].as.int_value = wrap_add_i64(regs[next.a].as.int_value, regs[in.a].as.int_value);
+            ++p;
+            break;
+          }
+        }
+        regs[in.a] = regs[in.b];
+        break;
+      case GVM_OP_LOAD_CONST:
+        if (p < end) {
+          const graphion_insn next = *p;
+          const graphion_vm_value value = const_pool[(size_t)in.imm];
+          if (next.op == GVM_OP_STORE_GLOBAL && next.a == in.a) {
+            regs[in.a] = value;
+            globals[(size_t)next.imm] = value;
+            ++p;
+            break;
+          }
+          if (vm->value_move_int_add_safe && next.op == GVM_OP_ADD && next.b == in.a) {
+            regs[in.a] = value;
+            regs[next.a].as.int_value = wrap_add_i64(regs[next.a].as.int_value, value.as.int_value);
+            ++p;
+            break;
+          }
+        }
+        regs[in.a] = const_pool[(size_t)in.imm];
+        break;
+      case GVM_OP_LOAD_GLOBAL:
+        if (p < end) {
+          const graphion_insn next = *p;
+          const graphion_vm_value value = globals[(size_t)in.imm];
+          if (next.op == GVM_OP_MOV && next.b == in.a) {
+            regs[in.a] = value;
+            regs[next.a] = value;
+            ++p;
+            break;
+          }
+          if (vm->value_move_int_add_safe && next.op == GVM_OP_ADD && next.b == in.a) {
+            regs[in.a] = value;
+            regs[next.a].as.int_value = wrap_add_i64(regs[next.a].as.int_value, value.as.int_value);
+            ++p;
+            break;
+          }
+        }
+        regs[in.a] = globals[(size_t)in.imm];
+        break;
+      case GVM_OP_STORE_GLOBAL:
+        globals[(size_t)in.imm] = regs[in.a];
+        break;
+      case GVM_OP_ADD:
+        if (!vm->value_move_int_add_safe) {
+          if (regs[in.a].kind != GVM_VALUE_INT || regs[in.b].kind != GVM_VALUE_INT) {
+            vm->pc = (size_t)((p - vm->program) - 1U);
+            return GVM_ERR_TYPE_MISMATCH;
+          }
+        }
+        regs[in.a].as.int_value = wrap_add_i64(regs[in.a].as.int_value, regs[in.b].as.int_value);
+        if (p < end) {
+          const graphion_insn next = *p;
+          if (next.op == GVM_OP_STORE_GLOBAL && next.a == in.a) {
+            globals[(size_t)next.imm] = regs[in.a];
+            ++p;
+          }
+        }
+        break;
+      default:
+        vm->pc = (size_t)((p - vm->program) - 1U);
+        return GVM_ERR_UNKNOWN_OPCODE;
+    }
+  }
+  vm->pc = vm->program_len;
+  return GVM_OK;
+}
+
 #if defined(GRAPHION_ENABLE_ASM) && !defined(_MSC_VER)
 extern size_t graphion_vm_run_hotpath_arith_asm(int64_t *regs,
                                                 const graphion_insn *program,
@@ -638,6 +953,9 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->arith_only_fastpath = false;
   vm->arith_only_halt_terminated = false;
   vm->weighted_sum_fastpath = false;
+  vm->value_move_fastpath = false;
+  vm->value_move_indices_valid = false;
+  vm->value_move_int_add_safe = false;
   vm->const_pool = NULL;
   vm->const_count = 0U;
   vm->globals = NULL;
@@ -654,6 +972,18 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->frontier_capacity = 0U;
 }
 
+void graphion_vm_reset_execution(graphion_vm *vm) {
+  size_t i;
+  if (vm == NULL) {
+    return;
+  }
+  for (i = 0; i < 16U; ++i) {
+    vm_value_set_int(&vm->regs[i], 0);
+  }
+  vm->pc = 0U;
+  vm->halted = false;
+}
+
 void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled) {
   if (vm == NULL) {
     return;
@@ -665,6 +995,7 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   bool halt_terminated = false;
   bool arith_only_fastpath = false;
   bool weighted_sum_fastpath = false;
+  bool value_move_fastpath = false;
   if (vm == NULL || program == NULL || program_len == 0U) {
     return GVM_ERR_INVALID_ARG;
   }
@@ -674,14 +1005,18 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->halted = false;
 
   if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated,
-                          &weighted_sum_fastpath)) {
+                          &weighted_sum_fastpath, &value_move_fastpath)) {
     arith_only_fastpath = is_arith_only_fastpath_candidate(program, program_len, &halt_terminated) != 0;
     weighted_sum_fastpath = is_weighted_sum_fastpath_candidate(program, program_len) != 0;
-    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath);
+    value_move_fastpath = is_value_move_fastpath_candidate(program, program_len) != 0;
+    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath,
+                      value_move_fastpath);
   }
   vm->arith_only_fastpath = arith_only_fastpath;
   vm->arith_only_halt_terminated = halt_terminated;
   vm->weighted_sum_fastpath = weighted_sum_fastpath;
+  vm->value_move_fastpath = value_move_fastpath;
+  refresh_value_move_validation(vm);
   return 0;
 }
 
@@ -705,6 +1040,7 @@ void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_
   }
   vm->const_pool = const_pool;
   vm->const_count = const_count;
+  refresh_value_move_validation(vm);
 }
 
 void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_t global_count) {
@@ -713,6 +1049,7 @@ void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_
   }
   vm->globals = globals;
   vm->global_count = global_count;
+  refresh_value_move_validation(vm);
 }
 
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph) {
@@ -1732,6 +2069,13 @@ int graphion_vm_run(graphion_vm *vm) {
     return run_weighted_sum_fastpath_c(vm);
   }
 
+  if (vm->value_move_fastpath) {
+    if (vm->value_move_indices_valid) {
+      return run_value_move_fastpath_verified_c(vm);
+    }
+    return run_value_move_fastpath_c(vm);
+  }
+
   if (vm->deterministic_mode) {
     return run_dispatch_switch(vm);
   }
@@ -1788,6 +2132,8 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
                    vm->arith_only_halt_terminated ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "weighted_sum_fastpath=%d\n",
                    vm->weighted_sum_fastpath ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "value_move_fastpath=%d\n",
+                   vm->value_move_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_bound=%d\n", vm->const_pool != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_count=%zu\n", vm->const_count);
   offset = appendf(buffer, buffer_size, offset, "globals_bound=%d\n", vm->globals != NULL ? 1 : 0);

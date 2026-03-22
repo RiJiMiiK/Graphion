@@ -8,33 +8,12 @@
 #include <string.h>
 
 enum {
-  GINT_LINE_MAX = 512,
-  GINT_SOURCE_LINE_MAX = 256,
-  GINT_FUNCTION_MAX = 32,
-  GINT_PARAM_MAX = 8,
+  GINT_LINE_MAX = GRAPHION_RUNTIME_LINE_MAX,
+  GINT_SOURCE_LINE_MAX = GRAPHION_RUNTIME_SOURCE_LINE_MAX,
+  GINT_FUNCTION_MAX = GRAPHION_RUNTIME_FUNCTION_MAX,
+  GINT_PARAM_MAX = GRAPHION_RUNTIME_PARAM_MAX,
   GINT_ARG_MAX = 8
 };
-
-typedef struct {
-  size_t line_no;
-  size_t indent;
-  char text[GINT_LINE_MAX];
-} graphion_source_line;
-
-typedef struct {
-  char name[GRAPHION_RUNTIME_NAME_MAX];
-  char params[GINT_PARAM_MAX][GRAPHION_RUNTIME_NAME_MAX];
-  size_t param_count;
-  size_t body_start;
-  size_t body_end;
-} graphion_runtime_function;
-
-typedef struct {
-  graphion_source_line lines[GINT_SOURCE_LINE_MAX];
-  size_t line_count;
-  graphion_runtime_function functions[GINT_FUNCTION_MAX];
-  size_t function_count;
-} graphion_program;
 
 static void set_diagnostic(graphion_runtime_diagnostic *diagnostic,
                            size_t line,
@@ -47,6 +26,12 @@ static int parse_string_literal(const char *token, graphion_runtime_value *value
 static int parse_bool_literal(const char *token, graphion_runtime_value *value);
 static int parse_int_literal(const char *token, graphion_runtime_value *value);
 static int parse_float_literal(const char *token, graphion_runtime_value *value);
+static int prepare_simple_top_level_steps(graphion_runtime_program *program,
+                                          graphion_runtime_diagnostic *diagnostic);
+static int execute_prepared_top_level_program(const graphion_runtime_program *program,
+                                              graphion_runtime_scope *scope);
+static int compile_prepared_top_level_vm_program(graphion_runtime_program *program,
+                                                 graphion_runtime_diagnostic *diagnostic);
 
 static int parse_graph_header(const char *text,
                               char *name_out,
@@ -844,6 +829,19 @@ static graphion_runtime_binding *find_binding_mut(graphion_runtime_scope *scope,
   return NULL;
 }
 
+static const graphion_runtime_binding *find_binding(const graphion_runtime_scope *scope, const char *name) {
+  size_t i;
+  if (scope == NULL || name == NULL) {
+    return NULL;
+  }
+  for (i = 0U; i < scope->count; ++i) {
+    if (strcmp(scope->bindings[i].name, name) == 0) {
+      return &scope->bindings[i];
+    }
+  }
+  return NULL;
+}
+
 static void graphion_runtime_value_dispose(graphion_runtime_value *value) {
   if (value == NULL) {
     return;
@@ -863,11 +861,208 @@ static void copy_runtime_value(graphion_runtime_value *dst,
   if (dst == NULL || src == NULL) {
     return;
   }
-  *dst = *src;
-  if (take_ownership == 0) {
-    dst->owns_graph_value = 0;
-    dst->owns_hypergraph_value = 0;
+  dst->kind = GRAPHION_VALUE_NONE;
+  dst->int_value = 0;
+  dst->float_value = 0.0;
+  dst->bool_value = 0;
+  dst->graph_value = NULL;
+  dst->hypergraph_value = NULL;
+  dst->owns_graph_value = 0;
+  dst->owns_hypergraph_value = 0;
+  dst->kind = src->kind;
+  switch (src->kind) {
+    case GRAPHION_VALUE_INT:
+      dst->int_value = src->int_value;
+      break;
+    case GRAPHION_VALUE_FLOAT:
+      dst->float_value = src->float_value;
+      break;
+    case GRAPHION_VALUE_BOOL:
+      dst->bool_value = src->bool_value;
+      break;
+    case GRAPHION_VALUE_STRING:
+      memcpy(dst->string_value, src->string_value, strlen(src->string_value) + 1U);
+      break;
+    case GRAPHION_VALUE_GRAPH:
+      dst->graph_value = src->graph_value;
+      dst->owns_graph_value = take_ownership != 0 ? src->owns_graph_value : 0;
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH:
+      dst->hypergraph_value = src->hypergraph_value;
+      dst->owns_hypergraph_value = take_ownership != 0 ? src->owns_hypergraph_value : 0;
+      break;
+    case GRAPHION_VALUE_GRAPH_NODE:
+      dst->graph_node_value = src->graph_node_value;
+      break;
+    case GRAPHION_VALUE_GRAPH_EDGE:
+      dst->graph_edge_value = src->graph_edge_value;
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH_NODE:
+      dst->hypergraph_node_value = src->hypergraph_node_value;
+      break;
+    case GRAPHION_VALUE_HYPEREDGE:
+      dst->hyperedge_value = src->hyperedge_value;
+      break;
+    case GRAPHION_VALUE_INT_SEQUENCE:
+      dst->int_sequence_value.count = src->int_sequence_value.count;
+      if (src->int_sequence_value.count != 0U) {
+        memcpy(dst->int_sequence_value.items,
+               src->int_sequence_value.items,
+               src->int_sequence_value.count * sizeof(src->int_sequence_value.items[0]));
+      }
+      break;
+    default:
+      break;
   }
+}
+
+static int runtime_value_is_vm_global_compatible(const graphion_runtime_value *value) {
+  if (value == NULL) {
+    return 0;
+  }
+  switch (value->kind) {
+    case GRAPHION_VALUE_NONE:
+    case GRAPHION_VALUE_INT:
+    case GRAPHION_VALUE_FLOAT:
+    case GRAPHION_VALUE_BOOL:
+    case GRAPHION_VALUE_STRING:
+    case GRAPHION_VALUE_GRAPH:
+    case GRAPHION_VALUE_HYPERGRAPH:
+    case GRAPHION_VALUE_INT_SEQUENCE:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+static void runtime_value_to_vm_value(const graphion_runtime_value *value,
+                                      const graphion_runtime_binding *binding,
+                                      graphion_vm_value *vm_value) {
+  if (value == NULL || vm_value == NULL) {
+    return;
+  }
+  memset(vm_value, 0, sizeof(*vm_value));
+  switch (value->kind) {
+    case GRAPHION_VALUE_NONE:
+      vm_value->kind = GVM_VALUE_NONE;
+      break;
+    case GRAPHION_VALUE_INT:
+      vm_value->kind = GVM_VALUE_INT;
+      vm_value->as.int_value = value->int_value;
+      break;
+    case GRAPHION_VALUE_FLOAT:
+      vm_value->kind = GVM_VALUE_FLOAT;
+      vm_value->as.float_value = value->float_value;
+      break;
+    case GRAPHION_VALUE_BOOL:
+      vm_value->kind = GVM_VALUE_BOOL;
+      vm_value->as.bool_value = value->bool_value;
+      break;
+    case GRAPHION_VALUE_STRING:
+      vm_value->kind = GVM_VALUE_STRING;
+      vm_value->as.string_value = binding != NULL ? binding->value.string_value : value->string_value;
+      break;
+    case GRAPHION_VALUE_GRAPH:
+      vm_value->kind = GVM_VALUE_GRAPH_REF;
+      vm_value->as.ref_value = value->graph_value;
+      break;
+    case GRAPHION_VALUE_HYPERGRAPH:
+      vm_value->kind = GVM_VALUE_HYPERGRAPH_REF;
+      vm_value->as.ref_value = value->hypergraph_value;
+      break;
+    case GRAPHION_VALUE_INT_SEQUENCE:
+      vm_value->kind = GVM_VALUE_INT_SEQUENCE_REF;
+      vm_value->as.ref_value = binding != NULL ? (const void *)&binding->value.int_sequence_value
+                                               : (const void *)&value->int_sequence_value;
+      break;
+    default:
+      vm_value->kind = GVM_VALUE_NONE;
+      break;
+  }
+}
+
+static int vm_value_to_runtime_value(const graphion_vm_value *vm_value, graphion_runtime_value *value) {
+  if (vm_value == NULL || value == NULL) {
+    return 0;
+  }
+  value->kind = GRAPHION_VALUE_NONE;
+  value->int_value = 0;
+  value->float_value = 0.0;
+  value->bool_value = 0;
+  value->graph_value = NULL;
+  value->hypergraph_value = NULL;
+  value->owns_graph_value = 0;
+  value->owns_hypergraph_value = 0;
+  switch (vm_value->kind) {
+    case GVM_VALUE_NONE:
+      value->kind = GRAPHION_VALUE_NONE;
+      return 1;
+    case GVM_VALUE_INT:
+      value->kind = GRAPHION_VALUE_INT;
+      value->int_value = vm_value->as.int_value;
+      return 1;
+    case GVM_VALUE_FLOAT:
+      value->kind = GRAPHION_VALUE_FLOAT;
+      value->float_value = vm_value->as.float_value;
+      return 1;
+    case GVM_VALUE_BOOL:
+      value->kind = GRAPHION_VALUE_BOOL;
+      value->bool_value = vm_value->as.bool_value;
+      return 1;
+    case GVM_VALUE_STRING:
+      if (vm_value->as.string_value == NULL || strlen(vm_value->as.string_value) >= GRAPHION_RUNTIME_STRING_MAX) {
+        return 0;
+      }
+      value->kind = GRAPHION_VALUE_STRING;
+      memcpy(value->string_value, vm_value->as.string_value, strlen(vm_value->as.string_value) + 1U);
+      return 1;
+    case GVM_VALUE_GRAPH_REF:
+      value->kind = GRAPHION_VALUE_GRAPH;
+      value->graph_value = (graphion_runtime_graph_value *)vm_value->as.ref_value;
+      return 1;
+    case GVM_VALUE_HYPERGRAPH_REF:
+      value->kind = GRAPHION_VALUE_HYPERGRAPH;
+      value->hypergraph_value = (graphion_runtime_hypergraph_value *)vm_value->as.ref_value;
+      return 1;
+    case GVM_VALUE_INT_SEQUENCE_REF:
+      if (vm_value->as.ref_value == NULL) {
+        return 0;
+      }
+      value->kind = GRAPHION_VALUE_INT_SEQUENCE;
+      value->int_sequence_value = *(const graphion_runtime_int_sequence_value *)vm_value->as.ref_value;
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+static int materialize_binding_value(graphion_runtime_scope *scope, graphion_runtime_binding *binding) {
+  if (scope == NULL || binding == NULL) {
+    return 0;
+  }
+  if (binding->is_vm_global == 0) {
+    return 1;
+  }
+  if (binding->value_materialized != 0) {
+    return 1;
+  }
+  if (!vm_value_to_runtime_value(&scope->vm_globals[binding->vm_global_index], &binding->value)) {
+    return 0;
+  }
+  binding->value_materialized = 1;
+  return 1;
+}
+
+static int scope_load_value(const graphion_runtime_scope *scope, const char *name, graphion_runtime_value *value) {
+  graphion_runtime_binding *binding = (graphion_runtime_binding *)find_binding(scope, name);
+  if (binding == NULL || value == NULL) {
+    return 0;
+  }
+  if (!materialize_binding_value((graphion_runtime_scope *)scope, binding)) {
+    return 0;
+  }
+  copy_runtime_value(value, &binding->value, 0);
+  return 1;
 }
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
@@ -890,33 +1085,45 @@ void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
 
 const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime_scope *scope,
                                                           const char *name) {
-  size_t i;
-  if (scope == NULL || name == NULL) {
+  graphion_runtime_binding *binding = (graphion_runtime_binding *)find_binding(scope, name);
+  if (binding == NULL) {
     return NULL;
   }
-  for (i = 0U; i < scope->count; ++i) {
-    if (strcmp(scope->bindings[i].name, name) == 0) {
-      return &scope->bindings[i].value;
-    }
+  if (!materialize_binding_value((graphion_runtime_scope *)scope, binding)) {
+    return NULL;
   }
-  return NULL;
+  return &binding->value;
 }
 
-static const graphion_runtime_value *find_value(const graphion_runtime_scope *local_scope,
-                                                const graphion_runtime_scope *global_scope,
-                                                const char *name) {
-  const graphion_runtime_value *value = graphion_runtime_scope_find(local_scope, name);
-  if (value != NULL) {
-    return value;
+static int load_value_from_scopes(const graphion_runtime_scope *local_scope,
+                                  const graphion_runtime_scope *global_scope,
+                                  const char *name,
+                                  graphion_runtime_value *value) {
+  if (scope_load_value(local_scope, name, value)) {
+    return 1;
   }
-  return graphion_runtime_scope_find(global_scope, name);
+  return scope_load_value(global_scope, name, value);
 }
 
 static int assign_value(graphion_runtime_scope *scope, const char *name, const graphion_runtime_value *value) {
   graphion_runtime_binding *binding = find_binding_mut(scope, name);
+  int take_ownership;
+  if (scope == NULL || name == NULL || value == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  take_ownership = value->owns_graph_value != 0 || value->owns_hypergraph_value != 0;
   if (binding != NULL) {
     graphion_runtime_value_dispose(&binding->value);
-    copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
+    copy_runtime_value(&binding->value, value, take_ownership);
+    if (scope->vm_globals_enabled != 0 && runtime_value_is_vm_global_compatible(value)) {
+      binding->is_vm_global = 1;
+      binding->value_materialized = 1;
+      runtime_value_to_vm_value(&binding->value, binding, &scope->vm_globals[binding->vm_global_index]);
+    } else {
+      binding->is_vm_global = 0;
+      binding->value_materialized = 1;
+      memset(&scope->vm_globals[binding->vm_global_index], 0, sizeof(scope->vm_globals[binding->vm_global_index]));
+    }
     return GINT_OK;
   }
   if (scope->count >= GRAPHION_RUNTIME_BINDING_MAX) {
@@ -925,7 +1132,15 @@ static int assign_value(graphion_runtime_scope *scope, const char *name, const g
   binding = &scope->bindings[scope->count];
   memset(binding, 0, sizeof(*binding));
   memcpy(binding->name, name, strlen(name) + 1U);
-  copy_runtime_value(&binding->value, value, value->owns_graph_value != 0 || value->owns_hypergraph_value != 0);
+  binding->vm_global_index = scope->count;
+  copy_runtime_value(&binding->value, value, take_ownership);
+  if (scope->vm_globals_enabled != 0 && runtime_value_is_vm_global_compatible(value)) {
+    binding->is_vm_global = 1;
+    binding->value_materialized = 1;
+    runtime_value_to_vm_value(&binding->value, binding, &scope->vm_globals[binding->vm_global_index]);
+  } else {
+    binding->value_materialized = 1;
+  }
   scope->count += 1U;
   return GINT_OK;
 }
@@ -1010,7 +1225,7 @@ static int parse_float_literal(const char *token, graphion_runtime_value *value)
 }
 
 static int parse_source_lines(const char *source,
-                              graphion_program *program,
+                              graphion_runtime_program *program,
                               graphion_runtime_diagnostic *diagnostic) {
   const char *cursor;
   size_t line_no = 1U;
@@ -1023,7 +1238,7 @@ static int parse_source_lines(const char *source,
     char raw[GINT_LINE_MAX];
     size_t raw_len = 0U;
     size_t indent = 0U;
-    graphion_source_line *line;
+    graphion_runtime_source_line *line;
 
     while (*cursor != '\0' && *cursor != '\n' && raw_len < (GINT_LINE_MAX - 1U)) {
       raw[raw_len++] = *cursor++;
@@ -1136,7 +1351,7 @@ static int parse_def_header(const char *text,
   return GINT_OK;
 }
 
-static const graphion_runtime_function *find_function(const graphion_program *program, const char *name) {
+static const graphion_runtime_function *find_function(const graphion_runtime_program *program, const char *name) {
   size_t i;
   if (program == NULL || name == NULL) {
     return NULL;
@@ -1149,10 +1364,10 @@ static const graphion_runtime_function *find_function(const graphion_program *pr
   return NULL;
 }
 
-static int index_functions(graphion_program *program, graphion_runtime_diagnostic *diagnostic) {
+static int index_functions(graphion_runtime_program *program, graphion_runtime_diagnostic *diagnostic) {
   size_t i = 0U;
   while (i < program->line_count) {
-    const graphion_source_line *line = &program->lines[i];
+    const graphion_runtime_source_line *line = &program->lines[i];
     graphion_runtime_function function;
     int rc;
     if (strncmp(line->text, "def ", 4U) != 0) {
@@ -1243,6 +1458,248 @@ static int split_assignment(char *line, char **lhs, char **rhs) {
     ++i;
   }
   return 0;
+}
+
+static int program_global_slot_index(const graphion_runtime_program *program, const char *name, size_t *slot_out) {
+  size_t i;
+  if (program == NULL || name == NULL || slot_out == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < program->global_count; ++i) {
+    if (strcmp(program->global_names[i], name) == 0) {
+      *slot_out = i;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int ensure_program_global_slot(graphion_runtime_program *program, const char *name, size_t *slot_out) {
+  if (program == NULL || name == NULL || slot_out == NULL) {
+    return 0;
+  }
+  if (program_global_slot_index(program, name, slot_out)) {
+    return 1;
+  }
+  if (program->global_count >= GRAPHION_RUNTIME_BINDING_MAX) {
+    return 0;
+  }
+  memcpy(program->global_names[program->global_count], name, strlen(name) + 1U);
+  *slot_out = program->global_count;
+  program->global_count += 1U;
+  return 1;
+}
+
+static int prepare_simple_top_level_steps(graphion_runtime_program *program,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+  if (program == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  program->prepared_step_count = 0U;
+  program->prepared_top_level_only = 0;
+  program->global_count = 0U;
+  program->prepared_const_count = 0U;
+  program->prepared_vm_program_len = 0U;
+  program->prepared_vm_enabled = 0;
+
+  for (i = 0U; i < program->line_count; ++i) {
+    const graphion_runtime_source_line *line = &program->lines[i];
+    char buffer[GINT_LINE_MAX];
+    char *lhs = NULL;
+    char *rhs = NULL;
+    graphion_runtime_prepared_step *step;
+    graphion_runtime_value literal;
+
+    if (line->indent != 0U) {
+      return GINT_OK;
+    }
+    if (strncmp(line->text, "def ", 4U) == 0 || strncmp(line->text, "graph ", 6U) == 0 ||
+        strncmp(line->text, "hypergraph ", 11U) == 0 || strncmp(line->text, "print(", 6U) == 0 ||
+        strncmp(line->text, "return", 6U) == 0) {
+      return GINT_OK;
+    }
+    memcpy(buffer, line->text, strlen(line->text) + 1U);
+    if (!split_assignment(buffer, &lhs, &rhs)) {
+      return GINT_OK;
+    }
+    if (!is_valid_identifier(lhs) || is_reserved_name(lhs)) {
+      return GINT_OK;
+    }
+    if (program->prepared_step_count >= GRAPHION_RUNTIME_PREPARED_STEP_MAX) {
+      set_diagnostic(diagnostic, line->line_no, 1U, "prepared step capacity exceeded");
+      return GINT_ERR_CAPACITY;
+    }
+    step = &program->prepared_steps[program->prepared_step_count];
+    memset(step, 0, sizeof(*step));
+    if (!ensure_program_global_slot(program, lhs, &step->target_slot)) {
+      set_diagnostic(diagnostic, line->line_no, 1U, "prepared global slot capacity exceeded");
+      return GINT_ERR_CAPACITY;
+    }
+    memset(&literal, 0, sizeof(literal));
+    if (parse_string_literal(rhs, &literal) || parse_bool_literal(rhs, &literal) || parse_float_literal(rhs, &literal) ||
+        parse_int_literal(rhs, &literal)) {
+      step->kind = GRAPHION_RUNTIME_STEP_STORE_LITERAL;
+      step->literal.kind = literal.kind;
+      step->literal.int_value = literal.int_value;
+      step->literal.float_value = literal.float_value;
+      step->literal.bool_value = literal.bool_value;
+      if (literal.kind == GRAPHION_VALUE_STRING) {
+        memcpy(step->literal.string_value, literal.string_value, strlen(literal.string_value) + 1U);
+      }
+    } else if (is_valid_identifier(rhs)) {
+      if (!ensure_program_global_slot(program, rhs, &step->source_slot)) {
+        set_diagnostic(diagnostic, line->line_no, 1U, "prepared global slot capacity exceeded");
+        return GINT_ERR_CAPACITY;
+      }
+      step->kind = GRAPHION_RUNTIME_STEP_STORE_COPY;
+    } else {
+      return GINT_OK;
+    }
+    program->prepared_step_count += 1U;
+  }
+
+  program->prepared_top_level_only = program->prepared_step_count == program->line_count && program->line_count != 0U;
+  return GINT_OK;
+}
+
+static int compile_prepared_top_level_vm_program(graphion_runtime_program *program,
+                                                 graphion_runtime_diagnostic *diagnostic) {
+  size_t step_index;
+  size_t insn_index = 0U;
+
+  if (program == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  program->prepared_const_count = 0U;
+  program->prepared_vm_program_len = 0U;
+  program->prepared_vm_enabled = 0;
+  if (program->prepared_top_level_only == 0) {
+    return GINT_OK;
+  }
+
+  for (step_index = 0U; step_index < program->prepared_step_count; ++step_index) {
+    const graphion_runtime_prepared_step *step = &program->prepared_steps[step_index];
+    if (insn_index + 2U >= GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX) {
+      set_diagnostic(diagnostic, program->lines[step_index].line_no, 1U, "prepared vm program too large");
+      return GINT_ERR_CAPACITY;
+    }
+    if (step->kind == GRAPHION_RUNTIME_STEP_STORE_LITERAL) {
+      graphion_vm_value *const_value;
+      if (program->prepared_const_count >= GRAPHION_RUNTIME_PREPARED_CONST_MAX) {
+        set_diagnostic(diagnostic, program->lines[step_index].line_no, 1U, "prepared constant pool too large");
+        return GINT_ERR_CAPACITY;
+      }
+      const_value = &program->prepared_const_pool[program->prepared_const_count];
+      memset(const_value, 0, sizeof(*const_value));
+      const_value->kind = (uint8_t)step->literal.kind;
+      switch (step->literal.kind) {
+        case GRAPHION_VALUE_INT:
+          const_value->kind = GVM_VALUE_INT;
+          const_value->as.int_value = step->literal.int_value;
+          break;
+        case GRAPHION_VALUE_FLOAT:
+          const_value->kind = GVM_VALUE_FLOAT;
+          const_value->as.float_value = step->literal.float_value;
+          break;
+        case GRAPHION_VALUE_BOOL:
+          const_value->kind = GVM_VALUE_BOOL;
+          const_value->as.bool_value = step->literal.bool_value;
+          break;
+        case GRAPHION_VALUE_STRING:
+          const_value->kind = GVM_VALUE_STRING;
+          const_value->as.string_value = step->literal.string_value;
+          break;
+        default:
+          return GINT_OK;
+      }
+      program->prepared_vm_program[insn_index++] =
+          (graphion_insn){GVM_OP_LOAD_CONST, 0U, 0U, (int32_t)program->prepared_const_count};
+      program->prepared_const_count += 1U;
+      program->prepared_vm_program[insn_index++] =
+          (graphion_insn){GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)step->target_slot};
+    } else if (step->kind == GRAPHION_RUNTIME_STEP_STORE_COPY) {
+      program->prepared_vm_program[insn_index++] =
+          (graphion_insn){GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)step->source_slot};
+      program->prepared_vm_program[insn_index++] =
+          (graphion_insn){GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)step->target_slot};
+    } else {
+      return GINT_OK;
+    }
+  }
+  if (insn_index >= GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX) {
+    set_diagnostic(diagnostic, 1U, 1U, "prepared vm program too large");
+    return GINT_ERR_CAPACITY;
+  }
+  program->prepared_vm_program[insn_index++] = (graphion_insn){GVM_OP_HALT, 0U, 0U, 0};
+  program->prepared_vm_program_len = insn_index;
+  program->prepared_vm_enabled = 1;
+  return GINT_OK;
+}
+
+static int execute_prepared_top_level_program(const graphion_runtime_program *program,
+                                              graphion_runtime_scope *scope) {
+  size_t i;
+  if (program == NULL || scope == NULL) {
+    return GINT_ERR_INVALID_ARG;
+  }
+  if (scope->count != 0U) {
+    if (scope->count != program->global_count) {
+      return GINT_ERR_INVALID_ARG;
+    }
+    for (i = 0U; i < program->global_count; ++i) {
+      if (strcmp(scope->bindings[i].name, program->global_names[i]) != 0) {
+        return GINT_ERR_INVALID_ARG;
+      }
+    }
+  } else {
+    scope->vm_globals_enabled = 1;
+    scope->count = program->global_count;
+    for (i = 0U; i < program->global_count; ++i) {
+      graphion_runtime_binding *binding = &scope->bindings[i];
+      memset(binding, 0, sizeof(*binding));
+      memcpy(binding->name, program->global_names[i], strlen(program->global_names[i]) + 1U);
+      binding->vm_global_index = i;
+      binding->is_vm_global = 1;
+      binding->value_materialized = 0;
+      binding->value.kind = GRAPHION_VALUE_NONE;
+      scope->vm_globals[i].kind = GVM_VALUE_NONE;
+      scope->vm_globals[i].as.int_value = 0;
+    }
+  }
+  scope->vm_globals_enabled = 1;
+  for (i = 0U; i < scope->count; ++i) {
+    scope->vm_globals[i].kind = GVM_VALUE_NONE;
+    scope->vm_globals[i].as.int_value = 0;
+  }
+
+  if (program->prepared_vm_enabled == 0) {
+    return GINT_ERR_PARSE;
+  }
+
+  if (scope->prepared_vm_ready == 0 || scope->prepared_program_key != (const void *)program) {
+    graphion_vm_init(&scope->prepared_vm);
+    graphion_vm_bind_constants(&scope->prepared_vm, program->prepared_const_pool, program->prepared_const_count);
+    graphion_vm_bind_globals(&scope->prepared_vm, scope->vm_globals, scope->count);
+    if (graphion_vm_load(&scope->prepared_vm, program->prepared_vm_program, program->prepared_vm_program_len) != GVM_OK) {
+      return GINT_ERR_PARSE;
+    }
+    scope->prepared_program_key = (const void *)program;
+    scope->prepared_vm_ready = 1;
+  } else {
+    graphion_vm_bind_globals(&scope->prepared_vm, scope->vm_globals, scope->count);
+    graphion_vm_reset_execution(&scope->prepared_vm);
+  }
+  if (graphion_vm_run(&scope->prepared_vm) != GVM_OK) {
+    return GINT_ERR_PARSE;
+  }
+
+  for (i = 0U; i < scope->count; ++i) {
+    graphion_runtime_binding *binding = &scope->bindings[i];
+    binding->is_vm_global = 1;
+    binding->value_materialized = 0;
+  }
+  return GINT_OK;
 }
 
 static int split_call(const char *expr, char *name_out, char *args_out) {
@@ -1494,7 +1951,7 @@ static int print_value(FILE *output, const graphion_runtime_value *value) {
 }
 
 static int eval_expression(const char *expr,
-                           const graphion_program *program,
+                           const graphion_runtime_program *program,
                            graphion_runtime_scope *global_scope,
                            graphion_runtime_scope *local_scope,
                            graphion_runtime_diagnostic *diagnostic,
@@ -1502,7 +1959,7 @@ static int eval_expression(const char *expr,
                            size_t line_no,
                            graphion_runtime_value *value);
 
-static int execute_block(const graphion_program *program,
+static int execute_block(const graphion_runtime_program *program,
                          size_t start,
                          size_t end,
                          graphion_runtime_scope *global_scope,
@@ -1513,7 +1970,7 @@ static int execute_block(const graphion_program *program,
                          int *did_return,
                          graphion_runtime_value *return_value);
 
-static int call_function(const graphion_program *program,
+static int call_function(const graphion_runtime_program *program,
                          const graphion_runtime_function *function,
                          graphion_runtime_scope *global_scope,
                          graphion_runtime_scope *caller_scope,
@@ -1585,15 +2042,13 @@ static int call_function(const graphion_program *program,
 }
 
 static int eval_expression(const char *expr,
-                           const graphion_program *program,
+                           const graphion_runtime_program *program,
                            graphion_runtime_scope *global_scope,
                            graphion_runtime_scope *local_scope,
                            graphion_runtime_diagnostic *diagnostic,
                            FILE *output,
                            size_t line_no,
                            graphion_runtime_value *value) {
-  const graphion_runtime_value *existing;
-
   if (parse_string_literal(expr, value) || parse_bool_literal(expr, value) ||
       parse_float_literal(expr, value) || parse_int_literal(expr, value)) {
     return GINT_OK;
@@ -1603,15 +2058,15 @@ static int eval_expression(const char *expr,
     char member_name[GRAPHION_RUNTIME_NAME_MAX];
     char index_expr[GINT_LINE_MAX];
     if (split_graph_member_access(expr, graph_name, member_name, index_expr)) {
-      const graphion_runtime_value *container_value = find_value(local_scope, global_scope, graph_name);
+      graphion_runtime_value container_value;
       graphion_runtime_value index_value;
       int rc;
-      if (container_value == NULL ||
-          (container_value->kind != GRAPHION_VALUE_GRAPH && container_value->kind != GRAPHION_VALUE_HYPERGRAPH)) {
+      if (!load_value_from_scopes(local_scope, global_scope, graph_name, &container_value) ||
+          (container_value.kind != GRAPHION_VALUE_GRAPH && container_value.kind != GRAPHION_VALUE_HYPERGRAPH)) {
         set_diagnostic(diagnostic, line_no, 1U, "member access expects a graph or hypergraph value");
         return GINT_ERR_CALL;
       }
-      if (container_value->kind == GRAPHION_VALUE_GRAPH) {
+      if (container_value.kind == GRAPHION_VALUE_GRAPH) {
         rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
         if (rc != GINT_OK) {
           return rc;
@@ -1621,14 +2076,14 @@ static int eval_expression(const char *expr,
             set_diagnostic(diagnostic, line_no, 1U, "graph node index must be an integer");
             return GINT_ERR_CALL;
           }
-          if (!graph_contains_node(container_value, index_value.int_value)) {
+          if (!graph_contains_node(&container_value, index_value.int_value)) {
             set_diagnostic(diagnostic, line_no, 1U, "graph node not found");
             return GINT_ERR_CALL;
           }
           memset(value, 0, sizeof(*value));
           value->kind = GRAPHION_VALUE_GRAPH_NODE;
           value->graph_node_value.id = index_value.int_value;
-          value->graph_node_value.graph = container_value->graph_value;
+          value->graph_node_value.graph = container_value.graph_value;
           return GINT_OK;
         }
         if (strcmp(member_name, "edge") == 0) {
@@ -1637,18 +2092,18 @@ static int eval_expression(const char *expr,
             set_diagnostic(diagnostic, line_no, 1U, "graph edge id must be an integer");
             return GINT_ERR_CALL;
           }
-          edge_value = find_graph_edge_by_id(container_value->graph_value, index_value.int_value);
+          edge_value = find_graph_edge_by_id(container_value.graph_value, index_value.int_value);
           if (edge_value == NULL) {
             set_diagnostic(diagnostic, line_no, 1U, "graph edge not found");
             return GINT_ERR_CALL;
           }
           memset(value, 0, sizeof(*value));
           value->kind = GRAPHION_VALUE_GRAPH_EDGE;
-          value->graph_edge_value.graph = container_value->graph_value;
+          value->graph_edge_value.graph = container_value.graph_value;
           value->graph_edge_value.edge = edge_value;
           return GINT_OK;
         }
-      } else if (container_value->kind == GRAPHION_VALUE_HYPERGRAPH) {
+      } else if (container_value.kind == GRAPHION_VALUE_HYPERGRAPH) {
         if (strcmp(member_name, "vertex") == 0) {
           rc = eval_expression(index_expr, program, global_scope, local_scope, diagnostic, output, line_no, &index_value);
           if (rc != GINT_OK) {
@@ -1658,14 +2113,14 @@ static int eval_expression(const char *expr,
             set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex index must be an integer");
             return GINT_ERR_CALL;
           }
-          if (!hypergraph_contains_node(container_value, index_value.int_value)) {
+          if (!hypergraph_contains_node(&container_value, index_value.int_value)) {
             set_diagnostic(diagnostic, line_no, 1U, "hypergraph vertex not found");
             return GINT_ERR_CALL;
           }
           memset(value, 0, sizeof(*value));
           value->kind = GRAPHION_VALUE_HYPERGRAPH_NODE;
           value->hypergraph_node_value.id = index_value.int_value;
-          value->hypergraph_node_value.hypergraph = container_value->hypergraph_value;
+          value->hypergraph_node_value.hypergraph = container_value.hypergraph_value;
           return GINT_OK;
         }
         if (strcmp(member_name, "hyperedge") == 0) {
@@ -1678,14 +2133,14 @@ static int eval_expression(const char *expr,
             set_diagnostic(diagnostic, line_no, 1U, "hyperedge id must be an integer");
             return GINT_ERR_CALL;
           }
-          hyperedge_value = find_hyperedge_by_id(container_value->hypergraph_value, index_value.int_value);
+          hyperedge_value = find_hyperedge_by_id(container_value.hypergraph_value, index_value.int_value);
           if (hyperedge_value == NULL) {
             set_diagnostic(diagnostic, line_no, 1U, "hyperedge not found");
             return GINT_ERR_CALL;
           }
           memset(value, 0, sizeof(*value));
           value->kind = GRAPHION_VALUE_HYPEREDGE;
-          value->hyperedge_value.hypergraph = container_value->hypergraph_value;
+          value->hyperedge_value.hypergraph = container_value.hypergraph_value;
           value->hyperedge_value.hyperedge = hyperedge_value;
           return GINT_OK;
         }
@@ -1821,17 +2276,15 @@ static int eval_expression(const char *expr,
     set_diagnostic(diagnostic, line_no, 1U, "invalid expression");
     return GINT_ERR_PARSE;
   }
-  existing = find_value(local_scope, global_scope, expr);
-  if (existing == NULL) {
+  if (!load_value_from_scopes(local_scope, global_scope, expr, value)) {
     set_diagnostic(diagnostic, line_no, 1U, "unknown variable in expression");
     return GINT_ERR_UNKNOWN_VARIABLE;
   }
-  copy_runtime_value(value, existing, 0);
   return GINT_OK;
 }
 
-static int execute_statement(const graphion_program *program,
-                             const graphion_source_line *line,
+static int execute_statement(const graphion_runtime_program *program,
+                             const graphion_runtime_source_line *line,
                              graphion_runtime_scope *global_scope,
                              graphion_runtime_scope *local_scope,
                              graphion_runtime_diagnostic *diagnostic,
@@ -1904,7 +2357,7 @@ static int execute_statement(const graphion_program *program,
   return GINT_OK;
 }
 
-static int execute_block(const graphion_program *program,
+static int execute_block(const graphion_runtime_program *program,
                          size_t start,
                          size_t end,
                          graphion_runtime_scope *global_scope,
@@ -1919,7 +2372,7 @@ static int execute_block(const graphion_program *program,
     *did_return = 0;
   }
   while (i < end) {
-    const graphion_source_line *line = &program->lines[i];
+    const graphion_runtime_source_line *line = &program->lines[i];
     int rc;
     if (line->indent == 0U && strncmp(line->text, "graph ", 6U) == 0) {
       graphion_runtime_value graph_value;
@@ -2068,32 +2521,71 @@ static int execute_block(const graphion_program *program,
   return GINT_OK;
 }
 
-int graphion_interpret_source_with_output(const char *source,
-                                          graphion_runtime_scope *scope,
-                                          graphion_runtime_diagnostic *diagnostic,
-                                          FILE *output) {
-  graphion_program program;
-  graphion_runtime_value return_value;
-  int did_return = 0;
-  int rc;
+void graphion_runtime_program_init(graphion_runtime_program *program) {
+  if (program == NULL) {
+    return;
+  }
+  memset(program, 0, sizeof(*program));
+}
 
+void graphion_runtime_program_dispose(graphion_runtime_program *program) {
+  if (program == NULL) {
+    return;
+  }
+  memset(program, 0, sizeof(*program));
+}
+
+int graphion_prepare_source(const char *source,
+                            graphion_runtime_program *program,
+                            graphion_runtime_diagnostic *diagnostic) {
+  int rc;
   clear_diagnostic(diagnostic);
-  if (source == NULL || scope == NULL || output == NULL) {
+  if (source == NULL || program == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
+  graphion_runtime_program_init(program);
+  rc = parse_source_lines(source, program, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(program);
+    return rc;
+  }
+  rc = index_functions(program, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(program);
+    return rc;
+  }
+  rc = prepare_simple_top_level_steps(program, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(program);
+    return rc;
+  }
+  rc = compile_prepared_top_level_vm_program(program, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(program);
+    return rc;
+  }
+  return GINT_OK;
+}
 
-  rc = parse_source_lines(source, &program, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
+int graphion_execute_program(const graphion_runtime_program *program,
+                             graphion_runtime_scope *scope,
+                             graphion_runtime_diagnostic *diagnostic,
+                             FILE *output) {
+  graphion_runtime_value return_value;
+  int did_return = 0;
+
+  clear_diagnostic(diagnostic);
+  if (program == NULL || scope == NULL || output == NULL) {
+    return GINT_ERR_INVALID_ARG;
   }
-  rc = index_functions(&program, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
+  if (program->prepared_top_level_only != 0 && scope->count == 0U) {
+    return execute_prepared_top_level_program(program, scope);
   }
+  scope->vm_globals_enabled = 1;
   memset(&return_value, 0, sizeof(return_value));
-  return execute_block(&program,
+  return execute_block(program,
                        0U,
-                       program.line_count,
+                       program->line_count,
                        scope,
                        scope,
                        diagnostic,
@@ -2101,6 +2593,22 @@ int graphion_interpret_source_with_output(const char *source,
                        0,
                        &did_return,
                        &return_value);
+}
+
+int graphion_interpret_source_with_output(const char *source,
+                                          graphion_runtime_scope *scope,
+                                          graphion_runtime_diagnostic *diagnostic,
+                                          FILE *output) {
+  graphion_runtime_program program;
+  int rc;
+
+  rc = graphion_prepare_source(source, &program, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = graphion_execute_program(&program, scope, diagnostic, output);
+  graphion_runtime_program_dispose(&program);
+  return rc;
 }
 
 int graphion_interpret_source(const char *source,

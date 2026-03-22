@@ -9,6 +9,7 @@
 
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
+#include "vm/vm.h"
 
 enum {
   GRAPHION_RUNTIME_BINDING_MAX = 128,
@@ -143,11 +144,19 @@ typedef struct {
 
 typedef struct {
   char name[GRAPHION_RUNTIME_NAME_MAX];
+  size_t vm_global_index;
+  int is_vm_global;
+  int value_materialized;
   graphion_runtime_value value;
 } graphion_runtime_binding;
 
 typedef struct {
   graphion_runtime_binding bindings[GRAPHION_RUNTIME_BINDING_MAX];
+  graphion_vm_value vm_globals[GRAPHION_RUNTIME_BINDING_MAX];
+  graphion_vm prepared_vm;
+  const void *prepared_program_key;
+  int prepared_vm_ready;
+  int vm_globals_enabled;
   size_t count;
 } graphion_runtime_scope;
 
@@ -156,6 +165,68 @@ typedef struct {
   size_t column;
   const char *message;
 } graphion_runtime_diagnostic;
+
+enum {
+  GRAPHION_RUNTIME_LINE_MAX = 512,
+  GRAPHION_RUNTIME_SOURCE_LINE_MAX = 256,
+  GRAPHION_RUNTIME_FUNCTION_MAX = 32,
+  GRAPHION_RUNTIME_PARAM_MAX = 8,
+  GRAPHION_RUNTIME_PREPARED_STEP_MAX = GRAPHION_RUNTIME_SOURCE_LINE_MAX,
+  GRAPHION_RUNTIME_PREPARED_CONST_MAX = GRAPHION_RUNTIME_SOURCE_LINE_MAX,
+  GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX = (GRAPHION_RUNTIME_SOURCE_LINE_MAX * 2) + 1
+};
+
+typedef struct {
+  size_t line_no;
+  size_t indent;
+  char text[GRAPHION_RUNTIME_LINE_MAX];
+} graphion_runtime_source_line;
+
+typedef struct {
+  char name[GRAPHION_RUNTIME_NAME_MAX];
+  char params[GRAPHION_RUNTIME_PARAM_MAX][GRAPHION_RUNTIME_NAME_MAX];
+  size_t param_count;
+  size_t body_start;
+  size_t body_end;
+} graphion_runtime_function;
+
+typedef enum {
+  GRAPHION_RUNTIME_STEP_NONE = 0,
+  GRAPHION_RUNTIME_STEP_STORE_LITERAL = 1,
+  GRAPHION_RUNTIME_STEP_STORE_COPY = 2
+} graphion_runtime_step_kind;
+
+typedef struct {
+  int kind;
+  int64_t int_value;
+  double float_value;
+  int bool_value;
+  char string_value[GRAPHION_RUNTIME_STRING_MAX];
+} graphion_runtime_prepared_literal;
+
+typedef struct {
+  int kind;
+  size_t target_slot;
+  size_t source_slot;
+  graphion_runtime_prepared_literal literal;
+} graphion_runtime_prepared_step;
+
+typedef struct {
+  graphion_runtime_source_line lines[GRAPHION_RUNTIME_SOURCE_LINE_MAX];
+  size_t line_count;
+  graphion_runtime_function functions[GRAPHION_RUNTIME_FUNCTION_MAX];
+  size_t function_count;
+  char global_names[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX];
+  size_t global_count;
+  graphion_runtime_prepared_step prepared_steps[GRAPHION_RUNTIME_PREPARED_STEP_MAX];
+  size_t prepared_step_count;
+  int prepared_top_level_only;
+  graphion_vm_value prepared_const_pool[GRAPHION_RUNTIME_PREPARED_CONST_MAX];
+  size_t prepared_const_count;
+  graphion_insn prepared_vm_program[GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX];
+  size_t prepared_vm_program_len;
+  int prepared_vm_enabled;
+} graphion_runtime_program;
 
 typedef enum {
   GINT_OK = 0,
@@ -173,6 +244,18 @@ void graphion_runtime_scope_dispose(graphion_runtime_scope *scope);
 
 const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime_scope *scope,
                                                           const char *name);
+
+void graphion_runtime_program_init(graphion_runtime_program *program);
+void graphion_runtime_program_dispose(graphion_runtime_program *program);
+
+int graphion_prepare_source(const char *source,
+                            graphion_runtime_program *program,
+                            graphion_runtime_diagnostic *diagnostic);
+
+int graphion_execute_program(const graphion_runtime_program *program,
+                             graphion_runtime_scope *scope,
+                             graphion_runtime_diagnostic *diagnostic,
+                             FILE *output);
 
 int graphion_interpret_source(const char *source,
                               graphion_runtime_scope *scope,

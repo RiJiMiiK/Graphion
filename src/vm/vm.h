@@ -104,6 +104,9 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
+  bool value_move_fastpath;
+  bool value_move_indices_valid;
+  bool value_move_int_add_safe;
   const graphion_vm_value *const_pool;
   size_t const_count;
   graphion_vm_value *globals;
@@ -121,6 +124,7 @@ typedef struct {
 } graphion_vm;
 
 void graphion_vm_init(graphion_vm *vm);
+void graphion_vm_reset_execution(graphion_vm *vm);
 void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled);
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len);
 void graphion_vm_bind_csr(graphion_vm *vm,

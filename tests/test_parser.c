@@ -347,6 +347,16 @@ static int expect_string_binding(const graphion_runtime_scope *scope, const char
   return strcmp(value->string_value, expected) == 0;
 }
 
+static int find_scope_binding_index(const graphion_runtime_scope *scope, const char *name) {
+  size_t i;
+  for (i = 0U; i < scope->count; ++i) {
+    if (strcmp(scope->bindings[i].name, name) == 0) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
 static int expect_graph_binding(const graphion_runtime_scope *scope,
                                 const char *name,
                                 size_t expected_edge_count,
@@ -441,6 +451,35 @@ int test_interpreter_dynamic_assignments(void) {
   }
   if (!expect_bool_binding(&scope, "ready", 1)) {
     return 5;
+  }
+  {
+    const int count_idx = find_scope_binding_index(&scope, "count");
+    const int ratio_idx = find_scope_binding_index(&scope, "ratio");
+    const int name_idx = find_scope_binding_index(&scope, "name");
+    const int ready_idx = find_scope_binding_index(&scope, "ready");
+    if (count_idx < 0 || ratio_idx < 0 || name_idx < 0 || ready_idx < 0) {
+      return 6;
+    }
+    if (scope.bindings[(size_t)count_idx].is_vm_global == 0 ||
+        scope.vm_globals[scope.bindings[(size_t)count_idx].vm_global_index].kind != GVM_VALUE_INT ||
+        scope.vm_globals[scope.bindings[(size_t)count_idx].vm_global_index].as.int_value != 7) {
+      return 7;
+    }
+    if (scope.bindings[(size_t)ratio_idx].is_vm_global == 0 ||
+        scope.vm_globals[scope.bindings[(size_t)ratio_idx].vm_global_index].kind != GVM_VALUE_FLOAT ||
+        scope.vm_globals[scope.bindings[(size_t)ratio_idx].vm_global_index].as.float_value != 3.5) {
+      return 8;
+    }
+    if (scope.bindings[(size_t)name_idx].is_vm_global == 0 ||
+        scope.vm_globals[scope.bindings[(size_t)name_idx].vm_global_index].kind != GVM_VALUE_STRING ||
+        strcmp(scope.vm_globals[scope.bindings[(size_t)name_idx].vm_global_index].as.string_value, "graphion") != 0) {
+      return 9;
+    }
+    if (scope.bindings[(size_t)ready_idx].is_vm_global == 0 ||
+        scope.vm_globals[scope.bindings[(size_t)ready_idx].vm_global_index].kind != GVM_VALUE_BOOL ||
+        scope.vm_globals[scope.bindings[(size_t)ready_idx].vm_global_index].as.bool_value != 1) {
+      return 10;
+    }
   }
   return 0;
 }
