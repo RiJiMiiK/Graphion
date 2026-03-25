@@ -99,12 +99,11 @@ int test_vm_value_movement_and_globals(void) {
   graphion_vm_value const_pool[2];
   graphion_vm_value globals[2];
   const graphion_insn program[] = {
-      {GVM_OP_LOAD_CONST, 0, 0, 0},
-      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_STORE_CONST_GLOBAL, 0, 0, 0},
       {GVM_OP_LOAD_GLOBAL, 1, 0, 0},
       {GVM_OP_MOV, 2, 1, 0},
-      {GVM_OP_LOAD_CONST, 3, 0, 1},
-      {GVM_OP_STORE_GLOBAL, 3, 0, 1},
+      {GVM_OP_STORE_CONST_GLOBAL, 0, 1, 1},
+      {GVM_OP_COPY_GLOBAL, 0, 0, 1},
       {GVM_OP_HALT, 0, 0, 0},
   };
   int rc;
@@ -130,7 +129,7 @@ int test_vm_value_movement_and_globals(void) {
   if (!vm.halted) {
     return 3;
   }
-  if (globals[0].kind != GVM_VALUE_FLOAT || globals[0].as.float_value != 3.5) {
+  if (globals[0].kind != GVM_VALUE_STRING || strcmp(globals[0].as.string_value, "graphion") != 0) {
     return 4;
   }
   if (vm.regs[1].kind != GVM_VALUE_FLOAT || vm.regs[1].as.float_value != 3.5) {
@@ -154,6 +153,9 @@ int test_vm_typed_value_errors(void) {
   };
   const graphion_insn bad_global_program[] = {
       {GVM_OP_STORE_GLOBAL, 0, 0, 2},
+  };
+  const graphion_insn bad_store_const_program[] = {
+      {GVM_OP_STORE_CONST_GLOBAL, 0, 2, 0},
   };
   int rc;
 
@@ -184,16 +186,29 @@ int test_vm_typed_value_errors(void) {
   }
 
   graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 1U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  rc = graphion_vm_load(
+      &vm, bad_store_const_program, sizeof(bad_store_const_program) / sizeof(bad_store_const_program[0]));
+  if (rc != 0) {
+    return 5;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_GLOBAL_INDEX) {
+    return 6;
+  }
+
+  graphion_vm_init(&vm);
   test_set_reg_i(&vm, 0U, 7);
   vm.regs[1].kind = GVM_VALUE_FLOAT;
   vm.regs[1].as.float_value = 2.0;
   rc = graphion_vm_load(&vm, (const graphion_insn[]){{GVM_OP_ADD, 0, 1, 0}}, 1U);
   if (rc != 0) {
-    return 5;
+    return 7;
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_TYPE_MISMATCH) {
-    return 6;
+    return 8;
   }
 
   return 0;

@@ -221,6 +221,7 @@ typedef struct {
   graphion_runtime_prepared_step prepared_steps[GRAPHION_RUNTIME_PREPARED_STEP_MAX];
   size_t prepared_step_count;
   int prepared_top_level_only;
+  int prepared_overwrites_all_globals;
   graphion_vm_value prepared_const_pool[GRAPHION_RUNTIME_PREPARED_CONST_MAX];
   size_t prepared_const_count;
   graphion_insn prepared_vm_program[GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX];

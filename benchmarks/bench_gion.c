@@ -8,9 +8,11 @@
 #include <time.h>
 
 enum {
-  GION_STAGE1_SOURCE_MAX = 4096,
-  GION_STAGE1_OPS_PER_ITERATION = 12
+  GION_SOURCE_MAX = 4096,
+  GION_SOURCE_OPS_PER_ITERATION = 12
 };
+
+static volatile const char *g_gion_name_sink = NULL;
 
 static double now_seconds(void) {
 #if defined(TIME_UTC)
@@ -58,42 +60,26 @@ static int find_binding_index(const graphion_runtime_scope *scope, const char *n
   return -1;
 }
 
-static uint64_t update_checksum(const graphion_runtime_scope *scope,
-                                int count_index,
-                                int ratio_index,
-                                int ready_index,
-                                int name_index,
-                                uint64_t checksum) {
-  const graphion_runtime_binding *count_binding;
-  const graphion_runtime_binding *ratio_binding;
-  const graphion_runtime_binding *ready_binding;
-  const graphion_runtime_binding *name_binding;
-  const graphion_vm_value *count_value;
-  const graphion_vm_value *ratio_value;
-  const graphion_vm_value *ready_value;
-  const graphion_vm_value *name_value;
+static int find_vm_global_slot(const graphion_runtime_scope *scope, const char *name) {
+  int binding_index = find_binding_index(scope, name);
+  if (scope == NULL || binding_index < 0) {
+    return -1;
+  }
+  return (int)scope->bindings[(size_t)binding_index].vm_global_index;
+}
 
-  if (scope == NULL || count_index < 0 || ratio_index < 0 || ready_index < 0 || name_index < 0) {
+static uint64_t update_checksum(const graphion_runtime_scope *scope, int count_slot, int name_slot, uint64_t checksum) {
+  if (scope == NULL || count_slot < 0 || name_slot < 0) {
     return checksum;
   }
-  count_binding = &scope->bindings[(size_t)count_index];
-  ratio_binding = &scope->bindings[(size_t)ratio_index];
-  ready_binding = &scope->bindings[(size_t)ready_index];
-  name_binding = &scope->bindings[(size_t)name_index];
-  count_value = &scope->vm_globals[count_binding->vm_global_index];
-  ratio_value = &scope->vm_globals[ratio_binding->vm_global_index];
-  ready_value = &scope->vm_globals[ready_binding->vm_global_index];
-  name_value = &scope->vm_globals[name_binding->vm_global_index];
-  checksum += (uint64_t)count_value->as.int_value;
-  checksum += (uint64_t)(ratio_value->as.float_value * 1000.0);
-  checksum += (uint64_t)ready_value->as.bool_value;
-  checksum += (uint64_t)strlen(name_value->as.string_value);
+  g_gion_name_sink = scope->vm_globals[(size_t)name_slot].as.string_value;
+  checksum += (uint64_t)scope->vm_globals[(size_t)count_slot].as.int_value;
   return checksum;
 }
 
 int main(int argc, char **argv) {
-  char source[GION_STAGE1_SOURCE_MAX];
-  const char *path = "benchmarks/workloads/stage1_values.gion";
+  char source[GION_SOURCE_MAX];
+  const char *path = "benchmarks/workloads/values.gion";
   graphion_runtime_program program;
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -105,10 +91,8 @@ int main(int argc, char **argv) {
   double mops;
   double ns_per_operation;
   uint64_t checksum = 0U;
-  int count_index = -1;
-  int ratio_index = -1;
-  int ready_index = -1;
-  int name_index = -1;
+  int count_slot = -1;
+  int name_slot = -1;
 
   if (argc > 1) {
     iterations = strtol(argv[1], NULL, 10);
@@ -149,13 +133,11 @@ int main(int argc, char **argv) {
       graphion_runtime_program_dispose(&program);
       return 4;
     }
-    if (count_index < 0) {
-      count_index = find_binding_index(&scope, "copy_count");
-      ratio_index = find_binding_index(&scope, "copy_ratio");
-      ready_index = find_binding_index(&scope, "copy_ready");
-      name_index = find_binding_index(&scope, "copy_name");
+    if (count_slot < 0) {
+      count_slot = find_vm_global_slot(&scope, "copy_count");
+      name_slot = find_vm_global_slot(&scope, "copy_name");
     }
-    checksum = update_checksum(&scope, count_index, ratio_index, ready_index, name_index, checksum);
+    checksum = update_checksum(&scope, count_slot, name_slot, checksum);
   }
   graphion_runtime_scope_dispose(&scope);
   end = now_seconds();
@@ -165,13 +147,13 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mops = ((double)(iterations * GION_STAGE1_OPS_PER_ITERATION) / seconds) / 1000000.0;
-  ns_per_operation = (seconds * 1000000000.0) / ((double)iterations * (double)GION_STAGE1_OPS_PER_ITERATION);
+  mops = ((double)(iterations * GION_SOURCE_OPS_PER_ITERATION) / seconds) / 1000000.0;
+  ns_per_operation = (seconds * 1000000000.0) / ((double)iterations * (double)GION_SOURCE_OPS_PER_ITERATION);
 
-  printf("{\"benchmark\":\"gion_stage1\",\"iterations\":%ld,\"source_ops_per_iteration\":%d,"
+  printf("{\"benchmark\":\"gion_source\",\"iterations\":%ld,\"source_ops_per_iteration\":%d,"
          "\"seconds\":%.6f,\"mops\":%.3f,\"ns_per_operation\":%.3f,\"checksum\":%llu}\n",
          iterations,
-         GION_STAGE1_OPS_PER_ITERATION,
+         GION_SOURCE_OPS_PER_ITERATION,
          seconds,
          mops,
          ns_per_operation,

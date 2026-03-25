@@ -19,6 +19,8 @@ typedef enum {
   GVM_OP_LOAD_CONST = 5,
   GVM_OP_LOAD_GLOBAL = 6,
   GVM_OP_STORE_GLOBAL = 7,
+  GVM_OP_STORE_CONST_GLOBAL = 8,
+  GVM_OP_COPY_GLOBAL = 9,
   GVM_OP_FRONTIER_CLEAR = 32,
   GVM_OP_FRONTIER_PUSH = 33,
   GVM_OP_FRONTIER_FILTER_LT_IMM = 34,
@@ -105,6 +107,7 @@ typedef struct {
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
   bool value_move_fastpath;
+  bool global_materialize_fastpath;
   bool value_move_indices_valid;
   bool value_move_int_add_safe;
   const graphion_vm_value *const_pool;

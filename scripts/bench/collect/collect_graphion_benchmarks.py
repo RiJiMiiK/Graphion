@@ -11,8 +11,40 @@ import argparse
 import json
 import statistics
 import subprocess
+from typing import NotRequired, TypedDict, cast
 
 from report_metadata import base_metadata, validate_metadata
+
+
+class BenchPayload(TypedDict):
+    seconds: float
+    benchmark: str
+    iterations: NotRequired[int]
+    frontier_items_per_iteration: NotRequired[int]
+    instructions_per_iteration: NotRequired[int]
+    edges_per_iteration: NotRequired[int]
+    neighbors_per_iteration: NotRequired[int]
+    edge_data_items_per_iteration: NotRequired[int]
+    frontier_len: NotRequired[int]
+    frontier_neighbor_work: NotRequired[int]
+    recommended_frontier_mode: NotRequired[str]
+    memberships_per_iteration: NotRequired[int]
+    incidence_per_iteration: NotRequired[int]
+    calls_per_iteration: NotRequired[int]
+    typed_value_ops_per_iteration: NotRequired[int]
+    source_ops_per_iteration: NotRequired[int]
+    ns_per_frontier_item: NotRequired[float]
+    ns_per_instruction: NotRequired[float]
+    ns_per_edge: NotRequired[float]
+    ns_per_neighbor: NotRequired[float]
+    ns_per_edge_data: NotRequired[float]
+    ns_per_incidence: NotRequired[float]
+    ns_per_membership: NotRequired[float]
+    ns_per_call: NotRequired[float]
+    ns_per_operation: NotRequired[float]
+    mips: NotRequired[float]
+    mteps: NotRequired[float]
+    mops: NotRequired[float]
 
 
 BENCH_SPECS = [
@@ -86,6 +118,13 @@ BENCH_SPECS = [
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
+    {
+        "benchmark": "gion_source",
+        "target": "graphion_bench_gion",
+        "iterations": 20000,
+        "latency_key": "ns_per_operation",
+        "throughput_key": "mops",
+    },
 ]
 
 
@@ -98,22 +137,25 @@ def exe_path(build_dir: pathlib.Path, target: str, config: str) -> pathlib.Path:
     return build_dir / target
 
 
-def parse_last_json(stdout: str) -> dict[str, object]:
+def parse_last_json(stdout: str) -> BenchPayload:
     for line in reversed(stdout.splitlines()):
         line = line.strip()
         if line.startswith("{") and line.endswith("}"):
-            return json.loads(line)
+            payload = json.loads(line)
+            if not isinstance(payload, dict):
+                break
+            return cast(BenchPayload, payload)
     raise ValueError("benchmark output did not contain a JSON payload")
 
 
-def run_benchmark(exe: pathlib.Path, iterations: int) -> dict[str, object]:
+def run_benchmark(exe: pathlib.Path, iterations: int) -> BenchPayload:
     proc = subprocess.run([str(exe), str(iterations)], capture_output=True, text=True, check=True)
     return parse_last_json(proc.stdout)
 
 
 def average_payloads(
     benchmark: str,
-    payloads: list[dict[str, object]],
+    payloads: list[BenchPayload],
     latency_key: str,
     throughput_key: str,
     platform_label: str,
@@ -146,9 +188,11 @@ def average_payloads(
         "incidence_per_iteration",
         "calls_per_iteration",
         "typed_value_ops_per_iteration",
+        "source_ops_per_iteration",
     ):
-        if key in sample:
-            result[key] = sample[key]
+        value = sample.get(key)
+        if value is not None:
+            result[key] = value
     return result
 
 

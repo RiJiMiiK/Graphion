@@ -26,6 +26,7 @@ BENCHMARK_ORDER = [
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
     "vm_graph_ops",
+    "gion_source",
 ]
 
 DISPLAY_NAMES = {
@@ -39,6 +40,7 @@ DISPLAY_NAMES = {
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
     "vm_graph_ops": "vm_graph_ops",
+    "gion_source": "gion_source",
 }
 
 LATENCY_LABELS = {
@@ -50,6 +52,7 @@ LATENCY_LABELS = {
     "ns_per_incidence": "ns_per_incidence",
     "ns_per_membership": "ns_per_membership",
     "ns_per_call": "ns_per_call",
+    "ns_per_operation": "ns_per_operation",
 }
 
 
@@ -88,6 +91,29 @@ def fmt_seconds(value: object) -> str:
     if isinstance(value, (int, float)):
         return f"{float(value):.6f}"
     return str(value)
+
+
+def meta_int(meta: dict[str, object], key: str) -> int:
+    value = meta.get(key)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        return int(value)
+    raise ValueError(f"metadata field {key!r} must be an int-compatible value")
+
+
+def meta_str(meta: dict[str, object], key: str) -> str:
+    value = meta.get(key)
+    if isinstance(value, str):
+        return value
+    raise ValueError(f"metadata field {key!r} must be a string")
+
+
+def meta_bool(meta: dict[str, object], key: str) -> bool:
+    value = meta.get(key)
+    if isinstance(value, bool):
+        return value
+    raise ValueError(f"metadata field {key!r} must be a bool")
 
 
 def metric_value(row: dict[str, object], key: str) -> object:
@@ -149,7 +175,7 @@ def render_dispatch_variants(
     runs = 0
     for meta in (win_meta, linux_meta):
         if meta:
-            runs = int(meta["runs"])
+            runs = meta_int(meta, "runs")
             break
     lines = [
         f"## vm_dispatch dispatch variants (`ns_per_instruction`, x{runs if runs else '?'})",
@@ -182,13 +208,13 @@ def render_environment_table(metas: list[dict[str, object]]) -> str:
             continue
         lines.append(
             "| {lane} | {compiler} | {asm} | {cpu} | {machine} | {git_rev} | {runs} |".format(
-                lane=meta["platform_label"],
-                compiler=meta["compiler_kind"],
-                asm="on" if meta["asm_enabled"] else "off",
-                cpu=meta["cpu_model"],
-                machine=meta["machine"],
-                git_rev=str(meta["git_rev"])[:12],
-                runs=meta["runs"],
+                lane=meta_str(meta, "platform_label"),
+                compiler=meta_str(meta, "compiler_kind"),
+                asm="on" if meta_bool(meta, "asm_enabled") else "off",
+                cpu=meta_str(meta, "cpu_model"),
+                machine=meta_str(meta, "machine"),
+                git_rev=meta_str(meta, "git_rev")[:12],
+                runs=meta_int(meta, "runs"),
             )
         )
     lines.append("")
@@ -216,7 +242,7 @@ def main() -> int:
     runs = 0
     for meta in (windows_meta, linux_meta, rust_meta):
         if meta:
-            runs = int(meta["runs"])
+            runs = meta_int(meta, "runs")
             break
 
     sections = []

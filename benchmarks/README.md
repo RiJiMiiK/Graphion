@@ -30,7 +30,7 @@ Benchmark scope is intentionally split:
 - it exercises `GVM_OP_INCIDENT_COUNT`
 - it exercises `GVM_OP_INCIDENT_SUM`
 
-`bench_gion_stage1.c` is the stage-1 `.gion` lane:
-- it interprets the checked-in workload in `benchmarks/workloads/stage1_values.gion`
+`bench_gion.c` is the checked-in `.gion` source lane:
+- it interprets the checked-in workload in `benchmarks/workloads/values.gion`
 - it measures the end-to-end `.gion` cost separately from the direct VM lane
-- it feeds the dedicated stage-1 comparison table in `docs/performance/reports/STAGE1_COMPARISON.md`
+- it is collected into the standard performance snapshot/reporting pipeline

@@ -11,8 +11,37 @@ import argparse
 import json
 import statistics
 import subprocess
+from typing import NotRequired, TypedDict, cast
 
 from report_metadata import base_metadata, validate_metadata
+
+
+class BenchPayload(TypedDict):
+    seconds: float
+    benchmark: str
+    iterations: NotRequired[int]
+    frontier_items_per_iteration: NotRequired[int]
+    instructions_per_iteration: NotRequired[int]
+    edges_per_iteration: NotRequired[int]
+    neighbors_per_iteration: NotRequired[int]
+    edge_data_items_per_iteration: NotRequired[int]
+    frontier_len: NotRequired[int]
+    frontier_neighbor_work: NotRequired[int]
+    recommended_frontier_mode: NotRequired[str]
+    memberships_per_iteration: NotRequired[int]
+    incidence_per_iteration: NotRequired[int]
+    calls_per_iteration: NotRequired[int]
+    typed_value_ops_per_iteration: NotRequired[int]
+    ns_per_frontier_item: NotRequired[float]
+    ns_per_instruction: NotRequired[float]
+    ns_per_edge: NotRequired[float]
+    ns_per_neighbor: NotRequired[float]
+    ns_per_edge_data: NotRequired[float]
+    ns_per_incidence: NotRequired[float]
+    ns_per_membership: NotRequired[float]
+    ns_per_call: NotRequired[float]
+    mips: NotRequired[float]
+    mteps: NotRequired[float]
 
 
 BENCH_SPECS = [
@@ -79,17 +108,20 @@ BENCH_SPECS = [
 ]
 
 
-def parse_last_json(stdout: str) -> dict[str, object]:
+def parse_last_json(stdout: str) -> BenchPayload:
     for line in reversed(stdout.splitlines()):
         line = line.strip()
         if line.startswith("{") and line.endswith("}"):
-            return json.loads(line)
+            payload = json.loads(line)
+            if not isinstance(payload, dict):
+                break
+            return cast(BenchPayload, payload)
     raise ValueError("rust benchmark output did not contain a JSON payload")
 
 
 def average_payloads(
     benchmark: str,
-    payloads: list[dict[str, object]],
+    payloads: list[BenchPayload],
     latency_key: str,
     throughput_key: str,
     platform_label: str,
@@ -123,8 +155,9 @@ def average_payloads(
         "calls_per_iteration",
         "typed_value_ops_per_iteration",
     ):
-        if key in sample:
-            result[key] = sample[key]
+        value = sample.get(key)
+        if value is not None:
+            result[key] = value
     return result
 
 

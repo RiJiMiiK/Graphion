@@ -24,6 +24,7 @@ typedef struct {
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
   bool value_move_fastpath;
+  bool global_materialize_fastpath;
 } graphion_vm_shape_cache_entry;
 
 enum { GRAPHION_VM_SHAPE_CACHE_SIZE = 64 };
@@ -51,7 +52,8 @@ static int shape_cache_lookup(const graphion_insn *program,
                               bool *arith_only_fastpath,
                               bool *arith_only_halt_terminated,
                               bool *weighted_sum_fastpath,
-                              bool *value_move_fastpath) {
+                              bool *value_move_fastpath,
+                              bool *global_materialize_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   const graphion_vm_shape_cache_entry e = g_shape_cache[slot];
   const size_t fingerprint = shape_cache_fingerprint(program, program_len);
@@ -62,6 +64,7 @@ static int shape_cache_lookup(const graphion_insn *program,
   *arith_only_halt_terminated = e.arith_only_halt_terminated;
   *weighted_sum_fastpath = e.weighted_sum_fastpath;
   *value_move_fastpath = e.value_move_fastpath;
+  *global_materialize_fastpath = e.global_materialize_fastpath;
   return 1;
 }
 
@@ -70,7 +73,8 @@ static void shape_cache_store(const graphion_insn *program,
                               bool arith_only_fastpath,
                               bool arith_only_halt_terminated,
                               bool weighted_sum_fastpath,
-                              bool value_move_fastpath) {
+                              bool value_move_fastpath,
+                              bool global_materialize_fastpath) {
   const size_t slot = shape_cache_slot(program, program_len);
   g_shape_cache[slot].program = program;
   g_shape_cache[slot].program_len = program_len;
@@ -79,6 +83,7 @@ static void shape_cache_store(const graphion_insn *program,
   g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
   g_shape_cache[slot].weighted_sum_fastpath = weighted_sum_fastpath;
   g_shape_cache[slot].value_move_fastpath = value_move_fastpath;
+  g_shape_cache[slot].global_materialize_fastpath = global_materialize_fastpath;
 }
 
 static int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
@@ -311,6 +316,8 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_LOAD_CONST:
       case GVM_OP_LOAD_GLOBAL:
       case GVM_OP_STORE_GLOBAL:
+      case GVM_OP_STORE_CONST_GLOBAL:
+      case GVM_OP_COPY_GLOBAL:
       case GVM_OP_FRONTIER_CLEAR:
       case GVM_OP_FRONTIER_FILTER_LT_IMM:
       case GVM_OP_FRONTIER_MAP_ADD_IMM:
@@ -395,11 +402,35 @@ static int is_value_move_fastpath_candidate(const graphion_insn *program, size_t
           return 0;
         }
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+      case GVM_OP_COPY_GLOBAL:
+        has_value_ops = 1;
+        break;
       default:
         return 0;
     }
   }
   return has_value_ops;
+}
+
+static int is_global_materialize_fastpath_candidate(const graphion_insn *program, size_t program_len) {
+  size_t i;
+  int has_global_ops = 0;
+  for (i = 0U; i < program_len; ++i) {
+    const graphion_insn in = program[i];
+    switch (in.op) {
+      case GVM_OP_NOP:
+      case GVM_OP_HALT:
+        break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+      case GVM_OP_COPY_GLOBAL:
+        has_global_ops = 1;
+        break;
+      default:
+        return 0;
+    }
+  }
+  return has_global_ops;
 }
 
 static int validate_value_move_program_indices(const graphion_vm *vm) {
@@ -415,9 +446,21 @@ static int validate_value_move_program_indices(const graphion_vm *vm) {
           return 0;
         }
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        if ((vm->const_pool == NULL || in.imm < 0 || (size_t)in.imm >= vm->const_count) ||
+            (vm->globals == NULL || (size_t)in.b >= vm->global_count)) {
+          return 0;
+        }
+        break;
       case GVM_OP_LOAD_GLOBAL:
       case GVM_OP_STORE_GLOBAL:
         if (vm->globals == NULL || in.imm < 0 || (size_t)in.imm >= vm->global_count) {
+          return 0;
+        }
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        if (vm->globals == NULL || in.imm < 0 || (size_t)in.imm >= vm->global_count ||
+            (size_t)in.b >= vm->global_count) {
           return 0;
         }
         break;
@@ -470,6 +513,12 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_STORE_GLOBAL:
         global_kinds[(size_t)in.imm] = reg_kinds[in.a];
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        global_kinds[(size_t)in.b] = vm->const_pool[(size_t)in.imm].kind;
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        global_kinds[(size_t)in.b] = global_kinds[(size_t)in.imm];
+        break;
       case GVM_OP_ADD:
         if (reg_kinds[in.a] != GVM_VALUE_INT || reg_kinds[in.b] != GVM_VALUE_INT) {
           return 0;
@@ -494,6 +543,65 @@ static void refresh_value_move_validation(graphion_vm *vm) {
   vm->value_move_indices_valid = validate_value_move_program_indices(vm) != 0;
   vm->value_move_int_add_safe =
       vm->value_move_indices_valid ? (validate_value_move_program_int_add_safety(vm) != 0) : false;
+}
+
+static int run_global_materialize_fastpath_c(graphion_vm *vm) {
+  const graphion_insn *p;
+  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_vm_value *const_pool;
+  graphion_vm_value *globals;
+  size_t const_count;
+  size_t global_count;
+
+  if (vm == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (vm->const_pool == NULL) {
+    return GVM_ERR_CONST_UNBOUND;
+  }
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+
+  const_pool = vm->const_pool;
+  globals = vm->globals;
+  const_count = vm->const_count;
+  global_count = vm->global_count;
+  p = vm->program + vm->pc;
+  while (p < end) {
+    const graphion_insn in = *p++;
+    switch (in.op) {
+      case GVM_OP_NOP:
+        break;
+      case GVM_OP_HALT:
+        vm->halted = true;
+        vm->pc = (size_t)(p - vm->program);
+        return GVM_OK;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        if (in.imm < 0 || (size_t)in.imm >= const_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_CONST_INDEX;
+        }
+        if ((size_t)in.b >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        globals[in.b] = const_pool[(size_t)in.imm];
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        if (in.imm < 0 || (size_t)in.imm >= global_count || (size_t)in.b >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        globals[in.b] = globals[(size_t)in.imm];
+        break;
+      default:
+        vm->pc = (size_t)((p - vm->program) - 1U);
+        return GVM_ERR_UNKNOWN_OPCODE;
+    }
+  }
+  vm->pc = vm->program_len;
+  return GVM_OK;
 }
 
 static void run_arith_fastpath_c_halt_terminated(graphion_vm *vm) {
@@ -768,6 +876,36 @@ static int run_value_move_fastpath_c(graphion_vm *vm) {
         }
         globals[(size_t)in.imm] = regs[in.a];
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        if (const_pool == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_CONST_UNBOUND;
+        }
+        if (globals == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_GLOBALS_UNBOUND;
+        }
+        if (in.imm < 0 || (size_t)in.imm >= const_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_CONST_INDEX;
+        }
+        if ((size_t)in.b >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        globals[in.b] = const_pool[(size_t)in.imm];
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        if (globals == NULL) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_GLOBALS_UNBOUND;
+        }
+        if (in.imm < 0 || (size_t)in.imm >= global_count || (size_t)in.b >= global_count) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return GVM_ERR_INVALID_GLOBAL_INDEX;
+        }
+        globals[in.b] = globals[(size_t)in.imm];
+        break;
       case GVM_OP_ADD:
         if (regs[in.a].kind != GVM_VALUE_INT || regs[in.b].kind != GVM_VALUE_INT) {
           vm->pc = (size_t)((p - vm->program) - 1U);
@@ -862,6 +1000,12 @@ static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
       case GVM_OP_STORE_GLOBAL:
         globals[(size_t)in.imm] = regs[in.a];
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        globals[in.b] = const_pool[(size_t)in.imm];
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        globals[in.b] = globals[(size_t)in.imm];
+        break;
       case GVM_OP_ADD:
         if (!vm->value_move_int_add_safe) {
           if (regs[in.a].kind != GVM_VALUE_INT || regs[in.b].kind != GVM_VALUE_INT) {
@@ -954,6 +1098,7 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->arith_only_halt_terminated = false;
   vm->weighted_sum_fastpath = false;
   vm->value_move_fastpath = false;
+  vm->global_materialize_fastpath = false;
   vm->value_move_indices_valid = false;
   vm->value_move_int_add_safe = false;
   vm->const_pool = NULL;
@@ -996,6 +1141,7 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   bool arith_only_fastpath = false;
   bool weighted_sum_fastpath = false;
   bool value_move_fastpath = false;
+  bool global_materialize_fastpath = false;
   if (vm == NULL || program == NULL || program_len == 0U) {
     return GVM_ERR_INVALID_ARG;
   }
@@ -1005,17 +1151,20 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->halted = false;
 
   if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated,
-                          &weighted_sum_fastpath, &value_move_fastpath)) {
+                          &weighted_sum_fastpath, &value_move_fastpath, &global_materialize_fastpath)) {
     arith_only_fastpath = is_arith_only_fastpath_candidate(program, program_len, &halt_terminated) != 0;
     weighted_sum_fastpath = is_weighted_sum_fastpath_candidate(program, program_len) != 0;
     value_move_fastpath = is_value_move_fastpath_candidate(program, program_len) != 0;
+    global_materialize_fastpath =
+        is_global_materialize_fastpath_candidate(program, program_len) != 0;
     shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath,
-                      value_move_fastpath);
+                      value_move_fastpath, global_materialize_fastpath);
   }
   vm->arith_only_fastpath = arith_only_fastpath;
   vm->arith_only_halt_terminated = halt_terminated;
   vm->weighted_sum_fastpath = weighted_sum_fastpath;
   vm->value_move_fastpath = value_move_fastpath;
+  vm->global_materialize_fastpath = global_materialize_fastpath;
   refresh_value_move_validation(vm);
   return 0;
 }
@@ -1510,6 +1659,34 @@ static int op_store_global(graphion_vm *vm, const graphion_insn *in) {
   return 0;
 }
 
+static int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->const_pool == NULL) {
+    return GVM_ERR_CONST_UNBOUND;
+  }
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->const_count) {
+    return GVM_ERR_INVALID_CONST_INDEX;
+  }
+  if ((size_t)in->b >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  vm_value_copy(&vm->globals[in->b], &vm->const_pool[(size_t)in->imm]);
+  return 0;
+}
+
+static int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->global_count || (size_t)in->b >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  vm_value_copy(&vm->globals[in->b], &vm->globals[(size_t)in->imm]);
+  return 0;
+}
+
 static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
   uint32_t source;
   int rc;
@@ -1731,6 +1908,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_STORE_GLOBAL:
         rc = op_store_global(vm, &in);
         break;
+      case GVM_OP_STORE_CONST_GLOBAL:
+        rc = op_store_const_global(vm, &in);
+        break;
+      case GVM_OP_COPY_GLOBAL:
+        rc = op_copy_global(vm, &in);
+        break;
       case GVM_OP_FRONTIER_CLEAR:
         rc = op_frontier_clear(vm, &in);
         break;
@@ -1810,6 +1993,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_LOAD_CONST] = op_load_const,
       [GVM_OP_LOAD_GLOBAL] = op_load_global,
       [GVM_OP_STORE_GLOBAL] = op_store_global,
+      [GVM_OP_STORE_CONST_GLOBAL] = op_store_const_global,
+      [GVM_OP_COPY_GLOBAL] = op_copy_global,
       [GVM_OP_FRONTIER_CLEAR] = op_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = op_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = op_frontier_filter_lt_imm,
@@ -1862,6 +2047,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_LOAD_CONST] = &&L_load_const,
       [GVM_OP_LOAD_GLOBAL] = &&L_load_global,
       [GVM_OP_STORE_GLOBAL] = &&L_store_global,
+      [GVM_OP_STORE_CONST_GLOBAL] = &&L_store_const_global,
+      [GVM_OP_COPY_GLOBAL] = &&L_copy_global,
       [GVM_OP_FRONTIER_CLEAR] = &&L_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = &&L_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = &&L_frontier_filter_lt_imm,
@@ -1934,6 +2121,18 @@ L_load_global:
     continue;
 L_store_global:
     rc = op_store_global(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_store_const_global:
+    rc = op_store_const_global(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_copy_global:
+    rc = op_copy_global(vm, &in);
     if (rc != 0) {
       return rc;
     }
@@ -2069,6 +2268,10 @@ int graphion_vm_run(graphion_vm *vm) {
     return run_weighted_sum_fastpath_c(vm);
   }
 
+  if (vm->global_materialize_fastpath) {
+    return run_global_materialize_fastpath_c(vm);
+  }
+
   if (vm->value_move_fastpath) {
     if (vm->value_move_indices_valid) {
       return run_value_move_fastpath_verified_c(vm);
@@ -2134,6 +2337,8 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
                    vm->weighted_sum_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "value_move_fastpath=%d\n",
                    vm->value_move_fastpath ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "global_materialize_fastpath=%d\n",
+                   vm->global_materialize_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_bound=%d\n", vm->const_pool != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_count=%zu\n", vm->const_count);
   offset = appendf(buffer, buffer_size, offset, "globals_bound=%d\n", vm->globals != NULL ? 1 : 0);

@@ -352,15 +352,15 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 
-  add_executable(graphion_bench_gion_stage1
-    benchmarks/bench_gion_stage1.c
+  add_executable(graphion_bench_gion
+    benchmarks/bench_gion.c
   )
-  target_link_libraries(graphion_bench_gion_stage1 PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_gion_stage1)
+  target_link_libraries(graphion_bench_gion PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_gion)
   if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_gion_stage1 PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_gion_stage1 PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_gion_stage1 PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+    set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 endif()
 

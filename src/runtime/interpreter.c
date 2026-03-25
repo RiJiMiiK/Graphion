@@ -1493,15 +1493,18 @@ static int ensure_program_global_slot(graphion_runtime_program *program, const c
 static int prepare_simple_top_level_steps(graphion_runtime_program *program,
                                           graphion_runtime_diagnostic *diagnostic) {
   size_t i;
+  int seen_targets[GRAPHION_RUNTIME_BINDING_MAX];
   if (program == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
   program->prepared_step_count = 0U;
   program->prepared_top_level_only = 0;
+  program->prepared_overwrites_all_globals = 0;
   program->global_count = 0U;
   program->prepared_const_count = 0U;
   program->prepared_vm_program_len = 0U;
   program->prepared_vm_enabled = 0;
+  memset(seen_targets, 0, sizeof(seen_targets));
 
   for (i = 0U; i < program->line_count; ++i) {
     const graphion_runtime_source_line *line = &program->lines[i];
@@ -1556,10 +1559,22 @@ static int prepare_simple_top_level_steps(graphion_runtime_program *program,
     } else {
       return GINT_OK;
     }
+    if (step->target_slot < GRAPHION_RUNTIME_BINDING_MAX) {
+      seen_targets[step->target_slot] = 1;
+    }
     program->prepared_step_count += 1U;
   }
 
   program->prepared_top_level_only = program->prepared_step_count == program->line_count && program->line_count != 0U;
+  if (program->prepared_top_level_only != 0) {
+    program->prepared_overwrites_all_globals = 1;
+    for (i = 0U; i < program->global_count; ++i) {
+      if (seen_targets[i] == 0) {
+        program->prepared_overwrites_all_globals = 0;
+        break;
+      }
+    }
+  }
   return GINT_OK;
 }
 
@@ -1580,7 +1595,7 @@ static int compile_prepared_top_level_vm_program(graphion_runtime_program *progr
 
   for (step_index = 0U; step_index < program->prepared_step_count; ++step_index) {
     const graphion_runtime_prepared_step *step = &program->prepared_steps[step_index];
-    if (insn_index + 2U >= GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX) {
+    if (insn_index + 1U >= GRAPHION_RUNTIME_PREPARED_VM_INSN_MAX) {
       set_diagnostic(diagnostic, program->lines[step_index].line_no, 1U, "prepared vm program too large");
       return GINT_ERR_CAPACITY;
     }
@@ -1613,16 +1628,12 @@ static int compile_prepared_top_level_vm_program(graphion_runtime_program *progr
         default:
           return GINT_OK;
       }
-      program->prepared_vm_program[insn_index++] =
-          (graphion_insn){GVM_OP_LOAD_CONST, 0U, 0U, (int32_t)program->prepared_const_count};
+      program->prepared_vm_program[insn_index++] = (graphion_insn){
+          GVM_OP_STORE_CONST_GLOBAL, 0U, (uint8_t)step->target_slot, (int32_t)program->prepared_const_count};
       program->prepared_const_count += 1U;
-      program->prepared_vm_program[insn_index++] =
-          (graphion_insn){GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)step->target_slot};
     } else if (step->kind == GRAPHION_RUNTIME_STEP_STORE_COPY) {
       program->prepared_vm_program[insn_index++] =
-          (graphion_insn){GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)step->source_slot};
-      program->prepared_vm_program[insn_index++] =
-          (graphion_insn){GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)step->target_slot};
+          (graphion_insn){GVM_OP_COPY_GLOBAL, 0U, (uint8_t)step->target_slot, (int32_t)step->source_slot};
     } else {
       return GINT_OK;
     }
@@ -1643,7 +1654,11 @@ static int execute_prepared_top_level_program(const graphion_runtime_program *pr
   if (program == NULL || scope == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
-  if (scope->count != 0U) {
+  if (scope->prepared_vm_ready != 0 && scope->prepared_program_key == (const void *)program) {
+    if (scope->count != program->global_count) {
+      return GINT_ERR_INVALID_ARG;
+    }
+  } else if (scope->count != 0U) {
     if (scope->count != program->global_count) {
       return GINT_ERR_INVALID_ARG;
     }
@@ -1668,9 +1683,11 @@ static int execute_prepared_top_level_program(const graphion_runtime_program *pr
     }
   }
   scope->vm_globals_enabled = 1;
-  for (i = 0U; i < scope->count; ++i) {
-    scope->vm_globals[i].kind = GVM_VALUE_NONE;
-    scope->vm_globals[i].as.int_value = 0;
+  if (program->prepared_overwrites_all_globals == 0) {
+    for (i = 0U; i < scope->count; ++i) {
+      scope->vm_globals[i].kind = GVM_VALUE_NONE;
+      scope->vm_globals[i].as.int_value = 0;
+    }
   }
 
   if (program->prepared_vm_enabled == 0) {
@@ -1687,7 +1704,6 @@ static int execute_prepared_top_level_program(const graphion_runtime_program *pr
     scope->prepared_program_key = (const void *)program;
     scope->prepared_vm_ready = 1;
   } else {
-    graphion_vm_bind_globals(&scope->prepared_vm, scope->vm_globals, scope->count);
     graphion_vm_reset_execution(&scope->prepared_vm);
   }
   if (graphion_vm_run(&scope->prepared_vm) != GVM_OK) {
@@ -2574,13 +2590,14 @@ int graphion_execute_program(const graphion_runtime_program *program,
   graphion_runtime_value return_value;
   int did_return = 0;
 
-  clear_diagnostic(diagnostic);
   if (program == NULL || scope == NULL || output == NULL) {
     return GINT_ERR_INVALID_ARG;
   }
-  if (program->prepared_top_level_only != 0 && scope->count == 0U) {
+  if (program->prepared_top_level_only != 0) {
+    clear_diagnostic(diagnostic);
     return execute_prepared_top_level_program(program, scope);
   }
+  clear_diagnostic(diagnostic);
   scope->vm_globals_enabled = 1;
   memset(&return_value, 0, sizeof(return_value));
   return execute_block(program,
