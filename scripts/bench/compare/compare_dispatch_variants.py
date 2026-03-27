@@ -10,14 +10,18 @@ if str(SCRIPT_BENCH_ROOT) not in sys.path:
 import argparse
 import ctypes
 import json
+import os
 import statistics
 import subprocess
+import shutil
 
 from bench_paths import DISPATCH_LINUX_JSON
 from report_metadata import base_metadata, validate_metadata
 
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+  if not sys.platform.startswith("win") and shutil.which("taskset") is not None:
+    cmd = ["taskset", "-c", "0", *cmd]
   return subprocess.run(cmd, capture_output=True, text=True)
 
 
@@ -41,6 +45,16 @@ def stabilize_windows_benchmark_host() -> None:
   kernel32.SetProcessAffinityMask(handle, affinity_mask)
 
 
+def stabilize_posix_benchmark_host() -> None:
+  if sys.platform.startswith("win"):
+    return
+  if hasattr(os, "sched_setaffinity"):
+    try:
+      os.sched_setaffinity(0, {0})
+    except OSError:
+      pass
+
+
 def main() -> int:
   parser = argparse.ArgumentParser(description="Compare VM dispatch variants on vm_dispatch benchmark.")
   parser.add_argument("--iterations", type=int, default=5000000)
@@ -58,6 +72,7 @@ def main() -> int:
   parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
   args = parser.parse_args()
   stabilize_windows_benchmark_host()
+  stabilize_posix_benchmark_host()
 
   variants = ["switch", "jumptable", "computed-goto"]
   rows: list[dict[str, object]] = []

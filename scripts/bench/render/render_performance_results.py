@@ -29,6 +29,8 @@ BENCHMARK_ORDER = [
     "gion_source",
     "vm_print_dispatch",
     "gion_print_source",
+    "vm_expr_dispatch",
+    "gion_expr_source",
 ]
 
 SECTION_BENCHMARKS = {
@@ -114,6 +116,20 @@ SECTION_BENCHMARKS = {
         "Rust Windows": "vm_print_dispatch",
         "Rust Linux": "vm_print_dispatch",
     },
+    "vm_expr_dispatch": {
+        "VM Windows": "vm_expr_dispatch",
+        "VM Linux": "vm_expr_dispatch",
+        "Rust Windows": "vm_expr_dispatch",
+        "Rust Linux": "vm_expr_dispatch",
+    },
+    "gion_expr_source": {
+        "VM Windows": "vm_expr_dispatch",
+        "VM Linux": "vm_expr_dispatch",
+        ".gion Windows": "gion_expr_source",
+        ".gion Linux": "gion_expr_source",
+        "Rust Windows": "vm_expr_dispatch",
+        "Rust Linux": "vm_expr_dispatch",
+    },
 }
 
 DISPLAY_NAMES = {
@@ -130,11 +146,14 @@ DISPLAY_NAMES = {
     "gion_source": "gion_source",
     "vm_print_dispatch": "vm_print_dispatch",
     "gion_print_source": "gion_print_source",
+    "vm_expr_dispatch": "vm_expr_dispatch",
+    "gion_expr_source": "gion_expr_source",
 }
 
 SECTION_LATENCY_KEY_OVERRIDE = {
     "gion_source": "ns_per_iteration",
     "gion_print_source": "ns_per_iteration",
+    "gion_expr_source": "ns_per_iteration",
 }
 
 LATENCY_LABELS = {

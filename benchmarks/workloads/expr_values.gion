@@ -1,0 +1,7 @@
+a = 1 + 2
+b = a + 5
+c = b + a
+d = c + 10
+e = d + c
+print(c)
+print(e + 1)

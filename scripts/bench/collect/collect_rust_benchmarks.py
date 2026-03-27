@@ -10,8 +10,10 @@ if str(SCRIPT_BENCH_ROOT) not in sys.path:
 import argparse
 import ctypes
 import json
+import os
 import statistics
 import subprocess
+import shutil
 from typing import NotRequired, TypedDict, cast
 
 from report_metadata import base_metadata, validate_metadata
@@ -33,6 +35,7 @@ class BenchPayload(TypedDict):
     incidence_per_iteration: NotRequired[int]
     calls_per_iteration: NotRequired[int]
     typed_value_ops_per_iteration: NotRequired[int]
+    expr_ops_per_iteration: NotRequired[int]
     print_ops_per_iteration: NotRequired[int]
     ns_per_frontier_item: NotRequired[float]
     ns_per_instruction: NotRequired[float]
@@ -114,6 +117,12 @@ BENCH_SPECS = [
         "latency_key": "ns_per_iteration",
         "throughput_key": "mips",
     },
+    {
+        "benchmark": "vm_expr_dispatch",
+        "iterations": 10000000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mips",
+    },
 ]
 
 
@@ -169,6 +178,7 @@ def average_payloads(
         "incidence_per_iteration",
         "calls_per_iteration",
         "typed_value_ops_per_iteration",
+        "expr_ops_per_iteration",
         "print_ops_per_iteration",
         "ns_per_iteration",
     ):
@@ -196,6 +206,16 @@ def stabilize_windows_benchmark_host() -> None:
     kernel32.SetProcessAffinityMask(handle, affinity_mask)
 
 
+def stabilize_posix_benchmark_host() -> None:
+    if sys.platform.startswith("win"):
+        return
+    if hasattr(os, "sched_setaffinity"):
+        try:
+            os.sched_setaffinity(0, {0})
+        except OSError:
+            pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Collect Rust comparison benchmark averages.")
     parser.add_argument("--manifest-path", default="graphion_rust/Cargo.toml", help="Path to graphion_rust Cargo.toml")
@@ -205,6 +225,7 @@ def main() -> int:
     parser.add_argument("--skip-missing", action="store_true", help="Exit successfully if the Rust sandbox is absent")
     args = parser.parse_args()
     stabilize_windows_benchmark_host()
+    stabilize_posix_benchmark_host()
 
     manifest_path = pathlib.Path(args.manifest_path)
     if not manifest_path.exists():
@@ -227,8 +248,11 @@ def main() -> int:
     for spec in BENCH_SPECS:
         payloads = []
         for _ in range(args.runs):
+            cmd = [str(exe), str(spec["benchmark"]), str(spec["iterations"])]
+            if not sys.platform.startswith("win") and shutil.which("taskset") is not None:
+                cmd = ["taskset", "-c", "0", *cmd]
             proc = subprocess.run(
-                [str(exe), str(spec["benchmark"]), str(spec["iterations"])],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True,

@@ -10,8 +10,10 @@ if str(SCRIPT_BENCH_ROOT) not in sys.path:
 import argparse
 import ctypes
 import json
+import os
 import statistics
 import subprocess
+import shutil
 from typing import NotRequired, TypedDict, cast
 
 from report_metadata import base_metadata, validate_metadata
@@ -33,6 +35,7 @@ class BenchPayload(TypedDict):
     incidence_per_iteration: NotRequired[int]
     calls_per_iteration: NotRequired[int]
     typed_value_ops_per_iteration: NotRequired[int]
+    expr_ops_per_iteration: NotRequired[int]
     source_ops_per_iteration: NotRequired[int]
     print_ops_per_iteration: NotRequired[int]
     ns_per_frontier_item: NotRequired[float]
@@ -142,6 +145,20 @@ BENCH_SPECS = [
         "latency_key": "ns_per_iteration",
         "throughput_key": "mops",
     },
+    {
+        "benchmark": "vm_expr_dispatch",
+        "target": "graphion_bench_vm_expr",
+        "iterations": 10000000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mips",
+    },
+    {
+        "benchmark": "gion_expr_source",
+        "target": "graphion_bench_gion_expr",
+        "iterations": 10000000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mops",
+    },
 ]
 
 
@@ -166,7 +183,10 @@ def parse_last_json(stdout: str) -> BenchPayload:
 
 
 def run_benchmark(exe: pathlib.Path, iterations: int) -> BenchPayload:
-    proc = subprocess.run([str(exe), str(iterations)], capture_output=True, text=True, check=True)
+    cmd = [str(exe), str(iterations)]
+    if not sys.platform.startswith("win") and shutil.which("taskset") is not None:
+        cmd = ["taskset", "-c", "0", *cmd]
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
     return parse_last_json(proc.stdout)
 
 
@@ -179,6 +199,16 @@ def stabilize_windows_benchmark_host() -> None:
     affinity_mask = 0x4
     kernel32.SetPriorityClass(handle, HIGH_PRIORITY_CLASS)
     kernel32.SetProcessAffinityMask(handle, affinity_mask)
+
+
+def stabilize_posix_benchmark_host() -> None:
+    if sys.platform.startswith("win"):
+        return
+    if hasattr(os, "sched_setaffinity"):
+        try:
+            os.sched_setaffinity(0, {0})
+        except OSError:
+            pass
 
 
 def average_payloads(
@@ -222,6 +252,7 @@ def average_payloads(
         "incidence_per_iteration",
         "calls_per_iteration",
         "typed_value_ops_per_iteration",
+        "expr_ops_per_iteration",
         "source_ops_per_iteration",
         "print_ops_per_iteration",
         "ns_per_iteration",
@@ -243,6 +274,7 @@ def main() -> int:
     parser.add_argument("--output", required=True, help="Output JSON path")
     args = parser.parse_args()
     stabilize_windows_benchmark_host()
+    stabilize_posix_benchmark_host()
 
     build_dir = pathlib.Path(args.build_dir)
     rows: list[dict[str, object]] = []

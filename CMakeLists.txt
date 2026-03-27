@@ -388,6 +388,28 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_gion_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     set_property(TARGET graphion_bench_gion_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
+
+  add_executable(graphion_bench_vm_expr
+    benchmarks/bench_vm_expr.c
+  )
+  target_link_libraries(graphion_bench_vm_expr PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_vm_expr)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_vm_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_vm_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_vm_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_gion_expr
+    benchmarks/bench_gion_expr.c
+  )
+  target_link_libraries(graphion_bench_gion_expr PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_gion_expr)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_gion_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_gion_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_gion_expr PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)

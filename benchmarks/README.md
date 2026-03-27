@@ -45,3 +45,13 @@ Benchmark scope is intentionally split:
 - it interprets the checked-in workload in `benchmarks/workloads/print_values.gion`
 - it measures the prepared `.gion -> bytecode -> VM` path for top-level scalar `print(...)`
 - it is collected into the standard performance snapshot/reporting pipeline as `gion_print_source`
+
+`bench_vm_expr.c` is the direct VM lane for the current top-level integer expression subset:
+- it loads the prepared VM program generated from `benchmarks/workloads/expr_values.gion`
+- it measures the direct VM cost of top-level integer additions plus simple `print(...)`
+- it is collected into the standard performance snapshot/reporting pipeline as `vm_expr_dispatch`
+
+`bench_gion_expr.c` is the checked-in `.gion` expression lane:
+- it interprets the checked-in workload in `benchmarks/workloads/expr_values.gion`
+- it measures the prepared `.gion -> bytecode -> VM` path for top-level integer additions
+- it is collected into the standard performance snapshot/reporting pipeline as `gion_expr_source`

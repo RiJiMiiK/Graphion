@@ -651,6 +651,7 @@ static int is_value_move_fastpath_candidate(const graphion_insn *program, size_t
       case GVM_OP_LOAD_CONST:
       case GVM_OP_LOAD_GLOBAL:
       case GVM_OP_STORE_GLOBAL:
+      case GVM_OP_PRINT_REG:
         has_value_ops = 1;
         if (!is_valid_reg(in.a)) {
           return 0;
@@ -736,6 +737,11 @@ static int validate_value_move_program_indices(const graphion_vm *vm) {
           return 0;
         }
         break;
+      case GVM_OP_PRINT_REG:
+        if (!is_valid_reg(in.a)) {
+          return 0;
+        }
+        break;
       case GVM_OP_LOAD_GLOBAL:
       case GVM_OP_STORE_GLOBAL:
         if (vm->globals == NULL || in.imm < 0 || (size_t)in.imm >= vm->global_count) {
@@ -804,6 +810,7 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_COPY_GLOBAL:
         global_kinds[(size_t)in.b] = global_kinds[(size_t)in.imm];
         break;
+      case GVM_OP_PRINT_REG:
       case GVM_OP_PRINT_CONST:
       case GVM_OP_PRINT_GLOBAL:
         break;
@@ -1647,9 +1654,8 @@ static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
   const graphion_vm_value *const_pool;
   graphion_vm_value *globals;
 
-  if (vm == NULL || vm->const_pool == NULL || vm->globals == NULL) {
-    return vm == NULL ? GVM_ERR_INVALID_ARG
-                      : (vm->const_pool == NULL ? GVM_ERR_CONST_UNBOUND : GVM_ERR_GLOBALS_UNBOUND);
+  if (vm == NULL || vm->const_pool == NULL) {
+    return vm == NULL ? GVM_ERR_INVALID_ARG : GVM_ERR_CONST_UNBOUND;
   }
 
   regs = vm->regs;
@@ -1733,6 +1739,13 @@ static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
       } break;
       case GVM_OP_PRINT_GLOBAL: {
         const int rc = vm_write_value_sink(&vm->output, &globals[(size_t)in.imm]);
+        if (rc != GVM_OK) {
+          vm->pc = (size_t)((p - vm->program) - 1U);
+          return rc;
+        }
+      } break;
+      case GVM_OP_PRINT_REG: {
+        const int rc = vm_write_value_sink(&vm->output, &regs[in.a]);
         if (rc != GVM_OK) {
           vm->pc = (size_t)((p - vm->program) - 1U);
           return rc;
@@ -2500,6 +2513,13 @@ static int op_print_global(graphion_vm *vm, const graphion_insn *in) {
   return vm_write_value_sink(&vm->output, &vm->globals[(size_t)in->imm]);
 }
 
+static int op_print_reg(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  return vm_write_value_sink(&vm->output, &vm->regs[in->a]);
+}
+
 static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
   uint32_t source;
   int rc;
@@ -2733,6 +2753,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_PRINT_GLOBAL:
         rc = op_print_global(vm, &in);
         break;
+      case GVM_OP_PRINT_REG:
+        rc = op_print_reg(vm, &in);
+        break;
       case GVM_OP_FRONTIER_CLEAR:
         rc = op_frontier_clear(vm, &in);
         break;
@@ -2816,6 +2839,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_COPY_GLOBAL] = op_copy_global,
       [GVM_OP_PRINT_CONST] = op_print_const,
       [GVM_OP_PRINT_GLOBAL] = op_print_global,
+      [GVM_OP_PRINT_REG] = op_print_reg,
       [GVM_OP_FRONTIER_CLEAR] = op_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = op_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = op_frontier_filter_lt_imm,
@@ -2872,6 +2896,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_COPY_GLOBAL] = &&L_copy_global,
       [GVM_OP_PRINT_CONST] = &&L_print_const,
       [GVM_OP_PRINT_GLOBAL] = &&L_print_global,
+      [GVM_OP_PRINT_REG] = &&L_print_reg,
       [GVM_OP_FRONTIER_CLEAR] = &&L_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = &&L_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = &&L_frontier_filter_lt_imm,
@@ -2968,6 +2993,12 @@ L_print_const:
     continue;
 L_print_global:
     rc = op_print_global(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_print_reg:
+    rc = op_print_reg(vm, &in);
     if (rc != 0) {
       return rc;
     }

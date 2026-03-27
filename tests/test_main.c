@@ -17,6 +17,7 @@ int test_vm_typed_register_defaults(void);
 int test_vm_value_movement_and_globals(void);
 int test_vm_typed_value_errors(void);
 int test_vm_print_scalar_opcodes(void);
+int test_vm_print_reg_opcode(void);
 int test_vm_bfs_levels_opcode(void);
 int test_vm_bfs_level_count_opcode(void);
 int test_vm_bfs_order_opcode(void);
@@ -59,6 +60,7 @@ int test_interpreter_hypergraph_scalar_attributes(void);
 int test_interpreter_rejects_invalid_weight_type(void);
 int test_interpreter_print_and_function_return(void);
 int test_interpreter_prepared_top_level_prints_scalars(void);
+int test_interpreter_prepared_top_level_int_adds(void);
 int test_interpreter_print_graph_summary(void);
 int test_interpreter_print_hypergraph_summary(void);
 int test_interpreter_print_graph_node_value(void);
@@ -119,6 +121,7 @@ int main(int argc, char **argv) {
       {"vm_value_movement_and_globals", test_vm_value_movement_and_globals},
       {"vm_typed_value_errors", test_vm_typed_value_errors},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
+      {"vm_print_reg_opcode", test_vm_print_reg_opcode},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
       {"vm_bfs_level_count_opcode", test_vm_bfs_level_count_opcode},
       {"vm_bfs_order_opcode", test_vm_bfs_order_opcode},
@@ -162,6 +165,7 @@ int main(int argc, char **argv) {
       {"interpreter_rejects_invalid_weight_type", test_interpreter_rejects_invalid_weight_type},
       {"interpreter_print_and_function_return", test_interpreter_print_and_function_return},
       {"interpreter_prepared_top_level_prints_scalars", test_interpreter_prepared_top_level_prints_scalars},
+      {"interpreter_prepared_top_level_int_adds", test_interpreter_prepared_top_level_int_adds},
       {"interpreter_print_graph_summary", test_interpreter_print_graph_summary},
       {"interpreter_print_hypergraph_summary", test_interpreter_print_hypergraph_summary},
       {"interpreter_print_graph_node_value", test_interpreter_print_graph_node_value},

@@ -155,6 +155,8 @@ typedef struct {
   graphion_vm_value vm_globals[GRAPHION_RUNTIME_BINDING_MAX];
   graphion_vm prepared_vm;
   const void *prepared_program_key;
+  graphion_output_sink prepared_output;
+  int prepared_output_bound;
   int prepared_vm_ready;
   int vm_globals_enabled;
   int vm_materialized_dirty;
@@ -196,8 +198,22 @@ typedef enum {
   GRAPHION_RUNTIME_STEP_STORE_LITERAL = 1,
   GRAPHION_RUNTIME_STEP_STORE_COPY = 2,
   GRAPHION_RUNTIME_STEP_PRINT_LITERAL = 3,
-  GRAPHION_RUNTIME_STEP_PRINT_COPY = 4
+  GRAPHION_RUNTIME_STEP_PRINT_COPY = 4,
+  GRAPHION_RUNTIME_STEP_STORE_INT_ADD = 5,
+  GRAPHION_RUNTIME_STEP_PRINT_INT_ADD = 6
 } graphion_runtime_step_kind;
+
+typedef enum {
+  GRAPHION_RUNTIME_OPERAND_NONE = 0,
+  GRAPHION_RUNTIME_OPERAND_INT_LITERAL = 1,
+  GRAPHION_RUNTIME_OPERAND_GLOBAL = 2
+} graphion_runtime_prepared_operand_kind;
+
+typedef struct {
+  int kind;
+  size_t slot;
+  int64_t int_value;
+} graphion_runtime_prepared_operand;
 
 typedef struct {
   int kind;
@@ -212,6 +228,8 @@ typedef struct {
   size_t target_slot;
   size_t source_slot;
   graphion_runtime_prepared_literal literal;
+  graphion_runtime_prepared_operand lhs_operand;
+  graphion_runtime_prepared_operand rhs_operand;
 } graphion_runtime_prepared_step;
 
 typedef struct {

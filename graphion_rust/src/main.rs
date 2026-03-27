@@ -18,6 +18,8 @@ const OP_MOV: u8 = 4;
 const OP_LOAD_CONST: u8 = 5;
 const OP_LOAD_GLOBAL: u8 = 6;
 const OP_STORE_GLOBAL: u8 = 7;
+const OP_PRINT_GLOBAL: u8 = 11;
+const OP_PRINT_REG: u8 = 12;
 const OP_HALT: u8 = 1;
 const OP_FRONTIER_FILTER_LT_IMM: u8 = 34;
 const OP_FRONTIER_MAP_ADD_IMM: u8 = 35;
@@ -239,6 +241,88 @@ fn vm_print_dispatch(iterations: u64) {
         "{{\"benchmark\":\"vm_print_dispatch\",\"iterations\":{},\"instructions_per_iteration\":{},\"print_ops_per_iteration\":5,\"seconds\":{:.6},\"mips\":{:.3},\"ns_per_instruction\":{:.3},\"ns_per_iteration\":{:.3},\"checksum\":{}}}",
         iterations,
         instructions_per_iteration,
+        secs,
+        mips,
+        ns_per_instruction,
+        ns_per_iteration,
+        checksum
+    );
+}
+
+fn vm_expr_dispatch(iterations: u64) {
+    let program = [
+        VmInsn { op: OP_LOAD_CONST, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 1, b: 0, imm: 1 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 1, b: 0, imm: 2 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 1 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 0, b: 0, imm: 1 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 1, b: 0, imm: 0 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 2 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 0, b: 0, imm: 2 },
+        VmInsn { op: OP_LOAD_CONST, a: 1, b: 0, imm: 3 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 3 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 0, b: 0, imm: 3 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 1, b: 0, imm: 2 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 4 },
+        VmInsn { op: OP_PRINT_GLOBAL, a: 0, b: 0, imm: 2 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 0, b: 0, imm: 4 },
+        VmInsn { op: OP_LOAD_CONST, a: 1, b: 0, imm: 4 },
+        VmInsn { op: OP_ADD, a: 0, b: 1, imm: 0 },
+        VmInsn { op: OP_PRINT_REG, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_HALT, a: 0, b: 0, imm: 0 },
+    ];
+    let const_pool = [
+        VmValue::Int(1),
+        VmValue::Int(2),
+        VmValue::Int(5),
+        VmValue::Int(10),
+        VmValue::Int(1),
+    ];
+    let mut sink = CountSink { bytes_written: 0 };
+    let start = Instant::now();
+    let mut checksum: u64 = 0;
+    for _ in 0..iterations {
+        let mut regs = [VmValue::Int(0); 16];
+        let mut globals = [VmValue::None; 5];
+        let mut pc = 0usize;
+        loop {
+            let insn = program[pc];
+            pc += 1;
+            match insn.op {
+                OP_ADD => {
+                    let lhs = value_as_int(regs[insn.a as usize]);
+                    let rhs = value_as_int(regs[insn.b as usize]);
+                    regs[insn.a as usize] = VmValue::Int(lhs.wrapping_add(rhs));
+                }
+                OP_LOAD_CONST => regs[insn.a as usize] = const_pool[insn.imm as usize],
+                OP_LOAD_GLOBAL => regs[insn.a as usize] = globals[insn.imm as usize],
+                OP_STORE_GLOBAL => globals[insn.imm as usize] = regs[insn.a as usize],
+                OP_PRINT_GLOBAL => write_value(&mut sink, globals[insn.imm as usize]),
+                OP_PRINT_REG => write_value(&mut sink, regs[insn.a as usize]),
+                OP_HALT => break,
+                _ => panic!("invalid opcode"),
+            }
+        }
+        checksum = checksum.wrapping_add(value_as_int(globals[4]) as u64);
+    }
+    sink.flush().unwrap();
+    black_box(sink.bytes_written);
+    black_box(checksum);
+    let secs = start.elapsed().as_secs_f64().max(1e-9);
+    let mips = (iterations as f64 * program.len() as f64 / secs) / 1_000_000.0;
+    let ns_per_instruction = (secs * 1_000_000_000.0) / (iterations as f64 * program.len() as f64);
+    let ns_per_iteration = (secs * 1_000_000_000.0) / iterations as f64;
+    println!(
+        "{{\"benchmark\":\"vm_expr_dispatch\",\"iterations\":{},\"instructions_per_iteration\":{},\"expr_ops_per_iteration\":7,\"print_ops_per_iteration\":2,\"seconds\":{:.6},\"mips\":{:.3},\"ns_per_instruction\":{:.3},\"ns_per_iteration\":{:.3},\"checksum\":{}}}",
+        iterations,
+        program.len(),
         secs,
         mips,
         ns_per_instruction,
@@ -850,7 +934,7 @@ fn parse_iterations(args: &[String], default_value: u64) -> u64 {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|vm_print_dispatch|bfs_levels|neighbor_iteration|weighted_neighbor_sums|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
+        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|vm_print_dispatch|vm_expr_dispatch|bfs_levels|neighbor_iteration|weighted_neighbor_sums|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
         std::process::exit(2);
     }
 
@@ -858,6 +942,7 @@ fn main() {
         "frontier_primitives" => frontier_primitives(parse_iterations(&args, 10_000_000)),
         "vm_dispatch" => vm_dispatch(parse_iterations(&args, 5_000_000)),
         "vm_print_dispatch" => vm_print_dispatch(parse_iterations(&args, 5_000_000)),
+        "vm_expr_dispatch" => vm_expr_dispatch(parse_iterations(&args, 10_000_000)),
         "bfs_levels" => bench_bfs(parse_iterations(&args, 5_000_000)),
         "neighbor_iteration" => bench_neighbors(parse_iterations(&args, 10_000_000)),
         "weighted_neighbor_sums" => bench_weighted_neighbor_sums(parse_iterations(&args, 300_000)),
