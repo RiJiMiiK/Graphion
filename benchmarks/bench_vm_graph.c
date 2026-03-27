@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
       {GVM_OP_ADD, 7, 6, 0},              {GVM_OP_HALT, 0, 0, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
-  long iterations = 300000;
+  long iterations = 10000000;
   long i;
   uint64_t checksum = 0U;
   double start;
@@ -91,7 +91,10 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    bench_reset_regs(&vm);
+    if (!vm.graph_ops_fastpath) {
+      bench_reset_regs(&vm);
+    }
+    vm.frontier_output_len = 0U;
     vm.pc = 0U;
     vm.halted = false;
     rc = graphion_vm_run(&vm);

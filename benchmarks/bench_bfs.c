@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   graphion_csr_graph graph;
   int32_t levels[8];
   uint32_t queue[8];
-  long iterations = 200000;
+  long iterations = 5000000;
   long i;
   double start;
   double end;

@@ -157,6 +157,7 @@ typedef struct {
   const void *prepared_program_key;
   int prepared_vm_ready;
   int vm_globals_enabled;
+  int vm_materialized_dirty;
   size_t count;
 } graphion_runtime_scope;
 
@@ -193,7 +194,9 @@ typedef struct {
 typedef enum {
   GRAPHION_RUNTIME_STEP_NONE = 0,
   GRAPHION_RUNTIME_STEP_STORE_LITERAL = 1,
-  GRAPHION_RUNTIME_STEP_STORE_COPY = 2
+  GRAPHION_RUNTIME_STEP_STORE_COPY = 2,
+  GRAPHION_RUNTIME_STEP_PRINT_LITERAL = 3,
+  GRAPHION_RUNTIME_STEP_PRINT_COPY = 4
 } graphion_runtime_step_kind;
 
 typedef struct {
@@ -257,6 +260,11 @@ int graphion_execute_program(const graphion_runtime_program *program,
                              graphion_runtime_scope *scope,
                              graphion_runtime_diagnostic *diagnostic,
                              FILE *output);
+
+int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *program,
+                                                graphion_runtime_scope *scope,
+                                                graphion_runtime_diagnostic *diagnostic,
+                                                const graphion_output_sink *output);
 
 int graphion_interpret_source(const char *source,
                               graphion_runtime_scope *scope,

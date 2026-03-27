@@ -768,6 +768,84 @@ int test_interpreter_print_and_function_return(void) {
   return 0;
 }
 
+int test_interpreter_prepared_top_level_prints_scalars(void) {
+  const char *path = "interpreter_prepared_print_output.txt";
+  const char *source = "count = 1\n"
+                       "ratio = 3.5\n"
+                       "ready = true\n"
+                       "name = \"graphion\"\n"
+                       "print(count)\n"
+                       "print(ratio)\n"
+                       "print(ready)\n"
+                       "print(name)\n"
+                       "print(\"done\")\n";
+  graphion_runtime_program program;
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  char output[128];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  graphion_runtime_program_init(&program);
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_prepare_source(source, &program, &diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(&scope);
+    graphion_runtime_program_dispose(&program);
+    return 1;
+  }
+  if (program.prepared_top_level_only == 0 || program.prepared_vm_enabled == 0) {
+    graphion_runtime_scope_dispose(&scope);
+    graphion_runtime_program_dispose(&program);
+    return 2;
+  }
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    graphion_runtime_scope_dispose(&scope);
+    graphion_runtime_program_dispose(&program);
+    return 3;
+  }
+  rc = graphion_execute_program(&program, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    graphion_runtime_program_dispose(&program);
+    return 4;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    graphion_runtime_scope_dispose(&scope);
+    graphion_runtime_program_dispose(&program);
+    return 5;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  graphion_runtime_scope_dispose(&scope);
+  graphion_runtime_program_dispose(&program);
+  if (strcmp(output, "1\n3.5\ntrue\ngraphion\ndone\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_interpreter_print_graph_summary(void) {
   const char *path = "interpreter_graph_output.txt";
   const char *source = "graph G:\n"

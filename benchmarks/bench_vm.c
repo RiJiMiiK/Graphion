@@ -41,13 +41,14 @@ int main(int argc, char **argv) {
       {GVM_OP_HALT, 0, 0, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
-  long iterations = 500000;
+  long iterations = 5000000;
   long i;
   double start;
   double end;
   double seconds;
   double mips;
   double ns_per_instruction;
+  double ns_per_iteration;
   int rc;
   uint64_t checksum = 0U;
 
@@ -100,10 +101,12 @@ int main(int argc, char **argv) {
   }
   mips = ((double)(iterations * (long)instruction_count) / seconds) / 1000000.0;
   ns_per_instruction = (seconds * 1000000000.0) / ((double)iterations * (double)instruction_count);
+  ns_per_iteration = (seconds * 1000000000.0) / (double)iterations;
 
   printf("{\"benchmark\":\"vm_dispatch\",\"iterations\":%ld,\"instructions_per_iteration\":%zu,"
-         "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,"
+         "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_instruction\":%.3f,\"ns_per_iteration\":%.3f,"
          "\"typed_value_ops_per_iteration\":%d,\"checksum\":%llu}\n",
-         iterations, instruction_count, seconds, mips, ns_per_instruction, 15, (unsigned long long)checksum);
+         iterations, instruction_count, seconds, mips, ns_per_instruction, ns_per_iteration, 15,
+         (unsigned long long)checksum);
   return 0;
 }

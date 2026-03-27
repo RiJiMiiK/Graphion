@@ -18,14 +18,15 @@ static double now_seconds(void) {
 }
 
 int main(int argc, char **argv) {
+  const size_t node_workload_repeats = 16U;
   const uint32_t node_offsets[] = {0, 2, 5, 8, 10, 12};
   const uint32_t node_hyperedges[] = {0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1};
   const uint32_t hyperedge_offsets[] = {0, 3, 6, 9, 12};
   const uint32_t hyperedge_nodes[] = {0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3};
+  uint32_t node_workload[5U * 16U];
   graphion_hypergraph graph;
-  long iterations = 500000;
+  long iterations = 10000000;
   long i;
-  size_t node;
   uint64_t checksum = 0U;
   double start;
   double end;
@@ -49,10 +50,16 @@ int main(int argc, char **argv) {
     return 3;
   }
 
+  for (size_t repeat = 0; repeat < node_workload_repeats; ++repeat) {
+    for (size_t node = 0U; node < graph.node_count; ++node) {
+      node_workload[(repeat * graph.node_count) + node] = (uint32_t)node;
+    }
+  }
+
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    for (node = 0U; node < graph.node_count; ++node) {
-      checksum += graphion_hypergraph_incident_sum(&graph, (uint32_t)node);
+    for (size_t work = 0U; work < (graph.node_count * node_workload_repeats); ++work) {
+      checksum += graphion_hypergraph_incident_sum(&graph, node_workload[work]);
     }
   }
   end = now_seconds();
@@ -61,11 +68,13 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mips = ((double)(iterations * (long)graph.node_count) / seconds) / 1000000.0;
-  ns_per_call = (seconds * 1000000000.0) / ((double)iterations * (double)graph.node_count);
+  mips = ((double)iterations * (double)(graph.node_count * node_workload_repeats) / seconds) / 1000000.0;
+  ns_per_call = (seconds * 1000000000.0) /
+                ((double)iterations * (double)(graph.node_count * node_workload_repeats));
 
   printf("{\"benchmark\":\"hypergraph_incident_sum\",\"iterations\":%ld,\"calls_per_iteration\":%zu,"
          "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_call\":%.3f,\"checksum\":%llu}\n",
-         iterations, graph.node_count, seconds, mips, ns_per_call, (unsigned long long)checksum);
+         iterations, graph.node_count * node_workload_repeats, seconds, mips, ns_per_call,
+         (unsigned long long)checksum);
   return 0;
 }

@@ -1,0 +1,17 @@
+count = 1
+ratio = 3.5
+ready = true
+name = "graphion"
+mirror_count = count
+mirror_ratio = ratio
+mirror_ready = ready
+mirror_name = name
+copy_count = mirror_count
+copy_ratio = mirror_ratio
+copy_ready = mirror_ready
+copy_name = mirror_name
+print(copy_count)
+print(copy_ratio)
+print(copy_ready)
+print(copy_name)
+print("done")

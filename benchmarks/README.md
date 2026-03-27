@@ -34,3 +34,14 @@ Benchmark scope is intentionally split:
 - it interprets the checked-in workload in `benchmarks/workloads/values.gion`
 - it measures the end-to-end `.gion` cost separately from the direct VM lane
 - it is collected into the standard performance snapshot/reporting pipeline
+
+`bench_vm_print.c` is the direct VM print lane for the current top-level scalar `print(...)` subset:
+- it exercises `GVM_OP_STORE_CONST_GLOBAL`
+- it exercises `GVM_OP_PRINT_GLOBAL`
+- it exercises `GVM_OP_PRINT_CONST`
+- it writes to a null sink so the lane measures the VM print path rather than terminal rendering
+
+`bench_gion_print.c` is the checked-in `.gion` print lane:
+- it interprets the checked-in workload in `benchmarks/workloads/print_values.gion`
+- it measures the prepared `.gion -> bytecode -> VM` path for top-level scalar `print(...)`
+- it is collected into the standard performance snapshot/reporting pipeline as `gion_print_source`

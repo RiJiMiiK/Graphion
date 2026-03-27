@@ -8,7 +8,9 @@ SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(SCRIPT_BENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import argparse
+import ctypes
 import json
+import statistics
 import subprocess
 
 from bench_paths import DISPATCH_LINUX_JSON
@@ -28,10 +30,21 @@ def bench_binary_path(build_dir: pathlib.Path) -> pathlib.Path:
   return build_dir / "graphion_bench"
 
 
+def stabilize_windows_benchmark_host() -> None:
+  if not sys.platform.startswith("win"):
+    return
+  kernel32 = ctypes.windll.kernel32
+  handle = kernel32.GetCurrentProcess()
+  HIGH_PRIORITY_CLASS = 0x00000080
+  affinity_mask = 0x4
+  kernel32.SetPriorityClass(handle, HIGH_PRIORITY_CLASS)
+  kernel32.SetProcessAffinityMask(handle, affinity_mask)
+
+
 def main() -> int:
   parser = argparse.ArgumentParser(description="Compare VM dispatch variants on vm_dispatch benchmark.")
-  parser.add_argument("--iterations", type=int, default=500000)
-  parser.add_argument("--runs", type=int, default=10)
+  parser.add_argument("--iterations", type=int, default=5000000)
+  parser.add_argument("--runs", type=int, default=100)
   parser.add_argument("--output", default=str(DISPATCH_LINUX_JSON))
   parser.add_argument(
       "--cmake-arg",
@@ -44,6 +57,7 @@ def main() -> int:
   parser.add_argument("--compiler-kind", default="unknown", help="Compiler/toolchain label for this lane")
   parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
   args = parser.parse_args()
+  stabilize_windows_benchmark_host()
 
   variants = ["switch", "jumptable", "computed-goto"]
   rows: list[dict[str, object]] = []
@@ -110,6 +124,11 @@ def main() -> int:
       mips.append(float(payload["mips"]))
       ns.append(float(payload["ns_per_instruction"]))
     else:
+      variation_pct = 0.0
+      if len(ns) > 1:
+        mean_ns = statistics.fmean(ns)
+        if mean_ns != 0.0:
+          variation_pct = statistics.stdev(ns) / mean_ns * 100.0
       rows.append(
           {
               "variant": variant,
@@ -118,6 +137,7 @@ def main() -> int:
               "seconds_avg": round(sum(seconds) / len(seconds), 6),
               "mips_avg": round(sum(mips) / len(mips), 3),
               "ns_per_instruction_avg": round(sum(ns) / len(ns), 3),
+              "variation_pct": round(variation_pct, 3),
           }
       )
 

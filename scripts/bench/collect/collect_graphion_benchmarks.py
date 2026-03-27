@@ -8,6 +8,7 @@ SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(SCRIPT_BENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import argparse
+import ctypes
 import json
 import statistics
 import subprocess
@@ -33,6 +34,7 @@ class BenchPayload(TypedDict):
     calls_per_iteration: NotRequired[int]
     typed_value_ops_per_iteration: NotRequired[int]
     source_ops_per_iteration: NotRequired[int]
+    print_ops_per_iteration: NotRequired[int]
     ns_per_frontier_item: NotRequired[float]
     ns_per_instruction: NotRequired[float]
     ns_per_edge: NotRequired[float]
@@ -42,6 +44,7 @@ class BenchPayload(TypedDict):
     ns_per_membership: NotRequired[float]
     ns_per_call: NotRequired[float]
     ns_per_operation: NotRequired[float]
+    ns_per_iteration: NotRequired[float]
     mips: NotRequired[float]
     mteps: NotRequired[float]
     mops: NotRequired[float]
@@ -51,28 +54,28 @@ BENCH_SPECS = [
     {
         "benchmark": "frontier_primitives",
         "target": "graphion_bench_frontier",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_frontier_item",
         "throughput_key": "mips",
     },
     {
         "benchmark": "vm_dispatch",
         "target": "graphion_bench",
-        "iterations": 500000,
+        "iterations": 5000000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
     {
         "benchmark": "bfs_levels",
         "target": "graphion_bench_bfs",
-        "iterations": 200000,
+        "iterations": 5000000,
         "latency_key": "ns_per_edge",
         "throughput_key": "mteps",
     },
     {
         "benchmark": "neighbor_iteration",
         "target": "graphion_bench_neighbors",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_neighbor",
         "throughput_key": "mteps",
     },
@@ -86,43 +89,57 @@ BENCH_SPECS = [
     {
         "benchmark": "hypergraph_incidence",
         "target": "graphion_bench_hypergraph",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_incidence",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_traversal",
         "target": "graphion_bench_hypergraph_traversal",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_membership",
         "throughput_key": "mteps",
     },
     {
         "benchmark": "hypergraph_incident_sum",
         "target": "graphion_bench_hypergraph_incident_sum",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_hyperedge_node_sum",
         "target": "graphion_bench_hypergraph_hyperedge_node_sum",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "vm_graph_ops",
         "target": "graphion_bench_vm_graph",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
     {
         "benchmark": "gion_source",
         "target": "graphion_bench_gion",
-        "iterations": 20000,
+        "iterations": 5000000,
         "latency_key": "ns_per_operation",
+        "throughput_key": "mops",
+    },
+    {
+        "benchmark": "vm_print_dispatch",
+        "target": "graphion_bench_vm_print",
+        "iterations": 5000000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mips",
+    },
+    {
+        "benchmark": "gion_print_source",
+        "target": "graphion_bench_gion_print",
+        "iterations": 5000000,
+        "latency_key": "ns_per_iteration",
         "throughput_key": "mops",
     },
 ]
@@ -153,6 +170,17 @@ def run_benchmark(exe: pathlib.Path, iterations: int) -> BenchPayload:
     return parse_last_json(proc.stdout)
 
 
+def stabilize_windows_benchmark_host() -> None:
+    if not sys.platform.startswith("win"):
+        return
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetCurrentProcess()
+    HIGH_PRIORITY_CLASS = 0x00000080
+    affinity_mask = 0x4
+    kernel32.SetPriorityClass(handle, HIGH_PRIORITY_CLASS)
+    kernel32.SetProcessAffinityMask(handle, affinity_mask)
+
+
 def average_payloads(
     benchmark: str,
     payloads: list[BenchPayload],
@@ -164,6 +192,11 @@ def average_payloads(
     seconds = [float(row["seconds"]) for row in payloads]
     latency = [float(row[latency_key]) for row in payloads]
     throughput = [float(row[throughput_key]) for row in payloads]
+    variation_pct = 0.0
+    if len(latency) > 1:
+        mean_latency = statistics.fmean(latency)
+        if mean_latency != 0.0:
+            variation_pct = statistics.stdev(latency) / mean_latency * 100.0
     result: dict[str, object] = {
         "benchmark": benchmark,
         "platform": platform_label,
@@ -171,6 +204,7 @@ def average_payloads(
         "seconds_avg": round(statistics.fmean(seconds), 6),
         latency_key + "_avg": round(statistics.fmean(latency), 3),
         throughput_key + "_avg": round(statistics.fmean(throughput), 3),
+        "variation_pct": round(variation_pct, 3),
         "latency_key": latency_key,
         "throughput_key": throughput_key,
     }
@@ -189,6 +223,8 @@ def average_payloads(
         "calls_per_iteration",
         "typed_value_ops_per_iteration",
         "source_ops_per_iteration",
+        "print_ops_per_iteration",
+        "ns_per_iteration",
     ):
         value = sample.get(key)
         if value is not None:
@@ -206,6 +242,7 @@ def main() -> int:
     parser.add_argument("--asm-enabled", choices=["on", "off"], default="off", help="Whether asm is enabled for this lane")
     parser.add_argument("--output", required=True, help="Output JSON path")
     args = parser.parse_args()
+    stabilize_windows_benchmark_host()
 
     build_dir = pathlib.Path(args.build_dir)
     rows: list[dict[str, object]] = []

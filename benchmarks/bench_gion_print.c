@@ -2,17 +2,23 @@
 
 #include "runtime/interpreter.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 enum {
-  GION_SOURCE_MAX = 4096,
-  GION_SOURCE_OPS_PER_ITERATION = 12
+  GION_PRINT_SOURCE_MAX = 4096,
+  GION_PRINT_SOURCE_OPS_PER_ITERATION = 17
 };
 
-static volatile const char *g_gion_name_sink = NULL;
+static volatile const char *g_gion_print_name_sink = NULL;
+static volatile uint64_t g_gion_print_bytes_sink = 0U;
+
+typedef struct {
+  uint64_t bytes_written;
+} graphion_bench_count_sink;
 
 static double now_seconds(void) {
 #if defined(TIME_UTC)
@@ -72,17 +78,19 @@ static uint64_t update_checksum(const graphion_runtime_scope *scope, int count_s
   if (scope == NULL || count_slot < 0 || name_slot < 0) {
     return checksum;
   }
-  g_gion_name_sink = scope->vm_globals[(size_t)name_slot].as.string_value;
+  g_gion_print_name_sink = scope->vm_globals[(size_t)name_slot].as.string_value;
   checksum += (uint64_t)scope->vm_globals[(size_t)count_slot].as.int_value;
   return checksum;
 }
 
 int main(int argc, char **argv) {
-  char source[GION_SOURCE_MAX];
-  const char *path = "benchmarks/workloads/values.gion";
+  char source[GION_PRINT_SOURCE_MAX];
+  const char *path = "benchmarks/workloads/print_values.gion";
   graphion_runtime_program program;
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
+  graphion_output_sink output;
+  graphion_bench_count_sink count_sink;
   long iterations = 5000000;
   long i;
   double start;
@@ -109,6 +117,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "failed to load gion workload: %s\n", path);
     return 3;
   }
+  memset(&count_sink, 0, sizeof(count_sink));
+  graphion_output_sink_from_counter(&output, &count_sink.bytes_written);
   graphion_runtime_program_init(&program);
   graphion_runtime_scope_init(&scope);
   if (graphion_prepare_source(source, &program, &diagnostic) != GINT_OK) {
@@ -117,13 +127,13 @@ int main(int argc, char **argv) {
             diagnostic.column,
             diagnostic.message != NULL ? diagnostic.message : "unknown");
     graphion_runtime_program_dispose(&program);
-    return 4;
+    return 5;
   }
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
     int rc;
-    rc = graphion_execute_program(&program, &scope, &diagnostic, stdout);
+    rc = graphion_execute_prepared_program_with_sink(&program, &scope, &diagnostic, &output);
     if (rc != GINT_OK) {
       fprintf(stderr, "interpret failed rc=%d at %zu:%zu (%s)\n",
               rc,
@@ -132,12 +142,13 @@ int main(int argc, char **argv) {
               diagnostic.message != NULL ? diagnostic.message : "unknown");
       graphion_runtime_scope_dispose(&scope);
       graphion_runtime_program_dispose(&program);
-      return 4;
+      return 6;
     }
     if (count_slot < 0) {
       count_slot = find_vm_global_slot(&scope, "copy_count");
       name_slot = find_vm_global_slot(&scope, "copy_name");
     }
+    g_gion_print_bytes_sink = count_sink.bytes_written;
     checksum = update_checksum(&scope, count_slot, name_slot, checksum);
   }
   graphion_runtime_scope_dispose(&scope);
@@ -148,14 +159,15 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mops = ((double)(iterations * GION_SOURCE_OPS_PER_ITERATION) / seconds) / 1000000.0;
-  ns_per_operation = (seconds * 1000000000.0) / ((double)iterations * (double)GION_SOURCE_OPS_PER_ITERATION);
+  mops = ((double)(iterations * GION_PRINT_SOURCE_OPS_PER_ITERATION) / seconds) / 1000000.0;
+  ns_per_operation = (seconds * 1000000000.0) / ((double)iterations * (double)GION_PRINT_SOURCE_OPS_PER_ITERATION);
   ns_per_iteration = (seconds * 1000000000.0) / (double)iterations;
 
-  printf("{\"benchmark\":\"gion_source\",\"iterations\":%ld,\"source_ops_per_iteration\":%d,"
-         "\"seconds\":%.6f,\"mops\":%.3f,\"ns_per_operation\":%.3f,\"ns_per_iteration\":%.3f,\"checksum\":%llu}\n",
+  printf("{\"benchmark\":\"gion_print_source\",\"iterations\":%ld,\"source_ops_per_iteration\":%d,"
+         "\"print_ops_per_iteration\":5,\"seconds\":%.6f,\"mops\":%.3f,"
+         "\"ns_per_operation\":%.3f,\"ns_per_iteration\":%.3f,\"checksum\":%llu}\n",
          iterations,
-         GION_SOURCE_OPS_PER_ITERATION,
+         GION_PRINT_SOURCE_OPS_PER_ITERATION,
          seconds,
          mops,
          ns_per_operation,

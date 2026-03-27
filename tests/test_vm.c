@@ -214,6 +214,77 @@ int test_vm_typed_value_errors(void) {
   return 0;
 }
 
+int test_vm_print_scalar_opcodes(void) {
+  const char *path = "vm_print_scalar_output.txt";
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[2];
+  const graphion_insn program[] = {
+      {GVM_OP_STORE_CONST_GLOBAL, 0, 0, 0},
+      {GVM_OP_PRINT_CONST, 0, 0, 1},
+      {GVM_OP_PRINT_GLOBAL, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  char output[64];
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  test_set_value_float(&const_pool[0], 3.5);
+  test_set_value_string(&const_pool[1], "graphion");
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  graphion_vm_bind_output(&vm, fp);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    fclose(fp);
+    remove(path);
+    return 2;
+  }
+  rc = graphion_vm_run(&vm);
+  fclose(fp);
+  if (rc != 0) {
+    remove(path);
+    return 3;
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return 4;
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  remove(path);
+  output[read_len] = '\0';
+  if (strcmp(output, "graphion\n3.5\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
 int test_vm_bfs_levels_opcode(void) {
   graphion_vm vm;
   graphion_csr_graph graph;

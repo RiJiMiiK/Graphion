@@ -135,8 +135,12 @@ add_library(graphion_vm
 )
 graphion_enable_pgo(graphion_vm)
 
-if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set_source_files_properties(src/vm/vm.c PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  if(MSVC)
+    set_source_files_properties(src/vm/vm.c PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
+  elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    set_source_files_properties(src/vm/vm.c PROPERTIES COMPILE_OPTIONS "-mavx2")
+  endif()
 endif()
 
 if(GRAPHION_VM_DISPATCH STREQUAL "switch")
@@ -361,6 +365,28 @@ if(GRAPHION_ENABLE_BENCHMARKS)
     set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     set_property(TARGET graphion_bench_gion PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_vm_print
+    benchmarks/bench_vm_print.c
+  )
+  target_link_libraries(graphion_bench_vm_print PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_vm_print)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_vm_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_vm_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_vm_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+
+  add_executable(graphion_bench_gion_print
+    benchmarks/bench_gion_print.c
+  )
+  target_link_libraries(graphion_bench_gion_print PRIVATE graphion_vm)
+  graphion_enable_pgo(graphion_bench_gion_print)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET graphion_bench_gion_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET graphion_bench_gion_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET graphion_bench_gion_print PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 endif()
 

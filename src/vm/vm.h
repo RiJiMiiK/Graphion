@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
@@ -21,6 +22,8 @@ typedef enum {
   GVM_OP_STORE_GLOBAL = 7,
   GVM_OP_STORE_CONST_GLOBAL = 8,
   GVM_OP_COPY_GLOBAL = 9,
+  GVM_OP_PRINT_CONST = 10,
+  GVM_OP_PRINT_GLOBAL = 11,
   GVM_OP_FRONTIER_CLEAR = 32,
   GVM_OP_FRONTIER_PUSH = 33,
   GVM_OP_FRONTIER_FILTER_LT_IMM = 34,
@@ -63,7 +66,8 @@ typedef enum {
   GVM_ERR_CONST_UNBOUND = -17,
   GVM_ERR_GLOBALS_UNBOUND = -18,
   GVM_ERR_INVALID_CONST_INDEX = -19,
-  GVM_ERR_INVALID_GLOBAL_INDEX = -20
+  GVM_ERR_INVALID_GLOBAL_INDEX = -20,
+  GVM_ERR_OUTPUT_UNBOUND = -21
 } graphion_vm_result;
 
 typedef enum {
@@ -96,6 +100,13 @@ typedef struct {
   int32_t imm;
 } graphion_insn;
 
+typedef int (*graphion_output_write_fn)(void *ctx, const char *bytes, size_t len);
+
+typedef struct {
+  graphion_output_write_fn write;
+  void *ctx;
+} graphion_output_sink;
+
 typedef struct {
   graphion_vm_value regs[16];
   const graphion_insn *program;
@@ -106,14 +117,22 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
+  bool frontier_filter_map_reduce_fastpath;
+  bool frontier_fastpath;
+  bool graph_ops_fastpath;
   bool value_move_fastpath;
   bool global_materialize_fastpath;
+  bool global_print_fastpath;
   bool value_move_indices_valid;
   bool value_move_int_add_safe;
+  bool global_print_indices_valid;
   const graphion_vm_value *const_pool;
   size_t const_count;
   graphion_vm_value *globals;
   size_t global_count;
+  graphion_output_sink output;
+  size_t global_print_const_lens[512];
+  size_t global_print_global_lens[256];
   const graphion_csr_graph *csr_graph;
   int32_t *bfs_levels;
   uint32_t *bfs_queue;
@@ -135,8 +154,12 @@ void graphion_vm_bind_csr(graphion_vm *vm,
                           int32_t *bfs_levels,
                           uint32_t *bfs_queue,
                           size_t bfs_capacity);
+void graphion_output_sink_from_file(graphion_output_sink *sink, FILE *output);
+void graphion_output_sink_from_counter(graphion_output_sink *sink, uint64_t *byte_count);
 void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_pool, size_t const_count);
 void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_t global_count);
+void graphion_vm_bind_output_sink(graphion_vm *vm, const graphion_output_sink *output);
+void graphion_vm_bind_output(graphion_vm *vm, FILE *output);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);
 void graphion_vm_bind_frontier(graphion_vm *vm,
                                uint32_t *input,
