@@ -111,18 +111,6 @@ BENCH_SPECS = [
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
-    {
-        "benchmark": "vm_print_dispatch",
-        "iterations": 5000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "vm_expr_dispatch",
-        "iterations": 10000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mips",
-    },
 ]
 
 

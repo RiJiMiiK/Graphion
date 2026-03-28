@@ -26,11 +26,6 @@ BENCHMARK_ORDER = [
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
     "vm_graph_ops",
-    "gion_source",
-    "vm_print_dispatch",
-    "gion_print_source",
-    "vm_expr_dispatch",
-    "gion_expr_source",
 ]
 
 SECTION_BENCHMARKS = {
@@ -94,42 +89,6 @@ SECTION_BENCHMARKS = {
         "Rust Windows": "vm_graph_ops",
         "Rust Linux": "vm_graph_ops",
     },
-    "gion_source": {
-        "VM Windows": "vm_dispatch",
-        "VM Linux": "vm_dispatch",
-        ".gion Windows": "gion_source",
-        ".gion Linux": "gion_source",
-        "Rust Windows": "vm_dispatch",
-        "Rust Linux": "vm_dispatch",
-    },
-    "vm_print_dispatch": {
-        "VM Windows": "vm_print_dispatch",
-        "VM Linux": "vm_print_dispatch",
-        "Rust Windows": "vm_print_dispatch",
-        "Rust Linux": "vm_print_dispatch",
-    },
-    "gion_print_source": {
-        "VM Windows": "vm_print_dispatch",
-        "VM Linux": "vm_print_dispatch",
-        ".gion Windows": "gion_print_source",
-        ".gion Linux": "gion_print_source",
-        "Rust Windows": "vm_print_dispatch",
-        "Rust Linux": "vm_print_dispatch",
-    },
-    "vm_expr_dispatch": {
-        "VM Windows": "vm_expr_dispatch",
-        "VM Linux": "vm_expr_dispatch",
-        "Rust Windows": "vm_expr_dispatch",
-        "Rust Linux": "vm_expr_dispatch",
-    },
-    "gion_expr_source": {
-        "VM Windows": "vm_expr_dispatch",
-        "VM Linux": "vm_expr_dispatch",
-        ".gion Windows": "gion_expr_source",
-        ".gion Linux": "gion_expr_source",
-        "Rust Windows": "vm_expr_dispatch",
-        "Rust Linux": "vm_expr_dispatch",
-    },
 }
 
 DISPLAY_NAMES = {
@@ -143,17 +102,9 @@ DISPLAY_NAMES = {
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
     "vm_graph_ops": "vm_graph_ops",
-    "gion_source": "gion_source",
-    "vm_print_dispatch": "vm_print_dispatch",
-    "gion_print_source": "gion_print_source",
-    "vm_expr_dispatch": "vm_expr_dispatch",
-    "gion_expr_source": "gion_expr_source",
 }
 
 SECTION_LATENCY_KEY_OVERRIDE = {
-    "gion_source": "ns_per_iteration",
-    "gion_print_source": "ns_per_iteration",
-    "gion_expr_source": "ns_per_iteration",
 }
 
 LATENCY_LABELS = {
@@ -207,8 +158,6 @@ def index_rows(rows: list[dict[str, object]]) -> dict[str, dict[str, object]]:
 LANE_ORDER = [
     "VM Windows",
     "VM Linux",
-    ".gion Windows",
-    ".gion Linux",
     "Rust Windows",
     "Rust Linux",
 ]
@@ -218,8 +167,6 @@ def lane_label(platform: str, benchmark: str) -> str:
     platform_lower = platform.lower()
     if "rust" in platform_lower:
       return "Rust Linux" if "linux" in platform_lower else "Rust Windows"
-    if benchmark.startswith("gion_"):
-      return ".gion Linux" if "linux" in platform_lower else ".gion Windows"
     return "VM Linux" if "linux" in platform_lower else "VM Windows"
 
 
@@ -385,9 +332,9 @@ def render_environment_table(metas: list[dict[str, object]]) -> str:
         if "Rust" in platform_label:
             lane = "Rust Linux" if "Linux" in platform_label else "Rust Windows"
         elif "Linux" in platform_label:
-            lane = "VM Linux / .gion Linux"
+            lane = "VM Linux"
         else:
-            lane = "VM Windows / .gion Windows"
+            lane = "VM Windows"
         meta_by_lane[lane] = meta
     lines = [
         "## Environment Metadata",
@@ -395,7 +342,7 @@ def render_environment_table(metas: list[dict[str, object]]) -> str:
         "| Lane | Compiler | ASM | CPU | Machine | Git | Runs |",
         "|---|---|---|---|---|---|---:|",
     ]
-    for lane in ("VM Windows / .gion Windows", "VM Linux / .gion Linux", "Rust Windows", "Rust Linux"):
+    for lane in ("VM Windows", "VM Linux", "Rust Windows", "Rust Linux"):
         meta = meta_by_lane.get(lane)
         if not meta:
             lines.append(f"| {lane} | - | - | - | - | - | - |")
@@ -436,8 +383,6 @@ def main() -> int:
     lane_sources = {
         "VM Windows": index_rows(windows_rows),
         "VM Linux": index_rows(linux_rows),
-        ".gion Windows": index_rows(windows_rows),
-        ".gion Linux": index_rows(linux_rows),
         "Rust Windows": index_rows(rust_windows_rows),
         "Rust Linux": index_rows(rust_linux_rows),
     }

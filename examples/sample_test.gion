@@ -4,6 +4,14 @@ name = "graphion"
 ready = true
 copy = count
 
+
+
+print(count)
+print(ratio)
+print(name)
+print(ready)
+print(copy)
+
 graph G:
   1 -> 2 [weight=7, color="red", active=true]
   2 -> 3 [rank=2]
@@ -12,11 +20,6 @@ hypergraph H:
   [1, 2, 3] [weight=2.5, label="core"]
   [2, 4] [enabled=false]
 
-print(count)
-print(ratio)
-print(name)
-print(ready)
-print(copy)
 print(G)
 print(H)
 print(G.node[1])

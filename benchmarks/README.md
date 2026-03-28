@@ -24,34 +24,11 @@ Benchmark scope is intentionally split:
 - it exercises `GVM_OP_MOV`
 - it keeps one integer `ADD` in the mix so typed arithmetic still stays measured
 
-`bench_vm_graph.c` is the coherence check for the current `.gion -> VM` backend path:
+`bench_vm_graph.c` is the coherence check for the current VM lowering path:
 - it exercises `GVM_OP_BFS_LEVEL_COUNT`
 - it exercises `GVM_OP_BFS_ORDER`
 - it exercises `GVM_OP_INCIDENT_COUNT`
 - it exercises `GVM_OP_INCIDENT_SUM`
 
-`bench_gion.c` is the checked-in `.gion` source lane:
-- it interprets the checked-in workload in `benchmarks/workloads/values.gion`
-- it measures the end-to-end `.gion` cost separately from the direct VM lane
-- it is collected into the standard performance snapshot/reporting pipeline
-
-`bench_vm_print.c` is the direct VM print lane for the current top-level scalar `print(...)` subset:
-- it exercises `GVM_OP_STORE_CONST_GLOBAL`
-- it exercises `GVM_OP_PRINT_GLOBAL`
-- it exercises `GVM_OP_PRINT_CONST`
-- it writes to a null sink so the lane measures the VM print path rather than terminal rendering
-
-`bench_gion_print.c` is the checked-in `.gion` print lane:
-- it interprets the checked-in workload in `benchmarks/workloads/print_values.gion`
-- it measures the prepared `.gion -> bytecode -> VM` path for top-level scalar `print(...)`
-- it is collected into the standard performance snapshot/reporting pipeline as `gion_print_source`
-
-`bench_vm_expr.c` is the direct VM lane for the current top-level integer expression subset:
-- it loads the prepared VM program generated from `benchmarks/workloads/expr_values.gion`
-- it measures the direct VM cost of top-level integer additions plus simple `print(...)`
-- it is collected into the standard performance snapshot/reporting pipeline as `vm_expr_dispatch`
-
-`bench_gion_expr.c` is the checked-in `.gion` expression lane:
-- it interprets the checked-in workload in `benchmarks/workloads/expr_values.gion`
-- it measures the prepared `.gion -> bytecode -> VM` path for top-level integer additions
-- it is collected into the standard performance snapshot/reporting pipeline as `gion_expr_source`
+Legacy interpreter benchmark lanes have been removed.
+The performance snapshot currently tracks only VM-native Graphion lanes and the matching Rust reference lanes.

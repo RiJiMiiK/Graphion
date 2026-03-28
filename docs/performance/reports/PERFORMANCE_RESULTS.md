@@ -1,6 +1,6 @@
 # Performance Snapshot (x100)
 
-This snapshot is generated from the latest local benchmark artifacts on 2026-03-27 19:19:47 UTC.
+This snapshot is generated from the latest local benchmark artifacts on 2026-03-27 23:49:10 UTC.
 
 Benchmark runs use x100 averages with benchmark-specific default iteration counts committed in the bench sources.
 
@@ -12,8 +12,8 @@ For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS
 
 | Lane | Compiler | ASM | CPU | Machine | Git | Runs |
 |---|---|---|---|---|---|---:|
-| VM Windows / .gion Windows | msvc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | c0a6dbd275c9 | 100 |
-| VM Linux / .gion Linux | gcc | on | AMD Ryzen 7 7735HS with Radeon Graphics | x86_64 | c0a6dbd275c9 | 100 |
+| VM Windows | msvc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | c0a6dbd275c9 | 100 |
+| VM Linux | gcc | on | AMD Ryzen 7 7735HS with Radeon Graphics | x86_64 | c0a6dbd275c9 | 100 |
 | Rust Windows | rustc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | c0a6dbd275c9 | 100 |
 | Rust Linux | rustc | off | AMD Ryzen 7 7735HS with Radeon Graphics | x86_64 | c0a6dbd275c9 | 100 |
 
@@ -124,37 +124,6 @@ Frontier mode notes:
 | VM Linux | 6.202% | 0.510733 | - | 235.969 | 4.256 |
 | Rust Windows | 2.992% | 1.129885 | - | 106.295 | 9.416 |
 | Rust Linux | 3.446% | 1.240276 | - | 96.866 | 10.336 |
-
-## gion_source (`ns_per_iteration`, iterations=5000000)
-
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 5.362% | 0.244401 | - | 328.139 | 50.959 |
-| VM Linux | 5.175% | 0.252231 | - | 317.912 | 50.046 |
-| .gion Windows | 5.382% | 0.440552 | - | 136.577 | 78.040 |
-| .gion Linux | 3.018% | 0.419138 | - | 143.272 | 83.958 |
-| Rust Windows | 3.625% | 0.343088 | - | 233.460 | 67.888 |
-| Rust Linux | 4.037% | 0.359315 | - | 222.988 | 69.663 |
-
-## vm_print_dispatch (`ns_per_iteration`, iterations=5000000)
-
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 4.870% | 0.702384 | - | 128.414 | 140.477 |
-| VM Linux | 3.261% | 0.441099 | - | 204.238 | 88.220 |
-| Rust Windows | 4.932% | 0.903032 | - | 55.499 | 180.606 |
-| Rust Linux | 6.262% | 1.009009 | - | 49.726 | 201.802 |
-
-## gion_print_source (`ns_per_iteration`, iterations=5000000)
-
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 4.870% | 0.702384 | - | 128.414 | 140.477 |
-| VM Linux | 3.261% | 0.441099 | - | 204.238 | 88.220 |
-| .gion Windows | 2.729% | 0.704129 | - | 120.805 | 140.826 |
-| .gion Linux | 2.371% | 0.529982 | - | 160.470 | 105.996 |
-| Rust Windows | 4.932% | 0.903032 | - | 55.499 | 180.606 |
-| Rust Linux | 6.262% | 1.009009 | - | 49.726 | 201.802 |
 
 Notes:
 

@@ -1,5 +1,8 @@
 # Architecture
 
+> Current language-runtime reconstruction is governed by [REBUILD_CHARTER.md](REBUILD_CHARTER.md).
+> Historical interpreter notes below should not be treated as proof of currently supported `.gion` language behavior.
+
 ## Scope
 
 Graphion is a graph/hypergraph-focused language project. Current implementation targets an efficient interpreter core.

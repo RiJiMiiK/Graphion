@@ -124,41 +124,6 @@ BENCH_SPECS = [
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
-    {
-        "benchmark": "gion_source",
-        "target": "graphion_bench_gion",
-        "iterations": 5000000,
-        "latency_key": "ns_per_operation",
-        "throughput_key": "mops",
-    },
-    {
-        "benchmark": "vm_print_dispatch",
-        "target": "graphion_bench_vm_print",
-        "iterations": 5000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "gion_print_source",
-        "target": "graphion_bench_gion_print",
-        "iterations": 5000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mops",
-    },
-    {
-        "benchmark": "vm_expr_dispatch",
-        "target": "graphion_bench_vm_expr",
-        "iterations": 10000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mips",
-    },
-    {
-        "benchmark": "gion_expr_source",
-        "target": "graphion_bench_gion_expr",
-        "iterations": 10000000,
-        "latency_key": "ns_per_iteration",
-        "throughput_key": "mops",
-    },
 ]
 
 

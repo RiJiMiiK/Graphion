@@ -3,8 +3,6 @@
 #ifndef GRAPHION_RUNTIME_ENTRY_H
 #define GRAPHION_RUNTIME_ENTRY_H
 
-#include <stddef.h>
-
 #include "runtime/interpreter.h"
 
 typedef enum {
@@ -21,6 +19,8 @@ typedef enum {
 
 int graphion_source_path_is_gion(const char *path);
 
-int graphion_run_gion_path(const char *path, graphion_runtime_scope *scope);
+int graphion_run_gion_path(const char *path,
+                           graphion_runtime_scope *scope,
+                           graphion_runtime_diagnostic *diagnostic);
 
 #endif

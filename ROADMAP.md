@@ -1,5 +1,8 @@
 # Roadmap
 
+> Language-runtime reconstruction is now governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
+> Historical roadmap checkboxes for interpreter-era milestones must not be read as proof that current `.gion` language support is still valid.
+
 ## Milestone 0.1 (Interpreter Core) [done]
 
 - [x] Stable VM ISA v0 and bytecode decoder.
