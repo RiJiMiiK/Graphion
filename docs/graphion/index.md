@@ -16,6 +16,8 @@ Graphion is currently an early-stage language with a small but already usable su
 - grouped expressions with parentheses
 - compound assignments
 - boolean `if / elif / else` blocks
+- line comments with `#`
+- block comments with `/* ... */`
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.

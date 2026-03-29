@@ -1,0 +1,15 @@
+# 01_scalars_and_print.gion
+# This file demonstrates the scalar value kinds currently supported by Graphion.
+
+count = 42
+ratio = 3.5
+name = "graphion"
+ready = true
+copy = count
+
+print("integer assignment -> count=" + count)
+print("float assignment -> ratio=" + ratio)
+print("string assignment -> name=" + name)
+print("boolean assignment -> ready=" + ready)
+print("copying a variable -> copy=" + copy)
+print("print-only string coercion -> " + "Test " + 7)

@@ -1031,6 +1031,95 @@ static int line_is_else_clause(const runtime_source_line *line) {
   return line_starts_with_keyword(line, "else") && !line_keyword_is_assignment_like(line, "else");
 }
 
+static int copy_source_without_comments(const char *source,
+                                        char **clean_out,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  size_t len;
+  char *clean;
+  size_t read_index = 0U;
+  size_t write_index = 0U;
+  unsigned int line = 1U;
+  unsigned int block_comment_line = 0U;
+  int in_string = 0;
+  int in_block_comment = 0;
+  int in_line_comment = 0;
+  if (source == NULL || clean_out == NULL) {
+    clear_diagnostic(diagnostic);
+    return GINT_ERR_INVALID_ARG;
+  }
+  len = strlen(source);
+  clean = (char *)malloc(len + 1U);
+  if (clean == NULL) {
+    return fail(diagnostic, 1U, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  while (source[read_index] != '\0') {
+    const char ch = source[read_index];
+    const char next = source[read_index + 1U];
+    if (in_block_comment) {
+      if (ch == '*' && next == '/') {
+        in_block_comment = 0;
+        read_index += 2U;
+        continue;
+      }
+      if (ch == '\n') {
+        clean[write_index++] = '\n';
+        line++;
+      }
+      read_index++;
+      continue;
+    }
+    if (in_line_comment) {
+      if (ch == '\n') {
+        clean[write_index++] = '\n';
+        line++;
+        in_line_comment = 0;
+      }
+      read_index++;
+      continue;
+    }
+    if (in_string) {
+      clean[write_index++] = ch;
+      if (ch == '"') {
+        in_string = 0;
+      }
+      if (ch == '\n') {
+        line++;
+      }
+      read_index++;
+      continue;
+    }
+    if (ch == '"') {
+      in_string = 1;
+      clean[write_index++] = ch;
+      read_index++;
+      continue;
+    }
+    if (ch == '#') {
+      in_line_comment = 1;
+      read_index++;
+      continue;
+    }
+    if (ch == '/' && next == '*') {
+      in_block_comment = 1;
+      block_comment_line = line;
+      read_index += 2U;
+      continue;
+    }
+    clean[write_index++] = ch;
+    if (ch == '\n') {
+      line++;
+    }
+    read_index++;
+  }
+  if (in_block_comment) {
+    free(clean);
+    return fail(diagnostic, block_comment_line, 1U, "unterminated block comment", GINT_ERR_PARSE);
+  }
+  clean[write_index] = '\0';
+  *clean_out = clean;
+  return GINT_OK;
+}
+
 static int split_source_lines(const char *source,
                               runtime_source_line *lines,
                               size_t capacity,
@@ -1038,22 +1127,30 @@ static int split_source_lines(const char *source,
                               graphion_runtime_diagnostic *diagnostic) {
   const char *line_start;
   const char *cursor;
+  char *clean_source = NULL;
   unsigned int line_number = 1U;
   size_t count = 0U;
+  int rc;
   if (source == NULL || lines == NULL || count_out == NULL) {
     clear_diagnostic(diagnostic);
     return GINT_ERR_INVALID_ARG;
   }
-  line_start = source;
-  cursor = source;
+  rc = copy_source_without_comments(source, &clean_source, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  line_start = clean_source;
+  cursor = clean_source;
   for (;;) {
     if (*cursor == '\n' || *cursor == '\0') {
       size_t len = (size_t)(cursor - line_start);
       size_t indent = 0U;
       if (count >= capacity) {
+        free(clean_source);
         return fail(diagnostic, line_number, 1U, "too many source lines", GINT_ERR_CAPACITY);
       }
       if (len >= sizeof(lines[count].text)) {
+        free(clean_source);
         return fail(diagnostic, line_number, 1U, "source line too long", GINT_ERR_CAPACITY);
       }
       memcpy(lines[count].text, line_start, len);
@@ -1074,6 +1171,7 @@ static int split_source_lines(const char *source,
     }
     cursor++;
   }
+  free(clean_source);
   *count_out = count;
   return GINT_OK;
 }
@@ -1551,6 +1649,7 @@ int graphion_prepare_source(const char *source,
                             graphion_runtime_diagnostic *diagnostic) {
   const char *line_start;
   const char *cursor;
+  char *clean_source = NULL;
   unsigned int line = 1U;
   int rc;
   if (source == NULL || program == NULL) {
@@ -1559,14 +1658,19 @@ int graphion_prepare_source(const char *source,
   }
   clear_diagnostic(diagnostic);
   graphion_runtime_program_init(program);
-  line_start = source;
-  cursor = source;
+  rc = copy_source_without_comments(source, &clean_source, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  line_start = clean_source;
+  cursor = clean_source;
   for (;;) {
     if (*cursor == '\n' || *cursor == '\0') {
       char line_buffer[512];
       size_t len = (size_t)(cursor - line_start);
       const char *line_cursor = line_buffer;
       if (len >= sizeof(line_buffer)) {
+        free(clean_source);
         return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
       }
       memcpy(line_buffer, line_start, len);
@@ -1579,6 +1683,7 @@ int graphion_prepare_source(const char *source,
           rc = parse_assignment(line_cursor, program, line, diagnostic);
         }
         if (rc != GINT_OK) {
+          free(clean_source);
           return rc;
         }
       }
@@ -1594,8 +1699,10 @@ int graphion_prepare_source(const char *source,
   }
   rc = program_emit(program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
   if (rc != GINT_OK) {
+    free(clean_source);
     return rc;
   }
+  free(clean_source);
   return GINT_OK;
 }
 

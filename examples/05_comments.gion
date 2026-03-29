@@ -1,0 +1,26 @@
+# 05_comments.gion
+# This file demonstrates both comment styles.
+
+# Line comments start with '#'.
+count = 40 # Inline line comments also work.
+
+/*
+Block comments use slash-star and star-slash.
+They can span multiple lines.
+*/
+
+count += 2
+message = "/* not a comment */"
+
+/* Inline block comments also work. */
+ratio = /* ignore this note */ 7 / 2
+
+if true: # Comments can appear after a conditional header.
+    label = "comments are ignored by the parser"
+else:
+    label = "bad"
+
+print("commented assignment -> count=" + count)
+print("comment markers inside strings stay literal -> " + message)
+print("inline block comment in expression -> ratio=" + ratio)
+print("commented conditional -> label=" + label)

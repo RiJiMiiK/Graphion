@@ -7,6 +7,15 @@
 - name: documentation
   color: "0075ca"
   description: Documentation updates
+- name: language
+  color: "1d76db"
+  description: User-facing Graphion language changes
+- name: runtime
+  color: "5319e7"
+  description: VM, parser, compiler, or runtime implementation changes
+- name: examples
+  color: "c5def5"
+  description: Example scripts and sample programs
 - name: performance
   color: "fbca04"
   description: Performance work or regression
@@ -14,7 +23,7 @@
   color: "b60205"
   description: Security-sensitive issue or change
 - name: ci
-  color: "5319e7"
+  color: "6f42c1"
   description: CI/CD or workflow changes
 - name: dependencies
   color: "0366d6"

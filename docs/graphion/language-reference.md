@@ -181,7 +181,7 @@ if 0:
 Invalid examples:
 
 ```gion
-if 1:
+if 2:
     print("bad")
 ```
 
@@ -223,6 +223,70 @@ print("bad")
 else:
     print("bad")
 ```
+
+## Comments
+
+Graphion currently supports two comment forms:
+
+- `#` for line comments
+- `/* ... */` for block comments
+
+### Line Comments
+
+`#` ignores the rest of the current line.
+
+Examples:
+
+```gion
+# full-line comment
+count = 40 # inline comment
+count += 2
+```
+
+### Block Comments
+
+`/* ... */` ignores everything until the closing `*/`.
+
+Examples:
+
+```gion
+/*
+multi-line note
+about the next assignment
+*/
+message = "graphion"
+```
+
+```gion
+ratio = /* inline block comment */ 7 / 2
+```
+
+Current rules:
+
+- block comments can span multiple lines
+- block comments are not nested
+- comment markers inside string literals are treated as string text
+
+Example:
+
+```gion
+message = "/* not a comment */"
+```
+
+### Comment Errors
+
+This is currently a parse error:
+
+```gion
+/*
+unterminated comment
+count = 42
+```
+
+The current diagnostic is:
+
+`unterminated block comment`
+: parse error when `/*` does not have a matching closing `*/`
 
 ## Arithmetic Operators
 
