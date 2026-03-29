@@ -81,6 +81,7 @@ function(graphion_enable_pgo target_name)
     elseif(GRAPHION_PGO_MODE STREQUAL "USE")
       target_compile_options(${target_name} PRIVATE
         "$<$<CONFIG:Release>:-fprofile-instr-use=${graphion_pgo_profdata_cmake}>"
+        "$<$<CONFIG:Release>:-Wno-error=profile-instr-out-of-date>"
       )
       target_link_options(${target_name} PRIVATE
         "$<$<CONFIG:Release>:-fprofile-instr-use=${graphion_pgo_profdata_cmake}>"
