@@ -593,7 +593,7 @@ int test_gion_assignment_syntax_errors(void) {
       {"count 42\n", GINT_ERR_PARSE, "expected '='"},
       {"= 42\n", GINT_ERR_PARSE, "expected identifier"},
       {"count =\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 42 + 1\n", GINT_ERR_PARSE, "unsupported assignment expression"},
+      {"count = 42 +\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = nope\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
   };
   size_t i;
@@ -613,6 +613,208 @@ int test_gion_assignment_syntax_errors(void) {
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
       return (int)(3 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_arithmetic_expressions(void) {
+  const char *source =
+      "base = 8\n"
+      "sum = 40 + 2\n"
+      "mixed = 1 + 2 * 3\n"
+      "delta = base - 3\n"
+      "ratio = 7 / 2\n"
+      "scaled = ratio * 2\n"
+      "total = base + ratio * 2\n"
+      "print(sum)\n"
+      "print(mixed)\n"
+      "print(delta)\n"
+      "print(ratio)\n"
+      "print(total)\n"
+      "print(3 + 4 * 2)\n";
+  const char *path = "gion_arithmetic_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *sum;
+  const graphion_runtime_value *mixed;
+  const graphion_runtime_value *delta;
+  const graphion_runtime_value *ratio;
+  const graphion_runtime_value *scaled;
+  const graphion_runtime_value *total;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  sum = graphion_runtime_scope_find(&scope, "sum");
+  mixed = graphion_runtime_scope_find(&scope, "mixed");
+  delta = graphion_runtime_scope_find(&scope, "delta");
+  ratio = graphion_runtime_scope_find(&scope, "ratio");
+  scaled = graphion_runtime_scope_find(&scope, "scaled");
+  total = graphion_runtime_scope_find(&scope, "total");
+  if (sum == NULL || sum->kind != GVM_VALUE_INT || sum->as.int_value != 42) {
+    remove(path);
+    return 3;
+  }
+  if (mixed == NULL || mixed->kind != GVM_VALUE_INT || mixed->as.int_value != 7) {
+    remove(path);
+    return 4;
+  }
+  if (delta == NULL || delta->kind != GVM_VALUE_INT || delta->as.int_value != 5) {
+    remove(path);
+    return 5;
+  }
+  if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
+    remove(path);
+    return 6;
+  }
+  if (scaled == NULL || scaled->kind != GVM_VALUE_FLOAT || scaled->as.float_value != 7.0) {
+    remove(path);
+    return 7;
+  }
+  if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
+    remove(path);
+    return 8;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 9;
+  }
+  remove(path);
+  if (strcmp(output, "42\n7\n5\n3.5\n15\n11\n") != 0) {
+    return 10;
+  }
+  return 0;
+}
+
+int test_gion_arithmetic_precedence_and_associativity(void) {
+  const char *source =
+      "a = 20 - 5 - 3\n"
+      "b = 20 / 5 / 2\n"
+      "c = 2 * 3 + 4 * 5\n"
+      "d = 2 + 3 * 4 - 5\n"
+      "e = 10 - 2 * 3\n"
+      "f = 2 * 3 / 4\n"
+      "g = -7 + 2\n"
+      "h = 2 + -3 * 4\n"
+      "print(a)\n"
+      "print(b)\n"
+      "print(c)\n"
+      "print(d)\n"
+      "print(e)\n"
+      "print(f)\n"
+      "print(g)\n"
+      "print(h)\n";
+  const char *path = "gion_arithmetic_precedence.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 3;
+  }
+  remove(path);
+  if (strcmp(output, "12\n2\n26\n9\n4\n1.5\n-5\n-10\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_gion_arithmetic_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 1 / 0\n", "division by zero"},
+      {"value = \"x\" + 1\n", "arithmetic requires numeric operands"},
+      {"value = true + 1\n", "arithmetic requires numeric operands"},
+      {"print(\"x\" / 2)\n", "arithmetic requires numeric operands"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_arithmetic_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    const char *message;
+  } cases[] = {
+      {"value = 1 + * 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 1 / / 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 1 ** 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 1 + 2 3\n", GINT_ERR_PARSE, "unsupported assignment expression"},
+      {"print(1 + )\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"print(1 + 2\n", GINT_ERR_PARSE, "expected ')' after print argument"},
+      {"print(1 + 2 3)\n", GINT_ERR_PARSE, "expected ')' after print argument"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
     }
   }
   return 0;

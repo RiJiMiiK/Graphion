@@ -17,6 +17,19 @@ typedef struct {
   size_t global_index;
 } parsed_operand;
 
+typedef enum {
+  EXPR_RESULT_LITERAL = 1,
+  EXPR_RESULT_GLOBAL = 2,
+  EXPR_RESULT_REG = 3
+} parsed_expr_kind;
+
+typedef struct {
+  parsed_expr_kind kind;
+  size_t const_index;
+  size_t global_index;
+  uint8_t reg_index;
+} parsed_expr_result;
+
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -349,13 +362,177 @@ static int parse_operand(const char **cursor,
   return GINT_OK;
 }
 
+static int emit_load_operand(graphion_runtime_program *program,
+                             const parsed_operand *operand,
+                             uint8_t reg,
+                             unsigned int line,
+                             graphion_runtime_diagnostic *diagnostic) {
+  if (program == NULL || operand == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (operand->kind == OPERAND_LITERAL) {
+    return program_emit(program, GVM_OP_LOAD_CONST, reg, 0U, (int32_t)operand->const_index, line, diagnostic);
+  }
+  return program_emit(program, GVM_OP_LOAD_GLOBAL, reg, 0U, (int32_t)operand->global_index, line, diagnostic);
+}
+
+static int ensure_expr_in_reg(graphion_runtime_program *program,
+                              parsed_expr_result *expr,
+                              uint8_t reg,
+                              unsigned int line,
+                              graphion_runtime_diagnostic *diagnostic) {
+  parsed_operand operand;
+  if (program == NULL || expr == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (expr->kind == EXPR_RESULT_REG && expr->reg_index == reg) {
+    return GINT_OK;
+  }
+  if (expr->kind == EXPR_RESULT_REG) {
+    return program_emit(program, GVM_OP_MOV, reg, expr->reg_index, 0, line, diagnostic);
+  }
+  operand.kind = expr->kind == EXPR_RESULT_LITERAL ? OPERAND_LITERAL : OPERAND_GLOBAL;
+  operand.const_index = expr->const_index;
+  operand.global_index = expr->global_index;
+  {
+    int rc = emit_load_operand(program, &operand, reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  expr->kind = EXPR_RESULT_REG;
+  expr->reg_index = reg;
+  expr->const_index = 0U;
+  expr->global_index = 0U;
+  return GINT_OK;
+}
+
+static int parse_factor(const char **cursor,
+                        graphion_runtime_program *program,
+                        parsed_expr_result *result_out,
+                        unsigned int line,
+                        graphion_runtime_diagnostic *diagnostic) {
+  parsed_operand operand;
+  int rc = parse_operand(cursor, program, &operand, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  result_out->kind = operand.kind == OPERAND_LITERAL ? EXPR_RESULT_LITERAL : EXPR_RESULT_GLOBAL;
+  result_out->const_index = operand.const_index;
+  result_out->global_index = operand.global_index;
+  result_out->reg_index = 0U;
+  return GINT_OK;
+}
+
+static int parse_term(const char **cursor,
+                      graphion_runtime_program *program,
+                      parsed_expr_result *result_out,
+                      uint8_t target_reg,
+                      uint8_t scratch_reg,
+                      unsigned int line,
+                      graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  int rc = parse_factor(cursor, program, &lhs, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (;;) {
+    char op;
+    parsed_expr_result rhs;
+    skip_spaces(cursor);
+    op = **cursor;
+    if (op != '*' && op != '/') {
+      break;
+    }
+    (*cursor)++;
+    rc = parse_factor(cursor, program, &rhs, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program,
+                      op == '*' ? GVM_OP_MUL : GVM_OP_DIV,
+                      target_reg,
+                      scratch_reg,
+                      0,
+                      line,
+                      diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+  *result_out = lhs;
+  return GINT_OK;
+}
+
+static int parse_expression(const char **cursor,
+                            graphion_runtime_program *program,
+                            parsed_expr_result *result_out,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  int rc = parse_term(cursor, program, &lhs, 0U, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (;;) {
+    char op;
+    parsed_expr_result rhs;
+    skip_spaces(cursor);
+    op = **cursor;
+    if (op != '+' && op != '-') {
+      break;
+    }
+    (*cursor)++;
+    rc = parse_term(cursor, program, &rhs, 1U, 2U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, 0U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program,
+                      op == '+' ? GVM_OP_ADD : GVM_OP_SUB,
+                      0U,
+                      1U,
+                      0,
+                      line,
+                      diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = 0U;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+  *result_out = lhs;
+  return GINT_OK;
+}
+
 static int parse_assignment(const char *line_text,
                             graphion_runtime_program *program,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = line_text;
   char target[GRAPHION_RUNTIME_NAME_MAX];
-  parsed_operand operand;
+  parsed_expr_result expr;
   size_t target_index;
   int rc;
 
@@ -371,7 +548,7 @@ static int parse_assignment(const char *line_text,
     return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
   }
   cursor++;
-  rc = parse_operand(&cursor, program, &operand, line, diagnostic);
+  rc = parse_expression(&cursor, program, &expr, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -383,10 +560,14 @@ static int parse_assignment(const char *line_text,
   if (rc != GINT_OK) {
     return rc;
   }
-  if (operand.kind == OPERAND_LITERAL) {
-    return program_emit(program, GVM_OP_STORE_CONST_GLOBAL, 0U, (uint8_t)target_index, (int32_t)operand.const_index, line, diagnostic);
+  if (expr.kind == EXPR_RESULT_LITERAL) {
+    return program_emit(
+        program, GVM_OP_STORE_CONST_GLOBAL, 0U, (uint8_t)target_index, (int32_t)expr.const_index, line, diagnostic);
   }
-  return program_emit(program, GVM_OP_COPY_GLOBAL, 0U, (uint8_t)target_index, (int32_t)operand.global_index, line, diagnostic);
+  if (expr.kind == EXPR_RESULT_GLOBAL) {
+    return program_emit(program, GVM_OP_COPY_GLOBAL, 0U, (uint8_t)target_index, (int32_t)expr.global_index, line, diagnostic);
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, expr.reg_index, 0U, (int32_t)target_index, line, diagnostic);
 }
 
 static int parse_print(const char *line_text,
@@ -394,7 +575,7 @@ static int parse_print(const char *line_text,
                        unsigned int line,
                        graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = line_text;
-  parsed_operand operand;
+  parsed_expr_result expr;
   int rc;
   skip_spaces(&cursor);
   if (strncmp(cursor, "print", 5U) != 0 || is_ident_char(cursor[5])) {
@@ -406,7 +587,7 @@ static int parse_print(const char *line_text,
     return fail(diagnostic, line, 1U, "expected '(' after print", GINT_ERR_PARSE);
   }
   cursor++;
-  rc = parse_operand(&cursor, program, &operand, line, diagnostic);
+  rc = parse_expression(&cursor, program, &expr, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -419,10 +600,13 @@ static int parse_print(const char *line_text,
   if (*cursor != '\0') {
     return fail(diagnostic, line, 1U, "unexpected trailing tokens after print", GINT_ERR_PARSE);
   }
-  if (operand.kind == OPERAND_LITERAL) {
-    return program_emit(program, GVM_OP_PRINT_CONST, 0U, 0U, (int32_t)operand.const_index, line, diagnostic);
+  if (expr.kind == EXPR_RESULT_LITERAL) {
+    return program_emit(program, GVM_OP_PRINT_CONST, 0U, 0U, (int32_t)expr.const_index, line, diagnostic);
   }
-  return program_emit(program, GVM_OP_PRINT_GLOBAL, 0U, 0U, (int32_t)operand.global_index, line, diagnostic);
+  if (expr.kind == EXPR_RESULT_GLOBAL) {
+    return program_emit(program, GVM_OP_PRINT_GLOBAL, 0U, 0U, (int32_t)expr.global_index, line, diagnostic);
+  }
+  return program_emit(program, GVM_OP_PRINT_REG, expr.reg_index, 0U, 0, line, diagnostic);
 }
 
 static void seed_program_from_scope(graphion_runtime_program *program, const graphion_runtime_scope *scope) {
@@ -610,6 +794,12 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
+    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
+      return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_TYPE_MISMATCH) {
+      return fail(diagnostic, 1U, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+    }
     return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }
   scope_stabilize_string_globals(scope);

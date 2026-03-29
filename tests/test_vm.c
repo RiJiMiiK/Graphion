@@ -13,6 +13,11 @@ static void test_set_reg_i(graphion_vm *vm, uint8_t reg, int64_t value) {
   vm->regs[reg].as.int_value = value;
 }
 
+static void test_set_value_int(graphion_vm_value *value, int64_t number) {
+  value->kind = GVM_VALUE_INT;
+  value->as.int_value = number;
+}
+
 static void test_set_value_float(graphion_vm_value *value, double number) {
   value->kind = GVM_VALUE_FLOAT;
   value->as.float_value = number;
@@ -146,7 +151,7 @@ int test_vm_value_movement_and_globals(void) {
 
 int test_vm_typed_value_errors(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[1];
+  graphion_vm_value const_pool[2];
   graphion_vm_value globals[1];
   const graphion_insn bad_const_program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 1},
@@ -160,6 +165,7 @@ int test_vm_typed_value_errors(void) {
   int rc;
 
   test_set_value_float(&const_pool[0], 1.25);
+  test_set_value_string(&const_pool[1], "bad");
   globals[0].kind = GVM_VALUE_NONE;
   globals[0].as.int_value = 0;
 
@@ -199,10 +205,9 @@ int test_vm_typed_value_errors(void) {
   }
 
   graphion_vm_init(&vm);
+  rc = graphion_vm_load(&vm, (const graphion_insn[]){{GVM_OP_LOAD_CONST, 1, 0, 1}, {GVM_OP_ADD, 0, 1, 0}}, 2U);
   test_set_reg_i(&vm, 0U, 7);
-  vm.regs[1].kind = GVM_VALUE_FLOAT;
-  vm.regs[1].as.float_value = 2.0;
-  rc = graphion_vm_load(&vm, (const graphion_insn[]){{GVM_OP_ADD, 0, 1, 0}}, 1U);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
   if (rc != 0) {
     return 7;
   }
@@ -211,6 +216,102 @@ int test_vm_typed_value_errors(void) {
     return 8;
   }
 
+  return 0;
+}
+
+int test_vm_numeric_arithmetic_opcodes(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[4];
+  graphion_vm_value globals[1];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 10},
+      {GVM_OP_MOV_IMM, 1, 0, 4},
+      {GVM_OP_SUB, 0, 1, 0},
+      {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_MUL, 0, 2, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 0},
+      {GVM_OP_ADD, 0, 3, 0},
+      {GVM_OP_LOAD_CONST, 4, 0, 1},
+      {GVM_OP_DIV, 0, 4, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 0.5);
+  test_set_value_int(&const_pool[1], 2);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 9.25) {
+    return 3;
+  }
+  if (globals[0].kind != GVM_VALUE_FLOAT || globals[0].as.float_value != 9.25) {
+    return 4;
+  }
+
+  return 0;
+}
+
+int test_vm_numeric_arithmetic_precedence_shapes(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[4];
+  const graphion_insn program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 1},
+      {GVM_OP_SUB, 0, 1, 0},
+      {GVM_OP_LOAD_CONST, 2, 0, 2},
+      {GVM_OP_MUL, 0, 2, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 3},
+      {GVM_OP_DIV, 0, 3, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 10.5);
+  test_set_value_int(&const_pool[1], 2);
+  test_set_value_float(&const_pool[2], 1.5);
+  test_set_value_int(&const_pool[3], 2);
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 4U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 6.375) {
+    return 3;
+  }
+  return 0;
+}
+
+int test_vm_divide_by_zero_fails(void) {
+  graphion_vm vm;
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_MOV_IMM, 1, 0, 0},
+      {GVM_OP_DIV, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc = run_vm_program(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != GVM_ERR_DIVIDE_BY_ZERO) {
+    return 1;
+  }
   return 0;
 }
 

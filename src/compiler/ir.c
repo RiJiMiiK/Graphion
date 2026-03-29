@@ -11,6 +11,9 @@ static int valid_ir_opcode(uint8_t op) {
     case GIR_OP_HALT:
     case GIR_OP_MOV_IMM:
     case GIR_OP_ADD:
+    case GIR_OP_SUB:
+    case GIR_OP_MUL:
+    case GIR_OP_DIV:
     case GIR_OP_FRONTIER_CLEAR:
     case GIR_OP_FRONTIER_PUSH:
     case GIR_OP_FRONTIER_FILTER_LT_IMM:

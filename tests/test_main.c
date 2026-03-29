@@ -16,6 +16,9 @@ int test_vm_invalid_register_fails(void);
 int test_vm_typed_register_defaults(void);
 int test_vm_value_movement_and_globals(void);
 int test_vm_typed_value_errors(void);
+int test_vm_numeric_arithmetic_opcodes(void);
+int test_vm_numeric_arithmetic_precedence_shapes(void);
+int test_vm_divide_by_zero_fails(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
 int test_vm_bfs_levels_opcode(void);
@@ -55,6 +58,10 @@ int test_gion_unknown_variable_errors(void);
 int test_gion_partial_execution_stops_at_first_unsupported_line(void);
 int test_gion_reserved_name_errors(void);
 int test_gion_assignment_syntax_errors(void);
+int test_gion_arithmetic_expressions(void);
+int test_gion_arithmetic_precedence_and_associativity(void);
+int test_gion_arithmetic_runtime_errors(void);
+int test_gion_arithmetic_syntax_errors(void);
 int test_gion_print_syntax_errors(void);
 int test_gion_unterminated_string_errors(void);
 int test_gion_invalid_identifier_errors(void);
@@ -113,6 +120,9 @@ int main(int argc, char **argv) {
       {"vm_typed_register_defaults", test_vm_typed_register_defaults},
       {"vm_value_movement_and_globals", test_vm_value_movement_and_globals},
       {"vm_typed_value_errors", test_vm_typed_value_errors},
+      {"vm_numeric_arithmetic_opcodes", test_vm_numeric_arithmetic_opcodes},
+      {"vm_numeric_arithmetic_precedence_shapes", test_vm_numeric_arithmetic_precedence_shapes},
+      {"vm_divide_by_zero_fails", test_vm_divide_by_zero_fails},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
@@ -153,6 +163,10 @@ int main(int argc, char **argv) {
       {"gion_partial_execution_stops_at_first_unsupported_line", test_gion_partial_execution_stops_at_first_unsupported_line},
       {"gion_reserved_name_errors", test_gion_reserved_name_errors},
       {"gion_assignment_syntax_errors", test_gion_assignment_syntax_errors},
+      {"gion_arithmetic_expressions", test_gion_arithmetic_expressions},
+      {"gion_arithmetic_precedence_and_associativity", test_gion_arithmetic_precedence_and_associativity},
+      {"gion_arithmetic_runtime_errors", test_gion_arithmetic_runtime_errors},
+      {"gion_arithmetic_syntax_errors", test_gion_arithmetic_syntax_errors},
       {"gion_print_syntax_errors", test_gion_print_syntax_errors},
       {"gion_unterminated_string_errors", test_gion_unterminated_string_errors},
       {"gion_invalid_identifier_errors", test_gion_invalid_identifier_errors},
