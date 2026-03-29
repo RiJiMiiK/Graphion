@@ -227,7 +227,7 @@ jobs:
       - name: Generate GitHub App token
         id: app-token
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr) }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.GRAPHION_PERF_APP_ID }}
           private-key: ${{ secrets.GRAPHION_PERF_APP_PRIVATE_KEY }}
