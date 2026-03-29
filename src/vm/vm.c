@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(_M_X64) || defined(__x86_64__) || defined(__SSE2__)
@@ -127,6 +128,21 @@ static int64_t wrap_mul_i64(int64_t lhs, int64_t rhs) {
   return (int64_t)(ulhs * urhs);
 }
 
+static char *vm_strdup_text(const char *text) {
+  size_t len;
+  char *copy;
+  if (text == NULL) {
+    return NULL;
+  }
+  len = strlen(text);
+  copy = (char *)malloc(len + 1U);
+  if (copy == NULL) {
+    return NULL;
+  }
+  memcpy(copy, text, len + 1U);
+  return copy;
+}
+
 static void vm_value_set_int(graphion_vm_value *value, int64_t int_value) {
   if (value == NULL) {
     return;
@@ -176,6 +192,65 @@ static int vm_value_get_numeric(const graphion_vm_value *value, int64_t *out_int
     default:
       return 0;
   }
+}
+
+static void vm_free_owned_reg_string(graphion_vm *vm, uint8_t reg) {
+  if (vm == NULL || !is_valid_reg(reg)) {
+    return;
+  }
+  if (vm->owned_reg_strings[reg] != NULL) {
+    free(vm->owned_reg_strings[reg]);
+    vm->owned_reg_strings[reg] = NULL;
+  }
+}
+
+static void vm_release_all_reg_strings(graphion_vm *vm) {
+  size_t i;
+  if (vm == NULL) {
+    return;
+  }
+  for (i = 0U; i < 16U; ++i) {
+    vm_free_owned_reg_string(vm, (uint8_t)i);
+  }
+}
+
+static int vm_reg_set_string_copy(graphion_vm *vm, uint8_t reg, const char *text) {
+  char *copy;
+  if (vm == NULL || !is_valid_reg(reg) || text == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  copy = vm_strdup_text(text);
+  if (copy == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, reg);
+  vm->owned_reg_strings[reg] = copy;
+  vm->regs[reg].kind = GVM_VALUE_STRING;
+  vm->regs[reg].as.string_value = copy;
+  return GVM_OK;
+}
+
+static int vm_global_set_string_copy(graphion_vm *vm, size_t index, const char *text) {
+  char *copy;
+  if (vm == NULL || text == NULL || index >= vm->global_count) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (vm->global_string_owners == NULL) {
+    vm->globals[index].kind = GVM_VALUE_STRING;
+    vm->globals[index].as.string_value = text;
+    return GVM_OK;
+  }
+  copy = vm_strdup_text(text);
+  if (copy == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (vm->global_string_owners[index] != NULL) {
+    free(vm->global_string_owners[index]);
+  }
+  vm->global_string_owners[index] = copy;
+  vm->globals[index].kind = GVM_VALUE_STRING;
+  vm->globals[index].as.string_value = copy;
+  return GVM_OK;
 }
 
 static int vm_write_bytes(FILE *output, const char *bytes, size_t len) {
@@ -1892,6 +1967,7 @@ void graphion_vm_init(graphion_vm *vm) {
     return;
   }
   for (i = 0; i < 16U; ++i) {
+    vm->owned_reg_strings[i] = NULL;
     vm_value_set_int(&vm->regs[i], 0);
   }
   vm->program = NULL;
@@ -1914,6 +1990,7 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->const_pool = NULL;
   vm->const_count = 0U;
   vm->globals = NULL;
+  vm->global_string_owners = NULL;
   vm->global_count = 0U;
   vm->output.write = NULL;
   vm->output.ctx = NULL;
@@ -1931,11 +2008,19 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->frontier_capacity = 0U;
 }
 
+void graphion_vm_dispose(graphion_vm *vm) {
+  if (vm == NULL) {
+    return;
+  }
+  vm_release_all_reg_strings(vm);
+}
+
 void graphion_vm_reset_execution(graphion_vm *vm) {
   size_t i;
   if (vm == NULL) {
     return;
   }
+  vm_release_all_reg_strings(vm);
   for (i = 0; i < 16U; ++i) {
     vm_value_set_int(&vm->regs[i], 0);
   }
@@ -1984,6 +2069,11 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
     shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath,
                       frontier_filter_map_reduce_fastpath, frontier_fastpath, graph_ops_fastpath,
                       value_move_fastpath, global_materialize_fastpath, global_print_fastpath);
+  }
+  if (vm->global_string_owners != NULL) {
+    value_move_fastpath = false;
+    global_materialize_fastpath = false;
+    global_print_fastpath = false;
   }
   vm->arith_only_fastpath = arith_only_fastpath;
   vm->arith_only_halt_terminated = halt_terminated;
@@ -2047,6 +2137,17 @@ void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_
   vm->global_count = global_count;
   refresh_value_move_validation(vm);
   refresh_global_print_validation(vm);
+}
+
+void graphion_vm_bind_global_string_owners(graphion_vm *vm, char **owners, size_t owner_count) {
+  if (vm == NULL) {
+    return;
+  }
+  if (owners == NULL || owner_count < vm->global_count) {
+    vm->global_string_owners = NULL;
+    return;
+  }
+  vm->global_string_owners = owners;
 }
 
 void graphion_vm_bind_output_sink(graphion_vm *vm, const graphion_output_sink *output) {
@@ -2458,6 +2559,7 @@ static int op_mov_imm(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_MOV_IMM_REG;
   }
+  vm_free_owned_reg_string(vm, in->a);
   SET_REG_I(vm, in->a, (int64_t)in->imm);
   return 0;
 }
@@ -2473,6 +2575,20 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return GVM_ERR_INVALID_REG;
   }
+  if (opcode == GVM_OP_ADD && vm->regs[in->a].kind == GVM_VALUE_STRING && vm->regs[in->b].kind == GVM_VALUE_STRING) {
+    size_t lhs_len = strlen(vm->regs[in->a].as.string_value != NULL ? vm->regs[in->a].as.string_value : "");
+    size_t rhs_len = strlen(vm->regs[in->b].as.string_value != NULL ? vm->regs[in->b].as.string_value : "");
+    char *buffer = (char *)malloc(lhs_len + rhs_len + 1U);
+    int rc;
+    if (buffer == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    memcpy(buffer, vm->regs[in->a].as.string_value, lhs_len);
+    memcpy(buffer + lhs_len, vm->regs[in->b].as.string_value, rhs_len + 1U);
+    rc = vm_reg_set_string_copy(vm, in->a, buffer);
+    free(buffer);
+    return rc;
+  }
   if (!vm_value_get_numeric(&vm->regs[in->a], &lhs_i, &lhs_f, &lhs_is_float) ||
       !vm_value_get_numeric(&vm->regs[in->b], &rhs_i, &rhs_f, &rhs_is_float)) {
     return GVM_ERR_TYPE_MISMATCH;
@@ -2482,6 +2598,7 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
     if ((rhs_is_float && rhs_f == 0.0) || (!rhs_is_float && rhs_i == 0)) {
       return GVM_ERR_DIVIDE_BY_ZERO;
     }
+    vm_free_owned_reg_string(vm, in->a);
     vm_value_set_float(&vm->regs[in->a], lhs_f / rhs_f);
     return GVM_OK;
   }
@@ -2489,12 +2606,15 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
   if (!lhs_is_float && !rhs_is_float) {
     switch (opcode) {
       case GVM_OP_ADD:
+        vm_free_owned_reg_string(vm, in->a);
         vm_value_set_int(&vm->regs[in->a], wrap_add_i64(lhs_i, rhs_i));
         return GVM_OK;
       case GVM_OP_SUB:
+        vm_free_owned_reg_string(vm, in->a);
         vm_value_set_int(&vm->regs[in->a], wrap_sub_i64(lhs_i, rhs_i));
         return GVM_OK;
       case GVM_OP_MUL:
+        vm_free_owned_reg_string(vm, in->a);
         vm_value_set_int(&vm->regs[in->a], wrap_mul_i64(lhs_i, rhs_i));
         return GVM_OK;
       default:
@@ -2504,12 +2624,15 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
 
   switch (opcode) {
     case GVM_OP_ADD:
+      vm_free_owned_reg_string(vm, in->a);
       vm_value_set_float(&vm->regs[in->a], lhs_f + rhs_f);
       return GVM_OK;
     case GVM_OP_SUB:
+      vm_free_owned_reg_string(vm, in->a);
       vm_value_set_float(&vm->regs[in->a], lhs_f - rhs_f);
       return GVM_OK;
     case GVM_OP_MUL:
+      vm_free_owned_reg_string(vm, in->a);
       vm_value_set_float(&vm->regs[in->a], lhs_f * rhs_f);
       return GVM_OK;
     default:
@@ -2537,6 +2660,10 @@ static int op_mov(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return GVM_ERR_INVALID_REG;
   }
+  if (vm->regs[in->b].kind == GVM_VALUE_STRING && vm->regs[in->b].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->regs[in->b].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->regs[in->b]);
   return 0;
 }
@@ -2551,6 +2678,11 @@ static int op_load_const(graphion_vm *vm, const graphion_insn *in) {
   if (in->imm < 0 || (size_t)in->imm >= vm->const_count) {
     return GVM_ERR_INVALID_CONST_INDEX;
   }
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->const_pool[(size_t)in->imm].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->const_pool[(size_t)in->imm]);
   return 0;
 }
@@ -2565,6 +2697,11 @@ static int op_load_global(graphion_vm *vm, const graphion_insn *in) {
   if (in->imm < 0 || (size_t)in->imm >= vm->global_count) {
     return GVM_ERR_INVALID_GLOBAL_INDEX;
   }
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->globals[(size_t)in->imm].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->globals[(size_t)in->imm].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->globals[(size_t)in->imm]);
   return 0;
 }
@@ -2578,6 +2715,13 @@ static int op_store_global(graphion_vm *vm, const graphion_insn *in) {
   }
   if (in->imm < 0 || (size_t)in->imm >= vm->global_count) {
     return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->regs[in->a].kind == GVM_VALUE_STRING && vm->regs[in->a].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->imm, vm->regs[in->a].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[(size_t)in->imm] != NULL) {
+    free(vm->global_string_owners[(size_t)in->imm]);
+    vm->global_string_owners[(size_t)in->imm] = NULL;
   }
   vm_value_copy(&vm->globals[(size_t)in->imm], &vm->regs[in->a]);
   return 0;
@@ -2596,6 +2740,14 @@ static int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
   if ((size_t)in->b >= vm->global_count) {
     return GVM_ERR_INVALID_GLOBAL_INDEX;
   }
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->b, vm->const_pool[(size_t)in->imm].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
+    free(vm->global_string_owners[in->b]);
+    vm->global_string_owners[in->b] = NULL;
+  }
   vm_value_copy(&vm->globals[in->b], &vm->const_pool[(size_t)in->imm]);
   return 0;
 }
@@ -2606,6 +2758,14 @@ static int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
   }
   if (in->imm < 0 || (size_t)in->imm >= vm->global_count || (size_t)in->b >= vm->global_count) {
     return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->globals[(size_t)in->imm].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->b, vm->globals[(size_t)in->imm].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
+    free(vm->global_string_owners[in->b]);
+    vm->global_string_owners[in->b] = NULL;
   }
   vm_value_copy(&vm->globals[in->b], &vm->globals[(size_t)in->imm]);
   return 0;

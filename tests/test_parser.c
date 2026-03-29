@@ -623,22 +623,26 @@ int test_gion_arithmetic_expressions(void) {
       "base = 8\n"
       "sum = 40 + 2\n"
       "mixed = 1 + 2 * 3\n"
+      "grouped = (1 + 2) * 3\n"
       "delta = base - 3\n"
       "ratio = 7 / 2\n"
       "scaled = ratio * 2\n"
       "total = base + ratio * 2\n"
       "print(sum)\n"
       "print(mixed)\n"
+      "print(grouped)\n"
       "print(delta)\n"
       "print(ratio)\n"
       "print(total)\n"
-      "print(3 + 4 * 2)\n";
+      "print(3 + 4 * 2)\n"
+      "print((3 + 4) * 2)\n";
   const char *path = "gion_arithmetic_expressions.txt";
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *sum;
   const graphion_runtime_value *mixed;
+  const graphion_runtime_value *grouped;
   const graphion_runtime_value *delta;
   const graphion_runtime_value *ratio;
   const graphion_runtime_value *scaled;
@@ -666,6 +670,7 @@ int test_gion_arithmetic_expressions(void) {
 
   sum = graphion_runtime_scope_find(&scope, "sum");
   mixed = graphion_runtime_scope_find(&scope, "mixed");
+  grouped = graphion_runtime_scope_find(&scope, "grouped");
   delta = graphion_runtime_scope_find(&scope, "delta");
   ratio = graphion_runtime_scope_find(&scope, "ratio");
   scaled = graphion_runtime_scope_find(&scope, "scaled");
@@ -678,29 +683,180 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 4;
   }
-  if (delta == NULL || delta->kind != GVM_VALUE_INT || delta->as.int_value != 5) {
+  if (grouped == NULL || grouped->kind != GVM_VALUE_INT || grouped->as.int_value != 9) {
     remove(path);
     return 5;
   }
-  if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
+  if (delta == NULL || delta->kind != GVM_VALUE_INT || delta->as.int_value != 5) {
     remove(path);
     return 6;
   }
-  if (scaled == NULL || scaled->kind != GVM_VALUE_FLOAT || scaled->as.float_value != 7.0) {
+  if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
     remove(path);
     return 7;
   }
-  if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
+  if (scaled == NULL || scaled->kind != GVM_VALUE_FLOAT || scaled->as.float_value != 7.0) {
     remove(path);
     return 8;
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
     remove(path);
     return 9;
   }
-  remove(path);
-  if (strcmp(output, "42\n7\n5\n3.5\n15\n11\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return 10;
+  }
+  remove(path);
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n11\n14\n") != 0) {
+    return 11;
+  }
+  return 0;
+}
+
+int test_gion_string_concatenation(void) {
+  const char *source =
+      "label = \"debut\" + \"fin\"\n"
+      "full = label + \"!\"\n"
+      "print(label)\n"
+      "print(full)\n";
+  const char *path = "gion_string_concatenation.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *label;
+  const graphion_runtime_value *full;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  label = graphion_runtime_scope_find(&scope, "label");
+  full = graphion_runtime_scope_find(&scope, "full");
+  if (label == NULL || label->kind != GVM_VALUE_STRING || strcmp(label->as.string_value, "debutfin") != 0) {
+    remove(path);
+    return 3;
+  }
+  if (full == NULL || full->kind != GVM_VALUE_STRING || strcmp(full->as.string_value, "debutfin!") != 0) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "debutfin\ndebutfin!\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_compound_assignments(void) {
+  const char *source =
+      "count = 10\n"
+      "count += 5\n"
+      "count -= 3\n"
+      "count *= 4\n"
+      "count /= 3\n"
+      "text = \"debut\"\n"
+      "text += \"fin\"\n"
+      "print(count)\n"
+      "print(text)\n";
+  const char *path = "gion_compound_assignments.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *count;
+  const graphion_runtime_value *text;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  count = graphion_runtime_scope_find(&scope, "count");
+  text = graphion_runtime_scope_find(&scope, "text");
+  if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 16.0) {
+    remove(path);
+    return 3;
+  }
+  if (text == NULL || text->kind != GVM_VALUE_STRING || strcmp(text->as.string_value, "debutfin") != 0) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "16\ndebutfin\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_compound_assignment_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    const char *message;
+  } cases[] = {
+      {"count += 1\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
+      {"count = 1\ncount +=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount -=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount *=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount /=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
+      {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
   }
   return 0;
 }
@@ -715,6 +871,10 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
       "f = 2 * 3 / 4\n"
       "g = -7 + 2\n"
       "h = 2 + -3 * 4\n"
+      "i = (2 + 3) * 4\n"
+      "j = 2 * (3 + 4)\n"
+      "k = (20 - 5) - 3\n"
+      "l = 20 - (5 - 3)\n"
       "print(a)\n"
       "print(b)\n"
       "print(c)\n"
@@ -722,7 +882,11 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
       "print(e)\n"
       "print(f)\n"
       "print(g)\n"
-      "print(h)\n";
+      "print(h)\n"
+      "print(i)\n"
+      "print(j)\n"
+      "print(k)\n"
+      "print(l)\n";
   const char *path = "gion_arithmetic_precedence.txt";
   char output[128];
   graphion_runtime_scope scope;
@@ -752,7 +916,7 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
     return 3;
   }
   remove(path);
-  if (strcmp(output, "12\n2\n26\n9\n4\n1.5\n-5\n-10\n") != 0) {
+  if (strcmp(output, "12\n2\n26\n9\n4\n1.5\n-5\n-10\n20\n14\n12\n18\n") != 0) {
     return 4;
   }
   return 0;
@@ -761,12 +925,13 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
 int test_gion_arithmetic_runtime_errors(void) {
   static const struct {
     const char *source;
+    int expected_rc;
     const char *message;
   } cases[] = {
-      {"value = 1 / 0\n", "division by zero"},
-      {"value = \"x\" + 1\n", "arithmetic requires numeric operands"},
-      {"value = true + 1\n", "arithmetic requires numeric operands"},
-      {"print(\"x\" / 2)\n", "arithmetic requires numeric operands"},
+      {"value = 1 / 0\n", GINT_ERR_RUN, "division by zero"},
+      {"value = \"x\" + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"value = true + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"print(\"x\" / 2)\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
   };
   size_t i;
 
@@ -777,7 +942,7 @@ int test_gion_arithmetic_runtime_errors(void) {
 
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
-    if (rc != GINT_ERR_RUN) {
+    if (rc != cases[i].expected_rc) {
       return (int)(1 + i * 10U);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
@@ -797,7 +962,14 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = 1 / / 2\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 1 ** 2\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 1 + 2 3\n", GINT_ERR_PARSE, "unsupported assignment expression"},
+      {"value = 1\nvalue +=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value + 2\n", GINT_ERR_PARSE, "expected '='"},
+      {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
+      {"value = 1 + (2 * 3\n", GINT_ERR_PARSE, "expected ')' after expression"},
+      {"value = ()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print(1 + )\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"print((1 + 2)\n", GINT_ERR_PARSE, "expected ')' after print argument"},
+      {"print(()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print(1 + 2\n", GINT_ERR_PARSE, "expected ')' after print argument"},
       {"print(1 + 2 3)\n", GINT_ERR_PARSE, "expected ')' after print argument"},
   };

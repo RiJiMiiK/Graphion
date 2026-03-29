@@ -60,21 +60,27 @@ static void vm_value_set_none(graphion_vm_value *value) {
   value->kind = GVM_VALUE_NONE;
 }
 
-static void copy_string_storage(char *dst, size_t capacity, const char *src) {
+static char *runtime_strdup_text(const char *src) {
   size_t len;
-  if (dst == NULL || capacity == 0U) {
-    return;
-  }
+  char *copy;
   if (src == NULL) {
-    dst[0] = '\0';
-    return;
+    return NULL;
   }
   len = strlen(src);
-  if (len >= capacity) {
-    len = capacity - 1U;
+  copy = (char *)malloc(len + 1U);
+  if (copy == NULL) {
+    return NULL;
   }
-  memcpy(dst, src, len);
-  dst[len] = '\0';
+  memcpy(copy, src, len + 1U);
+  return copy;
+}
+
+static void runtime_free_string(char **text) {
+  if (text == NULL || *text == NULL) {
+    return;
+  }
+  free(*text);
+  *text = NULL;
 }
 
 static void skip_spaces(const char **cursor) {
@@ -214,8 +220,8 @@ static int parse_string_literal(graphion_runtime_program *program,
                                 graphion_vm_value *value_out,
                                 unsigned int line,
                                 graphion_runtime_diagnostic *diagnostic) {
-  char *dst;
   size_t len = 0U;
+  char *dst;
   if (program == NULL || cursor == NULL || *cursor == NULL || value_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
@@ -226,22 +232,24 @@ static int parse_string_literal(graphion_runtime_program *program,
   if (program->const_count >= GRAPHION_RUNTIME_CONST_MAX) {
     return fail(diagnostic, line, 1U, "too many string literals", GINT_ERR_CAPACITY);
   }
-  dst = program->string_storage[program->const_count];
   while (**cursor != '\0' && **cursor != '"') {
     if (**cursor == '\n') {
       return fail(diagnostic, line, 1U, "unterminated string literal", GINT_ERR_PARSE);
     }
-    if (len + 1U >= GRAPHION_RUNTIME_NAME_MAX * 4U) {
-      return fail(diagnostic, line, 1U, "string literal too long", GINT_ERR_CAPACITY);
-    }
-    dst[len++] = **cursor;
+    len++;
     (*cursor)++;
   }
   if (**cursor != '"') {
     return fail(diagnostic, line, 1U, "unterminated string literal", GINT_ERR_PARSE);
   }
   (*cursor)++;
+  dst = (char *)malloc(len + 1U);
+  if (dst == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  memcpy(dst, *cursor - len - 1U, len);
   dst[len] = '\0';
+  program->owned_const_strings[program->const_count] = dst;
   value_out->kind = GVM_VALUE_STRING;
   value_out->as.string_value = dst;
   return GINT_OK;
@@ -407,13 +415,36 @@ static int ensure_expr_in_reg(graphion_runtime_program *program,
   return GINT_OK;
 }
 
+static int parse_expression(const char **cursor,
+                            graphion_runtime_program *program,
+                            parsed_expr_result *result_out,
+                            uint8_t base_reg,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic);
+
 static int parse_factor(const char **cursor,
                         graphion_runtime_program *program,
                         parsed_expr_result *result_out,
+                        uint8_t base_reg,
                         unsigned int line,
                         graphion_runtime_diagnostic *diagnostic) {
   parsed_operand operand;
-  int rc = parse_operand(cursor, program, &operand, line, diagnostic);
+  int rc;
+  skip_spaces(cursor);
+  if (**cursor == '(') {
+    (*cursor)++;
+    rc = parse_expression(cursor, program, result_out, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    return GINT_OK;
+  }
+  rc = parse_operand(cursor, program, &operand, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -427,12 +458,13 @@ static int parse_factor(const char **cursor,
 static int parse_term(const char **cursor,
                       graphion_runtime_program *program,
                       parsed_expr_result *result_out,
-                      uint8_t target_reg,
-                      uint8_t scratch_reg,
+                      uint8_t base_reg,
                       unsigned int line,
                       graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
-  int rc = parse_factor(cursor, program, &lhs, line, diagnostic);
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc = parse_factor(cursor, program, &lhs, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -445,7 +477,7 @@ static int parse_term(const char **cursor,
       break;
     }
     (*cursor)++;
-    rc = parse_factor(cursor, program, &rhs, line, diagnostic);
+    rc = parse_factor(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -479,10 +511,13 @@ static int parse_term(const char **cursor,
 static int parse_expression(const char **cursor,
                             graphion_runtime_program *program,
                             parsed_expr_result *result_out,
+                            uint8_t base_reg,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
-  int rc = parse_term(cursor, program, &lhs, 0U, 1U, line, diagnostic);
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc = parse_term(cursor, program, &lhs, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -495,22 +530,22 @@ static int parse_expression(const char **cursor,
       break;
     }
     (*cursor)++;
-    rc = parse_term(cursor, program, &rhs, 1U, 2U, line, diagnostic);
+    rc = parse_term(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = ensure_expr_in_reg(program, &lhs, 0U, line, diagnostic);
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = ensure_expr_in_reg(program, &rhs, 1U, line, diagnostic);
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
     rc = program_emit(program,
                       op == '+' ? GVM_OP_ADD : GVM_OP_SUB,
-                      0U,
-                      1U,
+                      target_reg,
+                      scratch_reg,
                       0,
                       line,
                       diagnostic);
@@ -518,7 +553,7 @@ static int parse_expression(const char **cursor,
       return rc;
     }
     lhs.kind = EXPR_RESULT_REG;
-    lhs.reg_index = 0U;
+    lhs.reg_index = target_reg;
     lhs.const_index = 0U;
     lhs.global_index = 0U;
   }
@@ -534,6 +569,7 @@ static int parse_assignment(const char *line_text,
   char target[GRAPHION_RUNTIME_NAME_MAX];
   parsed_expr_result expr;
   size_t target_index;
+  char assign_op = '=';
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -544,11 +580,27 @@ static int parse_assignment(const char *line_text,
     return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
   }
   skip_spaces(&cursor);
-  if (*cursor != '=') {
+  if ((*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/') && cursor[1] == '=') {
+    assign_op = *cursor;
+    cursor += 2;
+  } else if (*cursor == '=') {
+    cursor++;
+  } else {
     return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
   }
-  cursor++;
-  rc = parse_expression(&cursor, program, &expr, line, diagnostic);
+  if (assign_op == '=') {
+    rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  } else {
+    int existing = find_global_index_in_names(program->global_names, program->global_count, target);
+    if (existing < 0) {
+      return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+    }
+    target_index = (size_t)existing;
+  }
+  rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -556,9 +608,28 @@ static int parse_assignment(const char *line_text,
   if (*cursor != '\0') {
     return fail(diagnostic, line, 1U, "unsupported assignment expression", GINT_ERR_PARSE);
   }
-  rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
-  if (rc != GINT_OK) {
-    return rc;
+  if (assign_op != '=') {
+    rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &expr, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program,
+                      assign_op == '+' ? GVM_OP_ADD :
+                      assign_op == '-' ? GVM_OP_SUB :
+                      assign_op == '*' ? GVM_OP_MUL : GVM_OP_DIV,
+                      0U,
+                      1U,
+                      0,
+                      line,
+                      diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
   }
   if (expr.kind == EXPR_RESULT_LITERAL) {
     return program_emit(
@@ -587,7 +658,7 @@ static int parse_print(const char *line_text,
     return fail(diagnostic, line, 1U, "expected '(' after print", GINT_ERR_PARSE);
   }
   cursor++;
-  rc = parse_expression(&cursor, program, &expr, line, diagnostic);
+  rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -653,13 +724,22 @@ void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
   scope->global_count = 0U;
   for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
     scope->global_names[i][0] = '\0';
-    scope->string_storage[i][0] = '\0';
+    scope->owned_string_values[i] = NULL;
     vm_value_set_none(&scope->globals[i]);
   }
 }
 
 void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
-  graphion_runtime_scope_init(scope);
+  size_t i;
+  if (scope == NULL) {
+    return;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
+    runtime_free_string(&scope->owned_string_values[i]);
+    scope->global_names[i][0] = '\0';
+    vm_value_set_none(&scope->globals[i]);
+  }
+  scope->global_count = 0U;
 }
 
 const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime_scope *scope,
@@ -683,13 +763,28 @@ void graphion_runtime_program_init(graphion_runtime_program *program) {
     program->global_names[i][0] = '\0';
   }
   for (i = 0U; i < GRAPHION_RUNTIME_CONST_MAX; ++i) {
+    program->owned_const_strings[i] = NULL;
     vm_value_set_none(&program->const_pool[i]);
   }
   memset(program->program, 0, sizeof(program->program));
 }
 
 void graphion_runtime_program_dispose(graphion_runtime_program *program) {
-  graphion_runtime_program_init(program);
+  size_t i;
+  if (program == NULL) {
+    return;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_CONST_MAX; ++i) {
+    runtime_free_string(&program->owned_const_strings[i]);
+    vm_value_set_none(&program->const_pool[i]);
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
+    program->global_names[i][0] = '\0';
+  }
+  program->global_count = 0U;
+  program->const_count = 0U;
+  program->program_len = 0U;
+  memset(program->program, 0, sizeof(program->program));
 }
 
 int graphion_prepare_source(const char *source,
@@ -754,22 +849,6 @@ static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_
   scope->global_count = program->global_count;
 }
 
-static void scope_stabilize_string_globals(graphion_runtime_scope *scope) {
-  size_t i;
-  if (scope == NULL) {
-    return;
-  }
-  for (i = 0U; i < scope->global_count; ++i) {
-    if (scope->globals[i].kind != GVM_VALUE_STRING) {
-      continue;
-    }
-    copy_string_storage(scope->string_storage[i],
-                        sizeof(scope->string_storage[i]),
-                        scope->globals[i].as.string_value);
-    scope->globals[i].as.string_value = scope->string_storage[i];
-  }
-}
-
 int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *program,
                                                 graphion_runtime_scope *scope,
                                                 graphion_runtime_diagnostic *diagnostic,
@@ -785,15 +864,18 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
   graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);
+  graphion_vm_bind_global_string_owners(&vm, scope->owned_string_values, scope->global_count);
   if (output != NULL) {
     graphion_vm_bind_output_sink(&vm, output);
   }
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
     return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_PARSE);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
     if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
       return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
     }
@@ -802,7 +884,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     }
     return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }
-  scope_stabilize_string_globals(scope);
+  graphion_vm_dispose(&vm);
   return GINT_OK;
 }
 

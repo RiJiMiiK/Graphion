@@ -4,6 +4,7 @@
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define TEST_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
@@ -311,6 +312,57 @@ int test_vm_divide_by_zero_fails(void) {
   int rc = run_vm_program(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != GVM_ERR_DIVIDE_BY_ZERO) {
     return 1;
+  }
+  return 0;
+}
+
+int test_vm_string_addition_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[3];
+  graphion_vm_value globals[2];
+  char *global_string_owners[2] = {NULL, NULL};
+  const graphion_insn program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 1},
+      {GVM_OP_ADD, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 2},
+      {GVM_OP_ADD, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_string(&const_pool[0], "debut");
+  test_set_value_string(&const_pool[1], "fin");
+  test_set_value_string(&const_pool[2], "!");
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[1].kind = GVM_VALUE_NONE;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 3U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+  graphion_vm_bind_global_string_owners(&vm, global_string_owners, 2U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_STRING || strcmp(globals[0].as.string_value, "debutfin") != 0) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_STRING || strcmp(globals[1].as.string_value, "debutfin!") != 0) {
+    return 4;
+  }
+  if (global_string_owners[0] != NULL) {
+    free(global_string_owners[0]);
+  }
+  if (global_string_owners[1] != NULL) {
+    free(global_string_owners[1]);
   }
   return 0;
 }

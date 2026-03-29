@@ -114,6 +114,7 @@ typedef struct {
 
 typedef struct {
   graphion_vm_value regs[16];
+  char *owned_reg_strings[16];
   const graphion_insn *program;
   size_t program_len;
   size_t pc;
@@ -134,6 +135,7 @@ typedef struct {
   const graphion_vm_value *const_pool;
   size_t const_count;
   graphion_vm_value *globals;
+  char **global_string_owners;
   size_t global_count;
   graphion_output_sink output;
   size_t global_print_const_lens[512];
@@ -151,6 +153,7 @@ typedef struct {
 } graphion_vm;
 
 void graphion_vm_init(graphion_vm *vm);
+void graphion_vm_dispose(graphion_vm *vm);
 void graphion_vm_reset_execution(graphion_vm *vm);
 void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled);
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len);
@@ -163,6 +166,7 @@ void graphion_output_sink_from_file(graphion_output_sink *sink, FILE *output);
 void graphion_output_sink_from_counter(graphion_output_sink *sink, uint64_t *byte_count);
 void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_pool, size_t const_count);
 void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_t global_count);
+void graphion_vm_bind_global_string_owners(graphion_vm *vm, char **owners, size_t owner_count);
 void graphion_vm_bind_output_sink(graphion_vm *vm, const graphion_output_sink *output);
 void graphion_vm_bind_output(graphion_vm *vm, FILE *output);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);

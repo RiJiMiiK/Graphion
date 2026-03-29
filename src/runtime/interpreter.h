@@ -24,7 +24,7 @@ typedef graphion_vm_value graphion_runtime_value;
 
 typedef struct {
   char global_names[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX];
-  char string_storage[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX * 4U];
+  char *owned_string_values[GRAPHION_RUNTIME_BINDING_MAX];
   graphion_runtime_value globals[GRAPHION_RUNTIME_BINDING_MAX];
   size_t global_count;
 } graphion_runtime_scope;
@@ -32,7 +32,7 @@ typedef struct {
 typedef struct {
   char global_names[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX];
   size_t global_count;
-  char string_storage[GRAPHION_RUNTIME_CONST_MAX][GRAPHION_RUNTIME_NAME_MAX * 4U];
+  char *owned_const_strings[GRAPHION_RUNTIME_CONST_MAX];
   graphion_vm_value const_pool[GRAPHION_RUNTIME_CONST_MAX];
   size_t const_count;
   graphion_insn program[GRAPHION_RUNTIME_PROGRAM_MAX];

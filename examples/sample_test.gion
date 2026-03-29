@@ -1,39 +1,34 @@
 count = 42
-ratio = 3.5
+ratio = 3.5 + 0.5
 name = "graphion"
 ready = true
 copy = count
 
+sum = 40 + 2
+mixed = 1 + 2 * 3
+grouped = (1 + 2) * 3
+delta = count - 5
+half = 7 / 2
+scaled = half * 2
+message = "debut" + "fin"
 
+count += 1
+count -= 3
+count *= 2
+count /= 4
+message += "!"
 
 print(count)
 print(ratio)
 print(name)
 print(ready)
 print(copy)
-
-graph G:
-  1 -> 2 [weight=7, color="red", active=true]
-  2 -> 3 [rank=2]
-
-hypergraph H:
-  [1, 2, 3] [weight=2.5, label="core"]
-  [2, 4] [enabled=false]
-
-print(G)
-print(H)
-print(G.node[1])
-print(G.edge[0])
-print(H.vertex[2])
-print(H.hyperedge[0])
-print(bfs(G, 1))
-print(bfs_level(G, 1))
-print(incident_count(H, 2))
-print(incident_sum(H, 2))
-
-def echo(value):
-  print(value)
-  return value
-
-answer = echo(7)
-print(answer)
+print(sum)
+print(mixed)
+print(grouped)
+print(delta)
+print(half)
+print(scaled)
+print(message)
+print(3 + 4 * 2)
+print((3 + 4) * 2)
