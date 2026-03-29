@@ -4,6 +4,7 @@
 
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -412,6 +413,70 @@ static int vm_write_value_sink(const graphion_output_sink *output, const graphio
   }
 }
 
+static int vm_write_value_sink_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
+  char buffer[64];
+  int written;
+  size_t len;
+  if (output == NULL || output->write == NULL) {
+    return GVM_ERR_OUTPUT_UNBOUND;
+  }
+  if (value == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (vm_sink_is_counter(output)) {
+    if (value->kind == GVM_VALUE_STRING) {
+      len = value->as.string_value != NULL ? strlen(value->as.string_value) : 0U;
+      *((uint64_t *)output->ctx) += (uint64_t)len;
+      return GVM_OK;
+    }
+    switch (value->kind) {
+      case GVM_VALUE_NONE:
+        *((uint64_t *)output->ctx) += 4U;
+        return GVM_OK;
+      case GVM_VALUE_INT:
+        len = vm_write_i64_text(buffer, value->as.int_value);
+        *((uint64_t *)output->ctx) += (uint64_t)len;
+        return GVM_OK;
+      case GVM_VALUE_FLOAT:
+        written = snprintf(buffer, sizeof(buffer), "%g", value->as.float_value);
+        if (written < 0 || (size_t)written >= sizeof(buffer)) {
+          return GVM_ERR_OUTPUT_UNBOUND;
+        }
+        *((uint64_t *)output->ctx) += (uint64_t)written;
+        return GVM_OK;
+      case GVM_VALUE_BOOL:
+        *((uint64_t *)output->ctx) += value->as.bool_value != 0 ? 4U : 5U;
+        return GVM_OK;
+      default:
+        return GVM_ERR_TYPE_MISMATCH;
+    }
+  }
+  switch (value->kind) {
+    case GVM_VALUE_NONE:
+      return vm_write_bytes_sink(output, "none", 4U);
+    case GVM_VALUE_INT:
+      len = vm_write_i64_text(buffer, value->as.int_value);
+      return vm_write_bytes_sink(output, buffer, len);
+    case GVM_VALUE_FLOAT:
+      written = snprintf(buffer, sizeof(buffer), "%g", value->as.float_value);
+      if (written < 0 || (size_t)written >= sizeof(buffer)) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      return vm_write_bytes_sink(output, buffer, (size_t)written);
+    case GVM_VALUE_BOOL:
+      return value->as.bool_value != 0 ? vm_write_bytes_sink(output, "true", 4U)
+                                       : vm_write_bytes_sink(output, "false", 5U);
+    case GVM_VALUE_STRING:
+      if (value->as.string_value == NULL) {
+        return GVM_OK;
+      }
+      len = strlen(value->as.string_value);
+      return vm_write_bytes_sink(output, value->as.string_value, len);
+    default:
+      return GVM_ERR_TYPE_MISMATCH;
+  }
+}
+
 static int vm_reg_get_int(const graphion_vm *vm, uint8_t reg, int64_t *out_value) {
   if (vm == NULL || !is_valid_reg(reg)) {
     return 0;
@@ -610,6 +675,9 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_SUB:
       case GVM_OP_MUL:
       case GVM_OP_DIV:
+      case GVM_OP_MOD:
+      case GVM_OP_POW:
+      case GVM_OP_FLOOR_DIV:
         return 0;
       case GVM_OP_MOV:
       case GVM_OP_LOAD_CONST:
@@ -760,6 +828,9 @@ static int is_value_move_fastpath_candidate(const graphion_insn *program, size_t
       case GVM_OP_SUB:
       case GVM_OP_MUL:
       case GVM_OP_DIV:
+      case GVM_OP_MOD:
+      case GVM_OP_POW:
+      case GVM_OP_FLOOR_DIV:
         return 0;
       case GVM_OP_MOV:
         has_value_ops = 1;
@@ -914,6 +985,9 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_SUB:
       case GVM_OP_MUL:
       case GVM_OP_DIV:
+      case GVM_OP_MOD:
+      case GVM_OP_POW:
+      case GVM_OP_FLOOR_DIV:
         if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
           return 0;
         }
@@ -921,7 +995,8 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
           return 0;
         }
         reg_kinds[in.a] =
-            in.op == GVM_OP_DIV || reg_kinds[in.a] == GVM_VALUE_FLOAT || reg_kinds[in.b] == GVM_VALUE_FLOAT
+            in.op == GVM_OP_DIV || in.op == GVM_OP_MOD || in.op == GVM_OP_POW || in.op == GVM_OP_FLOOR_DIV ||
+                reg_kinds[in.a] == GVM_VALUE_FLOAT || reg_kinds[in.b] == GVM_VALUE_FLOAT
                 ? GVM_VALUE_FLOAT
                 : GVM_VALUE_INT;
         break;
@@ -2602,6 +2677,40 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
     vm_value_set_float(&vm->regs[in->a], lhs_f / rhs_f);
     return GVM_OK;
   }
+  if (opcode == GVM_OP_FLOOR_DIV) {
+    if ((rhs_is_float && rhs_f == 0.0) || (!rhs_is_float && rhs_i == 0)) {
+      return GVM_ERR_DIVIDE_BY_ZERO;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    if (!lhs_is_float && !rhs_is_float) {
+      int64_t q = lhs_i / rhs_i;
+      int64_t r = lhs_i % rhs_i;
+      if (r != 0 && ((lhs_i < 0) != (rhs_i < 0))) {
+        q -= 1;
+      }
+      vm_value_set_int(&vm->regs[in->a], q);
+    } else {
+      vm_value_set_float(&vm->regs[in->a], floor(lhs_f / rhs_f));
+    }
+    return GVM_OK;
+  }
+  if (opcode == GVM_OP_MOD) {
+    if ((rhs_is_float && rhs_f == 0.0) || (!rhs_is_float && rhs_i == 0)) {
+      return GVM_ERR_DIVIDE_BY_ZERO;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    if (!lhs_is_float && !rhs_is_float) {
+      vm_value_set_int(&vm->regs[in->a], lhs_i % rhs_i);
+    } else {
+      vm_value_set_float(&vm->regs[in->a], fmod(lhs_f, rhs_f));
+    }
+    return GVM_OK;
+  }
+  if (opcode == GVM_OP_POW) {
+    vm_free_owned_reg_string(vm, in->a);
+    vm_value_set_float(&vm->regs[in->a], pow(lhs_f, rhs_f));
+    return GVM_OK;
+  }
 
   if (!lhs_is_float && !rhs_is_float) {
     switch (opcode) {
@@ -2654,6 +2763,43 @@ static int op_mul(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_div(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_DIV);
+}
+
+static int op_mod(graphion_vm *vm, const graphion_insn *in) {
+  return op_numeric_binary(vm, in, GVM_OP_MOD);
+}
+
+static int op_pow(graphion_vm *vm, const graphion_insn *in) {
+  return op_numeric_binary(vm, in, GVM_OP_POW);
+}
+
+static int op_floor_div(graphion_vm *vm, const graphion_insn *in) {
+  return op_numeric_binary(vm, in, GVM_OP_FLOOR_DIV);
+}
+
+static int op_abs(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  double value_f;
+  int is_float;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  if (is_float) {
+    vm_value_set_float(&vm->regs[in->a], fabs(value_f));
+    return GVM_OK;
+  }
+  if (value_i == INT64_MIN) {
+    vm_value_set_float(&vm->regs[in->a], fabs((double)value_i));
+    return GVM_OK;
+  }
+  vm_value_set_int(&vm->regs[in->a], value_i < 0 ? -value_i : value_i);
+  return GVM_OK;
 }
 
 static int op_mov(graphion_vm *vm, const graphion_insn *in) {
@@ -2796,6 +2942,38 @@ static int op_print_reg(graphion_vm *vm, const graphion_insn *in) {
     return GVM_ERR_INVALID_REG;
   }
   return vm_write_value_sink(&vm->output, &vm->regs[in->a]);
+}
+
+static int op_print_const_part(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->const_pool == NULL) {
+    return GVM_ERR_CONST_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->const_count) {
+    return GVM_ERR_INVALID_CONST_INDEX;
+  }
+  return vm_write_value_sink_inline(&vm->output, &vm->const_pool[(size_t)in->imm]);
+}
+
+static int op_print_global_part(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  return vm_write_value_sink_inline(&vm->output, &vm->globals[(size_t)in->imm]);
+}
+
+static int op_print_reg_part(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  return vm_write_value_sink_inline(&vm->output, &vm->regs[in->a]);
+}
+
+static int op_print_newline(graphion_vm *vm, const graphion_insn *in) {
+  (void)in;
+  return vm_write_bytes_sink(&vm->output, "\n", 1U);
 }
 
 static int op_bfs_levels(graphion_vm *vm, const graphion_insn *in) {
@@ -3016,6 +3194,18 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_DIV:
         rc = op_div(vm, &in);
         break;
+      case GVM_OP_MOD:
+        rc = op_mod(vm, &in);
+        break;
+      case GVM_OP_POW:
+        rc = op_pow(vm, &in);
+        break;
+      case GVM_OP_FLOOR_DIV:
+        rc = op_floor_div(vm, &in);
+        break;
+      case GVM_OP_ABS:
+        rc = op_abs(vm, &in);
+        break;
       case GVM_OP_MOV:
         rc = op_mov(vm, &in);
         break;
@@ -3042,6 +3232,18 @@ static int run_dispatch_switch(graphion_vm *vm) {
         break;
       case GVM_OP_PRINT_REG:
         rc = op_print_reg(vm, &in);
+        break;
+      case GVM_OP_PRINT_CONST_PART:
+        rc = op_print_const_part(vm, &in);
+        break;
+      case GVM_OP_PRINT_GLOBAL_PART:
+        rc = op_print_global_part(vm, &in);
+        break;
+      case GVM_OP_PRINT_REG_PART:
+        rc = op_print_reg_part(vm, &in);
+        break;
+      case GVM_OP_PRINT_NEWLINE:
+        rc = op_print_newline(vm, &in);
         break;
       case GVM_OP_FRONTIER_CLEAR:
         rc = op_frontier_clear(vm, &in);
@@ -3121,6 +3323,10 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_SUB] = op_sub,
       [GVM_OP_MUL] = op_mul,
       [GVM_OP_DIV] = op_div,
+      [GVM_OP_MOD] = op_mod,
+      [GVM_OP_POW] = op_pow,
+      [GVM_OP_FLOOR_DIV] = op_floor_div,
+      [GVM_OP_ABS] = op_abs,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
       [GVM_OP_LOAD_GLOBAL] = op_load_global,
@@ -3130,6 +3336,10 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_PRINT_CONST] = op_print_const,
       [GVM_OP_PRINT_GLOBAL] = op_print_global,
       [GVM_OP_PRINT_REG] = op_print_reg,
+      [GVM_OP_PRINT_CONST_PART] = op_print_const_part,
+      [GVM_OP_PRINT_GLOBAL_PART] = op_print_global_part,
+      [GVM_OP_PRINT_REG_PART] = op_print_reg_part,
+      [GVM_OP_PRINT_NEWLINE] = op_print_newline,
       [GVM_OP_FRONTIER_CLEAR] = op_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = op_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = op_frontier_filter_lt_imm,
@@ -3181,6 +3391,10 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_SUB] = &&L_sub,
       [GVM_OP_MUL] = &&L_mul,
       [GVM_OP_DIV] = &&L_div,
+      [GVM_OP_MOD] = &&L_mod,
+      [GVM_OP_POW] = &&L_pow,
+      [GVM_OP_FLOOR_DIV] = &&L_floor_div,
+      [GVM_OP_ABS] = &&L_abs,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
       [GVM_OP_LOAD_GLOBAL] = &&L_load_global,
@@ -3190,6 +3404,10 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_PRINT_CONST] = &&L_print_const,
       [GVM_OP_PRINT_GLOBAL] = &&L_print_global,
       [GVM_OP_PRINT_REG] = &&L_print_reg,
+      [GVM_OP_PRINT_CONST_PART] = &&L_print_const_part,
+      [GVM_OP_PRINT_GLOBAL_PART] = &&L_print_global_part,
+      [GVM_OP_PRINT_REG_PART] = &&L_print_reg_part,
+      [GVM_OP_PRINT_NEWLINE] = &&L_print_newline,
       [GVM_OP_FRONTIER_CLEAR] = &&L_frontier_clear,
       [GVM_OP_FRONTIER_PUSH] = &&L_frontier_push,
       [GVM_OP_FRONTIER_FILTER_LT_IMM] = &&L_frontier_filter_lt_imm,
@@ -3260,6 +3478,30 @@ L_div:
       return rc;
     }
     continue;
+L_mod:
+    rc = op_mod(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_pow:
+    rc = op_pow(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_floor_div:
+    rc = op_floor_div(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_abs:
+    rc = op_abs(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
 L_mov:
     rc = op_mov(vm, &in);
     if (rc != 0) {
@@ -3310,6 +3552,30 @@ L_print_global:
     continue;
 L_print_reg:
     rc = op_print_reg(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_print_const_part:
+    rc = op_print_const_part(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_print_global_part:
+    rc = op_print_global_part(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_print_reg_part:
+    rc = op_print_reg_part(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_print_newline:
+    rc = op_print_newline(vm, &in);
     if (rc != 0) {
       return rc;
     }

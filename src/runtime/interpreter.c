@@ -98,7 +98,8 @@ static int is_ident_char(char ch) {
 }
 
 static int is_reserved_name(const char *name) {
-  return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0;
+  return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
+         strcmp(name, "abs") == 0;
 }
 
 static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
@@ -349,7 +350,7 @@ static int parse_operand(const char **cursor,
     } else {
       index = find_global_index_in_names(program->global_names, program->global_count, name);
       if (index < 0) {
-        return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+        return fail(diagnostic, line, 1U, "unknown operand", GINT_ERR_UNKNOWN_OPERAND);
       }
       operand_out->kind = OPERAND_GLOBAL;
       operand_out->global_index = (size_t)index;
@@ -428,12 +429,41 @@ static int parse_factor(const char **cursor,
                         uint8_t base_reg,
                         unsigned int line,
                         graphion_runtime_diagnostic *diagnostic) {
-  parsed_operand operand;
+  parsed_expr_result lhs;
   int rc;
   skip_spaces(cursor);
-  if (**cursor == '(') {
+  if (strncmp(*cursor, "abs", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 3;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after abs", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after abs argument", GINT_ERR_PARSE);
+    }
     (*cursor)++;
-    rc = parse_expression(cursor, program, result_out, base_reg, line, diagnostic);
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_ABS, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (**cursor == '(') {
+    (*cursor)++;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -442,16 +472,45 @@ static int parse_factor(const char **cursor,
       return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
     }
     (*cursor)++;
-    return GINT_OK;
+  } else {
+    parsed_operand operand;
+    rc = parse_operand(cursor, program, &operand, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = operand.kind == OPERAND_LITERAL ? EXPR_RESULT_LITERAL : EXPR_RESULT_GLOBAL;
+    lhs.const_index = operand.const_index;
+    lhs.global_index = operand.global_index;
+    lhs.reg_index = 0U;
   }
-  rc = parse_operand(cursor, program, &operand, line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
+  skip_spaces(cursor);
+  if ((*cursor)[0] == '*' && (*cursor)[1] == '*') {
+    parsed_expr_result rhs;
+    const uint8_t target_reg = base_reg;
+    const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+    *cursor += 2;
+    rc = parse_factor(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_POW, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
   }
-  result_out->kind = operand.kind == OPERAND_LITERAL ? EXPR_RESULT_LITERAL : EXPR_RESULT_GLOBAL;
-  result_out->const_index = operand.const_index;
-  result_out->global_index = operand.global_index;
-  result_out->reg_index = 0U;
+  *result_out = lhs;
   return GINT_OK;
 }
 
@@ -470,13 +529,16 @@ static int parse_term(const char **cursor,
   }
   for (;;) {
     char op;
+    int floor_div = 0;
     parsed_expr_result rhs;
     skip_spaces(cursor);
     op = **cursor;
-    if (op != '*' && op != '/') {
+    if (op == '/' && (*cursor)[1] == '/') {
+      floor_div = 1;
+    } else if (op != '*' && op != '/' && op != '%') {
       break;
     }
-    (*cursor)++;
+    *cursor += floor_div ? 2 : 1;
     rc = parse_factor(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -490,7 +552,9 @@ static int parse_term(const char **cursor,
       return rc;
     }
     rc = program_emit(program,
-                      op == '*' ? GVM_OP_MUL : GVM_OP_DIV,
+                      op == '*' ? GVM_OP_MUL :
+                      floor_div ? GVM_OP_FLOOR_DIV :
+                      op == '/' ? GVM_OP_DIV : GVM_OP_MOD,
                       target_reg,
                       scratch_reg,
                       0,
@@ -570,6 +634,8 @@ static int parse_assignment(const char *line_text,
   parsed_expr_result expr;
   size_t target_index;
   char assign_op = '=';
+  int power_assign = 0;
+  int floor_div_assign = 0;
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -580,7 +646,16 @@ static int parse_assignment(const char *line_text,
     return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
   }
   skip_spaces(&cursor);
-  if ((*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/') && cursor[1] == '=') {
+  if (cursor[0] == '*' && cursor[1] == '*' && cursor[2] == '=') {
+    assign_op = '*';
+    power_assign = 1;
+    cursor += 3;
+  } else if (cursor[0] == '/' && cursor[1] == '/' && cursor[2] == '=') {
+    assign_op = '/';
+    floor_div_assign = 1;
+    cursor += 3;
+  } else if ((*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/' || *cursor == '%') &&
+      cursor[1] == '=') {
     assign_op = *cursor;
     cursor += 2;
   } else if (*cursor == '=') {
@@ -618,9 +693,12 @@ static int parse_assignment(const char *line_text,
       return rc;
     }
     rc = program_emit(program,
+                      power_assign ? GVM_OP_POW :
+                      floor_div_assign ? GVM_OP_FLOOR_DIV :
                       assign_op == '+' ? GVM_OP_ADD :
                       assign_op == '-' ? GVM_OP_SUB :
-                      assign_op == '*' ? GVM_OP_MUL : GVM_OP_DIV,
+                      assign_op == '*' ? GVM_OP_MUL :
+                      assign_op == '/' ? GVM_OP_DIV : GVM_OP_MOD,
                       0U,
                       1U,
                       0,
@@ -642,6 +720,7 @@ static int parse_assignment(const char *line_text,
 }
 
 static int parse_print(const char *line_text,
+                       const graphion_runtime_scope *scope,
                        graphion_runtime_program *program,
                        unsigned int line,
                        graphion_runtime_diagnostic *diagnostic) {
@@ -658,6 +737,183 @@ static int parse_print(const char *line_text,
     return fail(diagnostic, line, 1U, "expected '(' after print", GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *scan = cursor;
+    int depth = 0;
+    int in_string = 0;
+    int has_concat = 0;
+    int has_stringish = 0;
+    const char *segment_start = cursor;
+    while (*scan != '\0') {
+      if (in_string) {
+        if (*scan == '"') {
+          in_string = 0;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == '"') {
+        in_string = 1;
+        scan++;
+        continue;
+      }
+      if (*scan == '(') {
+        depth++;
+        scan++;
+        continue;
+      }
+      if (*scan == ')') {
+        if (depth == 0) {
+          break;
+        }
+        depth--;
+        scan++;
+        continue;
+      }
+      if (depth == 0 && *scan == '+') {
+        const char *trim_start = segment_start;
+        const char *trim_end = scan;
+        while (trim_start < trim_end && (*trim_start == ' ' || *trim_start == '\t' || *trim_start == '\r')) {
+          trim_start++;
+        }
+        while (trim_end > trim_start && (trim_end[-1] == ' ' || trim_end[-1] == '\t' || trim_end[-1] == '\r')) {
+          trim_end--;
+        }
+        if (trim_start < trim_end) {
+          if (*trim_start == '"') {
+            has_stringish = 1;
+          } else {
+            size_t len = (size_t)(trim_end - trim_start);
+            if (scope != NULL && len < GRAPHION_RUNTIME_NAME_MAX) {
+              char name[GRAPHION_RUNTIME_NAME_MAX];
+              memcpy(name, trim_start, len);
+              name[len] = '\0';
+              if (scope_find_index(scope, name) >= 0) {
+                const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+                if (value != NULL && value->kind == GVM_VALUE_STRING) {
+                  has_stringish = 1;
+                }
+              }
+            }
+          }
+        }
+        has_concat = 1;
+        segment_start = scan + 1;
+      }
+      scan++;
+    }
+    if (has_concat) {
+      const char *trim_start = segment_start;
+      const char *trim_end = scan;
+      while (trim_start < trim_end && (*trim_start == ' ' || *trim_start == '\t' || *trim_start == '\r')) {
+        trim_start++;
+      }
+      while (trim_end > trim_start && (trim_end[-1] == ' ' || trim_end[-1] == '\t' || trim_end[-1] == '\r')) {
+        trim_end--;
+      }
+      if (trim_start < trim_end) {
+        if (*trim_start == '"') {
+          has_stringish = 1;
+        } else {
+          size_t len = (size_t)(trim_end - trim_start);
+          if (scope != NULL && len < GRAPHION_RUNTIME_NAME_MAX) {
+            char name[GRAPHION_RUNTIME_NAME_MAX];
+            memcpy(name, trim_start, len);
+            name[len] = '\0';
+            if (scope_find_index(scope, name) >= 0) {
+              const graphion_runtime_value *value = graphion_runtime_scope_find(scope, name);
+              if (value != NULL && value->kind == GVM_VALUE_STRING) {
+                has_stringish = 1;
+              }
+            }
+          }
+        }
+      }
+    }
+    if (has_concat && has_stringish) {
+      const char *part_cursor = cursor;
+      const char *part_start = cursor;
+      for (;;) {
+        int depth2 = 0;
+        int in_string2 = 0;
+        while (*part_cursor != '\0') {
+          if (in_string2) {
+            if (*part_cursor == '"') {
+              in_string2 = 0;
+            }
+            part_cursor++;
+            continue;
+          }
+          if (*part_cursor == '"') {
+            in_string2 = 1;
+            part_cursor++;
+            continue;
+          }
+          if (*part_cursor == '(') {
+            depth2++;
+            part_cursor++;
+            continue;
+          }
+          if (*part_cursor == ')') {
+            if (depth2 == 0) {
+              break;
+            }
+            depth2--;
+            part_cursor++;
+            continue;
+          }
+          if (depth2 == 0 && *part_cursor == '+') {
+            break;
+          }
+          part_cursor++;
+        }
+        {
+          char segment[512];
+          size_t len = (size_t)(part_cursor - part_start);
+          parsed_expr_result part_expr;
+          const char *segment_cursor = segment;
+          if (len >= sizeof(segment)) {
+            return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+          }
+          memcpy(segment, part_start, len);
+          segment[len] = '\0';
+          rc = parse_expression(&segment_cursor, program, &part_expr, 0U, line, diagnostic);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          skip_spaces(&segment_cursor);
+          if (*segment_cursor != '\0') {
+            return fail(diagnostic, line, 1U, "unexpected trailing tokens after print", GINT_ERR_PARSE);
+          }
+          if (part_expr.kind == EXPR_RESULT_LITERAL) {
+            rc = program_emit(program, GVM_OP_PRINT_CONST_PART, 0U, 0U, (int32_t)part_expr.const_index, line, diagnostic);
+          } else if (part_expr.kind == EXPR_RESULT_GLOBAL) {
+            rc = program_emit(program, GVM_OP_PRINT_GLOBAL_PART, 0U, 0U, (int32_t)part_expr.global_index, line, diagnostic);
+          } else {
+            rc = program_emit(program, GVM_OP_PRINT_REG_PART, part_expr.reg_index, 0U, 0, line, diagnostic);
+          }
+          if (rc != GINT_OK) {
+            return rc;
+          }
+        }
+        if (*part_cursor == ')') {
+          cursor = part_cursor;
+          break;
+        }
+        part_cursor++;
+        part_start = part_cursor;
+      }
+      if (*cursor != ')') {
+        return fail(diagnostic, line, 1U, "expected ')' after print argument", GINT_ERR_PARSE);
+      }
+      cursor++;
+      skip_spaces(&cursor);
+      if (*cursor != '\0') {
+        return fail(diagnostic, line, 1U, "unexpected trailing tokens after print", GINT_ERR_PARSE);
+      }
+      return program_emit(program, GVM_OP_PRINT_NEWLINE, 0U, 0U, 0, line, diagnostic);
+    }
+  }
   rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -693,6 +949,7 @@ static void seed_program_from_scope(graphion_runtime_program *program, const gra
 }
 
 static int parse_single_line(const char *line_text,
+                             const graphion_runtime_scope *scope,
                              graphion_runtime_program *program,
                              unsigned int line,
                              graphion_runtime_diagnostic *diagnostic) {
@@ -706,7 +963,7 @@ static int parse_single_line(const char *line_text,
     return fail(diagnostic, line, 1U, "unexpected indentation", GINT_ERR_PARSE);
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
-    rc = parse_print(line_cursor, program, line, diagnostic);
+    rc = parse_print(line_cursor, scope, program, line, diagnostic);
   } else {
     rc = parse_assignment(line_cursor, program, line, diagnostic);
   }
@@ -815,7 +1072,7 @@ int graphion_prepare_source(const char *source,
       skip_spaces(&line_cursor);
       if (*line_cursor != '\0') {
         if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
-          rc = parse_print(line_cursor, program, line, diagnostic);
+          rc = parse_print(line_cursor, NULL, program, line, diagnostic);
         } else {
           rc = parse_assignment(line_cursor, program, line, diagnostic);
         }
@@ -923,7 +1180,7 @@ int graphion_interpret_source_with_output(const char *source,
       memcpy(line_buffer, line_start, len);
       line_buffer[len] = '\0';
       seed_program_from_scope(&program, scope);
-      rc = parse_single_line(line_buffer, &program, line, diagnostic);
+      rc = parse_single_line(line_buffer, scope, &program, line, diagnostic);
       if (rc != GINT_OK) {
         graphion_runtime_program_dispose(&program);
         return rc;

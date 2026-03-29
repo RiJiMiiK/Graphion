@@ -316,6 +316,185 @@ int test_vm_divide_by_zero_fails(void) {
   return 0;
 }
 
+int test_vm_modulo_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[2];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 10},
+      {GVM_OP_MOV_IMM, 1, 0, 4},
+      {GVM_OP_MOD, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 2, 0, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 1},
+      {GVM_OP_MOD, 2, 3, 0},
+      {GVM_OP_STORE_GLOBAL, 2, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 7.5);
+  test_set_value_float(&const_pool[1], 2.0);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 2) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_FLOAT || globals[1].as.float_value != 1.5) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_vm_power_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[2];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 2},
+      {GVM_OP_MOV_IMM, 1, 0, 3},
+      {GVM_OP_POW, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 2, 0, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 1},
+      {GVM_OP_POW, 2, 3, 0},
+      {GVM_OP_STORE_GLOBAL, 2, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 9.0);
+  test_set_value_float(&const_pool[1], 0.5);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_FLOAT || globals[0].as.float_value != 8.0) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_FLOAT || globals[1].as.float_value != 3.0) {
+    return 4;
+  }
+  return 0;
+}
+
+int test_vm_floor_div_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[3];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 7},
+      {GVM_OP_MOV_IMM, 1, 0, 2},
+      {GVM_OP_FLOOR_DIV, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_MOV_IMM, 2, 0, -7},
+      {GVM_OP_MOV_IMM, 3, 0, 2},
+      {GVM_OP_FLOOR_DIV, 2, 3, 0},
+      {GVM_OP_STORE_GLOBAL, 2, 0, 1},
+      {GVM_OP_LOAD_CONST, 4, 0, 0},
+      {GVM_OP_LOAD_CONST, 5, 0, 1},
+      {GVM_OP_FLOOR_DIV, 4, 5, 0},
+      {GVM_OP_STORE_GLOBAL, 4, 0, 2},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], 7.5);
+  test_set_value_float(&const_pool[1], 2.0);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[2].kind = GVM_VALUE_NONE;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 2U);
+  graphion_vm_bind_globals(&vm, globals, 3U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 3) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_INT || globals[1].as.int_value != -4) {
+    return 4;
+  }
+  if (globals[2].kind != GVM_VALUE_FLOAT || globals[2].as.float_value != 3.0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_vm_abs_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[2];
+  graphion_vm_value globals[2];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, -42},
+      {GVM_OP_ABS, 0, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 0},
+      {GVM_OP_ABS, 1, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 1, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_float(&const_pool[0], -3.5);
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+  globals[1].kind = GVM_VALUE_NONE;
+  globals[1].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 1U);
+  graphion_vm_bind_globals(&vm, globals, 2U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 42) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_FLOAT || globals[1].as.float_value != 3.5) {
+    return 4;
+  }
+  return 0;
+}
+
 int test_vm_string_addition_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[3];

@@ -19,6 +19,10 @@ int test_vm_typed_value_errors(void);
 int test_vm_numeric_arithmetic_opcodes(void);
 int test_vm_numeric_arithmetic_precedence_shapes(void);
 int test_vm_divide_by_zero_fails(void);
+int test_vm_modulo_opcode(void);
+int test_vm_power_opcode(void);
+int test_vm_floor_div_opcode(void);
+int test_vm_abs_opcode(void);
 int test_vm_string_addition_opcode(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
@@ -61,6 +65,7 @@ int test_gion_reserved_name_errors(void);
 int test_gion_assignment_syntax_errors(void);
 int test_gion_arithmetic_expressions(void);
 int test_gion_string_concatenation(void);
+int test_gion_print_string_coercion(void);
 int test_gion_compound_assignments(void);
 int test_gion_compound_assignment_errors(void);
 int test_gion_arithmetic_precedence_and_associativity(void);
@@ -127,6 +132,10 @@ int main(int argc, char **argv) {
       {"vm_numeric_arithmetic_opcodes", test_vm_numeric_arithmetic_opcodes},
       {"vm_numeric_arithmetic_precedence_shapes", test_vm_numeric_arithmetic_precedence_shapes},
       {"vm_divide_by_zero_fails", test_vm_divide_by_zero_fails},
+      {"vm_modulo_opcode", test_vm_modulo_opcode},
+      {"vm_power_opcode", test_vm_power_opcode},
+      {"vm_floor_div_opcode", test_vm_floor_div_opcode},
+      {"vm_abs_opcode", test_vm_abs_opcode},
       {"vm_string_addition_opcode", test_vm_string_addition_opcode},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
@@ -170,6 +179,7 @@ int main(int argc, char **argv) {
       {"gion_assignment_syntax_errors", test_gion_assignment_syntax_errors},
       {"gion_arithmetic_expressions", test_gion_arithmetic_expressions},
       {"gion_string_concatenation", test_gion_string_concatenation},
+      {"gion_print_string_coercion", test_gion_print_string_coercion},
       {"gion_compound_assignments", test_gion_compound_assignments},
       {"gion_compound_assignment_errors", test_gion_compound_assignment_errors},
       {"gion_arithmetic_precedence_and_associativity", test_gion_arithmetic_precedence_and_associativity},

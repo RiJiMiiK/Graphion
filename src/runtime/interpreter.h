@@ -45,10 +45,11 @@ typedef enum {
   GINT_ERR_CAPACITY = -2,
   GINT_ERR_PARSE = -3,
   GINT_ERR_UNKNOWN_VARIABLE = -4,
-  GINT_ERR_RESERVED_NAME = -5,
-  GINT_ERR_CALL = -6,
-  GINT_ERR_RETURN = -7,
-  GINT_ERR_RUN = -8
+  GINT_ERR_UNKNOWN_OPERAND = -5,
+  GINT_ERR_RESERVED_NAME = -6,
+  GINT_ERR_CALL = -7,
+  GINT_ERR_RETURN = -8,
+  GINT_ERR_RUN = -9
 } graphion_interpreter_result;
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope);

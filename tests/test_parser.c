@@ -485,13 +485,13 @@ int test_gion_unknown_variable_errors(void) {
 
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source(source, &scope, &diagnostic);
-  if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+  if (rc != GINT_ERR_UNKNOWN_OPERAND) {
     return 1;
   }
   if (diagnostic.message == NULL) {
     return 2;
   }
-  return strcmp(diagnostic.message, "unknown variable") == 0 ? 0 : 3;
+  return strcmp(diagnostic.message, "unknown operand") == 0 ? 0 : 3;
 }
 
 int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
@@ -547,6 +547,7 @@ int test_gion_reserved_name_errors(void) {
   } cases[] = {
       {"true = 1\n", "reserved name cannot be assigned", "gion_reserved_true.gion"},
       {"false = 0\n", "reserved name cannot be assigned", "gion_reserved_false.gion"},
+      {"abs = 1\n", "reserved name cannot be assigned", "gion_reserved_abs.gion"},
   };
   size_t i;
 
@@ -594,7 +595,7 @@ int test_gion_assignment_syntax_errors(void) {
       {"= 42\n", GINT_ERR_PARSE, "expected identifier"},
       {"count =\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 42 +\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = nope\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
+      {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
   };
   size_t i;
 
@@ -627,15 +628,52 @@ int test_gion_arithmetic_expressions(void) {
       "delta = base - 3\n"
       "ratio = 7 / 2\n"
       "scaled = ratio * 2\n"
+      "negative_add = -5 + 2\n"
+      "negative_sub = 5 - -2\n"
+      "negative_mul = -3 * 4\n"
+      "negative_div = -7 / 2\n"
+      "floor_half = 7 // 2\n"
+      "negative_floor = -7 // 2\n"
+      "float_floor = 7.5 // 2\n"
+      "power = 2 ** 3\n"
+      "negative_power = (-2) ** 3\n"
+      "negative_exponent = 2 ** -1\n"
+      "right_assoc = 2 ** 3 ** 2\n"
+      "powered_group = (1 + 2) ** 2\n"
+      "abs_int = abs(-42)\n"
+      "abs_float = abs(-3.5)\n"
+      "abs_expr = abs(-5 + 2)\n"
       "total = base + ratio * 2\n"
+      "remainder = 10 % 4\n"
+      "negative_remainder = -10 % 4\n"
+      "float_remainder = 7.5 % 2\n"
       "print(sum)\n"
       "print(mixed)\n"
       "print(grouped)\n"
       "print(delta)\n"
       "print(ratio)\n"
       "print(total)\n"
+      "print(negative_add)\n"
+      "print(negative_sub)\n"
+      "print(negative_mul)\n"
+      "print(negative_div)\n"
+      "print(floor_half)\n"
+      "print(negative_floor)\n"
+      "print(float_floor)\n"
+      "print(power)\n"
+      "print(negative_power)\n"
+      "print(negative_exponent)\n"
+      "print(right_assoc)\n"
+      "print(powered_group)\n"
+      "print(abs_int)\n"
+      "print(abs_float)\n"
+      "print(abs_expr)\n"
+      "print(remainder)\n"
+      "print(negative_remainder)\n"
+      "print(float_remainder)\n"
       "print(3 + 4 * 2)\n"
-      "print((3 + 4) * 2)\n";
+      "print((3 + 4) * 2)\n"
+      "print(10 % 4)\n";
   const char *path = "gion_arithmetic_expressions.txt";
   char output[128];
   graphion_runtime_scope scope;
@@ -646,7 +684,25 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *delta;
   const graphion_runtime_value *ratio;
   const graphion_runtime_value *scaled;
+  const graphion_runtime_value *negative_add;
+  const graphion_runtime_value *negative_sub;
+  const graphion_runtime_value *negative_mul;
+  const graphion_runtime_value *negative_div;
+  const graphion_runtime_value *floor_half;
+  const graphion_runtime_value *negative_floor;
+  const graphion_runtime_value *float_floor;
+  const graphion_runtime_value *power;
+  const graphion_runtime_value *negative_power;
+  const graphion_runtime_value *negative_exponent;
+  const graphion_runtime_value *right_assoc;
+  const graphion_runtime_value *powered_group;
+  const graphion_runtime_value *abs_int;
+  const graphion_runtime_value *abs_float;
+  const graphion_runtime_value *abs_expr;
   const graphion_runtime_value *total;
+  const graphion_runtime_value *remainder;
+  const graphion_runtime_value *negative_remainder;
+  const graphion_runtime_value *float_remainder;
   FILE *fp = NULL;
   int rc;
 
@@ -674,7 +730,25 @@ int test_gion_arithmetic_expressions(void) {
   delta = graphion_runtime_scope_find(&scope, "delta");
   ratio = graphion_runtime_scope_find(&scope, "ratio");
   scaled = graphion_runtime_scope_find(&scope, "scaled");
+  negative_add = graphion_runtime_scope_find(&scope, "negative_add");
+  negative_sub = graphion_runtime_scope_find(&scope, "negative_sub");
+  negative_mul = graphion_runtime_scope_find(&scope, "negative_mul");
+  negative_div = graphion_runtime_scope_find(&scope, "negative_div");
+  floor_half = graphion_runtime_scope_find(&scope, "floor_half");
+  negative_floor = graphion_runtime_scope_find(&scope, "negative_floor");
+  float_floor = graphion_runtime_scope_find(&scope, "float_floor");
+  power = graphion_runtime_scope_find(&scope, "power");
+  negative_power = graphion_runtime_scope_find(&scope, "negative_power");
+  negative_exponent = graphion_runtime_scope_find(&scope, "negative_exponent");
+  right_assoc = graphion_runtime_scope_find(&scope, "right_assoc");
+  powered_group = graphion_runtime_scope_find(&scope, "powered_group");
+  abs_int = graphion_runtime_scope_find(&scope, "abs_int");
+  abs_float = graphion_runtime_scope_find(&scope, "abs_float");
+  abs_expr = graphion_runtime_scope_find(&scope, "abs_expr");
   total = graphion_runtime_scope_find(&scope, "total");
+  remainder = graphion_runtime_scope_find(&scope, "remainder");
+  negative_remainder = graphion_runtime_scope_find(&scope, "negative_remainder");
+  float_remainder = graphion_runtime_scope_find(&scope, "float_remainder");
   if (sum == NULL || sum->kind != GVM_VALUE_INT || sum->as.int_value != 42) {
     remove(path);
     return 3;
@@ -699,17 +773,89 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 8;
   }
-  if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
+  if (negative_add == NULL || negative_add->kind != GVM_VALUE_INT || negative_add->as.int_value != -3) {
     remove(path);
     return 9;
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (negative_sub == NULL || negative_sub->kind != GVM_VALUE_INT || negative_sub->as.int_value != 7) {
     remove(path);
     return 10;
   }
-  remove(path);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n11\n14\n") != 0) {
+  if (negative_mul == NULL || negative_mul->kind != GVM_VALUE_INT || negative_mul->as.int_value != -12) {
+    remove(path);
     return 11;
+  }
+  if (negative_div == NULL || negative_div->kind != GVM_VALUE_FLOAT || negative_div->as.float_value != -3.5) {
+    remove(path);
+    return 12;
+  }
+  if (floor_half == NULL || floor_half->kind != GVM_VALUE_INT || floor_half->as.int_value != 3) {
+    remove(path);
+    return 13;
+  }
+  if (negative_floor == NULL || negative_floor->kind != GVM_VALUE_INT || negative_floor->as.int_value != -4) {
+    remove(path);
+    return 14;
+  }
+  if (float_floor == NULL || float_floor->kind != GVM_VALUE_FLOAT || float_floor->as.float_value != 3.0) {
+    remove(path);
+    return 15;
+  }
+  if (power == NULL || power->kind != GVM_VALUE_FLOAT || power->as.float_value != 8.0) {
+    remove(path);
+    return 16;
+  }
+  if (negative_power == NULL || negative_power->kind != GVM_VALUE_FLOAT || negative_power->as.float_value != -8.0) {
+    remove(path);
+    return 17;
+  }
+  if (negative_exponent == NULL || negative_exponent->kind != GVM_VALUE_FLOAT || negative_exponent->as.float_value != 0.5) {
+    remove(path);
+    return 18;
+  }
+  if (right_assoc == NULL || right_assoc->kind != GVM_VALUE_FLOAT || right_assoc->as.float_value != 512.0) {
+    remove(path);
+    return 19;
+  }
+  if (powered_group == NULL || powered_group->kind != GVM_VALUE_FLOAT || powered_group->as.float_value != 9.0) {
+    remove(path);
+    return 20;
+  }
+  if (abs_int == NULL || abs_int->kind != GVM_VALUE_INT || abs_int->as.int_value != 42) {
+    remove(path);
+    return 21;
+  }
+  if (abs_float == NULL || abs_float->kind != GVM_VALUE_FLOAT || abs_float->as.float_value != 3.5) {
+    remove(path);
+    return 22;
+  }
+  if (abs_expr == NULL || abs_expr->kind != GVM_VALUE_INT || abs_expr->as.int_value != 3) {
+    remove(path);
+    return 23;
+  }
+  if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
+    remove(path);
+    return 24;
+  }
+  if (remainder == NULL || remainder->kind != GVM_VALUE_INT || remainder->as.int_value != 2) {
+    remove(path);
+    return 25;
+  }
+  if (negative_remainder == NULL || negative_remainder->kind != GVM_VALUE_INT || negative_remainder->as.int_value != -2) {
+    remove(path);
+    return 26;
+  }
+  if (float_remainder == NULL || float_remainder->kind != GVM_VALUE_FLOAT || float_remainder->as.float_value != 1.5) {
+    remove(path);
+    return 27;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 28;
+  }
+  remove(path);
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n512\n9\n42\n3.5\n3\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+    return 29;
   }
   return 0;
 }
@@ -767,6 +913,47 @@ int test_gion_string_concatenation(void) {
   return 0;
 }
 
+int test_gion_print_string_coercion(void) {
+  const char *source =
+      "name = \"Test \"\n"
+      "print(\"Test \" + 7)\n"
+      "print(name + 7)\n"
+      "print(\"value=\" + (3 + 4))\n";
+  const char *path = "gion_print_string_coercion.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 3;
+  }
+  remove(path);
+  if (strcmp(output, "Test 7\nTest 7\nvalue=7\n") != 0) {
+    return 4;
+  }
+  return 0;
+}
+
 int test_gion_compound_assignments(void) {
   const char *source =
       "count = 10\n"
@@ -774,6 +961,9 @@ int test_gion_compound_assignments(void) {
       "count -= 3\n"
       "count *= 4\n"
       "count /= 3\n"
+      "count //= 2\n"
+      "count %= 7\n"
+      "count **= 3\n"
       "text = \"debut\"\n"
       "text += \"fin\"\n"
       "print(count)\n"
@@ -806,7 +996,7 @@ int test_gion_compound_assignments(void) {
   }
   count = graphion_runtime_scope_find(&scope, "count");
   text = graphion_runtime_scope_find(&scope, "text");
-  if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 16.0) {
+  if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 1.0) {
     remove(path);
     return 3;
   }
@@ -819,7 +1009,7 @@ int test_gion_compound_assignments(void) {
     return 5;
   }
   remove(path);
-  if (strcmp(output, "16\ndebutfin\n") != 0) {
+  if (strcmp(output, "1\ndebutfin\n") != 0) {
     return 6;
   }
   return 0;
@@ -836,11 +1026,20 @@ int test_gion_compound_assignment_errors(void) {
       {"count = 1\ncount -=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount *=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount /=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount //=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount %=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count = 1\ncount **=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
+      {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
+      {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
+      {"count = 1\ncount %= 0\n", GINT_ERR_RUN, "division by zero"},
+      {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"value = \"Test \" + 7\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"text = \"x\"\ntext %= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
   };
   size_t i;
 
@@ -931,6 +1130,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = 1 / 0\n", GINT_ERR_RUN, "division by zero"},
       {"value = \"x\" + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"value = true + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"value = abs(\"x\")\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
       {"print(\"x\" / 2)\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
   };
   size_t i;
@@ -960,10 +1160,15 @@ int test_gion_arithmetic_syntax_errors(void) {
   } cases[] = {
       {"value = 1 + * 2\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 1 / / 2\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"value = 1 ** 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 1 ** * 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 1 % % 2\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 2 **\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = 2 //\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 1 + 2 3\n", GINT_ERR_PARSE, "unsupported assignment expression"},
       {"value = 1\nvalue +=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value + 2\n", GINT_ERR_PARSE, "expected '='"},
+      {"value = abs()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = abs(1 + 2\n", GINT_ERR_PARSE, "expected ')' after abs argument"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = 1 + (2 * 3\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = ()\n", GINT_ERR_PARSE, "expected scalar literal"},
@@ -1002,8 +1207,8 @@ int test_gion_print_syntax_errors(void) {
       {"print\n", GINT_ERR_PARSE, "expected '(' after print"},
       {"print(\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print()\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"print(count\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
-      {"print(count) extra\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
+      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
+      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
   };
   size_t i;
 
@@ -1161,13 +1366,13 @@ int test_gion_reference_before_definition_errors(void) {
 
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source("copy = count\ncount = 42\n", &scope, &diagnostic);
-  if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+  if (rc != GINT_ERR_UNKNOWN_OPERAND) {
     return 1;
   }
   if (diagnostic.line != 1U || diagnostic.column != 1U) {
     return 2;
   }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown variable") != 0) {
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown operand") != 0) {
     return 3;
   }
   return 0;
