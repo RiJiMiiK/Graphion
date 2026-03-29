@@ -5,8 +5,6 @@ on:
     branches: [main]
     paths:
       - "CHANGELOG.md"
-      - "docs/process/RELEASE.md"
-      - "docs/process/RELEASE_CHECKLIST.md"
       - ".github/workflows/release.yml"
       - ".github/workflows/release-dry-run.yml"
   workflow_dispatch:
@@ -24,10 +22,10 @@ jobs:
           python-version: "3.x"
       - name: Install benchmark tools
         run: sudo apt-get update && sudo apt-get install -y ninja-build clang llvm
-      - name: Validate tag pattern examples in docs
+      - name: Validate release workflow and changelog conventions
         run: |
-          grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/process/RELEASE.md
-          grep -Eq "vMAJOR\.MINOR\.PATCH|v0\.1\.0" docs/process/RELEASE_CHECKLIST.md
+          grep -Eq '^\s*-\s*"v\*\.\*\.\*"' .github/workflows/release.yml
+          grep -Eq '^## \[Unreleased\]' CHANGELOG.md
       - name: Generate release-candidate PGO smoke report
         run: |
           python3 scripts/bench/pgo/generate_optimization_report.py \

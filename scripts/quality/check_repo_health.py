@@ -18,8 +18,6 @@ REQUIRED_FILES = [
     "OWNERSHIP.md",
     "MAINTAINERS.md",
     "ROADMAP.md",
-    "docs/SUPPORT_POLICY.md",
-    "docs/ACTIONS_SECURITY.md",
     ".github/CODEOWNERS",
     ".github/pull_request_template.md",
     ".github/workflows/ci.yml",

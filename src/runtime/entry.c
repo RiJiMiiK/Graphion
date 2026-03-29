@@ -49,9 +49,10 @@ static int read_source_file(const char *path, char *buffer, size_t capacity) {
   return GENTRY_OK;
 }
 
-int graphion_run_gion_path(const char *path, graphion_runtime_scope *scope) {
+int graphion_run_gion_path(const char *path,
+                           graphion_runtime_scope *scope,
+                           graphion_runtime_diagnostic *diagnostic) {
   char source[GENTRY_SOURCE_MAX];
-  graphion_runtime_diagnostic diagnostic;
   int rc;
 
   if (path == NULL || scope == NULL) {
@@ -65,7 +66,7 @@ int graphion_run_gion_path(const char *path, graphion_runtime_scope *scope) {
     return rc;
   }
   graphion_runtime_scope_init(scope);
-  rc = graphion_interpret_source(source, scope, &diagnostic);
+  rc = graphion_interpret_source(source, scope, diagnostic);
   if (rc == GINT_ERR_PARSE || rc == GINT_ERR_RESERVED_NAME) {
     return GENTRY_ERR_PARSE;
   }

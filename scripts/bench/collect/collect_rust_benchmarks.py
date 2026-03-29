@@ -8,35 +8,70 @@ SCRIPT_BENCH_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(SCRIPT_BENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_BENCH_ROOT))
 import argparse
+import ctypes
 import json
+import os
 import statistics
 import subprocess
+import shutil
+from typing import NotRequired, TypedDict, cast
 
 from report_metadata import base_metadata, validate_metadata
+
+
+class BenchPayload(TypedDict):
+    seconds: float
+    benchmark: str
+    iterations: NotRequired[int]
+    frontier_items_per_iteration: NotRequired[int]
+    instructions_per_iteration: NotRequired[int]
+    edges_per_iteration: NotRequired[int]
+    neighbors_per_iteration: NotRequired[int]
+    edge_data_items_per_iteration: NotRequired[int]
+    frontier_len: NotRequired[int]
+    frontier_neighbor_work: NotRequired[int]
+    recommended_frontier_mode: NotRequired[str]
+    memberships_per_iteration: NotRequired[int]
+    incidence_per_iteration: NotRequired[int]
+    calls_per_iteration: NotRequired[int]
+    typed_value_ops_per_iteration: NotRequired[int]
+    expr_ops_per_iteration: NotRequired[int]
+    print_ops_per_iteration: NotRequired[int]
+    ns_per_frontier_item: NotRequired[float]
+    ns_per_instruction: NotRequired[float]
+    ns_per_edge: NotRequired[float]
+    ns_per_neighbor: NotRequired[float]
+    ns_per_edge_data: NotRequired[float]
+    ns_per_incidence: NotRequired[float]
+    ns_per_membership: NotRequired[float]
+    ns_per_call: NotRequired[float]
+    ns_per_iteration: NotRequired[float]
+    mips: NotRequired[float]
+    mteps: NotRequired[float]
 
 
 BENCH_SPECS = [
     {
         "benchmark": "frontier_primitives",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_frontier_item",
         "throughput_key": "mips",
     },
     {
         "benchmark": "vm_dispatch",
-        "iterations": 500000,
+        "iterations": 5000000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
     {
         "benchmark": "bfs_levels",
-        "iterations": 200000,
+        "iterations": 5000000,
         "latency_key": "ns_per_edge",
         "throughput_key": "mteps",
     },
     {
         "benchmark": "neighbor_iteration",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_neighbor",
         "throughput_key": "mteps",
     },
@@ -48,48 +83,57 @@ BENCH_SPECS = [
     },
     {
         "benchmark": "hypergraph_incidence",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_incidence",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_traversal",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_membership",
         "throughput_key": "mteps",
     },
     {
         "benchmark": "hypergraph_incident_sum",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "hypergraph_hyperedge_node_sum",
-        "iterations": 500000,
+        "iterations": 10000000,
         "latency_key": "ns_per_call",
         "throughput_key": "mips",
     },
     {
         "benchmark": "vm_graph_ops",
-        "iterations": 300000,
+        "iterations": 10000000,
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
+    },
+    {
+        "benchmark": "scalar_values_print",
+        "iterations": 100000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mops",
     },
 ]
 
 
-def parse_last_json(stdout: str) -> dict[str, object]:
+def parse_last_json(stdout: str) -> BenchPayload:
     for line in reversed(stdout.splitlines()):
         line = line.strip()
         if line.startswith("{") and line.endswith("}"):
-            return json.loads(line)
+            payload = json.loads(line)
+            if not isinstance(payload, dict):
+                break
+            return cast(BenchPayload, payload)
     raise ValueError("rust benchmark output did not contain a JSON payload")
 
 
 def average_payloads(
     benchmark: str,
-    payloads: list[dict[str, object]],
+    payloads: list[BenchPayload],
     latency_key: str,
     throughput_key: str,
     platform_label: str,
@@ -98,6 +142,11 @@ def average_payloads(
     seconds = [float(row["seconds"]) for row in payloads]
     latency = [float(row[latency_key]) for row in payloads]
     throughput = [float(row[throughput_key]) for row in payloads]
+    variation_pct = 0.0
+    if len(latency) > 1:
+        mean_latency = statistics.fmean(latency)
+        if mean_latency != 0.0:
+            variation_pct = statistics.stdev(latency) / mean_latency * 100.0
     result: dict[str, object] = {
         "benchmark": benchmark,
         "platform": platform_label,
@@ -105,6 +154,7 @@ def average_payloads(
         "seconds_avg": round(statistics.fmean(seconds), 6),
         latency_key + "_avg": round(statistics.fmean(latency), 3),
         throughput_key + "_avg": round(statistics.fmean(throughput), 3),
+        "variation_pct": round(variation_pct, 3),
         "latency_key": latency_key,
         "throughput_key": throughput_key,
     }
@@ -121,9 +171,14 @@ def average_payloads(
         "memberships_per_iteration",
         "incidence_per_iteration",
         "calls_per_iteration",
+        "typed_value_ops_per_iteration",
+        "expr_ops_per_iteration",
+        "print_ops_per_iteration",
+        "ns_per_iteration",
     ):
-        if key in sample:
-            result[key] = sample[key]
+        value = sample.get(key)
+        if value is not None:
+            result[key] = value
     return result
 
 
@@ -134,6 +189,27 @@ def exe_path(manifest_path: pathlib.Path) -> pathlib.Path:
     return project_root / "target" / "release" / "graphion_rust"
 
 
+def stabilize_windows_benchmark_host() -> None:
+    if not sys.platform.startswith("win"):
+        return
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetCurrentProcess()
+    HIGH_PRIORITY_CLASS = 0x00000080
+    affinity_mask = 0x4
+    kernel32.SetPriorityClass(handle, HIGH_PRIORITY_CLASS)
+    kernel32.SetProcessAffinityMask(handle, affinity_mask)
+
+
+def stabilize_posix_benchmark_host() -> None:
+    if sys.platform.startswith("win"):
+        return
+    if hasattr(os, "sched_setaffinity"):
+        try:
+            os.sched_setaffinity(0, {0})
+        except OSError:
+            pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Collect Rust comparison benchmark averages.")
     parser.add_argument("--manifest-path", default="graphion_rust/Cargo.toml", help="Path to graphion_rust Cargo.toml")
@@ -142,6 +218,8 @@ def main() -> int:
     parser.add_argument("--output", required=True, help="Output JSON path")
     parser.add_argument("--skip-missing", action="store_true", help="Exit successfully if the Rust sandbox is absent")
     args = parser.parse_args()
+    stabilize_windows_benchmark_host()
+    stabilize_posix_benchmark_host()
 
     manifest_path = pathlib.Path(args.manifest_path)
     if not manifest_path.exists():
@@ -164,8 +242,11 @@ def main() -> int:
     for spec in BENCH_SPECS:
         payloads = []
         for _ in range(args.runs):
+            cmd = [str(exe), str(spec["benchmark"]), str(spec["iterations"])]
+            if not sys.platform.startswith("win") and shutil.which("taskset") is not None:
+                cmd = ["taskset", "-c", "0", *cmd]
             proc = subprocess.run(
-                [str(exe), str(spec["benchmark"]), str(spec["iterations"])],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True,

@@ -13,7 +13,22 @@ typedef struct {
 
 int test_vm_addition_program(void);
 int test_vm_invalid_register_fails(void);
+int test_vm_typed_register_defaults(void);
+int test_vm_value_movement_and_globals(void);
+int test_vm_typed_value_errors(void);
+int test_vm_numeric_arithmetic_opcodes(void);
+int test_vm_numeric_arithmetic_precedence_shapes(void);
+int test_vm_divide_by_zero_fails(void);
+int test_vm_modulo_opcode(void);
+int test_vm_power_opcode(void);
+int test_vm_floor_div_opcode(void);
+int test_vm_abs_opcode(void);
+int test_vm_string_addition_opcode(void);
+int test_vm_print_scalar_opcodes(void);
+int test_vm_print_reg_opcode(void);
 int test_vm_bfs_levels_opcode(void);
+int test_vm_bfs_level_count_opcode(void);
+int test_vm_bfs_order_opcode(void);
 int test_vm_hypergraph_opcodes(void);
 int test_vm_superinstruction_add_pair_semantics(void);
 int test_vm_superinstruction_movimm_add_semantics(void);
@@ -42,26 +57,31 @@ int test_frontend_rejects_invalid_source(void);
 int test_frontend_source_to_vm_execution(void);
 int test_frontend_reference_graph_execution_examples(void);
 int test_gion_source_path_detection(void);
-int test_interpreter_dynamic_assignments(void);
-int test_interpreter_rejects_declared_type_syntax(void);
-int test_interpreter_graph_declaration(void);
-int test_interpreter_rejects_non_integer_graph_nodes(void);
-int test_interpreter_hypergraph_declaration(void);
-int test_interpreter_rejects_non_integer_hypergraph_nodes(void);
-int test_interpreter_graph_scalar_attributes(void);
-int test_interpreter_hypergraph_scalar_attributes(void);
-int test_interpreter_rejects_invalid_weight_type(void);
-int test_interpreter_print_and_function_return(void);
-int test_interpreter_print_graph_summary(void);
-int test_interpreter_print_hypergraph_summary(void);
-int test_interpreter_print_graph_node_value(void);
-int test_interpreter_print_graph_edge_value(void);
-int test_interpreter_print_hypergraph_node_value(void);
-int test_interpreter_print_hyperedge_value(void);
-int test_interpreter_bfs_builtin(void);
-int test_interpreter_print_bfs_builtin(void);
-int test_interpreter_incidence_builtins(void);
-int test_gion_entry_flow_execution(void);
+int test_gion_scalar_assignments_and_prints(void);
+int test_gion_scalar_feature_varied_names(void);
+int test_gion_unknown_variable_errors(void);
+int test_gion_partial_execution_stops_at_first_unsupported_line(void);
+int test_gion_reserved_name_errors(void);
+int test_gion_assignment_syntax_errors(void);
+int test_gion_arithmetic_expressions(void);
+int test_gion_string_concatenation(void);
+int test_gion_print_string_coercion(void);
+int test_gion_compound_assignments(void);
+int test_gion_compound_assignment_errors(void);
+int test_gion_arithmetic_precedence_and_associativity(void);
+int test_gion_arithmetic_runtime_errors(void);
+int test_gion_arithmetic_syntax_errors(void);
+int test_gion_print_syntax_errors(void);
+int test_gion_unterminated_string_errors(void);
+int test_gion_invalid_identifier_errors(void);
+int test_gion_trailing_token_errors(void);
+int test_gion_reference_before_definition_errors(void);
+int test_gion_reassignment_and_type_change(void);
+int test_gion_copy_chains_and_blank_lines(void);
+int test_gion_late_line_error_diagnostics(void);
+int test_gion_unexpected_indentation_errors(void);
+int test_gion_mixed_scalar_values(void);
+int test_gion_capacity_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -106,7 +126,22 @@ int main(int argc, char **argv) {
   const test_case tests[] = {
       {"vm_addition_program", test_vm_addition_program},
       {"vm_invalid_register_fails", test_vm_invalid_register_fails},
+      {"vm_typed_register_defaults", test_vm_typed_register_defaults},
+      {"vm_value_movement_and_globals", test_vm_value_movement_and_globals},
+      {"vm_typed_value_errors", test_vm_typed_value_errors},
+      {"vm_numeric_arithmetic_opcodes", test_vm_numeric_arithmetic_opcodes},
+      {"vm_numeric_arithmetic_precedence_shapes", test_vm_numeric_arithmetic_precedence_shapes},
+      {"vm_divide_by_zero_fails", test_vm_divide_by_zero_fails},
+      {"vm_modulo_opcode", test_vm_modulo_opcode},
+      {"vm_power_opcode", test_vm_power_opcode},
+      {"vm_floor_div_opcode", test_vm_floor_div_opcode},
+      {"vm_abs_opcode", test_vm_abs_opcode},
+      {"vm_string_addition_opcode", test_vm_string_addition_opcode},
+      {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
+      {"vm_print_reg_opcode", test_vm_print_reg_opcode},
       {"vm_bfs_levels_opcode", test_vm_bfs_levels_opcode},
+      {"vm_bfs_level_count_opcode", test_vm_bfs_level_count_opcode},
+      {"vm_bfs_order_opcode", test_vm_bfs_order_opcode},
       {"vm_hypergraph_opcodes", test_vm_hypergraph_opcodes},
       {"vm_superinstruction_add_pair_semantics", test_vm_superinstruction_add_pair_semantics},
       {"vm_superinstruction_movimm_add_semantics", test_vm_superinstruction_movimm_add_semantics},
@@ -136,26 +171,31 @@ int main(int argc, char **argv) {
       {"frontend_source_to_vm_execution", test_frontend_source_to_vm_execution},
       {"frontend_reference_graph_execution_examples", test_frontend_reference_graph_execution_examples},
       {"gion_source_path_detection", test_gion_source_path_detection},
-      {"interpreter_dynamic_assignments", test_interpreter_dynamic_assignments},
-      {"interpreter_rejects_declared_type_syntax", test_interpreter_rejects_declared_type_syntax},
-      {"interpreter_graph_declaration", test_interpreter_graph_declaration},
-      {"interpreter_rejects_non_integer_graph_nodes", test_interpreter_rejects_non_integer_graph_nodes},
-      {"interpreter_hypergraph_declaration", test_interpreter_hypergraph_declaration},
-      {"interpreter_rejects_non_integer_hypergraph_nodes", test_interpreter_rejects_non_integer_hypergraph_nodes},
-      {"interpreter_graph_scalar_attributes", test_interpreter_graph_scalar_attributes},
-      {"interpreter_hypergraph_scalar_attributes", test_interpreter_hypergraph_scalar_attributes},
-      {"interpreter_rejects_invalid_weight_type", test_interpreter_rejects_invalid_weight_type},
-      {"interpreter_print_and_function_return", test_interpreter_print_and_function_return},
-      {"interpreter_print_graph_summary", test_interpreter_print_graph_summary},
-      {"interpreter_print_hypergraph_summary", test_interpreter_print_hypergraph_summary},
-      {"interpreter_print_graph_node_value", test_interpreter_print_graph_node_value},
-      {"interpreter_print_graph_edge_value", test_interpreter_print_graph_edge_value},
-      {"interpreter_print_hypergraph_node_value", test_interpreter_print_hypergraph_node_value},
-      {"interpreter_print_hyperedge_value", test_interpreter_print_hyperedge_value},
-      {"interpreter_bfs_builtin", test_interpreter_bfs_builtin},
-      {"interpreter_print_bfs_builtin", test_interpreter_print_bfs_builtin},
-      {"interpreter_incidence_builtins", test_interpreter_incidence_builtins},
-      {"gion_entry_flow_execution", test_gion_entry_flow_execution},
+      {"gion_scalar_assignments_and_prints", test_gion_scalar_assignments_and_prints},
+      {"gion_scalar_feature_varied_names", test_gion_scalar_feature_varied_names},
+      {"gion_unknown_variable_errors", test_gion_unknown_variable_errors},
+      {"gion_partial_execution_stops_at_first_unsupported_line", test_gion_partial_execution_stops_at_first_unsupported_line},
+      {"gion_reserved_name_errors", test_gion_reserved_name_errors},
+      {"gion_assignment_syntax_errors", test_gion_assignment_syntax_errors},
+      {"gion_arithmetic_expressions", test_gion_arithmetic_expressions},
+      {"gion_string_concatenation", test_gion_string_concatenation},
+      {"gion_print_string_coercion", test_gion_print_string_coercion},
+      {"gion_compound_assignments", test_gion_compound_assignments},
+      {"gion_compound_assignment_errors", test_gion_compound_assignment_errors},
+      {"gion_arithmetic_precedence_and_associativity", test_gion_arithmetic_precedence_and_associativity},
+      {"gion_arithmetic_runtime_errors", test_gion_arithmetic_runtime_errors},
+      {"gion_arithmetic_syntax_errors", test_gion_arithmetic_syntax_errors},
+      {"gion_print_syntax_errors", test_gion_print_syntax_errors},
+      {"gion_unterminated_string_errors", test_gion_unterminated_string_errors},
+      {"gion_invalid_identifier_errors", test_gion_invalid_identifier_errors},
+      {"gion_trailing_token_errors", test_gion_trailing_token_errors},
+      {"gion_reference_before_definition_errors", test_gion_reference_before_definition_errors},
+      {"gion_reassignment_and_type_change", test_gion_reassignment_and_type_change},
+      {"gion_copy_chains_and_blank_lines", test_gion_copy_chains_and_blank_lines},
+      {"gion_late_line_error_diagnostics", test_gion_late_line_error_diagnostics},
+      {"gion_unexpected_indentation_errors", test_gion_unexpected_indentation_errors},
+      {"gion_mixed_scalar_values", test_gion_mixed_scalar_values},
+      {"gion_capacity_errors", test_gion_capacity_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

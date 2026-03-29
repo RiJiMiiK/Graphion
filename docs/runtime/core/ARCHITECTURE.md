@@ -1,187 +1,130 @@
 # Architecture
 
+> Current language-runtime reconstruction is governed by [REBUILD_CHARTER.md](REBUILD_CHARTER.md).
+
 ## Scope
 
-Graphion is a graph/hypergraph-focused language project. Current implementation targets an efficient interpreter core.
+Graphion currently exposes a small but real `.gion` language surface on top of a C runtime and a VM.
 
-Current source-program entry flow uses the `.gion` extension.
+At this stage, the important architectural truth is:
+
+- user programs enter as `.gion`
+- supported source is lowered toward VM execution
+- the VM remains the execution backend
+
+The project still contains older graph- and hypergraph-oriented runtime pieces, but they should not be read as proof that the current `.gion` language already exposes that whole surface.
 
 ## Runtime layers
 
-- `src/runtime/arena.*`: bump allocator for predictable low-overhead temporary allocations.
-- `src/runtime/interpreter.*`: minimal interpreted-language runtime for dynamic scalar values and assignment.
-- `src/vm/vm.*`: register-based VM scaffold with fixed-size register file.
-- `src/vm/hotpaths.s`: assembly hotpath entry point (disabled by default).
-- `src/graph/csr_graph.*`: CSR graph runtime with optional per-edge weights and edge attributes.
+- `src/runtime/entry.*`
+  - file entrypoint for `.gion`
+  - validates input path and reads source text
+- `src/runtime/interpreter.*`
+  - current source-level runtime/orchestration layer
+  - parses the supported `.gion` subset and prepares execution
+- `src/vm/vm.*`
+  - VM implementation and opcode semantics
+- `src/parser/bytecode.*`
+  - fixed-width bytecode decoding for VM-oriented tests and tooling
+- `src/runtime/arena.*`
+  - temporary allocation support used by the runtime
 
-## Interpreted source model (current)
+## Current `.gion` language surface
 
-- `.gion` programs currently execute through `src/runtime/entry.*`.
-- The current interpreted surface is intentionally minimal:
-  - dynamic variable assignment only
-  - builtin `print(...)`
-  - top-level user-defined functions via `def name(...):`
-  - `return` inside function bodies
-  - top-level `graph Name:` declarations
-  - top-level `hypergraph Name:` declarations
-  - no user-declared types
-  - supported scalar values:
-    - `int`
-    - `float`
-    - `bool`
-    - `string`
-- assignment expressions may reference an already-bound variable:
-  - `answer = 42`
-  - `copy = answer`
-- graph declarations currently support integer node ids only:
-  - `graph G:`
-  - `  1 -> 2`
-  - `  2 -> 3 [weight=7, color="red", active=true]`
-- hypergraph declarations currently support auto-indexed hyperedges and integer node lists:
-  - `hypergraph H:`
-  - `  [1, 2, 3]`
-  - `  [2, 4] [weight=2.5, label="core"]`
-- declaration attributes are currently restricted to scalar values only:
-  - `int`
-  - `float`
-  - `string`
-  - `bool`
-- `weight` is reserved and normalized to a runtime float whether written as `7` or `7.0`
-- function calls may appear in assignment expressions:
-  - `answer = echo(42)`
-- builtin graph/hypergraph queries are now available in expressions:
-  - `bfs(G, 0)` -> visited node ids in BFS encounter order
-  - `bfs_level(G, 0)` -> number of BFS levels
-  - `incident_count(H, 2)` -> incident hyperedge count for vertex `2`
-  - `incident_sum(H, 2)` -> sum of incident hyperedge ids for vertex `2`
-- user-facing builtin naming is intentionally decoupled from legacy VM opcode names:
-  - `bfs(...)` is the language-level BFS visit-order contract
-  - `bfs_level(...)` is the language-level BFS level-count contract
-  - legacy VM `bfs_levels` remains internal and should not be treated as the user-facing API surface
-- `print(...)` writes runtime values to the configured interpreter output stream.
-- printable graph-oriented runtime values are part of the intended user-facing model:
-  - `print(graph)` shows graph name, node count, and edge count
-  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
-  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
-  - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
-  - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
-  - `print(H.hyperedge[id])` shows hyperedge id and member node count
-- reserved names such as `def`, `return`, `print`, `graph`, and `hypergraph` are rejected as variable names.
-- the current function model is intentionally narrow:
-  - top-level definitions only
-  - no nested `def`
-  - local function scope with fallback reads from the global scope
-- the current graph declaration model is also intentionally narrow:
-  - top-level declarations only
-  - integer node ids only
-  - scalar attributes only
-  - currently implemented printable values:
-    - `print(graph)` -> graph name, node count, edge count
-    - `print(G.node[id])` -> node id and neighbor count
-    - `print(G.edge[id])` -> edge endpoints, optional weight, and scalar attributes
-    - `print(hypergraph)` -> hypergraph name, node count, hyperedge count
-    - `print(H.vertex[id])` -> vertex id and incident hyperedge count
-    - `print(H.hyperedge[id])` -> hyperedge id and member node count
-    - `print(bfs(G, id))` -> visited node id sequence
-  - graph edge ids are implicit and auto-increment by declaration order
-  - hypergraph hyperedge ids are implicit and auto-increment by declaration order
+The currently supported user-facing subset is centered on scalar values and expressions:
 
-## VM model (current)
+- assignment
+- variable reuse
+- `print(...)`
+- arithmetic expressions
+- grouped expressions with parentheses
+- compound assignments
+- builtin `abs(...)`
 
-- Register VM with 16 integer registers.
-- Instruction format:
-  - `op`: opcode
-  - `a`, `b`: register operands
-  - `imm`: immediate
-- Implemented opcodes:
-  - `GVM_OP_NOP`
-  - `GVM_OP_HALT`
-  - `GVM_OP_MOV_IMM`
-  - `GVM_OP_ADD`
-  - `GVM_OP_BFS_LEVELS`
-  - `GVM_OP_INCIDENT_COUNT`
-  - `GVM_OP_HYPEREDGE_SIZE`
-- Bytecode parser:
-  - `src/parser/bytecode.*` decodes fixed 7-byte instruction encoding.
-- Source entry flow:
-  - `src/runtime/entry.*` validates `.gion` source files, reads source text, and executes
-    the current interpreted runtime.
-- Legacy VM-oriented parser flow:
-  - `src/parser/frontend.*` still exists for mnemonic/IR bridge coverage and internal VM tests.
-- Current architecture tension:
-  - `.gion` syntax is now user-facing and coherent
-  - but long-term execution should lower in memory toward the VM so dispatch/PGO/fastpaths remain the real backend
-- ISA versioning and compatibility policy:
-  - `docs/runtime/contracts/ISA_VERSIONING.md` defines `v0.x` vs `v1.0` expectations.
-- Structured error model:
-  - `docs/runtime/debugging/VM_ERRORS.md` defines subsystem-local error-code interpretation.
-- Public VM runtime error codes:
-  - `src/vm/vm.h` exposes named `graphion_vm_result` values for load/run failures.
-- VM state snapshot format:
-  - `graphion_vm_write_snapshot(...)` emits a versioned text dump for deterministic repro.
-  - snapshot output now includes frontier binding state and frontier lengths.
-- Deterministic repro workflow:
-  - `docs/runtime/debugging/VM_REPRO.md` defines how to capture fixture + snapshot + environment.
-- Arithmetic overflow policy:
-  - `ADD` uses explicit two's-complement wraparound semantics in the VM.
-- Frontier execution model:
-  - host binds input/output frontier buffers directly to the VM
-  - frontier capacity is explicit and fixed by the binding call
-  - `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`
-    operate without dynamic allocation
-  - neighbor iteration opcodes already reuse this bounded model for CSR adjacency expansion
-  - hyperedge traversal opcodes reuse the same bounded contract for `node->edge` and `edge->node` materialization
-  - reference source programs for these flows live in `docs/runtime/core/GRAPH_EXECUTION_EXAMPLES.md`
+### Scalar values
 
-## Graph storage model (current)
+Supported scalar values are:
 
-- CSR graphs keep mandatory topology in:
-  - `offsets`
-  - `neighbors`
-- CSR graphs may also expose optional per-edge side data:
-  - `weights` (`int64_t`)
-  - `edge_attrs` (`uint32_t`)
-- These side arrays are aligned by edge index with `neighbors`.
-- Existing graph algorithms remain valid when the optional arrays are absent.
-- Weighted/attribute-aware execution can build on the same CSR layout without a second graph format.
-- The VM now exposes aggregated weighted execution opcodes over the same layout:
-  - `GVM_OP_NEIGHBOR_WEIGHT_SUM`
-  - `GVM_OP_NEIGHBOR_ATTR_SUM`
+- `int`
+- `float`
+- `bool`
+- `string`
 
-## Frontier mode heuristics
+### Arithmetic
 
-- Graphion now exposes a runtime recommendation for frontier execution mode:
-  - `GRAPHION_FRONTIER_MODE_SPARSE`
-  - `GRAPHION_FRONTIER_MODE_DENSE`
-- The current heuristic is benchmark-backed, simple, and deterministic:
-  - prefer `dense` when `frontier_len >= 15%` of `node_count`
-  - prefer `dense` when estimated frontier neighbor work reaches `28%` of total edge count
-  - otherwise prefer `sparse`
-- This does not introduce a second frontier representation inside the VM yet.
-- It is a planning/runtime hint for future frontier kernels and benchmark work.
-- Calibration report:
-  - `docs/performance/reports/FRONTIER_THRESHOLD_CALIBRATION.md`
+Currently supported arithmetic operators:
 
-## Hotpath acceleration
+- `+`
+- `-`
+- `*`
+- `/`
+- `//`
+- `%`
+- `**`
 
-- `graphion_vm_run` selects a fast arithmetic path when the loaded program only contains:
-  - `NOP`, `HALT`, `MOV_IMM`, `ADD`
-- Fast path backends:
-  - Portable C fallback (always available).
-  - x86_64 assembly backend (`src/vm/hotpaths.s`) when `GRAPHION_ENABLE_ASM=ON` with GCC/Clang.
-- Register/ABI details for assembly are documented in `docs/runtime/asm/ASM_REGISTERS.md`.
-- Assembly-vs-C parity/performance policy is documented in `docs/performance/policies/ASM_FALLBACK_POLICY.md`.
-- `graphion_vm_set_deterministic(vm, true)` forces the portable switch-dispatch
-  path and bypasses fast arithmetic specialization for reproducible debugging.
+Currently supported compound assignments:
 
-## Safety constraints
+- `+=`
+- `-=`
+- `*=`
+- `/=`
+- `//=`
+- `%=`
+- `**=`
 
-- Assembly path disabled by default.
-- CI blocks privileged/high-risk instructions in asm files.
-- Sanitizer and static-analysis pipeline available.
+### String behavior
 
-## Near-term roadmap
+- `string + string` performs concatenation
+- mixed string coercion such as `"Test " + 7` is currently supported only inside `print(...)`
+- outside `print(...)`, mixed arithmetic/string operands remain runtime errors
 
-- Add graph-centric opcodes and memory layouts.
-- Add parser/bytecode loader and structured error model.
-- Establish stable benchmark suite for Rust parity tracking.
+## Execution model
+
+The active design target is a single execution pipeline:
+
+- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
+
+The implementation is still being rebuilt toward that target, but the project should be evaluated against that direction rather than against historical intermediate structures.
+
+Two rules matter here:
+
+- no alternate semantic engine should silently take over when a form is unsupported
+- unsupported language forms should fail with a clear error
+
+## VM model
+
+The VM remains the execution backend and the main performance anchor.
+
+Current VM characteristics:
+
+- fixed instruction encoding documented in [ISA.md](ISA.md)
+- explicit VM result codes exposed in `src/vm/vm.h`
+- deterministic mode available through `graphion_vm_set_deterministic(vm, true)`
+
+The VM also contains older graph/hypergraph opcodes and runtime bindings. Those remain part of the broader project, but they should be treated separately from the currently documented `.gion` scalar-language surface.
+
+## Error model
+
+Runtime-visible error behavior is documented in:
+
+- [ERRORS.md](../debugging/ERRORS.md)
+
+At a high level, the current user-visible split is:
+
+- parse errors for unsupported/invalid source forms
+- unknown variable / unknown operand diagnostics
+- runtime errors for invalid arithmetic at execution time
+
+## Benchmarks
+
+Performance tracking is documented in:
+
+- [BENCHMARKS.md](../../performance/guides/BENCHMARKS.md)
+- [PERFORMANCE_RESULTS.md](../../performance/reports/PERFORMANCE_RESULTS.md)
+
+The important architectural benchmark distinction is:
+
+- VM performance is validated on VM-oriented lanes
+- `.gion` performance is validated separately on source-level lanes
+
+That separation matters because the VM can already be good while the source frontend still has significant work left.

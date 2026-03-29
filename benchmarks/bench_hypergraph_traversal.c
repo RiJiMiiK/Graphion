@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   const uint32_t hyperedge_offsets[] = {0, 3, 6, 9, 12};
   const uint32_t hyperedge_nodes[] = {0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3};
   graphion_hypergraph graph;
-  long iterations = 300000;
+  long iterations = 10000000;
   long i;
   uint64_t checksum = 0U;
   size_t memberships_per_iteration;

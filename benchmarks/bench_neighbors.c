@@ -22,10 +22,13 @@ int main(int argc, char **argv) {
   const uint32_t neighbors[] = {
       1, 2, 3, 4, 4, 5, 0, 6, 7, 1, 5, 7, 6, 7, 0, 2, 3, 1, 4,
   };
-  const uint32_t frontier[] = {0, 3, 6};
+  const uint32_t base_frontier[] = {0, 3, 6};
+  const size_t base_frontier_len = sizeof(base_frontier) / sizeof(base_frontier[0]);
+  const size_t frontier_repeats = 32U;
+  uint32_t frontier[3U * 32U];
   const size_t frontier_len = sizeof(frontier) / sizeof(frontier[0]);
   graphion_csr_graph graph;
-  long iterations = 300000;
+  long iterations = 10000000;
   long i;
   double start;
   double end;
@@ -52,6 +55,12 @@ int main(int argc, char **argv) {
     return 3;
   }
 
+  for (size_t repeat = 0; repeat < frontier_repeats; ++repeat) {
+    for (size_t j = 0; j < base_frontier_len; ++j) {
+      frontier[(repeat * base_frontier_len) + j] = base_frontier[j];
+    }
+  }
+
   for (size_t j = 0; j < frontier_len; ++j) {
     frontier_neighbor_work += graphion_csr_graph_neighbor_count(&graph, frontier[j]);
   }
@@ -75,7 +84,7 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mteps = ((double)(iterations * (long)frontier_neighbor_work) / seconds) / 1000000.0;
+  mteps = ((double)iterations * (double)frontier_neighbor_work / seconds) / 1000000.0;
   ns_per_neighbor =
       (seconds * 1000000000.0) / ((double)iterations * (double)frontier_neighbor_work);
 

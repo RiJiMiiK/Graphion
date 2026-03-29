@@ -18,12 +18,13 @@ static double now_seconds(void) {
 }
 
 int main(int argc, char **argv) {
+  const size_t inner_repeats = 8U;
   const uint32_t node_offsets[] = {0, 2, 5, 8, 10, 12};
   const uint32_t node_hyperedges[] = {0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1};
   const uint32_t hyperedge_offsets[] = {0, 3, 6, 9, 12};
   const uint32_t hyperedge_nodes[] = {0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3};
   graphion_hypergraph graph;
-  long iterations = 500000;
+  long iterations = 10000000;
   long i;
   uint64_t checksum = 0U;
   double start;
@@ -50,15 +51,17 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    const uint32_t *p = graph.node_hyperedges;
-    const uint32_t *const endp = graph.node_hyperedges + graph.incidence_count;
-    while ((endp - p) >= 4) {
-      checksum += (uint64_t)p[0] + (uint64_t)p[1] + (uint64_t)p[2] + (uint64_t)p[3];
-      p += 4;
-    }
-    while (p < endp) {
-      checksum += (uint64_t)(*p);
-      p++;
+    for (size_t repeat = 0; repeat < inner_repeats; ++repeat) {
+      const uint32_t *p = graph.node_hyperedges;
+      const uint32_t *const endp = graph.node_hyperedges + graph.incidence_count;
+      while ((endp - p) >= 4) {
+        checksum += (uint64_t)p[0] + (uint64_t)p[1] + (uint64_t)p[2] + (uint64_t)p[3];
+        p += 4;
+      }
+      while (p < endp) {
+        checksum += (uint64_t)(*p);
+        p++;
+      }
     }
   }
   end = now_seconds();
@@ -67,11 +70,13 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mips = ((double)(iterations * (long)graph.incidence_count) / seconds) / 1000000.0;
-  ns_per_incidence = (seconds * 1000000000.0) / ((double)iterations * (double)graph.incidence_count);
+  mips = ((double)iterations * (double)(graph.incidence_count * inner_repeats) / seconds) / 1000000.0;
+  ns_per_incidence =
+      (seconds * 1000000000.0) / ((double)iterations * (double)(graph.incidence_count * inner_repeats));
 
   printf("{\"benchmark\":\"hypergraph_incidence\",\"iterations\":%ld,\"incidence_per_iteration\":%zu,"
          "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_incidence\":%.3f,\"checksum\":%llu}\n",
-         iterations, graph.incidence_count, seconds, mips, ns_per_incidence, (unsigned long long)checksum);
+         iterations, graph.incidence_count * inner_repeats, seconds, mips, ns_per_incidence,
+         (unsigned long long)checksum);
   return 0;
 }

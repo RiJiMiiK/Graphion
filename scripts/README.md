@@ -1,38 +1,30 @@
-# Scripts Layout
+# Scripts
 
 This directory is organized by purpose:
 
-- `scripts/bench/`: benchmark runners and comparison tools.
-  Internal layout:
-  - `scripts/bench/run/`
-  - `scripts/bench/collect/`
-  - `scripts/bench/compare/`
-  - `scripts/bench/render/`
-  - `scripts/bench/refresh/`
-  - `scripts/bench/pgo/`
-- `scripts/dev/`: local developer bootstrap/build/hooks helpers.
-- `scripts/quality/`: local quality and safety checks.
-- `scripts/repo/`: repository maintenance automation.
+- `scripts/bench/`
+  - benchmark runners, collectors, renderers, refresh flows, and PGO helpers
+- `scripts/dev/`
+  - local bootstrap, build, and hook helpers
+- `scripts/quality/`
+  - local quality and safety checks
+- `scripts/repo/`
+  - repository maintenance helpers
 
-Quick pointers:
+## Common entry points
 
-- Bench run: `python scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000`
-- Perf snapshot: `python scripts/bench/refresh/refresh_performance_results.py`
-- Automated perf snapshot workflow: `.github/workflows/performance-report.yml`
-- PGO run: `python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo`
-- PGO corpus policy: `docs/performance/policies/PGO_CORPUS_POLICY.md`
-- Cross-compiler policy: `docs/performance/policies/CROSS_COMPILER_POLICY.md`
-- PGO artifact manifest: `<build-dir>/pgo-data/profile_manifest.json`
-- PGO thresholds: `scripts/bench/pgo/pgo_thresholds.py`
-- PGO release alerts: `python scripts/bench/pgo/check_pgo_alerts.py --report-json <path>`
-- ASM fallback compare: `python scripts/bench/compare/compare_asm_fallback.py --build-root build-asm-fallback --runs 20 --iterations 500000 -- -G Ninja -DCMAKE_C_COMPILER=clang`
-- Frontier/traversal regression gate: `python scripts/bench/compare/check_frontier_regressions.py --graphion-json <graphion_lane.json> --rust-json <rust_lane.json>`
-- ASM hardening parity: `python scripts/quality/test_asm_hardening_parity.py --build-root build-asm-hardening -- -G Ninja -DCMAKE_C_COMPILER=gcc`
-- Optimization report: `python scripts/bench/pgo/generate_optimization_report.py --build-root build-opt-report`
-- Unified optimization report: `python scripts/bench/refresh/refresh_optimization_reports.py --runs 100`
-- Cross-compiler report: `python scripts/bench/refresh/refresh_cross_compiler_report.py --runs 20 --iterations 500000`
-- Report metadata is enforced by the bench JSON schema; renderers now reject missing `metadata` blocks.
-- Dispatch parity: `python scripts/quality/test_dispatch_variants.py --build-root build-dispatch-tests`
-  This includes deterministic-mode VM tests on each supported dispatch variant.
-- ASM safety: `python scripts/quality/check_asm_safety.py`
-- Local gate: `scripts/quality/quality_gate.sh` or `scripts/quality/quality_gate.ps1`
+- bench run:
+  - `python scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000`
+- rolling performance snapshot:
+  - `python scripts/bench/refresh/refresh_performance_results.py`
+- PGO pipeline:
+  - `python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo`
+- quality gate:
+  - `scripts/quality/quality_gate.sh`
+  - `scripts/quality/quality_gate.ps1`
+
+## Notes
+
+- generated benchmark artifacts are written under `benchmarks/results/`
+- benchmark metadata is validated by the shared reporting helpers
+- if you add a new script, put it in the narrowest matching subdirectory instead of growing the root

@@ -5,25 +5,28 @@
 [![Fuzz Nightly](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Graphion is a domain-specific language project focused on graph and hypergraph workloads.
+Graphion is a language project built around a `.gion` source pipeline and a VM backend.
 
-Current scope:
-- High-performance interpreter in C.
-- Optional hand-tuned assembly for VM hot paths.
-- Compiled backend planned later.
+Today, the active language surface is the scalar subset:
 
-## Status
+- assignment
+- `print(...)`
+- arithmetic expressions
+- grouped expressions with parentheses
+- compound assignments
+- `abs(...)`
 
-Early stage repository. The current baseline provides:
-- Minimal VM/runtime scaffold in C.
-- Arena allocator primitive.
-- CMake build with strict warnings.
-- CI, static checks, and security workflows.
-- Unit tests (`ctest`) and benchmark scaffold.
-- Fuzzing scaffold for parser/VM robustness.
-- Bytecode parser scaffold with fixed-width ISA encoding.
+## Current direction
 
-## Build
+The rebuild is guided by one target pipeline:
+
+- `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
+
+The project also contains broader VM work for graph and hypergraph execution, but the user-facing `.gion` language is currently documented only for the subset that is actually implemented.
+
+## Quick start
+
+Configure, build, and test:
 
 ```bash
 cmake -S . -B build
@@ -31,13 +34,19 @@ cmake --build build --config Release
 ctest --test-dir build --output-on-failure -C Release
 ```
 
-Quick local dev build (Ninja):
+Run the main executable on the current sample:
+
+```powershell
+.\build\Release\graphion.exe .\examples\sample_test.gion
+```
+
+## Developer helpers
+
+Quick local dev build:
 
 ```bash
 ./scripts/dev/dev_build.sh
 ```
-
-PowerShell:
 
 ```powershell
 ./scripts/dev/dev_build.ps1
@@ -49,134 +58,65 @@ Repository bootstrap:
 ./scripts/dev/bootstrap.sh
 ```
 
-PowerShell:
-
 ```powershell
 ./scripts/dev/bootstrap.ps1
 ```
 
-Enable assembly hot paths (x86_64 only):
-
-```bash
-cmake -S . -B build-asm -DGRAPHION_ENABLE_ASM=ON
-cmake --build build-asm --config Release
-```
-
-PGO pipeline:
-
-```bash
-python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
-```
-
-PowerShell / MSVC:
-
-```powershell
-python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
-```
-
-Sanitizer build (Linux/macOS with Clang/GCC):
-
-```bash
-cmake -S . -B build-sanitize -DGRAPHION_ENABLE_SANITIZERS=ON
-cmake --build build-sanitize
-ctest --test-dir build-sanitize --output-on-failure -C Debug
-```
-
-Fuzzing target (Clang/libFuzzer):
-
-```bash
-cmake -S . -B build-fuzz -G Ninja -DGRAPHION_ENABLE_FUZZING=ON -DCMAKE_C_COMPILER=clang
-cmake --build build-fuzz
-./build-fuzz/fuzz_vm
-```
-
-## Reproducible Dev Environment (Docker)
-
-Build and open a shell:
-
-```bash
-docker compose build
-docker compose run --rm graphion-dev
-```
-
-Inside the container:
-
-```bash
-./scripts/dev/dev_build.sh
-```
-
-VS Code users can also use the included devcontainer configuration.
-
-## Benchmarks
-
-Run benchmark smoke and produce JSON:
-
-```bash
-cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
-cmake --build build-bench
-python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
-```
-
-See [docs/performance/guides/BENCHMARKS.md](docs/performance/guides/BENCHMARKS.md).
-Latest comparative snapshot: [docs/performance/reports/PERFORMANCE_RESULTS.md](docs/performance/reports/PERFORMANCE_RESULTS.md).
-PGO workflow details: [docs/performance/guides/PGO.md](docs/performance/guides/PGO.md).
-
-Additional graph-core benchmark:
-
-```bash
-./build-bench/graphion_bench_bfs 200000
-```
-
-Additional hypergraph-core benchmark:
-
-```bash
-./build-bench/graphion_bench_hypergraph 500000
-```
-
-VM graph-opcode benchmark:
-
-```bash
-./build-bench/graphion_bench_vm_graph 300000
-```
-
-## Developer Hooks
-
-Enable local pre-commit checks:
+Enable local hooks:
 
 ```bash
 ./scripts/dev/setup_hooks.sh
 ```
 
-PowerShell:
-
 ```powershell
 ./scripts/dev/setup_hooks.ps1
 ```
 
-## Security
+## Benchmarks
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting and supported versions.
-For assembly-specific safeguards and workflow, see [docs/runtime/asm/ASSEMBLY_SAFETY.md](docs/runtime/asm/ASSEMBLY_SAFETY.md).
-For assembly ABI/register mapping, see [docs/runtime/asm/ASM_REGISTERS.md](docs/runtime/asm/ASM_REGISTERS.md).
-For branch hardening settings, see [docs/process/BRANCH_PROTECTION.md](docs/process/BRANCH_PROTECTION.md).
-For GitHub Actions security posture, see [docs/ACTIONS_SECURITY.md](docs/ACTIONS_SECURITY.md).
-Coverage workflow runs on GitHub Actions and uploads HTML artifacts.
-Nightly long fuzzing is scheduled in GitHub Actions.
-Security contacts and response targets are documented in [SECURITY_CONTACTS.md](SECURITY_CONTACTS.md).
+Build benchmark targets:
 
-## Contributing
+```bash
+cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
+cmake --build build-bench
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-Documentation map: [docs/README.md](docs/README.md).
-VM instruction encoding and compatibility are documented in [docs/runtime/core/ISA.md](docs/runtime/core/ISA.md).
-ISA versioning policy and compatibility matrix are documented in [docs/runtime/contracts/ISA_VERSIONING.md](docs/runtime/contracts/ISA_VERSIONING.md).
-Structured subsystem and VM runtime error behavior is documented in [docs/runtime/debugging/VM_ERRORS.md](docs/runtime/debugging/VM_ERRORS.md).
-Git workflow policy is documented in [docs/process/GIT_WORKFLOW.md](docs/process/GIT_WORKFLOW.md).
+Collect local benchmark JSON:
 
-## Support
+```bash
+python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
+```
 
-See [SUPPORT.md](SUPPORT.md) for support and security reporting channels.
-Support policy is described in [docs/SUPPORT_POLICY.md](docs/SUPPORT_POLICY.md).
+Key benchmark docs:
+
+- [docs/performance/guides/BENCHMARKS.md](docs/performance/guides/BENCHMARKS.md)
+- [docs/performance/guides/PGO.md](docs/performance/guides/PGO.md)
+- [docs/performance/reports/PERFORMANCE_RESULTS.md](docs/performance/reports/PERFORMANCE_RESULTS.md)
+
+Current scalar-language tracking uses the `scalar_values_print` workload.
+
+## Documentation
+
+Primary documentation entry points:
+
+- user docs: [docs/graphion/index.md](docs/graphion/index.md)
+- site home: [docs/index.md](docs/index.md)
+- architecture: [docs/runtime/core/ARCHITECTURE.md](docs/runtime/core/ARCHITECTURE.md)
+- ISA: [docs/runtime/core/ISA.md](docs/runtime/core/ISA.md)
+- errors: [docs/runtime/debugging/ERRORS.md](docs/runtime/debugging/ERRORS.md)
+- rebuild charter: [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md)
+
+Generate the HTML site locally:
+
+```powershell
+python -m sphinx -b html docs docs/_build/html
+```
+
+## Contact
+
+Use the Discord server for questions, support, and private contact:
+
+- https://discord.com/invite/mPzDQ7TYkj
 
 ## License
 

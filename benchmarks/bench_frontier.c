@@ -8,10 +8,13 @@
 #include <string.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
 enum {
   FRONTIER_INPUT_LEN = 64,
   FRONTIER_CAPACITY = 64,
-  FRONTIER_ITEMS_PER_ITERATION = 128
+  FRONTIER_ITEMS_PER_ITERATION = 128,
+  FRONTIER_RESTORE_LEN = 32
 };
 
 static double now_seconds(void) {
@@ -37,7 +40,7 @@ int main(int argc, char **argv) {
       {GVM_OP_HALT, 0U, 0U, 0},
   };
   const size_t instruction_count = sizeof(program) / sizeof(program[0]);
-  long iterations = 300000;
+  long iterations = 10000000;
   long i;
   double start;
   double end;
@@ -63,23 +66,30 @@ int main(int argc, char **argv) {
     return 3;
   }
 
+  for (i = 0; i < FRONTIER_INPUT_LEN; ++i) {
+    frontier_a[i] = (uint32_t)i;
+  }
+  for (i = FRONTIER_INPUT_LEN; i < FRONTIER_CAPACITY; ++i) {
+    frontier_a[i] = 0U;
+  }
+  memset(frontier_b, 0, sizeof(frontier_b));
+  graphion_vm_bind_frontier(&vm, frontier_a, FRONTIER_INPUT_LEN, frontier_b, FRONTIER_CAPACITY);
+
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    size_t j;
-    for (j = 0U; j < FRONTIER_INPUT_LEN; ++j) {
-      frontier_a[j] = (uint32_t)j;
-      frontier_b[j] = 0U;
-    }
-    memset(vm.regs, 0, sizeof(vm.regs));
     vm.pc = 0U;
     vm.halted = false;
-    graphion_vm_bind_frontier(&vm, frontier_a, FRONTIER_INPUT_LEN, frontier_b, FRONTIER_CAPACITY);
+    vm.frontier_input = frontier_a;
+    vm.frontier_input_len = FRONTIER_INPUT_LEN;
+    vm.frontier_output = frontier_b;
+    vm.frontier_output_len = 0U;
+    vm.frontier_capacity = FRONTIER_CAPACITY;
     rc = graphion_vm_run(&vm);
     if (rc != 0) {
       fprintf(stderr, "run failed rc=%d\n", rc);
       return 4;
     }
-    checksum += (uint64_t)vm.regs[4];
+    checksum += (uint64_t)BENCH_REG_I(vm, 4);
   }
   end = now_seconds();
 

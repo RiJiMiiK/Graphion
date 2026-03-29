@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
@@ -15,6 +16,26 @@ typedef enum {
   GVM_OP_HALT = 1,
   GVM_OP_MOV_IMM = 2,
   GVM_OP_ADD = 3,
+  GVM_OP_MOV = 4,
+  GVM_OP_LOAD_CONST = 5,
+  GVM_OP_LOAD_GLOBAL = 6,
+  GVM_OP_STORE_GLOBAL = 7,
+  GVM_OP_STORE_CONST_GLOBAL = 8,
+  GVM_OP_COPY_GLOBAL = 9,
+  GVM_OP_PRINT_CONST = 10,
+  GVM_OP_PRINT_GLOBAL = 11,
+  GVM_OP_PRINT_REG = 12,
+  GVM_OP_SUB = 13,
+  GVM_OP_MUL = 14,
+  GVM_OP_DIV = 15,
+  GVM_OP_POW = 24,
+  GVM_OP_MOD = 23,
+  GVM_OP_PRINT_CONST_PART = 25,
+  GVM_OP_PRINT_GLOBAL_PART = 26,
+  GVM_OP_PRINT_REG_PART = 27,
+  GVM_OP_PRINT_NEWLINE = 28,
+  GVM_OP_FLOOR_DIV = 29,
+  GVM_OP_ABS = 30,
   GVM_OP_FRONTIER_CLEAR = 32,
   GVM_OP_FRONTIER_PUSH = 33,
   GVM_OP_FRONTIER_FILTER_LT_IMM = 34,
@@ -31,7 +52,9 @@ typedef enum {
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
   GVM_OP_INCIDENT_SUM = 19,
-  GVM_OP_HYPEREDGE_NODE_SUM = 20
+  GVM_OP_HYPEREDGE_NODE_SUM = 20,
+  GVM_OP_BFS_LEVEL_COUNT = 21,
+  GVM_OP_BFS_ORDER = 22
 } graphion_opcode;
 
 typedef enum {
@@ -50,8 +73,38 @@ typedef enum {
   GVM_ERR_FRONTIER_OVERFLOW = -12,
   GVM_ERR_INVALID_FRONTIER_VALUE = -13,
   GVM_ERR_CSR_WEIGHTS_UNBOUND = -14,
-  GVM_ERR_CSR_EDGE_ATTRS_UNBOUND = -15
+  GVM_ERR_CSR_EDGE_ATTRS_UNBOUND = -15,
+  GVM_ERR_TYPE_MISMATCH = -16,
+  GVM_ERR_CONST_UNBOUND = -17,
+  GVM_ERR_GLOBALS_UNBOUND = -18,
+  GVM_ERR_INVALID_CONST_INDEX = -19,
+  GVM_ERR_INVALID_GLOBAL_INDEX = -20,
+  GVM_ERR_OUTPUT_UNBOUND = -21,
+  GVM_ERR_DIVIDE_BY_ZERO = -22
 } graphion_vm_result;
+
+typedef enum {
+  GVM_VALUE_NONE = 0,
+  GVM_VALUE_INT = 1,
+  GVM_VALUE_FLOAT = 2,
+  GVM_VALUE_BOOL = 3,
+  GVM_VALUE_STRING = 4,
+  GVM_VALUE_GRAPH_REF = 5,
+  GVM_VALUE_HYPERGRAPH_REF = 6,
+  GVM_VALUE_INT_SEQUENCE_REF = 7
+} graphion_vm_value_kind;
+
+typedef struct {
+  uint8_t kind;
+  uint8_t reserved[7];
+  union {
+    int64_t int_value;
+    double float_value;
+    int bool_value;
+    const char *string_value;
+    const void *ref_value;
+  } as;
+} graphion_vm_value;
 
 typedef struct {
   uint8_t op;
@@ -60,8 +113,16 @@ typedef struct {
   int32_t imm;
 } graphion_insn;
 
+typedef int (*graphion_output_write_fn)(void *ctx, const char *bytes, size_t len);
+
 typedef struct {
-  int64_t regs[16];
+  graphion_output_write_fn write;
+  void *ctx;
+} graphion_output_sink;
+
+typedef struct {
+  graphion_vm_value regs[16];
+  char *owned_reg_strings[16];
   const graphion_insn *program;
   size_t program_len;
   size_t pc;
@@ -70,6 +131,23 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
+  bool frontier_filter_map_reduce_fastpath;
+  bool frontier_fastpath;
+  bool graph_ops_fastpath;
+  bool value_move_fastpath;
+  bool global_materialize_fastpath;
+  bool global_print_fastpath;
+  bool value_move_indices_valid;
+  bool value_move_int_add_safe;
+  bool global_print_indices_valid;
+  const graphion_vm_value *const_pool;
+  size_t const_count;
+  graphion_vm_value *globals;
+  char **global_string_owners;
+  size_t global_count;
+  graphion_output_sink output;
+  size_t global_print_const_lens[512];
+  size_t global_print_global_lens[256];
   const graphion_csr_graph *csr_graph;
   int32_t *bfs_levels;
   uint32_t *bfs_queue;
@@ -83,6 +161,8 @@ typedef struct {
 } graphion_vm;
 
 void graphion_vm_init(graphion_vm *vm);
+void graphion_vm_dispose(graphion_vm *vm);
+void graphion_vm_reset_execution(graphion_vm *vm);
 void graphion_vm_set_deterministic(graphion_vm *vm, bool enabled);
 int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t program_len);
 void graphion_vm_bind_csr(graphion_vm *vm,
@@ -90,6 +170,13 @@ void graphion_vm_bind_csr(graphion_vm *vm,
                           int32_t *bfs_levels,
                           uint32_t *bfs_queue,
                           size_t bfs_capacity);
+void graphion_output_sink_from_file(graphion_output_sink *sink, FILE *output);
+void graphion_output_sink_from_counter(graphion_output_sink *sink, uint64_t *byte_count);
+void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_pool, size_t const_count);
+void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_t global_count);
+void graphion_vm_bind_global_string_owners(graphion_vm *vm, char **owners, size_t owner_count);
+void graphion_vm_bind_output_sink(graphion_vm *vm, const graphion_output_sink *output);
+void graphion_vm_bind_output(graphion_vm *vm, FILE *output);
 void graphion_vm_bind_hypergraph(graphion_vm *vm, const graphion_hypergraph *graph);
 void graphion_vm_bind_frontier(graphion_vm *vm,
                                uint32_t *input,

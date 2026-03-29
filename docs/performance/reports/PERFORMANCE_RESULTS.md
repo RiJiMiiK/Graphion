@@ -6,7 +6,11 @@ Benchmark runs use x100 averages with benchmark-specific default iteration count
 
 Format requested: `s | mteps | mips | ns_per_X`.
 
-For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS.md](OPTIMIZATION_REPORTS.md).
+Read this file as a rolling engineering snapshot, not as a frozen publication report.
+For the current `.gion` rebuild, pay particular attention to:
+
+- `vm_dispatch` for the VM backend
+- `scalar_values_print` for the scalar language lane
 
 ## Environment Metadata
 

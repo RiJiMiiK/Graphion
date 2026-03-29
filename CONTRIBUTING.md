@@ -1,75 +1,60 @@
 # Contributing
 
-## Development setup
+## Build and test first
 
-1. Install CMake (>= 3.20) and a C11 compiler.
-2. Configure and build:
+Recommended baseline:
 
 ```bash
 cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure -C Debug
+cmake --build build --config Release
+ctest --test-dir build --output-on-failure -C Release
 ```
 
-Optional reproducible setup with Docker:
-
-```bash
-docker compose build
-docker compose run --rm graphion-dev
-```
-
-Inside container:
-
-```bash
-./scripts/dev/dev_build.sh
-```
-
-Project bootstrap:
+Useful local helpers:
 
 ```bash
 ./scripts/dev/bootstrap.sh
-```
-
-Enable local git hooks:
-
-```bash
+./scripts/dev/dev_build.sh
 ./scripts/dev/setup_hooks.sh
 ```
 
-## Coding rules
+PowerShell equivalents exist in the same directories.
 
-- Keep C code C11 compatible.
-- Run formatting (`clang-format`) before opening a PR.
-- Keep warnings at zero on supported toolchains.
-- Avoid introducing UB; prefer explicit bounds checks.
-- Run `python scripts/quality/check_asm_safety.py` before pushing asm changes.
-- Run tests with `ctest --test-dir <build-dir>`.
-- Run tests with `ctest --test-dir <build-dir> -C Debug`.
-- Include benchmark note for performance-sensitive PRs.
+## Working style
 
-## Pull requests
+- keep changes focused
+- add or update tests when behavior changes
+- prefer clear behavior over clever shortcuts
+- keep the current rebuild charter in mind
+- document user-visible changes when the language surface changes
 
-- Keep PRs focused and small.
-- Include rationale and benchmark notes for performance-sensitive changes.
-- Add or update tests when behavior changes.
-- For VM hot paths, include before/after performance evidence.
-- Use branch naming and PR title rules from `docs/process/GIT_WORKFLOW.md`.
-- Prefer squash merge and keep linear history.
+## For performance-sensitive changes
 
-## Commit message style
+- include a benchmark note
+- distinguish VM impact from `.gion` source-level impact
+- avoid benchmark-only shortcuts
 
-Use concise imperative messages, for example:
-- `vm: add bounds check on register access`
-- `ci: add cppcheck step for Linux`
+## For runtime / VM changes
 
-## Release and architecture docs
+- keep VM-visible behavior aligned with the docs
+- update [docs/runtime/core/ISA.md](docs/runtime/core/ISA.md) when instruction semantics change
+- update [docs/runtime/debugging/ERRORS.md](docs/runtime/debugging/ERRORS.md) when error behavior changes
 
-- Release process: `docs/process/RELEASE.md`
-- Release checklist: `docs/process/RELEASE_CHECKLIST.md`
-- Architecture overview: `docs/runtime/core/ARCHITECTURE.md`
-- ISA spec: `docs/runtime/core/ISA.md`
-- Git signing guidance: `docs/process/GIT_SIGNING.md`
-- Git workflow policy: `docs/process/GIT_WORKFLOW.md`
-- Actions security policy: `docs/ACTIONS_SECURITY.md`
-- Support policy: `docs/SUPPORT_POLICY.md`
+## For language changes
 
+- update the user docs in `docs/graphion/`
+- update the sample program when it helps demonstrate the new feature
+- add happy-path and error-path tests
+
+## Reference docs
+
+- architecture: `docs/runtime/core/ARCHITECTURE.md`
+- ISA: `docs/runtime/core/ISA.md`
+- errors: `docs/runtime/debugging/ERRORS.md`
+- rebuild charter: `docs/runtime/core/REBUILD_CHARTER.md`
+
+## Contact
+
+If you need to reach the maintainer directly, use:
+
+- https://discord.com/invite/mPzDQ7TYkj

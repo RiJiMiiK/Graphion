@@ -1,7 +1,9 @@
 # Contributors
 
-Auto-generated from `git shortlog -sne HEAD`.
+This file is generated from the git history and should be treated as a lightweight credits file.
 
-| Commits | Name | Email |
-|---:|---|---|
-| 8 | RiJiMiiK | youenn.lagadic@outlook.com |
+Current visible contributor list:
+
+| Commits | Name |
+|---:|---|
+| 8 | RiJiMiiK |

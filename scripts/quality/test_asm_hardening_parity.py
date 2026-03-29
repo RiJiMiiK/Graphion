@@ -144,7 +144,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--output-md",
-        default="docs/performance/reports/ASM_HARDENING_PARITY.md",
+        default="benchmarks/results/asm/asm_hardening_parity_latest.md",
         help="Markdown output path",
     )
     parser.add_argument("cmake_args", nargs="*", help="Extra CMake args, for example -G Ninja -DCMAKE_C_COMPILER=gcc")

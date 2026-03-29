@@ -1,22 +1,7 @@
 # Support
 
-## Usage questions
+Graphion support is currently best-effort while the project is still in active early-stage development.
 
-Use GitHub Discussions for usage and design questions:
+For questions, bug reports, and direct contact, use:
 
-- https://github.com/RiJiMiiK/Graphion/discussions
-
-## Bug reports
-
-Use GitHub Issues with the provided templates.
-
-## Security reports
-
-Report vulnerabilities privately:
-
-- https://github.com/RiJiMiiK/Graphion/security/advisories/new
-- https://discord.gg/SfyCjapBEt
-
-## Support policy
-
-See `docs/SUPPORT_POLICY.md` for current support scope.
+- https://discord.com/invite/mPzDQ7TYkj

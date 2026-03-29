@@ -14,7 +14,8 @@ from bench_paths import (
     DISPATCH_LINUX_JSON,
     DISPATCH_WINDOWS_JSON,
     PERFORMANCE_LINUX_JSON,
-    PERFORMANCE_RUST_JSON,
+    PERFORMANCE_RUST_LINUX_JSON,
+    PERFORMANCE_RUST_WINDOWS_JSON,
     PERFORMANCE_WINDOWS_JSON,
 )
 
@@ -41,7 +42,8 @@ def main() -> int:
 
     windows_json = PERFORMANCE_WINDOWS_JSON
     linux_json = PERFORMANCE_LINUX_JSON
-    rust_json = PERFORMANCE_RUST_JSON
+    rust_windows_json = PERFORMANCE_RUST_WINDOWS_JSON
+    rust_linux_json = PERFORMANCE_RUST_LINUX_JSON
     dispatch_windows_json = DISPATCH_WINDOWS_JSON
     dispatch_linux_json = DISPATCH_LINUX_JSON
 
@@ -78,7 +80,7 @@ def main() -> int:
             "python",
             "scripts/bench/compare/compare_dispatch_variants.py",
             "--iterations",
-            "500000",
+            "5000000",
             "--runs",
             str(args.runs),
             "--output",
@@ -103,7 +105,7 @@ def main() -> int:
             "--platform-label",
             "Rust Windows",
             "--output",
-            str(rust_json),
+            str(rust_windows_json),
             "--skip-missing",
         ])
 
@@ -119,7 +121,11 @@ def main() -> int:
                 "--output benchmarks/results/performance/linux_100x_latest.json"
             ).format(build_dir=args.linux_build_dir, runs=args.runs),
             (
-                "python3 scripts/bench/compare/compare_dispatch_variants.py --iterations 500000 --runs {runs} "
+                "python3 scripts/bench/collect/collect_rust_benchmarks.py --manifest-path graphion_rust/Cargo.toml --runs {runs} "
+                "--platform-label \"Rust Linux\" --output benchmarks/results/performance/rust_linux_100x_latest.json --skip-missing"
+            ).format(runs=args.runs),
+            (
+                "python3 scripts/bench/compare/compare_dispatch_variants.py --iterations 5000000 --runs {runs} "
                 "--platform-label \"Graphion Linux\" --compiler-kind gcc --asm-enabled on "
                 "--output benchmarks/results/performance/dispatch_variants.json --cmake-arg=-DGRAPHION_ENABLE_ASM=ON"
             ).format(runs=args.runs),
@@ -147,8 +153,10 @@ def main() -> int:
         "--dispatch-linux-json",
         str(dispatch_linux_json),
     ]
-    if rust_json.exists():
-        render_cmd.extend(["--rust-json", str(rust_json)])
+    if rust_windows_json.exists():
+        render_cmd.extend(["--rust-windows-json", str(rust_windows_json)])
+    if rust_linux_json.exists():
+        render_cmd.extend(["--rust-linux-json", str(rust_linux_json)])
     run(render_cmd)
     return 0
 

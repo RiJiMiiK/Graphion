@@ -7,6 +7,16 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define BENCH_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
+
+static void bench_reset_regs(graphion_vm *vm) {
+  size_t i;
+  for (i = 0U; i < (sizeof(vm->regs) / sizeof(vm->regs[0])); ++i) {
+    vm->regs[i].kind = GVM_VALUE_INT;
+    vm->regs[i].as.int_value = 0;
+  }
+}
+
 static double now_seconds(void) {
 #if defined(TIME_UTC)
   struct timespec ts;
@@ -18,6 +28,7 @@ static double now_seconds(void) {
 }
 
 int main(int argc, char **argv) {
+  const size_t inner_repeats = 4U;
   enum {
     NODE_COUNT = 8,
     EDGES_PER_NODE = 1024,
@@ -97,18 +108,19 @@ int main(int argc, char **argv) {
 
   start = now_seconds();
   for (long i = 0; i < iterations; ++i) {
-    for (size_t reg = 0U; reg < (sizeof(vm.regs) / sizeof(vm.regs[0])); ++reg) {
-      vm.regs[reg] = 0;
+    for (size_t repeat = 0; repeat < inner_repeats; ++repeat) {
+      bench_reset_regs(&vm);
+      vm.pc = 0U;
+      vm.halted = false;
+      rc = graphion_vm_run(&vm);
+      if (rc != 0) {
+        fprintf(stderr, "run failed rc=%d\n", rc);
+        return 5;
+      }
+      checksum += (uint64_t)(BENCH_REG_I(vm, 1) + BENCH_REG_I(vm, 3) + BENCH_REG_I(vm, 5) +
+                             BENCH_REG_I(vm, 7) + BENCH_REG_I(vm, 9) + BENCH_REG_I(vm, 11) +
+                             BENCH_REG_I(vm, 13) + BENCH_REG_I(vm, 15));
     }
-    vm.pc = 0U;
-    vm.halted = false;
-    rc = graphion_vm_run(&vm);
-    if (rc != 0) {
-      fprintf(stderr, "run failed rc=%d\n", rc);
-      return 5;
-    }
-    checksum += (uint64_t)(vm.regs[1] + vm.regs[3] + vm.regs[5] + vm.regs[7] + vm.regs[9] +
-                           vm.regs[11] + vm.regs[13] + vm.regs[15]);
   }
   end = now_seconds();
 
@@ -116,16 +128,18 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mteps = (((double)iterations) * ((double)edge_data_items_per_iteration) / seconds) / 1000000.0;
-  ns_per_instruction = (seconds * 1000000000.0) / ((double)iterations * (double)instruction_count);
+  mteps =
+      (((double)iterations) * ((double)(edge_data_items_per_iteration * inner_repeats)) / seconds) / 1000000.0;
+  ns_per_instruction =
+      (seconds * 1000000000.0) / ((double)iterations * (double)(instruction_count * inner_repeats));
   ns_per_edge_data =
-      (seconds * 1000000000.0) / ((double)iterations * (double)edge_data_items_per_iteration);
+      (seconds * 1000000000.0) / ((double)iterations * (double)(edge_data_items_per_iteration * inner_repeats));
 
   printf("{\"benchmark\":\"weighted_neighbor_sums\",\"iterations\":%ld,"
          "\"instructions_per_iteration\":%zu,\"edge_data_items_per_iteration\":%zu,"
          "\"seconds\":%.6f,\"mteps\":%.3f,\"ns_per_instruction\":%.3f,"
          "\"ns_per_edge_data\":%.3f,\"checksum\":%llu}\n",
-         iterations, instruction_count, edge_data_items_per_iteration, seconds, mteps,
+         iterations, instruction_count * inner_repeats, edge_data_items_per_iteration * inner_repeats, seconds, mteps,
          ns_per_instruction, ns_per_edge_data, (unsigned long long)checksum);
   return 0;
 }

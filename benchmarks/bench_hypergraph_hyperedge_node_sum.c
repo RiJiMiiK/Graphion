@@ -18,14 +18,15 @@ static double now_seconds(void) {
 }
 
 int main(int argc, char **argv) {
+  const size_t hyperedge_workload_repeats = 16U;
   const uint32_t node_offsets[] = {0, 2, 5, 8, 10, 12};
   const uint32_t node_hyperedges[] = {0, 1, 0, 2, 3, 1, 2, 3, 2, 3, 0, 1};
   const uint32_t hyperedge_offsets[] = {0, 3, 6, 9, 12};
   const uint32_t hyperedge_nodes[] = {0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3};
+  uint32_t hyperedge_workload[4U * 16U];
   graphion_hypergraph graph;
-  long iterations = 500000;
+  long iterations = 10000000;
   long i;
-  size_t hyperedge;
   uint64_t checksum = 0U;
   double start;
   double end;
@@ -49,10 +50,16 @@ int main(int argc, char **argv) {
     return 3;
   }
 
+  for (size_t repeat = 0; repeat < hyperedge_workload_repeats; ++repeat) {
+    for (size_t hyperedge = 0U; hyperedge < graph.hyperedge_count; ++hyperedge) {
+      hyperedge_workload[(repeat * graph.hyperedge_count) + hyperedge] = (uint32_t)hyperedge;
+    }
+  }
+
   start = now_seconds();
   for (i = 0; i < iterations; ++i) {
-    for (hyperedge = 0U; hyperedge < graph.hyperedge_count; ++hyperedge) {
-      checksum += graphion_hypergraph_hyperedge_node_sum(&graph, (uint32_t)hyperedge);
+    for (size_t work = 0U; work < (graph.hyperedge_count * hyperedge_workload_repeats); ++work) {
+      checksum += graphion_hypergraph_hyperedge_node_sum(&graph, hyperedge_workload[work]);
     }
   }
   end = now_seconds();
@@ -61,11 +68,13 @@ int main(int argc, char **argv) {
   if (seconds <= 0.0) {
     seconds = 1e-9;
   }
-  mips = ((double)(iterations * (long)graph.hyperedge_count) / seconds) / 1000000.0;
-  ns_per_call = (seconds * 1000000000.0) / ((double)iterations * (double)graph.hyperedge_count);
+  mips = ((double)iterations * (double)(graph.hyperedge_count * hyperedge_workload_repeats) / seconds) / 1000000.0;
+  ns_per_call = (seconds * 1000000000.0) /
+                ((double)iterations * (double)(graph.hyperedge_count * hyperedge_workload_repeats));
 
   printf("{\"benchmark\":\"hypergraph_hyperedge_node_sum\",\"iterations\":%ld,\"calls_per_iteration\":%zu,"
          "\"seconds\":%.6f,\"mips\":%.3f,\"ns_per_call\":%.3f,\"checksum\":%llu}\n",
-         iterations, graph.hyperedge_count, seconds, mips, ns_per_call, (unsigned long long)checksum);
+         iterations, graph.hyperedge_count * hyperedge_workload_repeats, seconds, mips, ns_per_call,
+         (unsigned long long)checksum);
   return 0;
 }

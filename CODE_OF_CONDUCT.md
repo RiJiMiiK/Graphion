@@ -4,12 +4,17 @@
 
 We aim for a respectful, technical, and constructive collaboration style.
 
-Examples of expected behavior:
-- Focus on technical merit.
-- Provide actionable feedback.
-- Respect different experience levels.
+Expected behavior:
 
-Unacceptable behavior includes harassment, personal attacks, or discrimination.
+- focus on technical merit
+- provide actionable feedback
+- respect different experience levels
+
+Unacceptable behavior includes:
+
+- harassment
+- personal attacks
+- discrimination
 
 ## Enforcement
 
@@ -17,4 +22,6 @@ Project maintainers may remove or reject contributions that violate this code.
 
 ## Reporting
 
-Report incidents through GitHub private channels when possible.
+Report conduct issues through:
+
+- https://discord.com/invite/mPzDQ7TYkj

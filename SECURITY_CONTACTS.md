@@ -1,19 +1,16 @@
 # Security Contacts
 
-## Private reporting channel
+Use the Discord server as the single contact channel:
 
-- GitHub Security Advisories:
-  - https://github.com/RiJiMiiK/Graphion/security/advisories/new
-- Discord:
-  - https://discord.gg/SfyCjapBEt
+- https://discord.com/invite/mPzDQ7TYkj
 
-## Response targets (SLA)
+## Response targets
 
-- Initial acknowledgment: within 72 hours
-- Triage decision: within 7 days
-- Mitigation plan for valid high/critical issues: within 14 days
+- initial acknowledgment: within 72 hours
+- triage decision: within 7 days
+- mitigation plan for valid high/critical issues: within 14 days
 
 ## Disclosure
 
-- Coordinate disclosure with maintainers.
-- Do not publish exploit details before a fix is available.
+- coordinate disclosure with the maintainer
+- do not publish exploit details before a fix is available
