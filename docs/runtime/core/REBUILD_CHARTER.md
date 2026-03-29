@@ -18,7 +18,7 @@ Every supported language form must go through one pipeline:
 - `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
 
 There must not be another hidden semantic engine.
-The produced bytecode must remain inspectable.
+The produced bytecode must remain readable and debuggable.
 
 ### 2. Preserve `.gion` as the normal entry point
 
