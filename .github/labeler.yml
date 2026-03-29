@@ -2,6 +2,31 @@ documentation:
   - changed-files:
       - any-glob-to-any-file: ["**/*.md", "docs/**"]
 
+language:
+  - changed-files:
+      - any-glob-to-any-file:
+          [
+            "src/runtime/interpreter.c",
+            "docs/graphion/**",
+            "examples/**/*.gion",
+            "examples/*.gion",
+            "tests/test_parser.c",
+          ]
+
+runtime:
+  - changed-files:
+      - any-glob-to-any-file:
+          [
+            "src/runtime/**",
+            "src/vm/**",
+            "src/parser/**",
+            "src/compiler/**",
+          ]
+
+examples:
+  - changed-files:
+      - any-glob-to-any-file: ["examples/**"]
+
 ci:
   - changed-files:
       - any-glob-to-any-file: [".github/workflows/**", ".github/dependabot.yml"]
