@@ -524,8 +524,8 @@ int test_vm_abs_opcode(void) {
 
 int test_vm_eq_opcode(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[8];
-  graphion_vm_value globals[8];
+  graphion_vm_value const_pool[12];
+  graphion_vm_value globals[12];
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -551,6 +551,14 @@ int test_vm_eq_opcode(void) {
       {GVM_OP_LOAD_CONST, 1, 0, 6},
       {GVM_OP_EQ, 0, 1, 0},
       {GVM_OP_STORE_GLOBAL, 0, 0, 5},
+      {GVM_OP_LOAD_CONST, 0, 0, 8},
+      {GVM_OP_LOAD_CONST, 1, 0, 9},
+      {GVM_OP_EQ, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 6},
+      {GVM_OP_LOAD_CONST, 0, 0, 10},
+      {GVM_OP_LOAD_CONST, 1, 0, 11},
+      {GVM_OP_EQ, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 7},
       {GVM_OP_HALT, 0, 0, 0},
   };
   int rc;
@@ -564,14 +572,18 @@ int test_vm_eq_opcode(void) {
   test_set_value_bool(&const_pool[5], 0);
   test_set_value_string(&const_pool[6], "ok");
   test_set_value_string(&const_pool[7], "no");
-  for (i = 0U; i < 8U; ++i) {
+  test_set_value_int(&const_pool[8], 1);
+  test_set_value_bool(&const_pool[9], 1);
+  test_set_value_int(&const_pool[10], 0);
+  test_set_value_bool(&const_pool[11], 0);
+  for (i = 0U; i < 12U; ++i) {
     globals[i].kind = GVM_VALUE_NONE;
     globals[i].as.int_value = 0;
   }
 
   graphion_vm_init(&vm);
-  graphion_vm_bind_constants(&vm, const_pool, 8U);
-  graphion_vm_bind_globals(&vm, globals, 8U);
+  graphion_vm_bind_constants(&vm, const_pool, 12U);
+  graphion_vm_bind_globals(&vm, globals, 12U);
   rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != 0) {
     return 1;
@@ -597,6 +609,12 @@ int test_vm_eq_opcode(void) {
   }
   if (globals[5].kind != GVM_VALUE_BOOL || globals[5].as.bool_value != 0) {
     return 8;
+  }
+  if (globals[6].kind != GVM_VALUE_BOOL || globals[6].as.bool_value != 1) {
+    return 9;
+  }
+  if (globals[7].kind != GVM_VALUE_BOOL || globals[7].as.bool_value != 1) {
+    return 10;
   }
   return 0;
 }

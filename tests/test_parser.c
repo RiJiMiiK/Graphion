@@ -1779,6 +1779,8 @@ int test_gion_equality_expressions(void) {
   const char *source =
       "same_int = 42 == 42\n"
       "mixed_numeric = 42 == 42.0\n"
+      "int_true_bool = 1 == true\n"
+      "int_false_bool = 0 == false\n"
       "different_numeric = 42 == 41\n"
       "same_bool = true == true\n"
       "different_bool = true == false\n"
@@ -1790,6 +1792,8 @@ int test_gion_equality_expressions(void) {
       "power_cmp = 2 ** 3 == 8\n"
       "print(same_int)\n"
       "print(mixed_numeric)\n"
+      "print(int_true_bool)\n"
+      "print(int_false_bool)\n"
       "print(different_numeric)\n"
       "print(same_bool)\n"
       "print(different_bool)\n"
@@ -1805,6 +1809,8 @@ int test_gion_equality_expressions(void) {
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *same_int;
   const graphion_runtime_value *mixed_numeric;
+  const graphion_runtime_value *int_true_bool;
+  const graphion_runtime_value *int_false_bool;
   const graphion_runtime_value *different_numeric;
   const graphion_runtime_value *same_string;
   const graphion_runtime_value *mixed_types;
@@ -1830,6 +1836,8 @@ int test_gion_equality_expressions(void) {
   }
   same_int = graphion_runtime_scope_find(&scope, "same_int");
   mixed_numeric = graphion_runtime_scope_find(&scope, "mixed_numeric");
+  int_true_bool = graphion_runtime_scope_find(&scope, "int_true_bool");
+  int_false_bool = graphion_runtime_scope_find(&scope, "int_false_bool");
   different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
   same_string = graphion_runtime_scope_find(&scope, "same_string");
   mixed_types = graphion_runtime_scope_find(&scope, "mixed_types");
@@ -1841,25 +1849,33 @@ int test_gion_equality_expressions(void) {
     remove(path);
     return finish_scope_test(&scope, 4);
   }
-  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 0) {
+  if (int_true_bool == NULL || int_true_bool->kind != GVM_VALUE_BOOL || int_true_bool->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 5);
   }
-  if (same_string == NULL || same_string->kind != GVM_VALUE_BOOL || same_string->as.bool_value != 1) {
+  if (int_false_bool == NULL || int_false_bool->kind != GVM_VALUE_BOOL || int_false_bool->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (mixed_types == NULL || mixed_types->kind != GVM_VALUE_BOOL || mixed_types->as.bool_value != 0) {
+  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 0) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (same_string == NULL || same_string->kind != GVM_VALUE_BOOL || same_string->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  remove(path);
-  if (strcmp(output, "true\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+  if (mixed_types == NULL || mixed_types->kind != GVM_VALUE_BOOL || mixed_types->as.bool_value != 0) {
+    remove(path);
     return finish_scope_test(&scope, 9);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 10);
+  }
+  remove(path);
+  if (strcmp(output, "true\ntrue\ntrue\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 11);
   }
   return finish_scope_test(&scope, 0);
 }

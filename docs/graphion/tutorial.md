@@ -159,11 +159,15 @@ It returns a boolean result:
 ```gion
 same_int = 42 == 42
 same_number = 42 == 42.0
+same_bool_bridge = 1 == true
+same_false_bridge = 0 == false
 same_text = "graphion" == "graphion"
 different_types = 1 == "1"
 
 print(same_int)
 print(same_number)
+print(same_bool_bridge)
+print(same_false_bridge)
 print(same_text)
 print(different_types)
 ```
@@ -174,6 +178,8 @@ Expected output:
 true
 true
 true
+true
+true
 false
 ```
 
@@ -181,6 +187,7 @@ Current behavior:
 
 - `int == int` works
 - `int == float` compares numerically
+- `1 == true` and `0 == false` work
 - `bool == bool` works
 - `string == string` works
 - incompatible scalar types compare as `false`

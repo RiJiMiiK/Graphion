@@ -333,6 +333,8 @@ Examples:
 ```gion
 same_int = 42 == 42
 same_number = 42 == 42.0
+same_bool_bridge = 1 == true
+same_false_bridge = 0 == false
 same_text = "ok" == "ok"
 different_types = 1 == "1"
 ```
@@ -342,10 +344,13 @@ Current comparison semantics:
 - `int == int`
 - `int == float`
 - `float == float`
+- `int == bool` when the integer is `0` or `1`
 - `bool == bool`
 - `string == string`
 
-Incompatible scalar kinds currently compare as `false`.
+`1 == true` and `0 == false` currently return `true`.
+
+Other incompatible scalar kinds currently compare as `false`.
 
 ## Precedence
 

@@ -2799,6 +2799,10 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
       return GVM_ERR_TYPE_MISMATCH;
     }
     result = lhs_f == rhs_f;
+  } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_INT) {
+    result = rhs->as.int_value == (int64_t)lhs->as.bool_value;
+  } else if (lhs->kind == GVM_VALUE_INT && rhs->kind == GVM_VALUE_BOOL) {
+    result = lhs->as.int_value == (int64_t)rhs->as.bool_value;
   } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
     result = lhs->as.bool_value == rhs->as.bool_value;
   } else if (lhs->kind == GVM_VALUE_STRING && rhs->kind == GVM_VALUE_STRING) {
