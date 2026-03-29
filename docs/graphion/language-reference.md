@@ -147,7 +147,12 @@ else:
 
 ### Condition Rules
 
-Current conditions must evaluate to a boolean value.
+Current conditions must evaluate to:
+
+- `true`
+- `false`
+- `1`
+- `0`
 
 Valid condition examples:
 
@@ -165,6 +170,14 @@ else:
     print("taken")
 ```
 
+```gion
+if 1:
+    print("taken")
+
+if 0:
+    print("never")
+```
+
 Invalid examples:
 
 ```gion
@@ -179,8 +192,8 @@ if "x":
 
 These currently fail with:
 
-`if condition must be boolean`
-: runtime error for non-boolean conditions
+`if condition must be boolean or 0/1`
+: runtime error for conditions outside the current accepted boolean subset
 
 ### Block Rules
 

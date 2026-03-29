@@ -189,17 +189,27 @@ Expected output:
 after if
 ```
 
-Current conditions must be boolean values:
+Current conditions currently accept:
+
+- `true`
+- `false`
+- `1`
+- `0`
 
 ```gion
 if true:
     print("ok")
 ```
 
+```gion
+if 1:
+    print("also ok")
+```
+
 This is currently invalid:
 
 ```gion
-if 1:
+if 2:
     print("bad")
 ```
 

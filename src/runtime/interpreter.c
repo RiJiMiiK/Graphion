@@ -1272,18 +1272,26 @@ static int evaluate_condition_text(const char *condition_text,
     if (rc != GINT_OK) {
       return rc;
     }
-    if (value.kind != GVM_VALUE_BOOL) {
-      return fail(diagnostic, line, 1U, "if condition must be boolean", GINT_ERR_RUN);
+    if (value.kind == GVM_VALUE_BOOL) {
+      *result_out = value.as.bool_value != 0;
+      return GINT_OK;
     }
+    if (value.kind == GVM_VALUE_INT && (value.as.int_value == 0 || value.as.int_value == 1)) {
+      *result_out = value.as.int_value != 0;
+      return GINT_OK;
+    }
+    return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
+  }
+  graphion_runtime_program_dispose(&program);
+  if (value.kind == GVM_VALUE_BOOL) {
     *result_out = value.as.bool_value != 0;
     return GINT_OK;
   }
-  graphion_runtime_program_dispose(&program);
-  if (value.kind != GVM_VALUE_BOOL) {
-    return fail(diagnostic, line, 1U, "if condition must be boolean", GINT_ERR_RUN);
+  if (value.kind == GVM_VALUE_INT && (value.as.int_value == 0 || value.as.int_value == 1)) {
+    *result_out = value.as.int_value != 0;
+    return GINT_OK;
   }
-  *result_out = value.as.bool_value != 0;
-  return GINT_OK;
+  return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
 }
 
 static int execute_statement_source_line(const runtime_source_line *line,
@@ -1325,6 +1333,7 @@ static int execute_if_chain(const runtime_source_line *lines,
   size_t clause_index = *index;
   int branch_taken = 0;
   int seen_else = 0;
+  int first_clause = 1;
   while (clause_index < count) {
     const runtime_source_line *clause_line;
     const char *cursor;
@@ -1343,6 +1352,9 @@ static int execute_if_chain(const runtime_source_line *lines,
     cursor = line_content(clause_line);
     is_else_clause = line_is_else_clause(clause_line);
     if (!line_is_if_clause(clause_line) && !line_is_elif_clause(clause_line) && !is_else_clause) {
+      break;
+    }
+    if (!first_clause && line_is_if_clause(clause_line)) {
       break;
     }
     if (seen_else && line_is_if_clause(clause_line)) {
@@ -1413,6 +1425,7 @@ static int execute_if_chain(const runtime_source_line *lines,
       }
     }
     clause_index = body_end;
+    first_clause = 0;
   }
   *index = clause_index;
   return GINT_OK;

@@ -1603,6 +1603,12 @@ int test_gion_if_elif_else_control_flow(void) {
       "if false:\n"
       "    single = \"bad\"\n"
       "single = \"if without else stays optional\"\n"
+      "if 1:\n"
+      "    int_true_branch = \"int one acts like true\"\n"
+      "if 0:\n"
+      "    int_false_branch = \"bad\"\n"
+      "else:\n"
+      "    int_false_branch = \"int zero acts like false\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1619,12 +1625,14 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(single)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
-  char output[256];
+  char output[512];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *selected;
   const graphion_runtime_value *optional;
   const graphion_runtime_value *single;
+  const graphion_runtime_value *int_true_branch;
+  const graphion_runtime_value *int_false_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1649,6 +1657,8 @@ int test_gion_if_elif_else_control_flow(void) {
   selected = graphion_runtime_scope_find(&scope, "selected");
   optional = graphion_runtime_scope_find(&scope, "optional");
   single = graphion_runtime_scope_find(&scope, "single");
+  int_true_branch = graphion_runtime_scope_find(&scope, "int_true_branch");
+  int_false_branch = graphion_runtime_scope_find(&scope, "int_false_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1664,18 +1674,28 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 5);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (int_true_branch == NULL || int_true_branch->kind != GVM_VALUE_STRING ||
+      strcmp(int_true_branch->as.string_value, "int one acts like true") != 0) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (int_false_branch == NULL || int_false_branch->kind != GVM_VALUE_STRING ||
+      strcmp(int_false_branch->as.string_value, "int zero acts like false") != 0) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 9);
+  }
   remove(path);
   if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nnested if branch\n") != 0) {
-    return finish_scope_test(&scope, 8);
+    return finish_scope_test(&scope, 10);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1700,10 +1720,12 @@ int test_gion_if_elif_else_errors(void) {
       {"if true:\n    if false:\n        print(1)\n      print(2)\n", GINT_ERR_PARSE, 4U, "unexpected indentation"},
       {"if true:\n    elif false:\n        print(1)\n", GINT_ERR_PARSE, 2U, "elif without matching if"},
       {"if true:\n    else:\n        print(1)\n", GINT_ERR_PARSE, 2U, "else without matching if"},
-      {"if 1:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean"},
-      {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean"},
-      {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean"},
-      {"if abs(-1):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean"},
+      {"if 2:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if -1:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 0.0:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n", GINT_ERR_PARSE, 6U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelse:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_PARSE, 5U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelif true\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
