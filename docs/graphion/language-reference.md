@@ -8,6 +8,7 @@ Current supported top-level statements:
 
 - assignment
 - compound assignment
+- `if` / `elif` / `else`
 - `print(...)`
 
 Examples:
@@ -15,6 +16,12 @@ Examples:
 ```gion
 count = 42
 count += 1
+
+if true:
+    count += 1
+else:
+    count -= 1
+
 print(count)
 ```
 
@@ -50,6 +57,9 @@ These names are currently reserved and cannot be assigned:
 - `true`
 - `false`
 - `abs`
+- `if`
+- `elif`
+- `else`
 
 ## Literals
 
@@ -105,6 +115,101 @@ count **= 2
 ```
 
 Compound assignment requires the target variable to already exist.
+
+## Conditional Statements
+
+Graphion currently supports Python-style conditional blocks:
+
+- `if`
+- `elif`
+- `else`
+
+Valid shapes:
+
+- `if`
+- `if` + one or more `elif`
+- `if` + `else`
+- `if` + one or more `elif` + `else`
+
+Examples:
+
+```gion
+ready = true
+fallback = false
+
+if ready:
+    message = "ready"
+elif fallback:
+    message = "fallback"
+else:
+    message = "other"
+```
+
+### Condition Rules
+
+Current conditions must evaluate to a boolean value.
+
+Valid condition examples:
+
+```gion
+flag = true
+
+if flag:
+    print("ok")
+```
+
+```gion
+if false:
+    print("never")
+else:
+    print("taken")
+```
+
+Invalid examples:
+
+```gion
+if 1:
+    print("bad")
+```
+
+```gion
+if "x":
+    print("bad")
+```
+
+These currently fail with:
+
+`if condition must be boolean`
+: runtime error for non-boolean conditions
+
+### Block Rules
+
+Conditional blocks currently use indentation-significant syntax.
+
+Rules:
+
+- a block line must end with `:`
+- the following block must be indented
+- `elif` can appear multiple times
+- `else` is optional
+- `else` must be last
+
+Invalid examples:
+
+```gion
+if true
+    print("bad")
+```
+
+```gion
+if true:
+print("bad")
+```
+
+```gion
+else:
+    print("bad")
+```
 
 ## Arithmetic Operators
 
