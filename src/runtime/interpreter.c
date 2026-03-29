@@ -60,21 +60,6 @@ static void vm_value_set_none(graphion_vm_value *value) {
   value->kind = GVM_VALUE_NONE;
 }
 
-static char *runtime_strdup_text(const char *src) {
-  size_t len;
-  char *copy;
-  if (src == NULL) {
-    return NULL;
-  }
-  len = strlen(src);
-  copy = (char *)malloc(len + 1U);
-  if (copy == NULL) {
-    return NULL;
-  }
-  memcpy(copy, src, len + 1U);
-  return copy;
-}
-
 static void runtime_free_string(char **text) {
   if (text == NULL || *text == NULL) {
     return;
@@ -111,10 +96,26 @@ static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
   dst[len] = '\0';
 }
 
-static int find_global_index_in_names(const char names[][GRAPHION_RUNTIME_NAME_MAX], size_t count, const char *name) {
+static int scope_find_global_index(const graphion_runtime_scope *scope, const char *name) {
   size_t i;
-  for (i = 0U; i < count; ++i) {
-    if (strcmp(names[i], name) == 0) {
+  if (scope == NULL || name == NULL) {
+    return -1;
+  }
+  for (i = 0U; i < scope->global_count; ++i) {
+    if (strcmp(scope->global_names[i], name) == 0) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
+static int program_find_global_index(const graphion_runtime_program *program, const char *name) {
+  size_t i;
+  if (program == NULL || name == NULL) {
+    return -1;
+  }
+  for (i = 0U; i < program->global_count; ++i) {
+    if (strcmp(program->global_names[i], name) == 0) {
       return (int)i;
     }
   }
@@ -122,10 +123,7 @@ static int find_global_index_in_names(const char names[][GRAPHION_RUNTIME_NAME_M
 }
 
 static int scope_find_index(const graphion_runtime_scope *scope, const char *name) {
-  if (scope == NULL || name == NULL) {
-    return -1;
-  }
-  return find_global_index_in_names(scope->global_names, scope->global_count, name);
+  return scope_find_global_index(scope, name);
 }
 
 static int program_find_or_add_global(graphion_runtime_program *program,
@@ -137,7 +135,7 @@ static int program_find_or_add_global(graphion_runtime_program *program,
   if (program == NULL || name == NULL || index_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
-  existing = find_global_index_in_names(program->global_names, program->global_count, name);
+  existing = program_find_global_index(program, name);
   if (existing >= 0) {
     *index_out = (size_t)existing;
     return GINT_OK;
@@ -348,7 +346,7 @@ static int parse_operand(const char **cursor,
     if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0) {
       *cursor = saved;
     } else {
-      index = find_global_index_in_names(program->global_names, program->global_count, name);
+      index = program_find_global_index(program, name);
       if (index < 0) {
         return fail(diagnostic, line, 1U, "unknown operand", GINT_ERR_UNKNOWN_OPERAND);
       }
@@ -669,7 +667,7 @@ static int parse_assignment(const char *line_text,
       return rc;
     }
   } else {
-    int existing = find_global_index_in_names(program->global_names, program->global_count, target);
+    int existing = program_find_global_index(program, target);
     if (existing < 0) {
       return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
     }
