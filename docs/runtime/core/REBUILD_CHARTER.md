@@ -1,168 +1,168 @@
 # Rebuild Charter
 
-## But
+## Goal
 
-Graphion doit etre reconstruit autour d'un seul pipeline :
+Graphion must be rebuilt around a single pipeline:
 
-- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
+- `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
 
-Le langage doit etre optimise de maniere generale.
-Il ne doit jamais etre optimise pour un seul benchmark, un seul fichier d'exemple, ou un test particulier.
+The language must be optimized in a general way.
+It must never be optimized for a single benchmark, a single example file, or one special test case.
 
-## Principes
+## Principles
 
-### 1. Pipeline unique
+### 1. Single pipeline
 
-Toute forme du langage supportee doit passer par un seul pipeline :
+Every supported language form must go through one pipeline:
 
-- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
+- `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
 
-Il ne doit pas exister d'autre moteur semantique cache.
-Le bytecode produit doit rester inspectable.
+There must not be another hidden semantic engine.
+The produced bytecode must remain inspectable.
 
-### 2. Entree `.gion` preservee
+### 2. Preserve `.gion` as the normal entry point
 
-L'entree `.gion` reste l'entree normale du langage.
-Elle ne doit pas etre contournee pour faire marcher une feature, un test, ou un benchmark.
+`.gion` remains the normal source entry point of the language.
+It must not be bypassed just to make one feature, test, or benchmark pass.
 
-### 3. Pas de fallback semantique
+### 3. No semantic fallback
 
-Si une forme du langage n'est pas encore supportee :
+If a language form is not supported yet:
 
-- erreur claire
+- fail with a clear error
 
-Il ne doit pas y avoir de deuxieme moteur d'execution qui "fait quand meme marcher" le programme.
+There must not be a second execution engine that "still makes it work anyway."
 
-### 4. Meme semantique partout
+### 4. Same semantics everywhere
 
-Un meme programme `.gion` doit produire la meme semantique en :
+The same `.gion` program must produce the same semantics in:
 
 - release
 - test
 - benchmark
 
-Le comportement ne doit pas dependre d'un chemin d'execution special, d'un binaire de bench, ou d'une optimisation cachee.
+Behavior must not depend on a special execution path, a bench-only binary, or a hidden optimization.
 
-### 5. Optimisation generale uniquement
+### 5. General-purpose optimization only
 
-Toute optimisation doit viser :
+Any optimization must target:
 
-- le parsing
-- la representation interne
-- le lowering bytecode
-- la VM
+- parsing
+- internal representation
+- bytecode lowering
+- the VM
 
-Il ne faut jamais optimiser :
+We must never optimize:
 
-- pour un seul test
-- pour un seul benchmark
-- pour un fichier particulier
-- pour un cas artificiel qui ne represente pas le langage
+- for one test only
+- for one benchmark only
+- for one particular file
+- for an artificial case that does not represent the language
 
-## Validation d'une feature
+## Feature validation
 
-L'ordre de validation est strict :
+The validation order is strict:
 
-1. fonctionnement general
+1. general behavior
 2. tests
 3. benchmarks
 
-### 1. Fonctionnement general
+### 1. General behavior
 
-Une feature doit fonctionner dans un `.gion` general tant que le programme utilisateur reste dans le perimetre supporte.
+A feature must work in a general `.gion` program as long as the user program stays within the supported scope.
 
-Cela doit etre vrai :
+That must remain true:
 
-- quels que soient les noms
-- quelles que soient les valeurs supportees
-- quel que soit l'ordre legal des lignes
-- quelle que soit la combinaison avec les features deja supportees
+- regardless of identifier names
+- regardless of supported values
+- regardless of the legal order of lines
+- regardless of the combination with already supported features
 
-### 2. Compatibilite cumulative
+### 2. Cumulative compatibility
 
-Une nouvelle feature ne doit pas casser les precedentes.
+A new feature must not break earlier ones.
 
-Une feature validee doit marcher :
+A validated feature must work:
 
-- seule
-- et en combinaison avec les features deja validees
+- on its own
+- and in combination with already validated features
 
-### 3. Tests obligatoires
+### 3. Required tests
 
-Toute feature doit avoir :
+Every feature must have:
 
-- des tests cibles
-- des tests de non-regression
-- des tests d'erreur
-- des tests d'integration inter-features
+- targeted tests
+- regression tests
+- error-path tests
+- inter-feature integration tests
 
-Les tests doivent varier pour limiter les faux positifs :
+Tests must vary enough to limit false positives:
 
-- noms
-- valeurs
-- cas negatifs
-- combinaisons de features
+- names
+- values
+- negative cases
+- feature combinations
 
-### 4. Erreurs claires
+### 4. Clear errors
 
-Si le code est hors perimetre supporte :
+If code is outside the supported scope:
 
-- erreur claire
+- fail with a clear error
 
-Si le programme utilisateur est invalide :
+If the user program is invalid:
 
-- erreur claire
+- fail with a clear error
 
-Exemples :
+Examples:
 
-- syntaxe invalide
-- variable inconnue
-- operande inconnu
-- operation non supportee pour les types fournis
+- invalid syntax
+- unknown variable
+- unknown operand
+- unsupported operation for the provided types
 
-### 5. Validation tracable
+### 5. Traceable validation state
 
-L'etat d'une feature doit rester explicite.
+The state of a feature must remain explicit.
 
-On distingue si necessaire :
+When useful, distinguish between:
 
-- implemente
-- teste
-- valide
-- benchmarke
+- implemented
+- tested
+- validated
+- benchmarked
 
 ## Benchmarks
 
-### 1. Role des benchmarks
+### 1. Role of benchmarks
 
-Un benchmark sert a mesurer la performance.
-Il ne sert pas a prouver qu'une feature fonctionne.
+A benchmark measures performance.
+It does not prove that a feature works.
 
-### 2. Representativite
+### 2. Representativeness
 
-Un benchmark doit representer une forme generale du langage.
+A benchmark must represent a general form of the language.
 
-Il ne doit pas tirer sa valeur d'un traitement de faveur applique a :
+Its value must not come from special treatment applied to:
 
-- un fichier precis
-- un ordre de lignes particulier
-- un nommage particulier
-- un cas specialise
+- one specific file
+- one special line order
+- one special naming pattern
+- one overly specialized case
 
-### 3. Seuils d'acceptation
+### 3. Acceptance thresholds
 
-Pour les benchmarks representatifs :
+For representative benchmarks:
 
 - `VM / Rust < 1.15x`
-- `.gion / Rust = 2x a 3x` comme cible principale
-- `.gion / Rust < 2x` seulement comme stretch goal si de vrais leviers generaux restent disponibles
+- `.gion / Rust = 2x to 3x` as the main target
+- `.gion / Rust < 2x` only as a stretch goal if real general-purpose levers remain
 - `variation < 10%`
 
-## Etat actuel
+## Current state
 
-A l'etat actuel du repo :
+At the current state of the repository:
 
-- la priorite fonctionnelle est le sous-ensemble `.gion` scalaire
-- la VM est deja un backend reel et mesurable
-- la reconstruction doit continuer sans recreer de fallback semantique
-- la doc utilisateur doit decrire seulement ce qui est vraiment implemente
+- the functional priority is the scalar `.gion` subset
+- the VM is already a real and measurable backend
+- the rebuild must continue without recreating a semantic fallback
+- user documentation must describe only what is actually implemented

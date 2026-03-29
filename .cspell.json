@@ -45,6 +45,8 @@
     "codegen",
     "Werror",
     "cutovers"
+    ,
+    "toctree"
   ],
   "ignorePaths": [
     "build/**",
