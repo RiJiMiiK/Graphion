@@ -39,6 +39,25 @@ static int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t 
   return graphion_vm_run(vm);
 }
 
+static int finish_vm_test(graphion_vm *vm, int code) {
+  graphion_vm_dispose(vm);
+  return code;
+}
+
+static int finish_vm_test_with_owned_globals(graphion_vm *vm, char **owners, size_t owner_count, int code) {
+  size_t i;
+  graphion_vm_dispose(vm);
+  if (owners != NULL) {
+    for (i = 0U; i < owner_count; ++i) {
+      if (owners[i] != NULL) {
+        free(owners[i]);
+        owners[i] = NULL;
+      }
+    }
+  }
+  return code;
+}
+
 int test_vm_addition_program(void) {
   graphion_vm vm;
   const graphion_insn program[] = {
@@ -126,28 +145,28 @@ int test_vm_value_movement_and_globals(void) {
   graphion_vm_bind_globals(&vm, globals, 2U);
   rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != 0) {
-    return 1;
+    return finish_vm_test(&vm, 1);
   }
   rc = graphion_vm_run(&vm);
   if (rc != 0) {
-    return 2;
+    return finish_vm_test(&vm, 2);
   }
   if (!vm.halted) {
-    return 3;
+    return finish_vm_test(&vm, 3);
   }
   if (globals[0].kind != GVM_VALUE_STRING || strcmp(globals[0].as.string_value, "graphion") != 0) {
-    return 4;
+    return finish_vm_test(&vm, 4);
   }
   if (vm.regs[1].kind != GVM_VALUE_FLOAT || vm.regs[1].as.float_value != 3.5) {
-    return 5;
+    return finish_vm_test(&vm, 5);
   }
   if (vm.regs[2].kind != GVM_VALUE_FLOAT || vm.regs[2].as.float_value != 3.5) {
-    return 6;
+    return finish_vm_test(&vm, 6);
   }
   if (globals[1].kind != GVM_VALUE_STRING || strcmp(globals[1].as.string_value, "graphion") != 0) {
-    return 7;
+    return finish_vm_test(&vm, 7);
   }
-  return 0;
+  return finish_vm_test(&vm, 0);
 }
 
 int test_vm_typed_value_errors(void) {
@@ -174,50 +193,53 @@ int test_vm_typed_value_errors(void) {
   graphion_vm_bind_constants(&vm, const_pool, 1U);
   rc = graphion_vm_load(&vm, bad_const_program, sizeof(bad_const_program) / sizeof(bad_const_program[0]));
   if (rc != 0) {
-    return 1;
+    return finish_vm_test(&vm, 1);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_INVALID_CONST_INDEX) {
-    return 2;
+    return finish_vm_test(&vm, 2);
   }
 
+  graphion_vm_dispose(&vm);
   graphion_vm_init(&vm);
   graphion_vm_bind_globals(&vm, globals, 1U);
   rc = graphion_vm_load(&vm, bad_global_program, sizeof(bad_global_program) / sizeof(bad_global_program[0]));
   if (rc != 0) {
-    return 3;
+    return finish_vm_test(&vm, 3);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_INVALID_GLOBAL_INDEX) {
-    return 4;
+    return finish_vm_test(&vm, 4);
   }
 
+  graphion_vm_dispose(&vm);
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, const_pool, 1U);
   graphion_vm_bind_globals(&vm, globals, 1U);
   rc = graphion_vm_load(
       &vm, bad_store_const_program, sizeof(bad_store_const_program) / sizeof(bad_store_const_program[0]));
   if (rc != 0) {
-    return 5;
+    return finish_vm_test(&vm, 5);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_INVALID_GLOBAL_INDEX) {
-    return 6;
+    return finish_vm_test(&vm, 6);
   }
 
+  graphion_vm_dispose(&vm);
   graphion_vm_init(&vm);
   rc = graphion_vm_load(&vm, (const graphion_insn[]){{GVM_OP_LOAD_CONST, 1, 0, 1}, {GVM_OP_ADD, 0, 1, 0}}, 2U);
   test_set_reg_i(&vm, 0U, 7);
   graphion_vm_bind_constants(&vm, const_pool, 2U);
   if (rc != 0) {
-    return 7;
+    return finish_vm_test(&vm, 7);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_TYPE_MISMATCH) {
-    return 8;
+    return finish_vm_test(&vm, 8);
   }
 
-  return 0;
+  return finish_vm_test(&vm, 0);
 }
 
 int test_vm_numeric_arithmetic_opcodes(void) {
@@ -525,25 +547,19 @@ int test_vm_string_addition_opcode(void) {
   graphion_vm_bind_global_string_owners(&vm, global_string_owners, 2U);
   rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != 0) {
-    return 1;
+    return finish_vm_test_with_owned_globals(&vm, global_string_owners, 2U, 1);
   }
   rc = graphion_vm_run(&vm);
   if (rc != 0) {
-    return 2;
+    return finish_vm_test_with_owned_globals(&vm, global_string_owners, 2U, 2);
   }
   if (globals[0].kind != GVM_VALUE_STRING || strcmp(globals[0].as.string_value, "debutfin") != 0) {
-    return 3;
+    return finish_vm_test_with_owned_globals(&vm, global_string_owners, 2U, 3);
   }
   if (globals[1].kind != GVM_VALUE_STRING || strcmp(globals[1].as.string_value, "debutfin!") != 0) {
-    return 4;
+    return finish_vm_test_with_owned_globals(&vm, global_string_owners, 2U, 4);
   }
-  if (global_string_owners[0] != NULL) {
-    free(global_string_owners[0]);
-  }
-  if (global_string_owners[1] != NULL) {
-    free(global_string_owners[1]);
-  }
-  return 0;
+  return finish_vm_test_with_owned_globals(&vm, global_string_owners, 2U, 0);
 }
 
 int test_vm_print_scalar_opcodes(void) {

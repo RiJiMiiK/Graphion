@@ -15,6 +15,11 @@
 
 #define TEST_VM_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
 
+static int finish_scope_test(graphion_runtime_scope *scope, int code) {
+  graphion_runtime_scope_dispose(scope);
+  return code;
+}
+
 int test_parser_decode_valid_program(void) {
   const uint8_t bytes[] = {
       GVM_OP_MOV_IMM, 0, 0, 7, 0, 0, 0,   GVM_OP_MOV_IMM, 1, 0, 35, 0, 0, 0,
@@ -369,13 +374,13 @@ int test_gion_scalar_assignments_and_prints(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   count = graphion_runtime_scope_find(&scope, "count");
   ratio = graphion_runtime_scope_find(&scope, "ratio");
@@ -384,33 +389,33 @@ int test_gion_scalar_assignments_and_prints(void) {
   copy = graphion_runtime_scope_find(&scope, "copy");
   if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (name == NULL || name->kind != GVM_VALUE_STRING || strcmp(name->as.string_value, "graphion") != 0) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   if (ready == NULL || ready->kind != GVM_VALUE_BOOL || ready->as.bool_value != 1) {
     remove(path);
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
   if (copy == NULL || copy->kind != GVM_VALUE_INT || copy->as.int_value != 42) {
     remove(path);
-    return 7;
+    return finish_scope_test(&scope, 7);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 8;
+    return finish_scope_test(&scope, 8);
   }
   remove(path);
   if (strcmp(output, "7\nraw\nfalse\n42\n3.5\ngraphion\ntrue\n42\n") != 0) {
-    return 9;
+    return finish_scope_test(&scope, 9);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_scalar_feature_varied_names(void) {
@@ -442,13 +447,13 @@ int test_gion_scalar_feature_varied_names(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   copied_name = graphion_runtime_scope_find(&scope, "copied_name");
   shadow_0 = graphion_runtime_scope_find(&scope, "shadow_0");
@@ -456,25 +461,25 @@ int test_gion_scalar_feature_varied_names(void) {
   if (copied_name == NULL || copied_name->kind != GVM_VALUE_STRING ||
       strcmp(copied_name->as.string_value, "ok") != 0) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (shadow_0 == NULL || shadow_0->kind != GVM_VALUE_INT || shadow_0->as.int_value != -7) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (z_value == NULL || z_value->kind != GVM_VALUE_BOOL || z_value->as.bool_value != 0) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
   remove(path);
   if (strcmp(output, "ok\nfalse\n-7\n") != 0) {
-    return 7;
+    return finish_scope_test(&scope, 7);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_unknown_variable_errors(void) {
@@ -884,33 +889,33 @@ int test_gion_string_concatenation(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   label = graphion_runtime_scope_find(&scope, "label");
   full = graphion_runtime_scope_find(&scope, "full");
   if (label == NULL || label->kind != GVM_VALUE_STRING || strcmp(label->as.string_value, "debutfin") != 0) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (full == NULL || full->kind != GVM_VALUE_STRING || strcmp(full->as.string_value, "debutfin!") != 0) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "debutfin\ndebutfin!\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_print_string_coercion(void) {
@@ -935,23 +940,23 @@ int test_gion_print_string_coercion(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   remove(path);
   if (strcmp(output, "Test 7\nTest 7\nvalue=7\n") != 0) {
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_compound_assignments(void) {
@@ -986,33 +991,33 @@ int test_gion_compound_assignments(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   count = graphion_runtime_scope_find(&scope, "count");
   text = graphion_runtime_scope_find(&scope, "text");
   if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 1.0) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (text == NULL || text->kind != GVM_VALUE_STRING || strcmp(text->as.string_value, "debutfin") != 0) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "1\ndebutfin\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_compound_assignment_errors(void) {
@@ -1051,11 +1056,12 @@ int test_gion_compound_assignment_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -1405,33 +1411,33 @@ int test_gion_reassignment_and_type_change(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   value = graphion_runtime_scope_find(&scope, "value");
   flag = graphion_runtime_scope_find(&scope, "flag");
   if (value == NULL || value->kind != GVM_VALUE_STRING || strcmp(value->as.string_value, "ok") != 0) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (flag == NULL || flag->kind != GVM_VALUE_BOOL || flag->as.bool_value != 0) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "ok\nfalse\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_copy_chains_and_blank_lines(void) {
@@ -1587,28 +1593,28 @@ int test_gion_mixed_scalar_values(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   copy_i = graphion_runtime_scope_find(&scope, "copy_i");
   if (copy_i == NULL || copy_i->kind != GVM_VALUE_INT || copy_i->as.int_value != -7) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "-7\n-3.25\nfalse\nhello\n-7\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_capacity_errors(void) {
