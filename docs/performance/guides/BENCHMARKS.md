@@ -4,6 +4,13 @@
 
 Track interpreter performance over time with reproducible measurements.
 
+For the current `.gion` rebuild, read the benchmark lanes in two buckets:
+
+- VM-oriented lanes
+- source-level `.gion` lanes
+
+Those two numbers answer different questions and should not be conflated.
+
 ## Run
 
 Build benchmark binary:
@@ -33,6 +40,13 @@ GitHub Actions can also render the rolling report automatically:
   - benchmark JSON artifacts per lane
   - rendered `docs/performance/reports/PERFORMANCE_RESULTS.md` artifact
 - optional manual-dispatch PR refresh for the report markdown
+
+Current source-level feature lane of interest:
+
+- `scalar_values_print`
+  - `VM`
+  - `.gion`
+  - `Rust`
 
 Run hypergraph sum benches directly:
 
@@ -87,7 +101,7 @@ Official baseline vs PGO report:
 python3 scripts/bench/pgo/generate_optimization_report.py \
   --build-root build-opt-report \
   --output-json benchmarks/results/optimization/optimization_report_latest.json \
-  --output-md docs/performance/reports/OPTIMIZATION_REPORTS.md \
+  --output-md benchmarks/results/optimization/optimization_report_latest.md \
   -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
@@ -177,6 +191,11 @@ Interpretation order:
 - `ns_per_*`: primary normalized latency metric (`ns_per_instruction`, `ns_per_edge`, `ns_per_incidence`).
 - `mips` / `mteps`: throughput indicator, useful for engine efficiency tracking.
 
+For the current scalar-language work:
+
+- `VM / Rust` tells us whether the backend is in range
+- `.gion / Rust` tells us how much source-level work is still above the VM
+
 ## Policy
 
 - Keep benchmark input deterministic.
@@ -187,13 +206,10 @@ Interpretation order:
 - Keep allowed regression threshold explicit in workflow config.
 - Frontier/traversal parity is separately gated against the Rust lane via
   `scripts/bench/compare/check_frontier_regressions.py`.
-- The current frontier/traversal parity contract is documented in
-  `docs/performance/policies/FRONTIER_REGRESSION_GATES.md`.
 - Keep Rust comparison benchmarks aligned with the versioned `graphion_rust` project.
 - Keep periodic summarized snapshots in `docs/performance/reports/PERFORMANCE_RESULTS.md`.
 - Prefer the automated `performance-report` workflow for official rolling snapshots instead of hand-editing the report.
 - Frontier-sensitive benchmark rows should carry the recommended `sparse` / `dense` mode when the heuristic applies.
-- Keep frontier threshold changes tied to `graphion_bench_frontier_thresholds` and the
-  paired report in `docs/performance/reports/FRONTIER_THRESHOLD_CALIBRATION.md`.
-- Keep official `baseline` vs `PGO` reports in `docs/performance/reports/OPTIMIZATION_REPORTS.md` and the paired JSON artifact in `benchmarks/results/optimization/`.
-- Keep cross-compiler governance snapshots in `docs/performance/reports/CROSS_COMPILER_REPORT.md` using the portable lane only.
+- Keep frontier threshold changes tied to `graphion_bench_frontier_thresholds` and store the resulting artifacts in `benchmarks/results/performance/`.
+- Keep official `baseline` vs `PGO` reports in `benchmarks/results/optimization/`.
+- Keep cross-compiler snapshots in `benchmarks/results/cross-compiler/` using the portable lane only.

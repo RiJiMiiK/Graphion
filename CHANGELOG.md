@@ -1,149 +1,57 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable project changes are documented here.
 
-The format follows Keep a Changelog and Semantic Versioning.
+The format follows Keep a Changelog and Semantic Versioning in spirit, but this file is intentionally concise:
+
+- it records meaningful project evolution
+- it does not try to preserve every historical internal experiment
 
 ## [Unreleased]
 
 ### Added
-- Merge workflow validation note (test branch `test/merge-flow`).
-- Unit test suite (`ctest`) for VM and arena.
-- Benchmark scaffold with JSON output.
-- Fuzzing target scaffold (`fuzz_vm`) for Clang/libFuzzer.
-- Pre-commit hooks for asm safety and static checks.
-- Supply-chain workflow (SBOM + vulnerability scan).
-- Release workflow for semantic version tags.
-- Architecture, release, benchmark, and branch-protection docs.
-- Coverage workflow producing HTML artifacts.
-- Parser scaffold for bytecode decoding (`src/parser/bytecode.*`).
-- ISA specification document (`docs/runtime/core/ISA.md`).
-- Benchmark regression comparison script and baseline.
-- Maintainers and roadmap files.
-- Explicit compiler CI matrix (`gcc`, `clang`, `msvc`).
-- `clang-tidy` CI job and local runner script.
-- Nightly long fuzz workflow.
-- Optional local VM vs Rust benchmark comparison script.
-- Label sync automation and path-based PR auto-labeling.
-- Stale issue/PR automation workflow.
-- Semantic PR title enforcement workflow.
-- Support/discussion templates and support policy file.
-- Git workflow policy documentation (branches, titles, merge rules).
-- Action workflow linting (`actionlint`) in CI.
-- Markdown link checking workflow.
-- Spellcheck workflow for docs.
-- License header verification workflow and SPDX header checker script.
-- Repository health check workflow and script.
-- Contributors auto-sync workflow and generator script.
-- Bootstrap scripts for local setup.
-- Security contacts + SLA document.
-- Maintainer release checklist document.
-- README status badges for core workflows.
-- Release dry-run workflow for archive simulation on release-related PRs.
-- Monthly audit issue workflow and template.
-- Action pinning audit script/workflow (report mode) and actions security policy doc.
-- Explicit artifact retention windows on uploaded CI artifacts.
-- `.mailmap` for contributor identity normalization.
-- Ownership policy document.
-- Incident postmortem template.
-- Support policy document.
-- Security email contact added to security docs.
-- CSR graph core runtime and BFS kernel with tests.
-- Hypergraph incidence runtime with tests.
-- VM graph/hypergraph opcodes:
-  - `GVM_OP_BFS_LEVELS`
-  - `GVM_OP_INCIDENT_COUNT`
-  - `GVM_OP_HYPEREDGE_SIZE`
-  - `GVM_OP_INCIDENT_SUM`
-  - `GVM_OP_HYPEREDGE_NODE_SUM`
-- Dedicated graph and hypergraph benchmark binaries.
-- Dedicated hypergraph sum benchmark binaries:
-  - `graphion_bench_hypergraph_incident_sum`
-  - `graphion_bench_hypergraph_hyperedge_node_sum`
-- Linux benchmark helper scripts (`scripts/bench/run/run_linux_bench_*.py`).
-- Assembly ABI/register reference doc (`docs/runtime/asm/ASM_REGISTERS.md`).
-- Performance snapshot doc with x100 benchmark runs (`docs/performance/reports/PERFORMANCE_RESULTS.md`).
-- Scripts index and categorized scripts layout (`scripts/README.md`).
-- Parser front-end skeleton (`source -> IR`) and IR lowering bridge (`IR -> VM bytecode`) with tests.
-- End-to-end parser bridge execution test (`source -> IR -> bytecode -> VM`) and IR v0 contract doc (`docs/runtime/core/IR.md`).
-- Cross-toolchain PGO pipeline doc, workflow, and local runner script (`docs/performance/guides/PGO.md`, `scripts/bench/pgo/run_pgo_pipeline.py`).
-- Dispatch-variant parity runner and extra VM edge-case tests for shape-cache / dispatch semantics.
-- Official optimization report generator and report doc for `baseline` vs `PGO`, including per-variant `vm_dispatch` sections.
-- Automated rolling performance snapshot tooling for Windows, Docker Linux, dispatch variants, and optional local Rust comparison.
-- Unified optimization report refresh flow for Windows + Docker Linux, including Linux `computed-goto` coverage.
-- Named PGO corpus profiles and representative-workload policy documentation.
-- Scheduled and release-gated PGO smoke policy with trigger-specific artifact retention rules.
-- Frontier VM primitives with bounded host-bound buffers: `clear`, `push`, `filter_lt_imm`, `map_add_imm`, `reduce_sum`, and `swap`.
-- CSR neighbor iteration opcodes with bounded frontier contracts: `neighbors_of` and `neighbors_expand`.
-- Hypergraph traversal opcodes with bounded frontier contracts: `incident_of` and `hyperedge_nodes_of`.
-- Optional CSR edge weights and edge attributes in the graph runtime, with backward-compatible topology-only initialization.
-- Sparse/dense frontier mode recommendation heuristic added to the CSR graph runtime.
-- Printable graph runtime values in `.gion`:
-  - `print(graph)` summary
-  - `print(G.node[id])`
-  - `print(G.edge[id])`
-- Printable hypergraph runtime values in `.gion`:
-  - `print(hypergraph)` summary
-  - `print(H.vertex[id])`
-  - `print(H.hyperedge[id])`
-- Builtin graph/hypergraph queries in `.gion`:
-  - `bfs(...)`
-  - `bfs_level(...)`
-  - `incident_count(...)`
-  - `incident_sum(...)`
-- Architecture/docs now explicitly separate user-facing builtin semantics from legacy VM opcode naming (`bfs_levels` remains internal).
-- Official frontier primitive benchmark added and integrated into the performance collection pipeline.
-- Official CSR neighbor-iteration benchmark added and integrated into the performance collection pipeline.
-- Official hypergraph traversal benchmark added and integrated into the performance collection pipeline.
-- Frontier-sensitive benchmark outputs now report the recommended sparse/dense mode in collections and perf docs.
-- Automated `PERFORMANCE_RESULTS.md` refresh workflow added for Windows/Linux benchmark lanes with optional PR publication.
-- Frontier recommendation thresholds are now benchmark-backed, with calibrated `15%` node and `28%` edge-work cutovers plus a dedicated calibration report.
-- Weighted CSR execution opcodes now expose neighbor weight sums and edge-attribute sums in the VM, with dedicated coverage and error handling.
-- Official weighted CSR execution benchmark added and integrated into the performance and PGO collection pipelines.
-- Frontier ISA fixtures now carry explicit golden frontier snapshots for graph and hypergraph traversal primitives.
-- Reference source programs are now documented and test-backed for frontier, neighbor, and hyperedge traversal flows.
-- Frontier and traversal workloads now have an automated Rust-parity regression gate in the performance report workflow.
-- Cross-compiler optimization comparison policy with a dedicated portable-lane governance report for `MSVC`, `GCC`, and `Clang`.
-- Benchmark environment metadata is now enforced in generated benchmark and optimization reports.
-- Official PGO effectiveness thresholds per workload family, surfaced in optimization reports.
-- Release-candidate PGO/non-PGO alert policy and dry-run workflow integration.
-- Release dry-run now surfaces PGO alerts in advisory mode on PRs and reserves blocking mode for manual candidate validation.
-- PGO profile artifact manifests and explicit cache invalidation rules.
-- Assembly-vs-C fallback parity and performance reporting policy with dedicated comparison runner.
-- ISA versioning policy and compatibility matrix for the `v0.x` to `v1.0` transition.
-- Structured VM error model document covering frontend, IR, bytecode, and VM runtime codes.
-- Golden ISA conformance fixtures covering decode and execute behavior for documented VM opcodes.
-- Deterministic VM execution toggle for reproducible debugging on the portable switch-dispatch path.
-- Overflow policy documented per opcode class, with explicit wraparound semantics for `GVM_OP_ADD`.
-- ISA fixture format and fixture expansion policy document for golden conformance coverage.
-- Opcode-by-opcode semantic tables added to the ISA documentation.
-- Public named VM runtime error codes exported in `src/vm/vm.h`.
-- Deterministic-mode test coverage expanded across switch/jumptable/computed-goto dispatch builds.
-- ASM parity coverage added for hardening-sensitive ISA cases.
-- Versioned VM state snapshot/debug dump format added for deterministic repro.
-- Deterministic VM repro workflow documented with fixture, snapshot, and environment capture rules.
-- Named repro artifact policy documented for bug reports and CI failures.
-- VM/ISA compatibility checklist documented for opcode additions and semantic changes.
-- Decode/load/execute failure classification table documented for debugging and tests.
-- `.gion` is now the source-file extension for interpreted Graphion programs, with a basic file-entry execution flow through the runtime interpreter.
-- Minimal interpreted `.gion` syntax for dynamic scalar variables and assignment, with no user-declared types.
-- Builtin `print(...)` and user-defined `def ...` / `return` support for the minimal interpreted `.gion` runtime.
-- User-facing `graph Name:` declarations with integer node ids and `a -> b` edge syntax in `.gion`.
-- User-facing `hypergraph Name:` declarations with auto-indexed hyperedges and integer node lists in `.gion`.
-- Scalar graph and hypergraph declaration attributes now support `int`, `float`, `string`, and `bool`, with reserved `weight` normalized to float.
+
+- Sphinx-based HTML documentation site under `docs/`
+- first Graphion user documentation:
+  - tutorial
+  - language reference
+  - builtins
+- scalar-language benchmark lane `scalar_values_print` integrated into the performance reporting flow
+- arithmetic support in `.gion` for:
+  - `+`
+  - `-`
+  - `*`
+  - `/`
+  - `//`
+  - `%`
+  - `**`
+- compound assignments:
+  - `+=`
+  - `-=`
+  - `*=`
+  - `/=`
+  - `//=`
+  - `%=`
+  - `**=`
+- grouped arithmetic expressions with parentheses
+- builtin `abs(...)`
+- string concatenation for `string + string`
+- print-only mixed string coercion such as `print("count=" + 7)`
+- dedicated source/runtime error distinction for:
+  - parse errors
+  - `unknown variable`
+  - `unknown operand`
+  - runtime arithmetic/type failures
+- expanded tests for arithmetic, grouped expressions, compound assignments, string concatenation, and error cases
 
 ### Changed
-- VM arithmetic fastpath refined with halt-terminated specialization.
-- VM arithmetic fastpath now includes an initial super-instruction fusion (`ADD` + `ADD` on same destination).
-- VM fastpath selection now uses a shape cache on `graphion_vm_load` to avoid repeated candidate scans.
-- VM dispatch now supports selectable variants (`switch`, `jumptable`, `computed-goto`) via `GRAPHION_VM_DISPATCH`.
-- VM dispatch performance improved and benchmark outputs extended with latency metrics (`ns_per_*`).
-- CMake now exposes a two-phase PGO mode (`OFF`, `GENERATE`, `USE`) for MSVC, GCC, and Clang.
-- Hypergraph benchmark hot loop optimized for lower overhead.
-- Repository scripts reorganized into purpose-based folders:
-  - `scripts/bench`
-  - `scripts/dev`
-  - `scripts/quality`
-  - `scripts/repo`
-- CI/workflows/docs updated to new script paths.
-- Assembly source now marks non-executable stack section (`.note.GNU-stack`).
+
+- documentation was heavily reduced and reorganized around the docs that are still relevant
+- the main engineering docs were rewritten to match the current project state instead of historical intermediate states
+- the roadmap now tracks remaining work instead of completed historical milestones
+- generated or report-style benchmark artifacts are now treated more clearly as artifacts rather than policy docs
+
+### Removed
+
+- obsolete/internal-heavy documentation that no longer matched the current direction
+- older policy/report/process pages that were creating noise rather than helping the active rebuild

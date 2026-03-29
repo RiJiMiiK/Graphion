@@ -2,34 +2,35 @@
 
 ## Supported versions
 
-This project is pre-1.0. Security fixes are applied to `main`.
+This project is pre-1.0.
+Security fixes are applied on the active main line.
 
 ## Reporting a vulnerability
 
-Please report vulnerabilities privately through GitHub Security Advisories:
-- `Security` tab
-- `Report a vulnerability`
-- Discord (fallback): `https://discord.gg/SfyCjapBEt`
+Use the Discord server for private contact:
 
-Security contact details and response targets are in `SECURITY_CONTACTS.md`.
+- https://discord.gg/mPzDQ7TYkj
 
-If unavailable, open a private issue with:
-- Impact summary
-- Reproduction steps
-- Suggested remediation (optional)
+When reporting, include:
+
+- impact summary
+- reproduction steps
+- any suspected scope or affected area
 
 Do not post zero-day details in public issues.
 
 ## Scope
 
 Security issues include:
-- Memory safety bugs leading to crash or code execution.
-- Unsafe parsing behavior for untrusted input.
-- Supply-chain risks in CI/dependencies.
+
+- memory safety bugs leading to crashes or code execution
+- unsafe parsing behavior for untrusted input
+- supply-chain risks in CI or dependencies
 
 ## Security automation
 
-The repository runs:
-- CodeQL analysis for C/C++.
-- Secret scanning.
-- SBOM generation and vulnerability scanning.
+The repository currently runs:
+
+- CodeQL analysis for C/C++
+- secret scanning
+- SBOM generation and vulnerability scanning

@@ -432,8 +432,6 @@ def main() -> int:
             "",
             "Format requested: `s | mteps | mips | ns_per_X`.",
             "",
-            "For official `baseline` vs `PGO` before/after reports, see [OPTIMIZATION_REPORTS.md](OPTIMIZATION_REPORTS.md).",
-            "",
             render_environment_table([windows_meta, linux_meta, rust_windows_meta, rust_linux_meta]),
             "",
             *sections,

@@ -1,34 +1,49 @@
 # Benchmarks
 
-`benchmarks/` contains the executable benchmark sources, fixed baselines, and local generated result artifacts.
+This directory holds benchmark sources plus local result artifacts.
 
-Layout:
-- `benchmarks/baselines/`: checked-in reference thresholds used by quality checks.
-- `benchmarks/results/performance/`: raw benchmark snapshots and dispatch comparison JSON outputs.
-- `benchmarks/results/optimization/`: baseline-vs-PGO JSON reports.
-- `benchmarks/results/cross-compiler/`: MSVC/GCC/Clang comparison JSON and temporary markdown outputs.
-- `benchmarks/results/asm/`: assembly fallback and hardening parity artifacts.
-- `benchmarks/results/release/`: release-dry-run artifacts.
-- `benchmarks/results/smoke/`: metadata smoke outputs and temporary merged-report scratch files.
+## Source layout
 
-`benchmarks/results/` is intentionally gitignored. The structure is still documented here so scripts and local runs converge on the same paths.
+- benchmark source files live directly under `benchmarks/`
+- result artifacts live under `benchmarks/results/`
 
-Benchmark scope is intentionally split:
-- some binaries measure raw kernels directly (`bench_bfs.c`, `bench_hypergraph*.c`)
-- some binaries measure VM execution (`bench_vm.c`, `bench_vm_graph.c`)
+## Result directories
 
-`bench_vm.c` now tracks the first typed-value VM baseline:
-- it exercises `GVM_OP_LOAD_CONST`
-- it exercises `GVM_OP_STORE_GLOBAL`
-- it exercises `GVM_OP_LOAD_GLOBAL`
-- it exercises `GVM_OP_MOV`
-- it keeps one integer `ADD` in the mix so typed arithmetic still stays measured
+- `benchmarks/results/performance/`
+  - rolling performance snapshots and lane JSON
+- `benchmarks/results/optimization/`
+  - PGO and optimization comparison artifacts
+- `benchmarks/results/cross-compiler/`
+  - cross-toolchain comparison artifacts
+- `benchmarks/results/asm/`
+  - asm-vs-C comparison and parity artifacts
+- `benchmarks/results/release/`
+  - release-oriented artifacts
+- `benchmarks/results/smoke/`
+  - temporary smoke outputs
 
-`bench_vm_graph.c` is the coherence check for the current VM lowering path:
-- it exercises `GVM_OP_BFS_LEVEL_COUNT`
-- it exercises `GVM_OP_BFS_ORDER`
-- it exercises `GVM_OP_INCIDENT_COUNT`
-- it exercises `GVM_OP_INCIDENT_SUM`
+`benchmarks/results/` is intentionally gitignored.
 
-Legacy interpreter benchmark lanes have been removed.
-The performance snapshot currently tracks only VM-native Graphion lanes and the matching Rust reference lanes.
+## Current benchmark reading
+
+The important split today is:
+
+- VM-oriented lanes
+- source-level `.gion` lanes
+
+The current scalar-language rebuild especially relies on:
+
+- `vm_dispatch`
+- `scalar_values_print`
+
+Those are the lanes to watch when we compare:
+
+- backend quality
+- source-level overhead
+- Rust parity
+
+## Reference docs
+
+- `docs/performance/guides/BENCHMARKS.md`
+- `docs/performance/guides/PGO.md`
+- `docs/performance/reports/PERFORMANCE_RESULTS.md`

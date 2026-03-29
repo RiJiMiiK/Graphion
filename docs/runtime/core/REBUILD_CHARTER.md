@@ -4,55 +4,60 @@
 
 Graphion doit etre reconstruit autour d'un seul pipeline :
 
-- `.gion -> bytecode -> VM`
+- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
 
 Le langage doit etre optimise de maniere generale.
-Il ne doit pas etre optimise pour un fichier de test, un benchmark particulier, ou un sous-ensemble cache.
+Il ne doit jamais etre optimise pour un seul benchmark, un seul fichier d'exemple, ou un test particulier.
 
 ## Principes
 
 ### 1. Pipeline unique
 
-Toute forme du langage supportee doit passer par :
+Toute forme du langage supportee doit passer par un seul pipeline :
 
-- `.gion -> bytecode -> VM`
+- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
 
-Il ne doit pas exister d'autre moteur semantique.
-Le bytecode genere doit etre inspectable.
+Il ne doit pas exister d'autre moteur semantique cache.
+Le bytecode produit doit rester inspectable.
 
 ### 2. Entree `.gion` preservee
 
-L'entree `.gion` doit rester une vraie entree du langage.
-Elle ne doit pas etre contournee pour faire marcher une feature, un test ou un benchmark.
+L'entree `.gion` reste l'entree normale du langage.
+Elle ne doit pas etre contournee pour faire marcher une feature, un test, ou un benchmark.
 
 ### 3. Pas de fallback semantique
 
-Si une forme du langage n'est pas encore supportee par le pipeline `.gion -> bytecode -> VM` :
+Si une forme du langage n'est pas encore supportee :
 
 - erreur claire
 
-Il ne doit pas y avoir de fallback d'execution vers un autre moteur semantique.
+Il ne doit pas y avoir de deuxieme moteur d'execution qui "fait quand meme marcher" le programme.
 
 ### 4. Meme semantique partout
 
-Un meme `.gion` doit produire la meme semantique quel que soit le contexte d'execution :
+Un meme programme `.gion` doit produire la meme semantique en :
 
 - release
 - test
 - benchmark
 
-Le comportement ne doit pas dependre du chemin d'execution, du mode debug/release, ou du benchmark lance.
+Le comportement ne doit pas dependre d'un chemin d'execution special, d'un binaire de bench, ou d'une optimisation cachee.
 
 ### 5. Optimisation generale uniquement
 
-Toute optimisation doit viser une forme generale du langage, le lowering bytecode, ou la VM.
+Toute optimisation doit viser :
+
+- le parsing
+- la representation interne
+- le lowering bytecode
+- la VM
 
 Il ne faut jamais optimiser :
 
-- pour un test
-- pour un benchmark
+- pour un seul test
+- pour un seul benchmark
 - pour un fichier particulier
-- pour un cas ultra-specifique qui ne represente pas le langage
+- pour un cas artificiel qui ne represente pas le langage
 
 ## Validation d'une feature
 
@@ -62,45 +67,40 @@ L'ordre de validation est strict :
 2. tests
 3. benchmarks
 
-Une feature n'est validee que si elle passe ces trois niveaux dans cet ordre.
-
 ### 1. Fonctionnement general
 
-Une feature doit fonctionner dans un `.gion` general si le code ecrit par l'utilisateur entre bien dans le cadre de cette feature.
+Une feature doit fonctionner dans un `.gion` general tant que le programme utilisateur reste dans le perimetre supporte.
 
 Cela doit etre vrai :
 
-- quel que soit le nom des variables
-- quelles que soient les valeurs dans le domaine supporte
+- quels que soient les noms
+- quelles que soient les valeurs supportees
 - quel que soit l'ordre legal des lignes
-- quel que soit le contenu global du fichier, tant qu'il reste semantiquement coherent
-
-Si une feature ne marche que dans un fichier de test, un benchmark, ou un cas fixe, elle n'est pas faite.
+- quelle que soit la combinaison avec les features deja supportees
 
 ### 2. Compatibilite cumulative
 
 Une nouvelle feature ne doit pas casser les precedentes.
 
-Une feature validee doit fonctionner :
+Une feature validee doit marcher :
 
 - seule
 - et en combinaison avec les features deja validees
 
-Si une feature ne marche qu'isolee, elle n'est pas validee.
-
 ### 3. Tests obligatoires
 
-Toute feature doit passer :
+Toute feature doit avoir :
 
 - des tests cibles
 - des tests de non-regression
+- des tests d'erreur
 - des tests d'integration inter-features
 
-Les tests doivent varier pour eviter les faux positifs :
+Les tests doivent varier pour limiter les faux positifs :
 
 - noms
 - valeurs
-- ordre legal des lignes
+- cas negatifs
 - combinaisons de features
 
 ### 4. Erreurs claires
@@ -116,10 +116,9 @@ Si le programme utilisateur est invalide :
 Exemples :
 
 - syntaxe invalide
-- variable non definie
-- forme non encore supportee
-
-Il ne doit pas y avoir de support implicite, partiel, ou cache.
+- variable inconnue
+- operande inconnu
+- operation non supportee pour les types fournis
 
 ### 5. Validation tracable
 
@@ -132,21 +131,12 @@ On distingue si necessaire :
 - valide
 - benchmarke
 
-La trace doit indiquer au minimum :
-
-- support
-- tests
-- benchmarks
-- erreurs connues
-
 ## Benchmarks
 
 ### 1. Role des benchmarks
 
-Un benchmark sert a verifier les performances.
+Un benchmark sert a mesurer la performance.
 Il ne sert pas a prouver qu'une feature fonctionne.
-
-Un benchmark n'a de valeur qu'apres validation fonctionnelle et passage des tests.
 
 ### 2. Representativite
 
@@ -157,24 +147,22 @@ Il ne doit pas tirer sa valeur d'un traitement de faveur applique a :
 - un fichier precis
 - un ordre de lignes particulier
 - un nommage particulier
-- un cas de test specialise
-
-Un benchmark specialise n'a pas de valeur de validation.
+- un cas specialise
 
 ### 3. Seuils d'acceptation
 
-Une feature ne passe la validation benchmark que si :
+Pour les benchmarks representatifs :
 
-- `VM < x1.15`
-- `.gion < x1.5`
+- `VM / Rust < 1.15x`
+- `.gion / Rust = 2x a 3x` comme cible principale
+- `.gion / Rust < 2x` seulement comme stretch goal si de vrais leviers generaux restent disponibles
 - `variation < 10%`
-
-Ces seuils ne valent que pour des benchmarks representatifs.
 
 ## Etat actuel
 
 A l'etat actuel du repo :
 
-- l'interpreteur legacy ne doit plus servir de base de reconstruction
-- l'entree `.gion` existe toujours
-- la base actuelle doit seulement servir de point de depart propre pour reconstruire le vrai pipeline `.gion -> bytecode -> VM`
+- la priorite fonctionnelle est le sous-ensemble `.gion` scalaire
+- la VM est deja un backend reel et mesurable
+- la reconstruction doit continuer sans recreer de fallback semantique
+- la doc utilisateur doit decrire seulement ce qui est vraiment implemente

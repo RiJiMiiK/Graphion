@@ -1,116 +1,113 @@
-# PGO Pipeline
+# PGO
 
-Graphion supports a two-phase profile-guided optimization workflow for:
+## What this page is for
 
-- MSVC
-- GCC
-- Clang
+This page describes how Graphion currently runs profile-guided optimization builds.
 
-The build is controlled with:
+It is intentionally practical:
 
-- `GRAPHION_PGO_MODE=OFF|GENERATE|USE`
-- `GRAPHION_PGO_PROFILE_DIR=<dir>`
-- `--corpus-profile representative|ci`
+- how to run PGO locally
+- what the pipeline does
+- where artifacts end up
 
-## Local Run
+It is not a policy archive.
 
-Recommended entrypoint:
+## Local run
+
+Recommended entrypoints:
 
 ```bash
 python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=clang
 ```
 
-GCC:
-
 ```bash
 python3 scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo -- -G Ninja -DCMAKE_C_COMPILER=gcc
 ```
-
-MSVC:
 
 ```powershell
 python scripts/bench/pgo/run_pgo_pipeline.py --build-dir build-pgo
 ```
 
-The default corpus profile is `representative`.
+## Modes
 
-The script does:
+The build uses:
 
-1. Configure with `GRAPHION_PGO_MODE=GENERATE`
-2. Build `Release`
-3. Train on the benchmark set
-4. Merge Clang `.profraw` files into `graphion.profdata` when needed
-5. Reconfigure with `GRAPHION_PGO_MODE=USE`
-6. Rebuild and run `ctest`
+- `GRAPHION_PGO_MODE=OFF`
+- `GRAPHION_PGO_MODE=GENERATE`
+- `GRAPHION_PGO_MODE=USE`
 
-## Training Corpus
+Relevant knobs:
 
-Graphion now uses named corpus profiles instead of an implicit hardcoded list.
+- `GRAPHION_PGO_PROFILE_DIR=<dir>`
+- `--corpus-profile representative|ci`
 
-The default `representative` profile covers:
+## What the pipeline does
 
-- arithmetic dispatch
-- CSR/BFS graph traversal
-- hypergraph incidence traversal
-- hypergraph reducer paths
-- graph-specific VM opcodes
+The current pipeline:
 
-The detailed policy is documented in [PGO_CORPUS_POLICY.md](./PGO_CORPUS_POLICY.md).
+1. configures a `GENERATE` build
+2. builds the project
+3. trains on the benchmark corpus
+4. merges raw profiling data when the toolchain requires it
+5. reconfigures with `USE`
+6. rebuilds and runs tests
 
-PGO effectiveness thresholds are reported per workload family in the generated optimization report.
-They are review guidance for optimization quality, not a standalone release gate.
+## Corpus profiles
 
-Generated PGO profiles are treated as single-run artifacts and are reset before each new `GENERATE` phase.
-The profile directory records a `profile_manifest.json` so invalidation reasons are explicit.
+The default corpus profile is:
+
+- `representative`
+
+There is also a lighter profile for smoke-style runs:
+
+- `ci`
+
+The corpus should remain:
+
+- small enough to run routinely
+- representative enough to exercise real hot paths
+- versioned with the repo rather than treated as an undocumented local habit
+
+## Artifacts
+
+PGO-related result artifacts are written under:
+
+- `benchmarks/results/optimization/`
+
+Cross-compiler result artifacts are written under:
+
+- `benchmarks/results/cross-compiler/`
+
+Generated profile data is kept under the configured profile directory, and the pipeline records a manifest so invalidation is explicit.
 
 ## CI
 
-GitHub Actions workflow:
+Workflow:
 
-- [`.github/workflows/pgo.yml`](../.github/workflows/pgo.yml)
+- `.github/workflows/pgo.yml`
 
-It runs in three modes:
+Current CI use is mainly for:
 
-- `workflow_dispatch`
-- scheduled weekly smoke
-- pull requests to `main` that touch release-gating or PGO-policy files
+- periodic smoke validation
+- release-oriented confidence checks
+- manual dispatch when we want a controlled run
 
-It covers:
+## Toolchain notes
 
-- `ubuntu-latest` with `gcc`
-- `ubuntu-latest` with `clang`
-- `windows-latest` with `msvc`
+- Clang uses source-based profiling and requires `llvm-profdata`
+- GCC uses `-fprofile-generate` / `-fprofile-use`
+- MSVC uses `/GENPROFILE` / `/USEPROFILE`
 
-Policy by trigger:
+## Recommended usage
 
-- scheduled weekly smoke
-  - corpus: `ci`
-  - iteration scale: `0.10`
-  - artifact retention: `7 days`
-- release-gated or PGO-policy pull request
-  - corpus: `ci`
-  - iteration scale: `0.10`
-  - artifact retention: `21 days`
-- manual dispatch
-  - corpus: `representative`
-  - iteration scale: `0.25`
-  - artifact retention: `14 days`
+Use PGO when:
 
-The `pull_request` gate is intentionally path-scoped to release and PGO workflow files so the smoke job is not attached to unrelated feature work.
+- you are validating a performance-sensitive change
+- you want a realistic optimized build
+- you are checking whether a VM or `.gion` lane still behaves after profile-guided optimization
 
-For a unified engineering report that merges local Windows and Docker Linux optimization results,
-use `scripts/bench/refresh/refresh_optimization_reports.py`.
+Do not use PGO results as a substitute for:
 
-For portable cross-compiler governance (`MSVC` vs `GCC` vs `Clang`), use
-`scripts/bench/refresh/refresh_cross_compiler_report.py` and `docs/performance/policies/CROSS_COMPILER_POLICY.md`.
-Release-related pull requests also run a small clang-based release-candidate smoke report and evaluate
-the PGO/non-PGO alert policy before the dry-run archive job is considered complete.
-On pull requests this is advisory-only; the blocking mode is reserved for manual candidate validation.
-
-## Notes
-
-- Clang uses source-based profiling and requires `llvm-profdata`.
-- GCC uses `-fprofile-generate` / `-fprofile-use`.
-- MSVC uses `/GENPROFILE` and `/USEPROFILE` on `Release`.
-- MSVC writes `.pgc` / `.pgd` artifacts next to the `Release` binaries; the runner cleans stale files before a new training pass.
-- The recommended mode is to reuse the same build directory across both PGO phases.
+- functional validation
+- test coverage
+- representative benchmark interpretation

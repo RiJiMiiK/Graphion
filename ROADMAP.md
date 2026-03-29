@@ -1,182 +1,99 @@
 # Roadmap
 
-> Language-runtime reconstruction is now governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
-> Historical roadmap checkboxes for interpreter-era milestones must not be read as proof that current `.gion` language support is still valid.
+> The rebuild is governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
 
-## Milestone 0.1 (Interpreter Core) [done]
+This roadmap tracks what is still ahead of us.
+Completed historical work is intentionally not repeated here.
 
-- [x] Stable VM ISA v0 and bytecode decoder.
-- [x] Deterministic benchmark harness.
-- [x] Baseline safety/security CI.
+## Current focus
 
-## Milestone 0.2 (Graph Primitives) [done]
+The current active lane is the `.gion` scalar language rebuild:
 
-- [x] Runtime CSR/BFS core (`csr_graph` + `graphion_bfs_levels`) with tests.
-- [x] Graph-centric opcodes and kernels (`BFS_LEVELS`, incidence/size ops).
-- [x] Parser front-end skeleton and IR bridge.
-- [x] Benchmark scenarios for graph/hypergraph kernels.
-- [x] Initial hypergraph traversal opcode set (beyond count/size).
+- source Graphion
+- tokens/parsing
+- internal representation
+- bytecode
+- VM
 
-## Milestone 0.2.1 (Stabilization) [done]
+The goal is to keep growing that path without reintroducing alternate semantic engines or benchmark-only shortcuts.
 
-- [x] End-to-end parser integration test (`source -> IR -> bytecode -> VM run`).
-- [x] IR v0 bridge contract document (`docs/runtime/core/IR.md`).
+## Near-term language work
 
-## Milestone 0.3 (Optimization Pass) [done]
-- [x] Hotpath profiling pipeline (repeatable x100 snapshots).
-- [x] Super-instruction experiments (initial `ADD+ADD` fusion in arithmetic fastpath).
-- [x] Assembly integration behind measured gates (Linux x86_64 SysV path).
-- [x] PGO pipeline (MSVC + GCC/Clang).
-- [x] Branch-prediction-oriented dispatch variants (computed-goto / jump-table study, with portable selection gate).
-- [x] Fastpath specialization cache by bytecode shape.
+### Comparisons
 
-## Milestone 0.3.1 (Optimization Stabilization) [done]
+- [ ] `==`
+- [ ] `!=`
+- [ ] `<`
+- [ ] `<=`
+- [ ] `>`
+- [ ] `>=`
+- [ ] clear comparison semantics across `int`, `float`, `bool`, and `string`
+- [ ] matching runtime/type-error coverage
 
-- [x] PGO training corpus review and representative-workload policy.
-- [x] Official before/after optimization reports (`baseline` vs `PGO`, per dispatch strategy where applicable).
-- [x] Optimization parity tests for dispatch variants and fastpath cache edge cases.
-- [x] Scheduled or release-gated PGO smoke execution policy with artifact retention rules.
+### Boolean logic
 
-## Milestone 0.3.2 (Optimization Governance) [done]
+- [ ] `and`
+- [ ] `or`
+- [ ] `not`
+- [ ] documented truth rules
+- [ ] tests for precedence and short-circuit behavior if adopted
 
-- [x] Official PGO effectiveness thresholds per workload family.
-- [x] Cross-compiler optimization comparison policy (`MSVC` vs `GCC` vs `Clang`).
-- [x] Benchmark environment metadata enforcement in generated reports.
-- [x] PGO / non-PGO regression alert policy for release candidates.
-- [x] Assembly-vs-C fallback parity and performance reporting policy.
-- [x] Profile artifact hygiene and cache invalidation rules.
+### More builtins
 
-## Milestone 0.4 (VM + ISA Hardening) [done]
+- [ ] decide and implement the next math-oriented builtins after `abs(...)`
+- [ ] document every builtin as soon as it becomes real
 
-- [x] ISA version policy (`v0.x` -> `v1.0`) with compatibility matrix.
-- [x] Golden ISA conformance tests (decode + execute fixtures).
-- [x] Structured VM error model and error codes document.
-- [x] Deterministic execution mode toggle (for reproducible debugging).
-- [x] Overflow/checked arithmetic policy per opcode class.
+### Tuples and parentheses
 
-## Milestone 0.4.1 (VM/ISA Stabilization) [done]
+- [ ] introduce tuple semantics
+- [ ] preserve the intended rule that `(x)` becomes a tuple form later
+- [ ] clearly distinguish grouped arithmetic expressions from tuple syntax
 
-- [x] Public named VM runtime error codes in `src/vm/vm.h`.
-- [x] ISA fixture format documentation and fixture expansion policy.
-- [x] Deterministic-mode coverage across all dispatch variants.
-- [x] ASM parity coverage for hardening-sensitive ISA cases.
-- [x] VM state snapshot/debug dump format for deterministic repro.
-- [x] Opcode-by-opcode semantic tables (inputs, outputs, failure cases).
+## Runtime / frontend rebuild
 
-## Milestone 0.4.2 (VM/ISA Repro And Governance)
+- [ ] continue moving toward the explicit target pipeline:
+  - `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
+- [ ] reduce historical coupling between source handling and execution internals
+- [ ] keep unsupported forms as clear errors instead of fallbacks
+- [ ] keep the bytecode inspectable
 
-- [x] Deterministic repro workflow documentation (snapshot + fixture + environment capture).
-- [x] Named repro artifact policy for bug reports and CI failures.
-- [x] VM/ISA compatibility checklist for adding or changing opcodes.
-- [x] Decode/load/execute failure classification table for debugging and tests.
+## VM work
 
-## Milestone 0.5 (Graph/Hypergraph Execution Model)
+- [ ] keep VM-visible behavior aligned with the actively used `.gion` subset
+- [ ] document which opcodes are active for the scalar language path
+- [ ] continue validating the VM lane independently from the source lane
+- [ ] revisit VM documentation so it separates:
+  - active scalar/runtime work
+  - broader graph/hypergraph VM capabilities
 
-- [x] Frontier operations (`push/filter/map/reduce` style primitives).
-- [x] Neighbor iteration opcodes with bounded memory contracts.
-- [x] Hyperedge traversal primitives (node->edge and edge->node).
-- [x] Optional weighted graph support and edge attributes.
-- [x] Sparse/dense frontier switching heuristics.
+## Performance work
 
-## Milestone 0.5.1 (Graph/Frontier Benchmark Stabilization) [done]
+- [ ] keep `VM / Rust < 1.15x` on representative VM lanes
+- [ ] work `.gion / Rust` toward the main target band `2x to 3x`
+- [ ] treat `< 2x` as a stretch goal only if general-purpose levers remain
+- [ ] keep benchmark variation below `10%` on accepted runs
+- [ ] continue using `scalar_values_print` as the current scalar-language benchmark lane
 
-- [x] Official benchmarks for frontier primitives.
-- [x] Official benchmarks for CSR neighbor iteration primitives.
-- [x] Official benchmarks for hypergraph traversal primitives.
-- [x] Benchmark-backed calibration of sparse/dense frontier thresholds.
-- [x] Frontier-mode reporting in benchmark outputs and docs.
+## Documentation
 
-## Milestone 0.5.2 (Graph Execution Stabilization)
+- [ ] keep the Graphion user docs aligned with the actually implemented subset
+- [ ] keep architecture / ISA / error docs aligned with real code, not historical intermediate states
+- [ ] expand the tutorial as new language features land
+- [ ] keep the HTML doc site as the primary documentation surface
 
-- [x] Weighted graph execution opcodes and VM coverage.
-- [x] Frontier golden fixtures for graph and hypergraph traversal primitives.
-- [x] Performance regression gates for frontier and traversal workloads.
-- [x] Reference graph execution examples for frontier, neighbor, and hyperedge traversal flows.
+## Quality
 
-## Milestone 0.6 (Frontend And Language Surface)
+- [ ] keep growing targeted tests for each new language feature
+- [ ] keep adding error-case coverage, not just happy-path coverage
+- [ ] maintain cumulative integration tests as the language surface expands
+- [ ] revisit fuzzing once the language surface is larger
 
-- [x] `.gion` source-file extension and interpreter entry flow.
-- [x] High-level interpreted syntax for dynamic variables and assignment, with no user-declared types.
-- [x] Builtin `print(...)` plus user-defined functions via `def ...` and `return`.
-- [x] User-facing graph declarations with integer node ids and `a -> b` edge syntax.
-- [x] User-facing hypergraph declarations with auto-indexed hyperedges and integer node lists.
-- [x] Scalar attribute parsing for graph/hypergraph declarations (`int`, `float`, `string`, `bool`), with reserved `weight` normalized to float.
-- [x] Builtin graph/hypergraph functions with user-facing semantics:
-  - `bfs(...)` returns visited node ids in BFS encounter order
-  - `bfs_level(...)` returns only the number of BFS levels
-  - incidence query builtins align with the future user-facing graph/hypergraph API
-- [x] User-facing printable graph values for `graph`, `node`, and `edge`:
-  - `print(graph)` shows graph name, node count, and edge count
-  - `print(G.node[id])` shows node id/name and neighbor count for graph nodes
-  - `print(G.edge[id])` shows source, target, reserved `weight` when present, and other attributes
-- [x] User-facing printable hypergraph values for `hypergraph` and `hyperedge`:
-  - `print(hypergraph)` shows hypergraph name, node count, and hyperedge count
-  - `print(H.vertex[id])` shows vertex id/name and incident hyperedge count for hypergraph nodes
-  - `print(H.hyperedge[id])` shows hyperedge id and member node count
-- [x] Legacy VM-facing naming review for user-facing builtin alignment (notably `bfs_levels`):
-  - user-facing `bfs(...)` is defined as BFS visit order
-  - user-facing `bfs_level(...)` is defined as BFS level count
-  - legacy VM opcode `bfs_levels` remains internal and is not the user-facing contract
-- [x] In-memory lowering from `.gion` source semantics into VM execution, so optimized VM paths remain the real runtime backend.
+## Later tracks
 
-## Milestone 0.6.1 (Language Surface Follow-Up)
+These remain interesting, but they are not the current driver of the rebuild:
 
-- [ ] Composite attribute values: `list`, `enum`, `dict`, and `struct`.
-- [ ] Non-integer node identifiers for graphs and hypergraphs.
-- [ ] Richer user-facing graph/hypergraph examples using post-0.6 value types.
-
-## Milestone 0.7 (Runtime And Memory)
-
-- [ ] Runtime value model for dynamic variables, scalars, graphs, hypergraphs, and function returns.
-- [ ] Scope/environment model for globals, locals, builtin functions, and user-defined functions.
-- [ ] Memory lifetime audit for interpreted values and VM-bound graph objects.
-- [ ] Optional debug runtime checks for interpreted execution and runtime value invariants.
-- [ ] Configurable allocator strategy (arena/system/hybrid) for interpreter-owned values.
-- [ ] Arena/runtime metrics (peak, allocations, reset stats) for interpreted workloads.
-- [ ] Thread-safety plan for future parallel runtime.
-
-## Milestone 0.8 (Assembly Program)
-
-- [ ] Additional assembly hotpaths for proven interpreted-runtime bottlenecks only.
-- [ ] Per-ABI docs (SysV + Windows x64 strategy).
-- [ ] Automated asm correctness tests vs C reference path.
-- [ ] Differential perf checks (asm on/off thresholds) for language-visible workloads.
-- [ ] Hardened asm lint rules and exception workflow.
-
-## Milestone 0.9 (Benchmark Governance)
-
-- [ ] Official benchmark matrix split between VM/internal kernels and user-facing interpreted programs.
-- [ ] Mandatory report metadata (CPU, governor, flags, OS, date).
-- [ ] Baseline update policy and review gate for both VM and language-surface workloads.
-- [ ] Trend reports committed on schedule (weekly or per release).
-- [ ] Cross-platform comparison tables for interpreted-language workloads (Windows/Linux/Rust where applicable).
-- [ ] Benchmark policy for startup cost vs steady-state interpreter cost.
-
-## Milestone 1.0 (Language MVP)
-
-- [ ] End-to-end interpreted source execution for `.gion` programs.
-- [ ] Stable user-facing syntax for graphs, hypergraphs, functions, builtins, and scalar attributes.
-- [ ] Stable runtime + documentation + release process.
-- [ ] Performance target definition for interpreted-language workloads and internal kernels.
-- [ ] Security model and supported platform matrix.
-- [ ] v1.0 release checklist and migration notes.
-
-## Continuous Tracks
-
-### Security
-
-- [ ] Keep action pinning and supply-chain checks green.
-- [ ] Quarterly dependency and workflow audit.
-- [ ] Incident/postmortem templates exercised by drill.
-
-### Quality
-
-- [ ] Expand tests for parser, interpreter runtime, VM kernels, and edge cases.
-- [ ] Fuzz corpus curation and crash triage process.
-- [ ] Static analysis budget (`clang-tidy`, `cppcheck`) with zero-regression rule.
-
-### Developer Experience
-
-- [ ] One-command local setup parity (Windows/Linux).
-- [ ] Script UX consistency and structured logs.
-- [ ] Contributor quickstart for interpreted-language repro and perf repro.
+- richer data types
+- graph/hypergraph user-facing language features
+- function model expansion
+- deeper runtime memory model work
+- broader assembly work beyond proven hot paths

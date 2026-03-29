@@ -1,9 +1,16 @@
 # Maintainers
 
-- `@RiJiMiiK` (owner, final review)
+- `@RiJiMiiK`
+  - project owner
+  - final review
 
-## Review policy
+## Review expectations
 
-- Security-sensitive changes require maintainer review.
-- VM ISA/parser changes require tests and benchmark note.
-- Assembly changes require explicit safety rationale in PR.
+- security-sensitive changes require maintainer review
+- VM and parser changes should come with tests
+- language-surface changes should come with doc updates
+- assembly changes require an explicit safety rationale
+
+## Contact
+
+- https://discord.gg/mPzDQ7TYkj
