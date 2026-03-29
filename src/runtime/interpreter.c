@@ -282,8 +282,6 @@ static int parse_scalar_literal(graphion_runtime_program *program,
     return GINT_OK;
   }
   if (*start == '-' || isdigit((unsigned char)*start)) {
-    double as_float;
-    long long as_int;
     int saw_dot = 0;
     const char *scan = start;
     if (*scan == '-') {
@@ -303,6 +301,7 @@ static int parse_scalar_literal(graphion_runtime_program *program,
       return fail(diagnostic, line, 1U, "expected scalar literal", GINT_ERR_PARSE);
     }
     if (saw_dot) {
+      double as_float;
       as_float = strtod(start, &end);
       if (end != scan) {
         return fail(diagnostic, line, 1U, "invalid float literal", GINT_ERR_PARSE);
@@ -310,6 +309,7 @@ static int parse_scalar_literal(graphion_runtime_program *program,
       value_out->kind = GVM_VALUE_FLOAT;
       value_out->as.float_value = as_float;
     } else {
+      long long as_int;
       as_int = strtoll(start, &end, 10);
       if (end != scan) {
         return fail(diagnostic, line, 1U, "invalid integer literal", GINT_ERR_PARSE);
@@ -330,15 +330,14 @@ static int parse_operand(const char **cursor,
                          graphion_runtime_diagnostic *diagnostic) {
   graphion_vm_value literal;
   const char *saved;
-  char name[GRAPHION_RUNTIME_NAME_MAX];
   int rc;
-  int index;
   if (cursor == NULL || *cursor == NULL || program == NULL || operand_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   saved = *cursor;
   skip_spaces(cursor);
   if (is_ident_start_char(**cursor)) {
+    char name[GRAPHION_RUNTIME_NAME_MAX];
     rc = parse_identifier_token(cursor, name, sizeof(name), line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -346,6 +345,7 @@ static int parse_operand(const char **cursor,
     if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0) {
       *cursor = saved;
     } else {
+      int index;
       index = program_find_global_index(program, name);
       if (index < 0) {
         return fail(diagnostic, line, 1U, "unknown operand", GINT_ERR_UNKNOWN_OPERAND);

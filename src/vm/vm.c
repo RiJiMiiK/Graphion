@@ -1080,7 +1080,7 @@ static void refresh_global_print_validation(graphion_vm *vm) {
 
 static int run_global_materialize_fastpath_c(graphion_vm *vm) {
   const graphion_insn *p;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *end;
   const graphion_vm_value *const_pool;
   graphion_vm_value *globals;
   size_t const_count;
@@ -1096,6 +1096,7 @@ static int run_global_materialize_fastpath_c(graphion_vm *vm) {
     return GVM_ERR_GLOBALS_UNBOUND;
   }
 
+  end = vm->program + vm->program_len;
   const_pool = vm->const_pool;
   globals = vm->globals;
   const_count = vm->const_count;
@@ -1165,7 +1166,7 @@ static int run_global_materialize_fastpath_c(graphion_vm *vm) {
 
 static int run_global_print_fastpath_c(graphion_vm *vm) {
   const graphion_insn *p;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *end;
   const graphion_vm_value *const_pool;
   graphion_vm_value *globals;
   size_t const_count;
@@ -1183,6 +1184,7 @@ static int run_global_print_fastpath_c(graphion_vm *vm) {
     return GVM_ERR_GLOBALS_UNBOUND;
   }
 
+  end = vm->program + vm->program_len;
   const_pool = vm->const_pool;
   globals = vm->globals;
   const_count = vm->const_count;
@@ -1484,7 +1486,7 @@ static int run_weighted_sum_fastpath_c(graphion_vm *vm) {
 
 static int run_frontier_fastpath_c(graphion_vm *vm) {
   const graphion_insn *p;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *end;
 
   if (vm == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -1493,6 +1495,7 @@ static int run_frontier_fastpath_c(graphion_vm *vm) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
 
+  end = vm->program + vm->program_len;
   p = vm->program + vm->pc;
   while (p < end) {
     const graphion_insn in = *p++;
@@ -1751,20 +1754,23 @@ static int run_graph_ops_fastpath_c(graphion_vm *vm) {
 
 static int run_value_move_fastpath_c(graphion_vm *vm) {
   const graphion_insn *p;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *end;
   graphion_vm_value *regs;
   const graphion_vm_value *const_pool;
   graphion_vm_value *globals;
-  const size_t const_count = vm->const_count;
-  const size_t global_count = vm->global_count;
+  size_t const_count;
+  size_t global_count;
 
   if (vm == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
 
+  end = vm->program + vm->program_len;
   regs = vm->regs;
   const_pool = vm->const_pool;
   globals = vm->globals;
+  const_count = vm->const_count;
+  global_count = vm->global_count;
   p = vm->program + vm->pc;
   while (p < end) {
     const graphion_insn in = *p++;
@@ -1859,7 +1865,7 @@ static int run_value_move_fastpath_c(graphion_vm *vm) {
 
 static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
   const graphion_insn *p;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *end;
   graphion_vm_value *regs;
   const graphion_vm_value *const_pool;
   graphion_vm_value *globals;
@@ -1868,6 +1874,7 @@ static int run_value_move_fastpath_verified_c(graphion_vm *vm) {
     return vm == NULL ? GVM_ERR_INVALID_ARG : GVM_ERR_CONST_UNBOUND;
   }
 
+  end = vm->program + vm->program_len;
   regs = vm->regs;
   const_pool = vm->const_pool;
   globals = vm->globals;
