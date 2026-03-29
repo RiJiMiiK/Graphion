@@ -153,6 +153,7 @@ Current conditions must evaluate to:
 - `false`
 - `1`
 - `0`
+- an expression that evaluates to `bool`, such as `1 + 1 == 2`
 
 Valid condition examples:
 
@@ -176,6 +177,11 @@ if 1:
 
 if 0:
     print("never")
+```
+
+```gion
+if 1 + 1 == 2:
+    print("taken")
 ```
 
 Invalid examples:
@@ -314,6 +320,33 @@ Supported arithmetic operators:
 `**`
 : power, right-associative
 
+## Comparison Operators
+
+Currently supported comparison operators:
+
+- `==`
+
+`==` returns a `bool`.
+
+Examples:
+
+```gion
+same_int = 42 == 42
+same_number = 42 == 42.0
+same_text = "ok" == "ok"
+different_types = 1 == "1"
+```
+
+Current comparison semantics:
+
+- `int == int`
+- `int == float`
+- `float == float`
+- `bool == bool`
+- `string == string`
+
+Incompatible scalar kinds currently compare as `false`.
+
 ## Precedence
 
 Current precedence order:
@@ -323,6 +356,7 @@ Current precedence order:
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
+6. `==`
 
 Examples:
 

@@ -150,6 +150,41 @@ Expected output:
 6
 ```
 
+## Equality
+
+Graphion currently supports `==`.
+
+It returns a boolean result:
+
+```gion
+same_int = 42 == 42
+same_number = 42 == 42.0
+same_text = "graphion" == "graphion"
+different_types = 1 == "1"
+
+print(same_int)
+print(same_number)
+print(same_text)
+print(different_types)
+```
+
+Expected output:
+
+```text
+true
+true
+true
+false
+```
+
+Current behavior:
+
+- `int == int` works
+- `int == float` compares numerically
+- `bool == bool` works
+- `string == string` works
+- incompatible scalar types compare as `false`
+
 ## Conditional Blocks
 
 Graphion currently supports indentation-based `if / elif / else` with boolean conditions.
@@ -204,6 +239,11 @@ if true:
 ```gion
 if 1:
     print("also ok")
+```
+
+```gion
+if 1 + 1 == 2:
+    print("comparison conditions also work")
 ```
 
 This is currently invalid:

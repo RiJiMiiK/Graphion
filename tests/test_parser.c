@@ -1609,6 +1609,10 @@ int test_gion_if_elif_else_control_flow(void) {
       "    int_false_branch = \"bad\"\n"
       "else:\n"
       "    int_false_branch = \"int zero acts like false\"\n"
+      "if 1 + 1 == 2:\n"
+      "    equality_branch = \"equality condition works\"\n"
+      "else:\n"
+      "    equality_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1623,6 +1627,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(selected)\n"
       "print(optional)\n"
       "print(single)\n"
+      "print(equality_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1633,6 +1638,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *single;
   const graphion_runtime_value *int_true_branch;
   const graphion_runtime_value *int_false_branch;
+  const graphion_runtime_value *equality_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1659,6 +1665,7 @@ int test_gion_if_elif_else_control_flow(void) {
   single = graphion_runtime_scope_find(&scope, "single");
   int_true_branch = graphion_runtime_scope_find(&scope, "int_true_branch");
   int_false_branch = graphion_runtime_scope_find(&scope, "int_false_branch");
+  equality_branch = graphion_runtime_scope_find(&scope, "equality_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1684,18 +1691,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (equality_branch == NULL || equality_branch->kind != GVM_VALUE_STRING ||
+      strcmp(equality_branch->as.string_value, "equality condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 9);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 10);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 11);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1759,6 +1771,139 @@ int test_gion_if_elif_else_errors(void) {
       return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
     graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_equality_expressions(void) {
+  const char *source =
+      "same_int = 42 == 42\n"
+      "mixed_numeric = 42 == 42.0\n"
+      "different_numeric = 42 == 41\n"
+      "same_bool = true == true\n"
+      "different_bool = true == false\n"
+      "same_string = \"ok\" == \"ok\"\n"
+      "different_string = \"ok\" == \"no\"\n"
+      "mixed_types = 1 == \"1\"\n"
+      "grouped = (1 + 2) == 3\n"
+      "precedence = 1 + 2 == 3\n"
+      "power_cmp = 2 ** 3 == 8\n"
+      "print(same_int)\n"
+      "print(mixed_numeric)\n"
+      "print(different_numeric)\n"
+      "print(same_bool)\n"
+      "print(different_bool)\n"
+      "print(same_string)\n"
+      "print(different_string)\n"
+      "print(mixed_types)\n"
+      "print(grouped)\n"
+      "print(precedence)\n"
+      "print(power_cmp)\n";
+  const char *path = "gion_equality_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *same_int;
+  const graphion_runtime_value *mixed_numeric;
+  const graphion_runtime_value *different_numeric;
+  const graphion_runtime_value *same_string;
+  const graphion_runtime_value *mixed_types;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  same_int = graphion_runtime_scope_find(&scope, "same_int");
+  mixed_numeric = graphion_runtime_scope_find(&scope, "mixed_numeric");
+  different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
+  same_string = graphion_runtime_scope_find(&scope, "same_string");
+  mixed_types = graphion_runtime_scope_find(&scope, "mixed_types");
+  if (same_int == NULL || same_int->kind != GVM_VALUE_BOOL || same_int->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (mixed_numeric == NULL || mixed_numeric->kind != GVM_VALUE_BOOL || mixed_numeric->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (same_string == NULL || same_string->kind != GVM_VALUE_BOOL || same_string->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (mixed_types == NULL || mixed_types->kind != GVM_VALUE_BOOL || mixed_types->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  remove(path);
+  if (strcmp(output, "true\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 9);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_comment_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"/* unterminated block comment\ncount = 42\n", 1U},
+      {"count = 42\n/* unterminated block comment\nprint(count)\n", 2U},
+      {"message = \"/* not a comment */\"\n/* unterminated\n", 2U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    graphion_runtime_program program;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unterminated block comment") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+
+    graphion_runtime_program_init(&program);
+    rc = graphion_prepare_source(cases[i].source, &program, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      graphion_runtime_program_dispose(&program);
+      return (int)(3 + i * 10U);
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unterminated block comment") != 0) {
+      graphion_runtime_program_dispose(&program);
+      return (int)(4 + i * 10U);
+    }
+    graphion_runtime_program_dispose(&program);
   }
   return 0;
 }
@@ -1859,21 +2004,21 @@ int test_gion_comments(void) {
   return finish_scope_test(&scope, 0);
 }
 
-int test_gion_comment_errors(void) {
+int test_gion_equality_syntax_errors(void) {
   static const struct {
     const char *source;
-    unsigned int expected_line;
+    const char *message;
   } cases[] = {
-      {"/* unterminated block comment\ncount = 42\n", 1U},
-      {"count = 42\n/* unterminated block comment\nprint(count)\n", 2U},
-      {"message = \"/* not a comment */\"\n/* unterminated\n", 2U},
+      {"value = 1 ==\n", "expected scalar literal"},
+      {"value = == 1\n", "expected scalar literal"},
+      {"print(1 == )\n", "expected scalar literal"},
+      {"if 1 ==:\n    print(1)\n", "expected scalar literal"},
   };
   size_t i;
 
   for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
     graphion_runtime_scope scope;
     graphion_runtime_diagnostic diagnostic;
-    graphion_runtime_program program;
     int rc;
 
     graphion_runtime_scope_init(&scope);
@@ -1881,24 +2026,10 @@ int test_gion_comment_errors(void) {
     if (rc != GINT_ERR_PARSE) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
-        strcmp(diagnostic.message, "unterminated block comment") != 0) {
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     graphion_runtime_scope_dispose(&scope);
-
-    graphion_runtime_program_init(&program);
-    rc = graphion_prepare_source(cases[i].source, &program, &diagnostic);
-    if (rc != GINT_ERR_PARSE) {
-      graphion_runtime_program_dispose(&program);
-      return (int)(3 + i * 10U);
-    }
-    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
-        strcmp(diagnostic.message, "unterminated block comment") != 0) {
-      graphion_runtime_program_dispose(&program);
-      return (int)(4 + i * 10U);
-    }
-    graphion_runtime_program_dispose(&program);
   }
   return 0;
 }
@@ -2042,3 +2173,4 @@ int test_gion_capacity_errors(void) {
 
   return 0;
 }
+

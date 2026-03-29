@@ -21,14 +21,15 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 
 ### Comparisons
 
-- [ ] `==`
+- [x] `==`
 - [ ] `!=`
 - [ ] `<`
 - [ ] `<=`
 - [ ] `>`
 - [ ] `>=`
-- [ ] clear comparison semantics across `int`, `float`, `bool`, and `string`
-- [ ] matching runtime/type-error coverage
+- [ ] finish and document comparison semantics across `int`, `float`, `bool`, and `string`
+  - current `==` supports numeric comparison, same-kind `bool`, same-kind `string`, and `false` for incompatible scalar kinds
+- [ ] revisit whether later comparison operators should also use `false` on incompatible scalar kinds or raise a dedicated runtime error
 
 ### Boolean logic
 

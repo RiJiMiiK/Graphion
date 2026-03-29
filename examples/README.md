@@ -13,7 +13,7 @@ Files:
 - `03_compound_assignments.gion`
   - `+=`, `-=`, `*=`, `/=`, `//=`, `%=`, `**=`
 - `04_conditionals.gion`
-  - `if / elif / else`, including accepted `0` and `1` conditions
+  - `if / elif / else`, equality conditions, and accepted `0` / `1` conditions
 - `05_comments.gion`
   - line comments with `#` and block comments with `/* ... */`
 

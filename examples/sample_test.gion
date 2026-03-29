@@ -10,6 +10,9 @@ count = 42
 ratio = 7 / 2
 message = "graph" + "ion"
 ready = true
+same_number = 42 == 42
+same_text = "graphion" == "graphion"
+different_types = 1 == "1"
 
 count += 1
 message += "!"
@@ -19,10 +22,19 @@ if ready:
 else:
     branch = "fallback branch"
 
+if 1 + 1 == 2:
+    equality_branch = "1 + 1 == 2 is true"
+else:
+    equality_branch = "bad"
+
 /* block comments are also ignored */
 
 print("overview assignment -> count=" + count)
 print("overview arithmetic -> ratio=" + ratio)
 print("overview string concat -> message=" + message)
+print("overview equality on numbers -> same_number=" + same_number)
+print("overview equality on strings -> same_text=" + same_text)
+print("overview equality on incompatible types -> different_types=" + different_types)
 print("overview conditional -> branch=" + branch)
+print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview print coercion -> " + "Test " + 7)

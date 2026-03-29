@@ -160,6 +160,14 @@ static void vm_value_set_float(graphion_vm_value *value, double float_value) {
   value->as.float_value = float_value;
 }
 
+static void vm_value_set_bool(graphion_vm_value *value, int bool_value) {
+  if (value == NULL) {
+    return;
+  }
+  value->kind = GVM_VALUE_BOOL;
+  value->as.bool_value = bool_value != 0 ? 1 : 0;
+}
+
 static void vm_value_copy(graphion_vm_value *dst, const graphion_vm_value *src) {
   if (dst == NULL || src == NULL) {
     return;
@@ -678,6 +686,7 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_MOD:
       case GVM_OP_POW:
       case GVM_OP_FLOOR_DIV:
+      case GVM_OP_EQ:
         return 0;
       case GVM_OP_MOV:
       case GVM_OP_LOAD_CONST:
@@ -988,11 +997,20 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_MOD:
       case GVM_OP_POW:
       case GVM_OP_FLOOR_DIV:
+      case GVM_OP_EQ:
         if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
-          return 0;
+          if (in.op != GVM_OP_EQ) {
+            return 0;
+          }
         }
         if (reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT) {
-          return 0;
+          if (in.op != GVM_OP_EQ) {
+            return 0;
+          }
+        }
+        if (in.op == GVM_OP_EQ) {
+          reg_kinds[in.a] = GVM_VALUE_BOOL;
+          break;
         }
         reg_kinds[in.a] =
             in.op == GVM_OP_DIV || in.op == GVM_OP_MOD || in.op == GVM_OP_POW || in.op == GVM_OP_FLOOR_DIV ||
@@ -2756,6 +2774,46 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
   }
 }
 
+static int op_eq(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  int result = 0;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+
+  if ((lhs->kind == GVM_VALUE_INT || lhs->kind == GVM_VALUE_FLOAT) &&
+      (rhs->kind == GVM_VALUE_INT || rhs->kind == GVM_VALUE_FLOAT)) {
+    int64_t lhs_i;
+    int64_t rhs_i;
+    double lhs_f;
+    double rhs_f;
+    int lhs_is_float;
+    int rhs_is_float;
+    if (!vm_value_get_numeric(lhs, &lhs_i, &lhs_f, &lhs_is_float) ||
+        !vm_value_get_numeric(rhs, &rhs_i, &rhs_f, &rhs_is_float)) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    result = lhs_f == rhs_f;
+  } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
+    result = lhs->as.bool_value == rhs->as.bool_value;
+  } else if (lhs->kind == GVM_VALUE_STRING && rhs->kind == GVM_VALUE_STRING) {
+    const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
+    const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
+    result = strcmp(lhs_text, rhs_text) == 0;
+  } else {
+    result = 0;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], result);
+  return GVM_OK;
+}
+
 static int op_add(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_ADD);
 }
@@ -2782,6 +2840,10 @@ static int op_pow(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_floor_div(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_FLOOR_DIV);
+}
+
+static int op_eq_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_eq(vm, in);
 }
 
 static int op_abs(graphion_vm *vm, const graphion_insn *in) {
@@ -3210,6 +3272,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_FLOOR_DIV:
         rc = op_floor_div(vm, &in);
         break;
+      case GVM_OP_EQ:
+        rc = op_eq_cmp(vm, &in);
+        break;
       case GVM_OP_ABS:
         rc = op_abs(vm, &in);
         break;
@@ -3333,6 +3398,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_MOD] = op_mod,
       [GVM_OP_POW] = op_pow,
       [GVM_OP_FLOOR_DIV] = op_floor_div,
+      [GVM_OP_EQ] = op_eq_cmp,
       [GVM_OP_ABS] = op_abs,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
@@ -3401,6 +3467,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_MOD] = &&L_mod,
       [GVM_OP_POW] = &&L_pow,
       [GVM_OP_FLOOR_DIV] = &&L_floor_div,
+      [GVM_OP_EQ] = &&L_eq,
       [GVM_OP_ABS] = &&L_abs,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
@@ -3499,6 +3566,12 @@ L_pow:
     continue;
 L_floor_div:
     rc = op_floor_div(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_eq:
+    rc = op_eq_cmp(vm, &in);
     if (rc != 0) {
       return rc;
     }

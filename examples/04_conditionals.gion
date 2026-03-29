@@ -1,5 +1,6 @@
 # 04_conditionals.gion
-# This file demonstrates if / elif / else forms and the current 0/1 rule.
+# This file demonstrates if / elif / else forms,
+# equality conditions, and the current 0/1 rule.
 
 branch_flag = true
 other_branch = false
@@ -30,8 +31,14 @@ if false:
     single_if_demo = "bad"
 single_if_demo = "if without else keeps flowing"
 
+if 1 + 1 == 2:
+    equality_branch = "1 + 1 == 2 is true"
+else:
+    equality_branch = "bad"
+
 print("if / elif / else with booleans -> branch_demo=" + branch_demo)
 print("if + else without elif -> optional_branch=" + optional_branch)
 print("if with integer 1 -> integer_bool_branch=" + integer_bool_branch)
 print("if with integer 0 -> integer_zero_branch=" + integer_zero_branch)
 print("if without else -> single_if_demo=" + single_if_demo)
+print("if with equality expression -> equality_branch=" + equality_branch)
