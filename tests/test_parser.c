@@ -553,6 +553,9 @@ int test_gion_reserved_name_errors(void) {
       {"true = 1\n", "reserved name cannot be assigned", "gion_reserved_true.gion"},
       {"false = 0\n", "reserved name cannot be assigned", "gion_reserved_false.gion"},
       {"abs = 1\n", "reserved name cannot be assigned", "gion_reserved_abs.gion"},
+      {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
+      {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
+      {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
   };
   size_t i;
 
@@ -1561,6 +1564,202 @@ int test_gion_unexpected_indentation_errors(void) {
     }
   }
 
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    const graphion_runtime_value *count;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("flag = true\nif flag:\n    count = 42\nprint(count)\n", &scope, &diagnostic);
+    if (rc != GINT_OK) {
+      return 110;
+    }
+    count = graphion_runtime_scope_find(&scope, "count");
+    if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
+      return 111;
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+
+  return 0;
+}
+
+int test_gion_if_elif_else_control_flow(void) {
+  const char *source =
+      "flag = true\n"
+      "other = false\n"
+      "nested = false\n"
+      "if false:\n"
+      "    selected = \"bad\"\n"
+      "elif flag:\n"
+      "    selected = \"if branch\"\n"
+      "else:\n"
+      "    selected = \"fallback\"\n"
+      "if other:\n"
+      "    optional = \"bad\"\n"
+      "else:\n"
+      "    optional = \"if else without elif\"\n"
+      "if false:\n"
+      "    single = \"bad\"\n"
+      "single = \"if without else stays optional\"\n"
+      "if 1:\n"
+      "    int_true_branch = \"int one acts like true\"\n"
+      "if 0:\n"
+      "    int_false_branch = \"bad\"\n"
+      "else:\n"
+      "    int_false_branch = \"int zero acts like false\"\n"
+      "if nested:\n"
+      "    nested_result = \"bad\"\n"
+      "elif false:\n"
+      "    nested_result = \"bad2\"\n"
+      "elif true:\n"
+      "    if flag:\n"
+      "        nested_result = \"nested if branch\"\n"
+      "    else:\n"
+      "        nested_result = \"nested else branch\"\n"
+      "else:\n"
+      "    nested_result = \"bad3\"\n"
+      "print(selected)\n"
+      "print(optional)\n"
+      "print(single)\n"
+      "print(nested_result)\n";
+  const char *path = "gion_if_elif_else_control_flow.txt";
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *selected;
+  const graphion_runtime_value *optional;
+  const graphion_runtime_value *single;
+  const graphion_runtime_value *int_true_branch;
+  const graphion_runtime_value *int_false_branch;
+  const graphion_runtime_value *nested_result;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  selected = graphion_runtime_scope_find(&scope, "selected");
+  optional = graphion_runtime_scope_find(&scope, "optional");
+  single = graphion_runtime_scope_find(&scope, "single");
+  int_true_branch = graphion_runtime_scope_find(&scope, "int_true_branch");
+  int_false_branch = graphion_runtime_scope_find(&scope, "int_false_branch");
+  nested_result = graphion_runtime_scope_find(&scope, "nested_result");
+  if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (optional == NULL || optional->kind != GVM_VALUE_STRING ||
+      strcmp(optional->as.string_value, "if else without elif") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (single == NULL || single->kind != GVM_VALUE_STRING ||
+      strcmp(single->as.string_value, "if without else stays optional") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (int_true_branch == NULL || int_true_branch->kind != GVM_VALUE_STRING ||
+      strcmp(int_true_branch->as.string_value, "int one acts like true") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (int_false_branch == NULL || int_false_branch->kind != GVM_VALUE_STRING ||
+      strcmp(int_false_branch->as.string_value, "int zero acts like false") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 9);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 10);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_if_elif_else_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    const char *message;
+  } cases[] = {
+      {"if true\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after if condition"},
+      {"if :\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected condition after if"},
+      {"if true: extra\n    print(1)\n", GINT_ERR_PARSE, 1U, "unexpected trailing tokens after condition"},
+      {"elif true:\n    print(1)\n", GINT_ERR_PARSE, 1U, "elif without matching if"},
+      {"elif :\n    print(1)\n", GINT_ERR_PARSE, 1U, "elif without matching if"},
+      {"else:\n    print(1)\n", GINT_ERR_PARSE, 1U, "else without matching if"},
+      {"if true:\nprint(1)\n", GINT_ERR_PARSE, 1U, "expected indented block after if"},
+      {"if false:\n    print(1)\nelif true:\nprint(2)\n", GINT_ERR_PARSE, 3U, "expected indented block after elif"},
+      {"if false:\n    print(1)\nelse:\nprint(2)\n", GINT_ERR_PARSE, 3U, "expected indented block after else"},
+      {"if true:\n    print(1)\n  print(2)\n", GINT_ERR_PARSE, 3U, "unexpected indentation"},
+      {"if true:\n    if false:\n        print(1)\n      print(2)\n", GINT_ERR_PARSE, 4U, "unexpected indentation"},
+      {"if true:\n    elif false:\n        print(1)\n", GINT_ERR_PARSE, 2U, "elif without matching if"},
+      {"if true:\n    else:\n        print(1)\n", GINT_ERR_PARSE, 2U, "else without matching if"},
+      {"if 2:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if -1:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 0.0:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n", GINT_ERR_PARSE, 6U, "else must be last in if chain"},
+      {"if false:\n    print(1)\nelse:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_PARSE, 5U, "else must be last in if chain"},
+      {"if false:\n    print(1)\nelif true\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
+      {"if false:\n    print(1)\nelif :\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected condition after elif"},
+      {"if false:\n    print(1)\nelif true: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after condition"},
+      {"if false:\n    print(1)\nelse\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after else"},
+      {"if false:\n    print(1)\nelse: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after else"},
+      {"if nope:\n    print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
+      {"flag = false\nif flag:\n    print(1)\nelif nope:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_UNKNOWN_OPERAND, 4U, "unknown operand"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (cases[i].expected_rc == GINT_OK) {
+      graphion_runtime_scope_dispose(&scope);
+      continue;
+    }
+    if (diagnostic.line != cases[i].expected_line) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
   return 0;
 }
 

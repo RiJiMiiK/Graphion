@@ -150,6 +150,69 @@ Expected output:
 6
 ```
 
+## Conditional Blocks
+
+Graphion currently supports indentation-based `if / elif / else` with boolean conditions.
+
+```gion
+ready = true
+fallback = false
+
+if ready:
+    print("ready branch")
+elif fallback:
+    print("fallback branch")
+else:
+    print("else branch")
+```
+
+Expected output:
+
+```text
+ready branch
+```
+
+You can also omit `elif` or `else`:
+
+```gion
+flag = false
+
+if flag:
+    print("taken")
+
+print("after if")
+```
+
+Expected output:
+
+```text
+after if
+```
+
+Current conditions currently accept:
+
+- `true`
+- `false`
+- `1`
+- `0`
+
+```gion
+if true:
+    print("ok")
+```
+
+```gion
+if 1:
+    print("also ok")
+```
+
+This is currently invalid:
+
+```gion
+if 2:
+    print("bad")
+```
+
 ## Strings
 
 String concatenation is supported with `+`.

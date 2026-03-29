@@ -46,7 +46,8 @@
     "Werror",
     "cutovers"
     ,
-    "toctree"
+    "toctree",
+    "elif"
   ],
   "ignorePaths": [
     "build/**",

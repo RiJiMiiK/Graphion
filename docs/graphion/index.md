@@ -15,6 +15,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - arithmetic expressions
 - grouped expressions with parentheses
 - compound assignments
+- boolean `if / elif / else` blocks
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.
@@ -39,8 +40,12 @@ Example:
 count = 42
 ratio = 7 / 2
 message = "graph" + "ion"
+ready = true
 
 count += 1
+
+if ready:
+    message += "!"
 
 print("count=" + count)
 print("ratio=" + ratio)
@@ -52,7 +57,7 @@ Expected output:
 ```text
 count=43
 ratio=3.5
-message=graphion
+message=graphion!
 ```
 
 ## Current Limits
