@@ -14,7 +14,6 @@ same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
 int_bool_false = 0 == false
-different_types = 1 == "1"
 
 count += 1
 message += "!"
@@ -38,7 +37,6 @@ print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)
 print("overview equality on int/bool false -> int_bool_false=" + int_bool_false)
-print("overview equality on incompatible types -> different_types=" + different_types)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview print coercion -> " + "Test " + 7)

@@ -336,7 +336,6 @@ same_number = 42 == 42.0
 same_bool_bridge = 1 == true
 same_false_bridge = 0 == false
 same_text = "ok" == "ok"
-different_types = 1 == "1"
 ```
 
 Current comparison semantics:
@@ -350,7 +349,7 @@ Current comparison semantics:
 
 `1 == true` and `0 == false` currently return `true`.
 
-Other incompatible scalar kinds currently compare as `false`.
+Other incompatible scalar kinds currently raise a runtime error.
 
 ## Precedence
 
@@ -463,5 +462,5 @@ Examples:
 `division by zero`
 : runtime arithmetic error
 
-`arithmetic requires numeric operands`
+`incompatible operand types`
 : runtime type error for numeric operators

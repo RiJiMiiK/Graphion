@@ -2810,7 +2810,7 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
     const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
     result = strcmp(lhs_text, rhs_text) == 0;
   } else {
-    result = 0;
+    return GVM_ERR_TYPE_MISMATCH;
   }
 
   vm_free_owned_reg_string(vm, in->a);

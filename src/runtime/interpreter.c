@@ -1364,7 +1364,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
       return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, line, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+      return fail(diagnostic, line, 1U, "incompatible operand types", GINT_ERR_RUN);
     }
     return fail(diagnostic, line, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }
@@ -1798,7 +1798,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
       return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, 1U, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+      return fail(diagnostic, 1U, 1U, "incompatible operand types", GINT_ERR_RUN);
     }
     return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }

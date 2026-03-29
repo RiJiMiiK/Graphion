@@ -1041,13 +1041,13 @@ int test_gion_compound_assignment_errors(void) {
       {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount %= 0\n", GINT_ERR_RUN, "division by zero"},
-      {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"value = \"Test \" + 7\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"text = \"x\"\ntext %= 2\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = \"Test \" + 7\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"text = \"x\"\ntext %= 2\n", GINT_ERR_RUN, "incompatible operand types"},
   };
   size_t i;
 
@@ -1137,10 +1137,10 @@ int test_gion_arithmetic_runtime_errors(void) {
     const char *message;
   } cases[] = {
       {"value = 1 / 0\n", GINT_ERR_RUN, "division by zero"},
-      {"value = \"x\" + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"value = true + 1\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"value = abs(\"x\")\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
-      {"print(\"x\" / 2)\n", GINT_ERR_RUN, "arithmetic requires numeric operands"},
+      {"value = \"x\" + 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = true + 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = abs(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"print(\"x\" / 2)\n", GINT_ERR_RUN, "incompatible operand types"},
   };
   size_t i;
 
@@ -1786,7 +1786,6 @@ int test_gion_equality_expressions(void) {
       "different_bool = true == false\n"
       "same_string = \"ok\" == \"ok\"\n"
       "different_string = \"ok\" == \"no\"\n"
-      "mixed_types = 1 == \"1\"\n"
       "grouped = (1 + 2) == 3\n"
       "precedence = 1 + 2 == 3\n"
       "power_cmp = 2 ** 3 == 8\n"
@@ -1799,7 +1798,6 @@ int test_gion_equality_expressions(void) {
       "print(different_bool)\n"
       "print(same_string)\n"
       "print(different_string)\n"
-      "print(mixed_types)\n"
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
@@ -1813,7 +1811,6 @@ int test_gion_equality_expressions(void) {
   const graphion_runtime_value *int_false_bool;
   const graphion_runtime_value *different_numeric;
   const graphion_runtime_value *same_string;
-  const graphion_runtime_value *mixed_types;
   FILE *fp = NULL;
   int rc;
 
@@ -1840,7 +1837,6 @@ int test_gion_equality_expressions(void) {
   int_false_bool = graphion_runtime_scope_find(&scope, "int_false_bool");
   different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
   same_string = graphion_runtime_scope_find(&scope, "same_string");
-  mixed_types = graphion_runtime_scope_find(&scope, "mixed_types");
   if (same_int == NULL || same_int->kind != GVM_VALUE_BOOL || same_int->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 3);
@@ -1865,19 +1861,46 @@ int test_gion_equality_expressions(void) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  if (mixed_types == NULL || mixed_types->kind != GVM_VALUE_BOOL || mixed_types->as.bool_value != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
     return finish_scope_test(&scope, 9);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
-    remove(path);
+  remove(path);
+  if (strcmp(output, "true\ntrue\ntrue\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\ntrue\ntrue\ntrue\n") != 0) {
     return finish_scope_test(&scope, 10);
   }
-  remove(path);
-  if (strcmp(output, "true\ntrue\ntrue\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\n") != 0) {
-    return finish_scope_test(&scope, 11);
-  }
   return finish_scope_test(&scope, 0);
+}
+
+int test_gion_equality_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = 1 == \"1\"\n", 1U},
+      {"if 1 == \"1\":\n    print(1)\n", 1U},
+      {"value = \"true\" == true\n", 1U},
+      {"value = \"x\" == 1.5\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
 }
 
 int test_gion_comment_errors(void) {
