@@ -1,113 +1,28 @@
+# sample_test.gion is the quick overview script.
+# For more focused examples, also see:
+# - 01_scalars_and_print.gion
+# - 02_arithmetic.gion
+# - 03_compound_assignments.gion
+# - 04_conditionals.gion
+# - 05_comments.gion
+
 count = 42
-ratio = 3.5 + 0.5
-name = "graphion"
+ratio = 7 / 2
+message = "graph" + "ion"
 ready = true
-copy = count
-
-# line comments start with '#'
-/* block comments can span
-multiple lines */
-
-sum = 40 + 2
-mixed = 1 + 2 * 3
-grouped = (1 + 2) * 3
-delta = count - 5
-half = 7 / 2
-scaled = half * 2
-negative_add = -5 + 2
-negative_sub = 5 - -2
-negative_mul = -3 * 4
-negative_div = -7 / 2
-floor_half = 7 // 2
-negative_floor = -7 // 2
-float_floor = 7.5 // 2
-power = 2 ** 3
-negative_power = (-2) ** 3
-negative_exponent = 2 ** -1
-right_assoc = 2 ** 3 ** 2
-powered_group = (1 + 2) ** 2
-abs_count = abs(-42)
-abs_ratio = abs(-3.5)
-abs_expression = abs(-5 + 2)
-remainder = 10 % 4
-negative_remainder = -10 % 4
-float_remainder = 7.5 % 2
-message = "debut" + "fin"
-branch_flag = true
-other_branch = false
 
 count += 1
-count -= 3
-count *= 2
-count /= 4
-count //= 2
-count %= 9
-count **= 2
 message += "!"
 
-if branch_flag:
-    branch_demo = "if branch"
-elif other_branch:
-    branch_demo = "elif branch"
+if ready:
+    branch = "ready branch"
 else:
-    branch_demo = "else branch"
+    branch = "fallback branch"
 
-if false:
-    optional_branch = "bad"
-else:
-    optional_branch = "if + else without elif"
+/* block comments are also ignored */
 
-if 1:
-    integer_bool_branch = "integer 1 acts like true"
-else:
-    integer_bool_branch = "bad"
-
-if 0:
-    integer_zero_branch = "bad"
-else:
-    integer_zero_branch = "integer 0 acts like false"
-
-if false:
-    single_if_demo = "bad"
-single_if_demo = "if without else keeps flowing"
-
-print("integer assignment and compound operators -> count=" + count)
-print("float arithmetic -> ratio=" + ratio)
-print("string assignment -> name=" + name)
-print("boolean assignment -> ready=" + ready)
-print("copying a variable -> copy=" + copy)
-print("basic addition -> sum=" + sum)
-print("operator precedence -> mixed=" + mixed)
-print("parentheses override precedence -> grouped=" + grouped)
-print("subtraction -> delta=" + delta)
-print("division -> half=" + half)
-print("multiplication -> scaled=" + scaled)
-print("addition with negative numbers -> negative_add=" + negative_add)
-print("subtraction with negative numbers -> negative_sub=" + negative_sub)
-print("multiplication with negative numbers -> negative_mul=" + negative_mul)
-print("division with negative numbers -> negative_div=" + negative_div)
-print("floor division -> floor_half=" + floor_half)
-print("floor division with negative numbers -> negative_floor=" + negative_floor)
-print("floor division with floats -> float_floor=" + float_floor)
-print("power -> power=" + power)
-print("power with a negative base -> negative_power=" + negative_power)
-print("power with a negative exponent -> negative_exponent=" + negative_exponent)
-print("power is right-associative -> right_assoc=" + right_assoc)
-print("power with parentheses -> powered_group=" + powered_group)
-print("absolute value of an integer -> abs_count=" + abs_count)
-print("absolute value of a float -> abs_ratio=" + abs_ratio)
-print("absolute value of an expression -> abs_expression=" + abs_expression)
-print("integer modulo -> remainder=" + remainder)
-print("modulo with negative numbers -> negative_remainder=" + negative_remainder)
-print("float modulo -> float_remainder=" + float_remainder)
-print("string concatenation -> message=" + message)
-print("if / elif / else with booleans -> branch_demo=" + branch_demo)
-print("if + else without elif -> optional_branch=" + optional_branch)
-print("if with integer 1 -> integer_bool_branch=" + integer_bool_branch)
-print("if with integer 0 -> integer_zero_branch=" + integer_zero_branch)
-print("if without else -> single_if_demo=" + single_if_demo)
-print("line comments and block comments are ignored by the parser")
-print("string coercion only inside print -> " + "Test " + 7)
-print("raw expression with normal precedence -> " + (3 + 4 * 2))
-print("raw expression with grouped precedence -> " + ((3 + 4) * 2))
-print("raw modulo expression -> " + (10 % 4))
+print("overview assignment -> count=" + count)
+print("overview arithmetic -> ratio=" + ratio)
+print("overview string concat -> message=" + message)
+print("overview conditional -> branch=" + branch)
+print("overview print coercion -> " + "Test " + 7)

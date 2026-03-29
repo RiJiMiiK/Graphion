@@ -34,11 +34,15 @@ cmake --build build --config Release
 ctest --test-dir build --output-on-failure -C Release
 ```
 
-Run the main executable on the current sample:
+Run the main executable on any example:
 
 ```powershell
-.\build\Release\graphion.exe .\examples\sample_test.gion
+.\build\Release\graphion.exe .\examples\01_scalars_and_print.gion
 ```
+
+Start with the examples index:
+
+- [examples/README.md](examples/README.md)
 
 ## Developer helpers
 

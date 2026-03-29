@@ -1,0 +1,18 @@
+# 03_compound_assignments.gion
+# This file demonstrates every compound assignment currently supported.
+
+count = 42
+message = "debut" + "fin"
+
+count += 1
+count -= 3
+count *= 2
+count /= 4
+count //= 2
+count %= 9
+count **= 2
+
+message += "!"
+
+print("integer assignment and compound operators -> count=" + count)
+print("string concatenation with += -> message=" + message)
