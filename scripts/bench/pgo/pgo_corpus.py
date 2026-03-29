@@ -77,6 +77,18 @@ WORKLOADS: dict[str, dict[str, Any]] = {
         "family": "vm-graph",
         "coverage": "graph-specific VM opcode dispatch",
     },
+    "vm_scalar_values_print": {
+        "target": "graphion_bench_vm_scalars",
+        "iterations": 50000,
+        "family": "vm-scalars",
+        "coverage": "scalar VM typed values, globals, and print-oriented opcode flow",
+    },
+    "gion_scalar_values_print": {
+        "target": "graphion_bench_gion_scalars",
+        "iterations": 25000,
+        "family": "gion-scalars",
+        "coverage": "scalar .gion prepare/execute path for assignments, copies, and prints",
+    },
 }
 
 
@@ -95,6 +107,8 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "hypergraph_incident_sum",
             "hypergraph_hyperedge_node_sum",
             "vm_graph_ops",
+            "vm_scalar_values_print",
+            "gion_scalar_values_print",
         ],
         "run_graphion_binary": True,
         "run_tests": True,
@@ -114,6 +128,8 @@ CORPUS_PROFILES: dict[str, dict[str, Any]] = {
             "hypergraph_incident_sum",
             "hypergraph_hyperedge_node_sum",
             "vm_graph_ops",
+            "vm_scalar_values_print",
+            "gion_scalar_values_print",
         ],
         "run_graphion_binary": True,
         "run_tests": True,
