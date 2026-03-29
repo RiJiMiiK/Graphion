@@ -58,6 +58,8 @@ struct HyperGraph<'a> {
 enum VmValue {
     None,
     Int(i64),
+    Float(f64),
+    Bool(bool),
     String(&'static str),
 }
 
@@ -65,6 +67,17 @@ fn value_as_int(value: VmValue) -> i64 {
     match value {
         VmValue::Int(number) => number,
         _ => panic!("type mismatch"),
+    }
+}
+
+fn text_len(value: VmValue) -> usize {
+    match value {
+        VmValue::None => 5,
+        VmValue::Int(number) => format!("{number}\n").len(),
+        VmValue::Float(number) => format!("{number}\n").len(),
+        VmValue::Bool(true) => 5,
+        VmValue::Bool(false) => 6,
+        VmValue::String(text) => text.len() + 1,
     }
 }
 
@@ -163,6 +176,68 @@ fn vm_dispatch(iterations: u64) {
         secs,
         mips,
         ns_per_instruction,
+        ns_per_iteration,
+        checksum
+    );
+}
+
+fn scalar_values_print(iterations: u64) {
+    let program = [
+        VmInsn { op: OP_LOAD_CONST, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 0, b: 0, imm: 0 },
+        VmInsn { op: OP_LOAD_CONST, a: 1, b: 0, imm: 1 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 1, b: 0, imm: 1 },
+        VmInsn { op: OP_LOAD_CONST, a: 2, b: 0, imm: 2 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 2, b: 0, imm: 2 },
+        VmInsn { op: OP_LOAD_CONST, a: 3, b: 0, imm: 3 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 3, b: 0, imm: 3 },
+        VmInsn { op: OP_LOAD_GLOBAL, a: 4, b: 0, imm: 0 },
+        VmInsn { op: OP_STORE_GLOBAL, a: 4, b: 0, imm: 4 },
+        VmInsn { op: OP_HALT, a: 0, b: 0, imm: 0 },
+    ];
+    let const_pool = [
+        VmValue::Int(42),
+        VmValue::Float(3.5),
+        VmValue::String("graphion"),
+        VmValue::Bool(true),
+    ];
+
+    let start = Instant::now();
+    let mut checksum: u64 = 0;
+    for _ in 0..iterations {
+        let mut regs = [VmValue::Int(0); 16];
+        let mut globals = [VmValue::None, VmValue::None, VmValue::None, VmValue::None, VmValue::None];
+        let mut pc = 0usize;
+        loop {
+            let insn = program[pc];
+            pc += 1;
+            match insn.op {
+                OP_LOAD_CONST => regs[insn.a as usize] = const_pool[insn.imm as usize],
+                OP_STORE_GLOBAL => globals[insn.imm as usize] = regs[insn.a as usize],
+                OP_LOAD_GLOBAL => regs[insn.a as usize] = globals[insn.imm as usize],
+                OP_HALT => break,
+                _ => panic!("invalid opcode"),
+            }
+        }
+        checksum = checksum
+            .wrapping_add(text_len(VmValue::Int(7)) as u64)
+            .wrapping_add(text_len(VmValue::String("raw")) as u64)
+            .wrapping_add(text_len(VmValue::Bool(false)) as u64)
+            .wrapping_add(text_len(globals[0]) as u64)
+            .wrapping_add(text_len(globals[1]) as u64)
+            .wrapping_add(text_len(globals[2]) as u64)
+            .wrapping_add(text_len(globals[3]) as u64)
+            .wrapping_add(text_len(globals[4]) as u64);
+    }
+    black_box(checksum);
+    let secs = start.elapsed().as_secs_f64().max(1e-9);
+    let ns_per_iteration = (secs * 1_000_000_000.0) / iterations as f64;
+    let mops = (iterations as f64 * 13.0 / secs) / 1_000_000.0;
+    println!(
+        "{{\"benchmark\":\"scalar_values_print\",\"iterations\":{},\"source_ops_per_iteration\":13,\"print_ops_per_iteration\":8,\"seconds\":{:.6},\"mops\":{:.3},\"ns_per_iteration\":{:.3},\"checksum\":{}}}",
+        iterations,
+        secs,
+        mops,
         ns_per_iteration,
         checksum
     );
@@ -771,13 +846,14 @@ fn parse_iterations(args: &[String], default_value: u64) -> u64 {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|bfs_levels|neighbor_iteration|weighted_neighbor_sums|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
+        eprintln!("usage: graphion_rust <frontier_primitives|vm_dispatch|scalar_values_print|bfs_levels|neighbor_iteration|weighted_neighbor_sums|hypergraph_incidence|hypergraph_traversal|hypergraph_incident_sum|hypergraph_hyperedge_node_sum|vm_graph_ops> [iterations]");
         std::process::exit(2);
     }
 
     match args[1].as_str() {
         "frontier_primitives" => frontier_primitives(parse_iterations(&args, 10_000_000)),
         "vm_dispatch" => vm_dispatch(parse_iterations(&args, 5_000_000)),
+        "scalar_values_print" => scalar_values_print(parse_iterations(&args, 100_000)),
         "bfs_levels" => bench_bfs(parse_iterations(&args, 5_000_000)),
         "neighbor_iteration" => bench_neighbors(parse_iterations(&args, 10_000_000)),
         "weighted_neighbor_sums" => bench_weighted_neighbor_sums(parse_iterations(&args, 300_000)),

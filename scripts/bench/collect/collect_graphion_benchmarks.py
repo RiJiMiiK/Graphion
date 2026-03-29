@@ -124,6 +124,20 @@ BENCH_SPECS = [
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
+    {
+        "benchmark": "vm_scalar_values_print",
+        "target": "graphion_bench_vm_scalars",
+        "iterations": 100000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mops",
+    },
+    {
+        "benchmark": "gion_scalar_values_print",
+        "target": "graphion_bench_gion_scalars",
+        "iterations": 100000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mops",
+    },
 ]
 
 

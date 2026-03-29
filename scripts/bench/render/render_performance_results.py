@@ -26,6 +26,7 @@ BENCHMARK_ORDER = [
     "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum",
     "vm_graph_ops",
+    "scalar_values_print",
 ]
 
 SECTION_BENCHMARKS = {
@@ -89,6 +90,14 @@ SECTION_BENCHMARKS = {
         "Rust Windows": "vm_graph_ops",
         "Rust Linux": "vm_graph_ops",
     },
+    "scalar_values_print": {
+        "VM Windows": "vm_scalar_values_print",
+        "VM Linux": "vm_scalar_values_print",
+        ".gion Windows": "gion_scalar_values_print",
+        ".gion Linux": "gion_scalar_values_print",
+        "Rust Windows": "scalar_values_print",
+        "Rust Linux": "scalar_values_print",
+    },
 }
 
 DISPLAY_NAMES = {
@@ -102,6 +111,7 @@ DISPLAY_NAMES = {
     "hypergraph_incident_sum": "hypergraph_incident_sum",
     "hypergraph_hyperedge_node_sum": "hypergraph_hyperedge_node_sum",
     "vm_graph_ops": "vm_graph_ops",
+    "scalar_values_print": "scalar_values_print",
 }
 
 SECTION_LATENCY_KEY_OVERRIDE = {
@@ -158,6 +168,8 @@ def index_rows(rows: list[dict[str, object]]) -> dict[str, dict[str, object]]:
 LANE_ORDER = [
     "VM Windows",
     "VM Linux",
+    ".gion Windows",
+    ".gion Linux",
     "Rust Windows",
     "Rust Linux",
 ]
@@ -331,18 +343,25 @@ def render_environment_table(metas: list[dict[str, object]]) -> str:
         platform_label = meta_str(meta, "platform_label")
         if "Rust" in platform_label:
             lane = "Rust Linux" if "Linux" in platform_label else "Rust Windows"
+            meta_by_lane[lane] = meta
+        elif "Graphion" in platform_label:
+            if "Linux" in platform_label:
+                meta_by_lane["VM Linux"] = meta
+                meta_by_lane[".gion Linux"] = meta
+            else:
+                meta_by_lane["VM Windows"] = meta
+                meta_by_lane[".gion Windows"] = meta
         elif "Linux" in platform_label:
-            lane = "VM Linux"
+            meta_by_lane["VM Linux"] = meta
         else:
-            lane = "VM Windows"
-        meta_by_lane[lane] = meta
+            meta_by_lane["VM Windows"] = meta
     lines = [
         "## Environment Metadata",
         "",
         "| Lane | Compiler | ASM | CPU | Machine | Git | Runs |",
         "|---|---|---|---|---|---|---:|",
     ]
-    for lane in ("VM Windows", "VM Linux", "Rust Windows", "Rust Linux"):
+    for lane in ("VM Windows", "VM Linux", ".gion Windows", ".gion Linux", "Rust Windows", "Rust Linux"):
         meta = meta_by_lane.get(lane)
         if not meta:
             lines.append(f"| {lane} | - | - | - | - | - | - |")
@@ -383,6 +402,8 @@ def main() -> int:
     lane_sources = {
         "VM Windows": index_rows(windows_rows),
         "VM Linux": index_rows(linux_rows),
+        ".gion Windows": index_rows(windows_rows),
+        ".gion Linux": index_rows(linux_rows),
         "Rust Windows": index_rows(rust_windows_rows),
         "Rust Linux": index_rows(rust_linux_rows),
     }

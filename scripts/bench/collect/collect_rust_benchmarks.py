@@ -111,6 +111,12 @@ BENCH_SPECS = [
         "latency_key": "ns_per_instruction",
         "throughput_key": "mips",
     },
+    {
+        "benchmark": "scalar_values_print",
+        "iterations": 100000,
+        "latency_key": "ns_per_iteration",
+        "throughput_key": "mops",
+    },
 ]
 
 
