@@ -1763,6 +1763,146 @@ int test_gion_if_elif_else_errors(void) {
   return 0;
 }
 
+int test_gion_comments(void) {
+  const char *prepare_source_text =
+      "# prepare_source should ignore comments too\n"
+      "count = 40 # inline line comment\n"
+      "/* block comment before an assignment */\n"
+      "count += 2\n"
+      "message = \"/* not a comment */\"\n"
+      "ratio = /* inline block */ 7 / 2\n"
+      "print(count)\n"
+      "print(message)\n"
+      "print(ratio)\n";
+  const char *source =
+      "# line comment before code\n"
+      "count = 40 # inline line comment\n"
+      "/* block comment before an assignment */\n"
+      "count += 2\n"
+      "message = \"/* not a comment */\"\n"
+      "/*\n"
+      "multi-line block comment\n"
+      "that spans several lines\n"
+      "*/\n"
+      "if true: # comment after header\n"
+      "    # comment inside block\n"
+      "    label = \"ok\" /* inline block comment in block */\n"
+      "else:\n"
+      "    label = \"bad\"\n"
+      "ratio = /* inline block */ 7 / 2\n"
+      "print(count) # trailing print comment\n"
+      "print(message)\n"
+      "print(label)\n"
+      "print(ratio)\n";
+  const char *path = "gion_comments.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  graphion_runtime_program program;
+  const graphion_runtime_value *count;
+  const graphion_runtime_value *message;
+  const graphion_runtime_value *label;
+  const graphion_runtime_value *ratio;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_prepare_source(prepare_source_text, &program, &diagnostic);
+  if (rc != GINT_OK) {
+    return finish_scope_test(&scope, 1);
+  }
+  graphion_runtime_program_dispose(&program);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 2);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  count = graphion_runtime_scope_find(&scope, "count");
+  message = graphion_runtime_scope_find(&scope, "message");
+  label = graphion_runtime_scope_find(&scope, "label");
+  ratio = graphion_runtime_scope_find(&scope, "ratio");
+  if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (message == NULL || message->kind != GVM_VALUE_STRING || strcmp(message->as.string_value, "/* not a comment */") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (label == NULL || label->kind != GVM_VALUE_STRING || strcmp(label->as.string_value, "ok") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  remove(path);
+  if (strcmp(output, "42\n/* not a comment */\nok\n3.5\n") != 0) {
+    return finish_scope_test(&scope, 9);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_comment_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"/* unterminated block comment\ncount = 42\n", 1U},
+      {"count = 42\n/* unterminated block comment\nprint(count)\n", 2U},
+      {"message = \"/* not a comment */\"\n/* unterminated\n", 2U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    graphion_runtime_program program;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unterminated block comment") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+
+    graphion_runtime_program_init(&program);
+    rc = graphion_prepare_source(cases[i].source, &program, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      graphion_runtime_program_dispose(&program);
+      return (int)(3 + i * 10U);
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unterminated block comment") != 0) {
+      graphion_runtime_program_dispose(&program);
+      return (int)(4 + i * 10U);
+    }
+    graphion_runtime_program_dispose(&program);
+  }
+  return 0;
+}
+
 int test_gion_mixed_scalar_values(void) {
   const char *source =
       "i = -7\n"

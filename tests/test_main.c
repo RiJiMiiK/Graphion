@@ -84,6 +84,8 @@ int test_gion_mixed_scalar_values(void);
 int test_gion_capacity_errors(void);
 int test_gion_if_elif_else_control_flow(void);
 int test_gion_if_elif_else_errors(void);
+int test_gion_comments(void);
+int test_gion_comment_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -200,6 +202,8 @@ int main(int argc, char **argv) {
       {"gion_capacity_errors", test_gion_capacity_errors},
       {"gion_if_elif_else_control_flow", test_gion_if_elif_else_control_flow},
       {"gion_if_elif_else_errors", test_gion_if_elif_else_errors},
+      {"gion_comments", test_gion_comments},
+      {"gion_comment_errors", test_gion_comment_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

@@ -213,6 +213,58 @@ if 2:
     print("bad")
 ```
 
+## Comments
+
+Graphion currently supports two comment styles:
+
+- `#` for line comments
+- `/* ... */` for block comments
+
+Line comments can appear on their own line or after a statement:
+
+```gion
+# initialize the counter
+count = 40 # base value
+count += 2
+```
+
+Block comments can span multiple lines:
+
+```gion
+/*
+this section demonstrates
+multi-line comments
+*/
+message = "graphion"
+```
+
+Inline block comments are also allowed:
+
+```gion
+ratio = /* ignore this note */ 7 / 2
+```
+
+Comment markers inside strings remain part of the string:
+
+```gion
+message = "/* not a comment */"
+print(message)
+```
+
+Expected output:
+
+```text
+/* not a comment */
+```
+
+Block comments must be closed. This is currently invalid:
+
+```gion
+/*
+missing the closing marker
+count = 42
+```
+
 ## Strings
 
 String concatenation is supported with `+`.

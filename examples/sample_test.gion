@@ -4,6 +4,10 @@ name = "graphion"
 ready = true
 copy = count
 
+# line comments start with '#'
+/* block comments can span
+multiple lines */
+
 sum = 40 + 2
 mixed = 1 + 2 * 3
 grouped = (1 + 2) * 3
@@ -102,6 +106,7 @@ print("if + else without elif -> optional_branch=" + optional_branch)
 print("if with integer 1 -> integer_bool_branch=" + integer_bool_branch)
 print("if with integer 0 -> integer_zero_branch=" + integer_zero_branch)
 print("if without else -> single_if_demo=" + single_if_demo)
+print("line comments and block comments are ignored by the parser")
 print("string coercion only inside print -> " + "Test " + 7)
 print("raw expression with normal precedence -> " + (3 + 4 * 2))
 print("raw expression with grouped precedence -> " + ((3 + 4) * 2))
