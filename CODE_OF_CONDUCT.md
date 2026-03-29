@@ -24,4 +24,4 @@ Project maintainers may remove or reject contributions that violate this code.
 
 Report conduct issues through:
 
-- https://discord.gg/mPzDQ7TYkj
+- https://discord.com/invite/mPzDQ7TYkj

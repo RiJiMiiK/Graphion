@@ -9,7 +9,7 @@ Security fixes are applied on the active main line.
 
 Use the Discord server for private contact:
 
-- https://discord.gg/mPzDQ7TYkj
+- https://discord.com/invite/mPzDQ7TYkj
 
 When reporting, include:
 

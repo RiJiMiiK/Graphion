@@ -220,7 +220,7 @@ Current builtin functions:
 
 - `abs(...)`
 
-See [Builtins](builtins).
+See [Builtins](builtins.md).
 
 ## Errors
 

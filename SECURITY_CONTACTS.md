@@ -2,7 +2,7 @@
 
 Use the Discord server as the single contact channel:
 
-- https://discord.gg/mPzDQ7TYkj
+- https://discord.com/invite/mPzDQ7TYkj
 
 ## Response targets
 

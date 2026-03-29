@@ -13,4 +13,4 @@
 
 ## Contact
 
-- https://discord.gg/mPzDQ7TYkj
+- https://discord.com/invite/mPzDQ7TYkj

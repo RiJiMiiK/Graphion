@@ -57,4 +57,4 @@ PowerShell equivalents exist in the same directories.
 
 If you need to reach the maintainer directly, use:
 
-- https://discord.gg/mPzDQ7TYkj
+- https://discord.com/invite/mPzDQ7TYkj
