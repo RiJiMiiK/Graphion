@@ -30,6 +30,12 @@ typedef struct {
   uint8_t reg_index;
 } parsed_expr_result;
 
+typedef struct {
+  char text[512];
+  unsigned int line;
+  unsigned int indent;
+} runtime_source_line;
+
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -84,7 +90,8 @@ static int is_ident_char(char ch) {
 
 static int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
-         strcmp(name, "abs") == 0;
+         strcmp(name, "abs") == 0 || strcmp(name, "if") == 0 || strcmp(name, "elif") == 0 ||
+         strcmp(name, "else") == 0;
 }
 
 static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
@@ -420,6 +427,8 @@ static int parse_expression(const char **cursor,
                             uint8_t base_reg,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic);
+
+static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_runtime_program *program);
 
 static int parse_factor(const char **cursor,
                         graphion_runtime_program *program,
@@ -946,19 +955,16 @@ static void seed_program_from_scope(graphion_runtime_program *program, const gra
   }
 }
 
-static int parse_single_line(const char *line_text,
-                             const graphion_runtime_scope *scope,
-                             graphion_runtime_program *program,
-                             unsigned int line,
-                             graphion_runtime_diagnostic *diagnostic) {
+static int parse_statement_line(const char *line_text,
+                                const graphion_runtime_scope *scope,
+                                graphion_runtime_program *program,
+                                unsigned int line,
+                                graphion_runtime_diagnostic *diagnostic) {
   const char *line_cursor = line_text;
   int rc;
   skip_spaces(&line_cursor);
   if (*line_cursor == '\0') {
     return GINT_OK;
-  }
-  if (line_cursor != line_text) {
-    return fail(diagnostic, line, 1U, "unexpected indentation", GINT_ERR_PARSE);
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
@@ -969,6 +975,491 @@ static int parse_single_line(const char *line_text,
     return rc;
   }
   return program_emit(program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
+}
+
+static int line_is_blank(const runtime_source_line *line) {
+  const char *cursor = line->text;
+  skip_spaces(&cursor);
+  return *cursor == '\0';
+}
+
+static const char *line_content(const runtime_source_line *line) {
+  const char *cursor = line->text;
+  skip_spaces(&cursor);
+  return cursor;
+}
+
+static int line_starts_with_keyword(const runtime_source_line *line, const char *keyword) {
+  const char *cursor = line_content(line);
+  const size_t len = strlen(keyword);
+  return strncmp(cursor, keyword, len) == 0 && !is_ident_char(cursor[len]);
+}
+
+static int line_keyword_is_assignment_like(const runtime_source_line *line, const char *keyword) {
+  const char *cursor = line_content(line);
+  const size_t len = strlen(keyword);
+  if (strncmp(cursor, keyword, len) != 0 || is_ident_char(cursor[len])) {
+    return 0;
+  }
+  cursor += len;
+  skip_spaces(&cursor);
+  if (*cursor == '=') {
+    return 1;
+  }
+  if ((cursor[0] == '+' || cursor[0] == '-' || cursor[0] == '*' || cursor[0] == '/' || cursor[0] == '%') &&
+      cursor[1] == '=') {
+    return 1;
+  }
+  if (cursor[0] == '*' && cursor[1] == '*' && cursor[2] == '=') {
+    return 1;
+  }
+  if (cursor[0] == '/' && cursor[1] == '/' && cursor[2] == '=') {
+    return 1;
+  }
+  return 0;
+}
+
+static int line_is_if_clause(const runtime_source_line *line) {
+  return line_starts_with_keyword(line, "if") && !line_keyword_is_assignment_like(line, "if");
+}
+
+static int line_is_elif_clause(const runtime_source_line *line) {
+  return line_starts_with_keyword(line, "elif") && !line_keyword_is_assignment_like(line, "elif");
+}
+
+static int line_is_else_clause(const runtime_source_line *line) {
+  return line_starts_with_keyword(line, "else") && !line_keyword_is_assignment_like(line, "else");
+}
+
+static int split_source_lines(const char *source,
+                              runtime_source_line *lines,
+                              size_t capacity,
+                              size_t *count_out,
+                              graphion_runtime_diagnostic *diagnostic) {
+  const char *line_start;
+  const char *cursor;
+  unsigned int line_number = 1U;
+  size_t count = 0U;
+  if (source == NULL || lines == NULL || count_out == NULL) {
+    clear_diagnostic(diagnostic);
+    return GINT_ERR_INVALID_ARG;
+  }
+  line_start = source;
+  cursor = source;
+  for (;;) {
+    if (*cursor == '\n' || *cursor == '\0') {
+      size_t len = (size_t)(cursor - line_start);
+      size_t indent = 0U;
+      if (count >= capacity) {
+        return fail(diagnostic, line_number, 1U, "too many source lines", GINT_ERR_CAPACITY);
+      }
+      if (len >= sizeof(lines[count].text)) {
+        return fail(diagnostic, line_number, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      memcpy(lines[count].text, line_start, len);
+      lines[count].text[len] = '\0';
+      while (lines[count].text[indent] == ' ' || lines[count].text[indent] == '\t') {
+        indent++;
+      }
+      lines[count].line = line_number;
+      lines[count].indent = (unsigned int)indent;
+      count++;
+      if (*cursor == '\0') {
+        break;
+      }
+      cursor++;
+      line_number++;
+      line_start = cursor;
+      continue;
+    }
+    cursor++;
+  }
+  *count_out = count;
+  return GINT_OK;
+}
+
+static size_t find_next_nonblank_line(const runtime_source_line *lines, size_t count, size_t start) {
+  size_t i;
+  for (i = start; i < count; ++i) {
+    if (!line_is_blank(&lines[i])) {
+      return i;
+    }
+  }
+  return count;
+}
+
+static size_t scan_block_end(const runtime_source_line *lines, size_t count, size_t start, unsigned int block_indent) {
+  size_t i;
+  for (i = start; i < count; ++i) {
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent < block_indent) {
+      break;
+    }
+  }
+  return i;
+}
+
+static int parse_control_condition_span(const char *cursor,
+                                        const char *keyword,
+                                        const char **cond_start_out,
+                                        const char **cond_end_out,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  const size_t keyword_len = strlen(keyword);
+  const char *scan;
+  int depth = 0;
+  int in_string = 0;
+  if (strncmp(cursor, keyword, keyword_len) != 0 || is_ident_char(cursor[keyword_len])) {
+    return fail(diagnostic, line, 1U, "invalid conditional header", GINT_ERR_PARSE);
+  }
+  cursor += keyword_len;
+  skip_spaces(&cursor);
+  if (*cursor == '\0') {
+    return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif", GINT_ERR_PARSE);
+  }
+  *cond_start_out = cursor;
+  scan = cursor;
+  while (*scan != '\0') {
+    if (in_string) {
+      if (*scan == '"') {
+        in_string = 0;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == '"') {
+      in_string = 1;
+      scan++;
+      continue;
+    }
+    if (*scan == '(') {
+      depth++;
+      scan++;
+      continue;
+    }
+    if (*scan == ')') {
+      if (depth > 0) {
+        depth--;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == ':' && depth == 0) {
+      const char *tail = scan + 1;
+      const char *cond_end = scan;
+      while (cond_end > *cond_start_out && (cond_end[-1] == ' ' || cond_end[-1] == '\t' || cond_end[-1] == '\r')) {
+        cond_end--;
+      }
+      skip_spaces(&tail);
+      if (*tail != '\0') {
+        return fail(diagnostic, line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+      }
+      if (cond_end == *cond_start_out) {
+        return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif", GINT_ERR_PARSE);
+      }
+      *cond_end_out = cond_end;
+      return GINT_OK;
+    }
+    scan++;
+  }
+  return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition", GINT_ERR_PARSE);
+}
+
+static int parse_else_header(const char *cursor,
+                             unsigned int line,
+                             graphion_runtime_diagnostic *diagnostic) {
+  if (strncmp(cursor, "else", 4U) != 0 || is_ident_char(cursor[4])) {
+    return fail(diagnostic, line, 1U, "invalid else header", GINT_ERR_PARSE);
+  }
+  cursor += 4;
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    return fail(diagnostic, line, 1U, "expected ':' after else", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after else", GINT_ERR_PARSE);
+  }
+  return GINT_OK;
+}
+
+static int execute_condition_program(const graphion_runtime_program *program,
+                                     graphion_runtime_scope *scope,
+                                     uint8_t reg_index,
+                                     unsigned int line,
+                                     graphion_runtime_diagnostic *diagnostic,
+                                     graphion_vm_value *value_out) {
+  graphion_vm vm;
+  int rc;
+  if (program == NULL || scope == NULL || value_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  scope_sync_to_program(scope, program);
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
+  graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);
+  graphion_vm_bind_global_string_owners(&vm, scope->owned_string_values, scope->global_count);
+  rc = graphion_vm_load(&vm, program->program, program->program_len);
+  if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
+    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_PARSE);
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
+    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
+      return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_TYPE_MISMATCH) {
+      return fail(diagnostic, line, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+    }
+    return fail(diagnostic, line, 1U, "failed to execute VM program", GINT_ERR_RUN);
+  }
+  *value_out = vm.regs[reg_index];
+  if (value_out->kind == GVM_VALUE_STRING) {
+    value_out->as.string_value = NULL;
+  }
+  graphion_vm_dispose(&vm);
+  return GINT_OK;
+}
+
+static int evaluate_condition_text(const char *condition_text,
+                                   size_t condition_len,
+                                   graphion_runtime_scope *scope,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic,
+                                   int *result_out) {
+  char condition_buffer[512];
+  const char *cursor = condition_buffer;
+  parsed_expr_result expr;
+  graphion_runtime_program program;
+  graphion_vm_value value;
+  int rc;
+  if (scope == NULL || condition_text == NULL || result_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (condition_len >= sizeof(condition_buffer)) {
+    return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+  }
+  memcpy(condition_buffer, condition_text, condition_len);
+  condition_buffer[condition_len] = '\0';
+  seed_program_from_scope(&program, scope);
+  rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    graphion_runtime_program_dispose(&program);
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+  }
+  if (expr.kind == EXPR_RESULT_LITERAL) {
+    value = program.const_pool[expr.const_index];
+  } else if (expr.kind == EXPR_RESULT_GLOBAL) {
+    value = scope->globals[expr.global_index];
+  } else {
+    rc = program_emit(&program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      graphion_runtime_program_dispose(&program);
+      return rc;
+    }
+    rc = execute_condition_program(&program, scope, expr.reg_index, line, diagnostic, &value);
+    graphion_runtime_program_dispose(&program);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (value.kind != GVM_VALUE_BOOL) {
+      return fail(diagnostic, line, 1U, "if condition must be boolean", GINT_ERR_RUN);
+    }
+    *result_out = value.as.bool_value != 0;
+    return GINT_OK;
+  }
+  graphion_runtime_program_dispose(&program);
+  if (value.kind != GVM_VALUE_BOOL) {
+    return fail(diagnostic, line, 1U, "if condition must be boolean", GINT_ERR_RUN);
+  }
+  *result_out = value.as.bool_value != 0;
+  return GINT_OK;
+}
+
+static int execute_statement_source_line(const runtime_source_line *line,
+                                         graphion_runtime_scope *scope,
+                                         graphion_runtime_diagnostic *diagnostic,
+                                         FILE *output) {
+  graphion_runtime_program program;
+  int rc;
+  seed_program_from_scope(&program, scope);
+  rc = parse_statement_line(line_content(line), scope, &program, line->line, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
+  if (program.program_len > 0U) {
+    rc = graphion_execute_program(&program, scope, diagnostic, output);
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
+  graphion_runtime_program_dispose(&program);
+  return GINT_OK;
+}
+
+static int execute_block(const runtime_source_line *lines,
+                         size_t count,
+                         size_t *index,
+                         unsigned int block_indent,
+                         graphion_runtime_scope *scope,
+                         graphion_runtime_diagnostic *diagnostic,
+                         FILE *output);
+
+static int execute_if_chain(const runtime_source_line *lines,
+                            size_t count,
+                            size_t *index,
+                            unsigned int current_indent,
+                            graphion_runtime_scope *scope,
+                            graphion_runtime_diagnostic *diagnostic,
+                            FILE *output) {
+  size_t clause_index = *index;
+  int branch_taken = 0;
+  int seen_else = 0;
+  while (clause_index < count) {
+    const runtime_source_line *clause_line;
+    const char *cursor;
+    size_t body_start;
+    size_t body_end;
+    unsigned int body_indent;
+    int is_else_clause;
+    if (line_is_blank(&lines[clause_index])) {
+      clause_index++;
+      continue;
+    }
+    if (lines[clause_index].indent != current_indent) {
+      break;
+    }
+    clause_line = &lines[clause_index];
+    cursor = line_content(clause_line);
+    is_else_clause = line_is_else_clause(clause_line);
+    if (!line_is_if_clause(clause_line) && !line_is_elif_clause(clause_line) && !is_else_clause) {
+      break;
+    }
+    if (seen_else && line_is_if_clause(clause_line)) {
+      break;
+    }
+    if (seen_else && (line_is_elif_clause(clause_line) || is_else_clause)) {
+      return fail(diagnostic, clause_line->line, 1U, "else must be last in if chain", GINT_ERR_PARSE);
+    }
+    body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
+    if (body_start >= count || lines[body_start].indent <= current_indent) {
+      return fail(diagnostic,
+                  clause_line->line,
+                  1U,
+                  is_else_clause ? "expected indented block after else" :
+                  line_is_elif_clause(clause_line) ? "expected indented block after elif" :
+                  "expected indented block after if",
+                  GINT_ERR_PARSE);
+    }
+    body_indent = lines[body_start].indent;
+    body_end = scan_block_end(lines, count, body_start, body_indent);
+    if (is_else_clause) {
+      int rc = parse_else_header(cursor, clause_line->line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      seen_else = 1;
+      if (!branch_taken) {
+        size_t exec_index = body_start;
+        rc = execute_block(lines, count, &exec_index, body_indent, scope, diagnostic, output);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        body_end = exec_index;
+        branch_taken = 1;
+      }
+    } else {
+      const char *cond_start = NULL;
+      const char *cond_end = NULL;
+      int rc = parse_control_condition_span(cursor,
+                                            line_is_elif_clause(clause_line) ? "elif" : "if",
+                                            &cond_start,
+                                            &cond_end,
+                                            clause_line->line,
+                                            diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      if (!branch_taken) {
+        int condition_true = 0;
+        rc = evaluate_condition_text(cond_start,
+                                     (size_t)(cond_end - cond_start),
+                                     scope,
+                                     clause_line->line,
+                                     diagnostic,
+                                     &condition_true);
+        if (rc != GINT_OK) {
+          return rc;
+        }
+        if (condition_true) {
+          size_t exec_index = body_start;
+          rc = execute_block(lines, count, &exec_index, body_indent, scope, diagnostic, output);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+          body_end = exec_index;
+          branch_taken = 1;
+        }
+      }
+    }
+    clause_index = body_end;
+  }
+  *index = clause_index;
+  return GINT_OK;
+}
+
+static int execute_block(const runtime_source_line *lines,
+                         size_t count,
+                         size_t *index,
+                         unsigned int block_indent,
+                         graphion_runtime_scope *scope,
+                         graphion_runtime_diagnostic *diagnostic,
+                         FILE *output) {
+  size_t i = *index;
+  while (i < count) {
+    if (line_is_blank(&lines[i])) {
+      i++;
+      continue;
+    }
+    if (lines[i].indent < block_indent) {
+      break;
+    }
+    if (lines[i].indent > block_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    if (line_is_elif_clause(&lines[i])) {
+      return fail(diagnostic, lines[i].line, 1U, "elif without matching if", GINT_ERR_PARSE);
+    }
+    if (line_is_else_clause(&lines[i])) {
+      return fail(diagnostic, lines[i].line, 1U, "else without matching if", GINT_ERR_PARSE);
+    }
+    if (line_is_if_clause(&lines[i])) {
+      int rc = execute_if_chain(lines, count, &i, block_indent, scope, diagnostic, output);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      continue;
+    }
+    {
+      int rc = execute_statement_source_line(&lines[i], scope, diagnostic, output);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    }
+    i++;
+  }
+  *index = i;
+  return GINT_OK;
 }
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
@@ -1156,49 +1647,28 @@ int graphion_interpret_source_with_output(const char *source,
                                           graphion_runtime_scope *scope,
                                           graphion_runtime_diagnostic *diagnostic,
                                           FILE *output) {
-  graphion_runtime_program program;
-  const char *line_start;
-  const char *cursor;
-  unsigned int line = 1U;
+  runtime_source_line lines[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t line_count = 0U;
+  size_t index = 0U;
   int rc;
   if (source == NULL || scope == NULL) {
     clear_diagnostic(diagnostic);
     return GINT_ERR_INVALID_ARG;
   }
   clear_diagnostic(diagnostic);
-  line_start = source;
-  cursor = source;
-  for (;;) {
-    if (*cursor == '\n' || *cursor == '\0') {
-      char line_buffer[512];
-      size_t len = (size_t)(cursor - line_start);
-      if (len >= sizeof(line_buffer)) {
-        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
-      }
-      memcpy(line_buffer, line_start, len);
-      line_buffer[len] = '\0';
-      seed_program_from_scope(&program, scope);
-      rc = parse_single_line(line_buffer, scope, &program, line, diagnostic);
-      if (rc != GINT_OK) {
-        graphion_runtime_program_dispose(&program);
-        return rc;
-      }
-      if (program.program_len > 0U) {
-        rc = graphion_execute_program(&program, scope, diagnostic, output);
-        graphion_runtime_program_dispose(&program);
-        if (rc != GINT_OK) {
-          return rc;
-        }
-      }
-      if (*cursor == '\0') {
-        break;
-      }
-      cursor++;
-      line++;
-      line_start = cursor;
-      continue;
+  rc = split_source_lines(source, lines, GRAPHION_RUNTIME_PROGRAM_MAX, &line_count, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = execute_block(lines, line_count, &index, 0U, scope, diagnostic, output);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  while (index < line_count) {
+    if (!line_is_blank(&lines[index])) {
+      return fail(diagnostic, lines[index].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
     }
-    cursor++;
+    index++;
   }
   return GINT_OK;
 }
