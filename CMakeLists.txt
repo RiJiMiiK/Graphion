@@ -133,6 +133,11 @@ add_library(graphion_vm
   src/graph/csr_graph.c
   src/graph/hypergraph.c
 )
+
+if(NOT MSVC)
+  target_link_libraries(graphion_vm PUBLIC m)
+endif()
+
 graphion_enable_pgo(graphion_vm)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
