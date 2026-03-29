@@ -176,18 +176,18 @@ jobs:
         with:
           python-version: "3.x"
       - name: Download Windows artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: performance-windows
           path: benchmarks/results/performance
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: performance-linux
           path: benchmarks/results/performance
       - name: Download Rust artifacts
         if: ${{ needs.rust-comparison.result == 'success' }}
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: performance-rust
           path: benchmarks/results/performance
@@ -227,7 +227,7 @@ jobs:
       - name: Generate GitHub App token
         id: app-token
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr) }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.GRAPHION_PERF_APP_ID }}
           private-key: ${{ secrets.GRAPHION_PERF_APP_PRIVATE_KEY }}

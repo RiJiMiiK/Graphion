@@ -1,6 +1,6 @@
 # Performance Snapshot (x100)
 
-This snapshot is generated from the latest local benchmark artifacts on 2026-03-27 23:49:10 UTC.
+This snapshot is generated from the latest local benchmark artifacts on 2026-03-27 18:41:18 UTC.
 
 Benchmark runs use x100 averages with benchmark-specific default iteration counts committed in the bench sources.
 
@@ -16,118 +16,106 @@ For the current `.gion` rebuild, pay particular attention to:
 
 | Lane | Compiler | ASM | CPU | Machine | Git | Runs |
 |---|---|---|---|---|---|---:|
-| VM Windows | msvc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | c0a6dbd275c9 | 100 |
-| VM Linux | gcc | on | AMD Ryzen 7 7735HS with Radeon Graphics | x86_64 | c0a6dbd275c9 | 100 |
-| Rust Windows | rustc | off | AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD | AMD64 | c0a6dbd275c9 | 100 |
-| Rust Linux | rustc | off | AMD Ryzen 7 7735HS with Radeon Graphics | x86_64 | c0a6dbd275c9 | 100 |
+| Graphion Windows | msvc | off | Intel64 Family 6 Model 106 Stepping 6, GenuineIntel | AMD64 | c8d9e6e44fc2 | 100 |
+| Graphion Linux | gcc | on | AMD EPYC 7763 64-Core Processor | x86_64 | c8d9e6e44fc2 | 100 |
+| Rust Windows | rustc | off | AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD | AMD64 | c8d9e6e44fc2 | 100 |
 
 
-## frontier_primitives (`ns_per_frontier_item`, iterations=10000000)
+## frontier_primitives (`ns_per_frontier_item`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 3.595% | 0.693582 | - | 86.614 | 0.542 |
-| VM Linux | 3.086% | 0.894251 | - | 67.155 | 0.699 |
-| Rust Windows | 6.725% | 0.885367 | - | 68.053 | 0.692 |
-| Rust Linux | 4.116% | 0.895224 | - | 67.128 | 0.699 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.046220 | - | 38.961 | 1.204 |
+| Graphion Linux | 0.033767 | - | 53.309 | 0.879 |
+| Rust Windows | 0.104219 | - | 17.331 | 2.714 |
 
-## vm_dispatch (`ns_per_instruction`, iterations=5000000)
+## vm_dispatch (`ns_per_instruction`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 5.362% | 0.244401 | - | 328.139 | 3.055 |
-| VM Linux | 5.175% | 0.252231 | - | 317.912 | 3.153 |
-| Rust Windows | 3.625% | 0.343088 | - | 233.460 | 4.289 |
-| Rust Linux | 4.037% | 0.359315 | - | 222.988 | 4.491 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.010202 | - | 882.510 | 1.134 |
+| Graphion Linux | 0.008505 | - | 1058.410 | 0.945 |
+| Rust Windows | 0.008224 | - | 1098.145 | 0.914 |
 
-## vm_dispatch dispatch variants (`ns_per_instruction`, iterations=5000000, x100)
+## vm_dispatch dispatch variants (`ns_per_instruction`, x100)
 
-| Platform | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| Graphion Windows (switch) | 5.981% | 0.247622 | - | 324.048 | 3.095 |
-| Graphion Windows (jumptable) | 6.384% | 0.268091 | - | 299.506 | 3.351 |
-| Graphion Linux (switch) | 6.865% | 0.261600 | - | 307.094 | 3.270 |
-| Graphion Linux (jumptable) | 5.624% | 0.257122 | - | 312.030 | 3.214 |
-| Graphion Linux (computed-goto) | 7.417% | 0.274766 | - | 292.717 | 3.435 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows (switch) | 0.010254 | - | 878.141 | 1.139 |
+| Graphion Windows (jumptable) | 0.009647 | - | 933.737 | 1.072 |
+| Graphion Linux (switch) | 0.008520 | - | 1056.558 | 0.947 |
+| Graphion Linux (jumptable) | 0.008569 | - | 1050.656 | 0.952 |
+| Graphion Linux (computed-goto) | 0.008243 | - | 1092.079 | 0.916 |
 
-## bfs_levels (`ns_per_edge`, iterations=5000000)
+## bfs_levels (`ns_per_edge`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 2.752% | 0.251153 | 378.525 | - | 2.644 |
-| VM Linux | 4.423% | 0.254997 | 373.231 | - | 2.684 |
-| Rust Windows | 4.464% | 0.282696 | 336.661 | - | 2.976 |
-| Rust Linux | 6.998% | 0.303209 | 314.449 | - | 3.192 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.004249 | 895.322 | - | 1.118 |
+| Graphion Linux | 0.007114 | 534.184 | - | 1.872 |
+| Rust Windows | 0.019171 | 198.568 | - | 5.045 |
 
-## neighbor_iteration (`ns_per_neighbor`, iterations=10000000)
+## neighbor_iteration (`ns_per_neighbor`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 3.044% | 2.671923 | 958.111 | - | 1.044 |
-| VM Linux | 2.293% | 2.358400 | 1085.482 | - | 0.921 |
-| Rust Windows | 4.423% | 4.004608 | 639.264 | - | 1.564 |
-| Rust Linux | 2.705% | 3.562752 | 718.546 | - | 1.392 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.001361 | 1763.984 | - | 0.567 |
+| Graphion Linux | 0.001646 | 1506.192 | - | 0.686 |
+| Rust Windows | 0.003610 | 665.157 | - | 1.504 |
 
 Frontier mode notes:
 
-- VM Windows: mode=`dense` frontier_len=96 frontier_neighbor_work=256
-- VM Linux: mode=`dense` frontier_len=96 frontier_neighbor_work=256
-- Rust Windows: mode=`dense` frontier_len=96 frontier_neighbor_work=256
-- Rust Linux: mode=`dense` frontier_len=96 frontier_neighbor_work=256
+- Graphion Windows: mode=`dense` frontier_len=3 frontier_neighbor_work=8
+- Graphion Linux: mode=`dense` frontier_len=3 frontier_neighbor_work=8
+- Rust Windows: mode=`dense` frontier_len=3 frontier_neighbor_work=8
 
-## weighted_neighbor_sums (`ns_per_edge_data`, iterations=300000)
+## weighted_neighbor_sums (`ns_per_edge_data`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 4.450% | 0.450519 | 5465.468 | - | 0.183 |
-| VM Linux | 3.947% | 0.342843 | 7178.380 | - | 0.140 |
-| Rust Windows | 5.676% | 0.411005 | 5997.080 | - | 0.167 |
-| Rust Linux | 10.147% | 0.446314 | 5555.647 | - | 0.182 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.239678 | 10259.446 | - | 0.098 |
+| Graphion Linux | 0.601602 | 4085.146 | - | 0.245 |
+| Rust Windows | 0.343749 | 7149.991 | - | 0.140 |
 
-## hypergraph_incidence (`ns_per_incidence`, iterations=10000000)
+## hypergraph_incidence (`ns_per_incidence`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 5.209% | 0.453836 | - | 2120.756 | 0.473 |
-| VM Linux | 6.513% | 0.326842 | - | 2937.203 | 0.340 |
-| Rust Windows | 4.369% | 0.652090 | - | 1472.190 | 0.679 |
-| Rust Linux | 4.240% | 0.603072 | - | 1591.850 | 0.628 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.001735 | - | 3462.252 | 0.289 |
+| Graphion Linux | 0.001147 | - | 5244.301 | 0.191 |
+| Rust Windows | 0.002379 | - | 2526.214 | 0.397 |
 
-## hypergraph_traversal (`ns_per_membership`, iterations=10000000)
+## hypergraph_traversal (`ns_per_membership`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 7.437% | 0.273294 | 882.751 | - | 1.139 |
-| VM Linux | 4.943% | 0.235041 | 1023.340 | - | 0.979 |
-| Rust Windows | 4.063% | 0.398395 | 603.338 | - | 1.660 |
-| Rust Linux | 7.056% | 0.465398 | 518.206 | - | 1.939 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.005632 | 1281.710 | - | 0.782 |
+| Graphion Linux | 0.004582 | 1571.373 | - | 0.636 |
+| Rust Windows | 0.007926 | 908.573 | - | 1.101 |
 
-## hypergraph_incident_sum (`ns_per_call`, iterations=10000000)
+## hypergraph_incident_sum (`ns_per_call`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 4.421% | 4.163456 | - | 192.148 | 5.204 |
-| VM Linux | 2.796% | 1.903504 | - | 420.278 | 2.379 |
-| Rust Windows | 7.623% | 4.485552 | - | 178.350 | 5.607 |
-| Rust Linux | 2.901% | 3.944840 | - | 202.797 | 4.931 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.005859 | - | 426.864 | 2.343 |
+| Graphion Linux | 0.003944 | - | 633.949 | 1.578 |
+| Rust Windows | 0.007738 | - | 323.637 | 3.095 |
 
-## hypergraph_hyperedge_node_sum (`ns_per_call`, iterations=10000000)
+## hypergraph_hyperedge_node_sum (`ns_per_call`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 8.836% | 0.151737 | - | 265.464 | 3.793 |
-| VM Linux | 15.499% | 0.121527 | - | 335.499 | 3.038 |
-| Rust Windows | 5.242% | 0.169045 | - | 237.257 | 4.226 |
-| Rust Linux | 9.356% | 0.239190 | - | 168.702 | 5.980 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.004842 | - | 413.339 | 2.421 |
+| Graphion Linux | 0.003882 | - | 516.774 | 1.941 |
+| Rust Windows | 0.007287 | - | 274.834 | 3.644 |
 
-## vm_graph_ops (`ns_per_instruction`, iterations=10000000)
+## vm_graph_ops (`ns_per_instruction`)
 
-| Lane | var_% | s | mteps | mips | ns_per_X |
-|---|---:|---:|---:|---:|---:|
-| VM Windows | 5.067% | 0.459278 | - | 261.904 | 3.827 |
-| VM Linux | 6.202% | 0.510733 | - | 235.969 | 4.256 |
-| Rust Windows | 2.992% | 1.129885 | - | 106.295 | 9.416 |
-| Rust Linux | 3.446% | 1.240276 | - | 96.866 | 10.336 |
+| Platform | s | mteps | mips | ns_per_X |
+|---|---:|---:|---:|---:|
+| Graphion Windows | 0.011861 | - | 252.978 | 3.954 |
+| Graphion Linux | 0.014325 | - | 209.440 | 4.775 |
+| Rust Windows | 0.025131 | - | 119.406 | 8.377 |
 
 Notes:
 
