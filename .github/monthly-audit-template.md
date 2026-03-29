@@ -2,10 +2,10 @@
 
 Checklist:
 
-- [ ] Branch protection still matches `docs/process/BRANCH_PROTECTION.md`
+- [ ] Branch protection rules still match the current repository policy
 - [ ] Required checks are healthy and not flaky
 - [ ] Dependabot/security alerts triaged
-- [ ] Release process validated (`docs/process/RELEASE_CHECKLIST.md`)
+- [ ] Release process validated against the current release workflows and changelog conventions
 - [ ] Fuzz nightly results reviewed
 - [ ] Benchmark trend reviewed
 - [ ] Stale policy still appropriate
