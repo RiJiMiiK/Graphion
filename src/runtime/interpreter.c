@@ -2013,20 +2013,27 @@ static int process_file_level_directives(const char *source,
       static const char directive_prefix[] = "# graphion:";
       static const char warnings_off_value[] = "warnings=off";
       const size_t directive_prefix_len = sizeof(directive_prefix) - 1U;
-      const size_t warnings_off_len = sizeof(warnings_off_value) - 1U;
 
       if ((size_t)(line_end - trimmed) >= directive_prefix_len &&
           strncmp(trimmed, directive_prefix, directive_prefix_len) == 0) {
         const char *payload = trimmed + directive_prefix_len;
         const char *payload_end = line_end;
+        char directive_value[32];
+        size_t payload_len;
         while (payload < payload_end && (*payload == ' ' || *payload == '\t' || *payload == '\r')) {
           payload++;
         }
         while (payload_end > payload && (payload_end[-1] == ' ' || payload_end[-1] == '\t' || payload_end[-1] == '\r')) {
           payload_end--;
         }
-        if ((size_t)(payload_end - payload) == warnings_off_len &&
-            strncmp(payload, warnings_off_value, warnings_off_len) == 0) {
+        payload_len = (size_t)(payload_end - payload);
+        if (payload_len < sizeof(directive_value)) {
+          memcpy(directive_value, payload, payload_len);
+          directive_value[payload_len] = '\0';
+        } else {
+          directive_value[0] = '\0';
+        }
+        if (strcmp(directive_value, warnings_off_value) == 0) {
           report->enabled = 0;
           report->count = 0U;
         } else {
