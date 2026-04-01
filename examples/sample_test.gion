@@ -5,11 +5,15 @@
 # - 03_compound_assignments.gion
 # - 04_conditionals.gion
 # - 05_comments.gion
+# - 06_bits_literals.gion
 
 count = 42
 ratio = 7 / 2
 message = "graph" + "ion"
 ready = true
+short_bits = 0b10
+wide_bits = 0b0010
+same_bits = 0b10 == 0b0010
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -136,6 +140,9 @@ match 2:
 print("overview assignment -> count=" + count)
 print("overview arithmetic -> ratio=" + ratio)
 print("overview string concat -> message=" + message)
+print("overview bits literal -> short_bits=" + short_bits)
+print("overview bits width preservation -> wide_bits=" + wide_bits)
+print("overview bits equality -> same_bits=" + same_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)
