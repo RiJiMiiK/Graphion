@@ -2011,7 +2011,9 @@ static int process_file_level_directives(const char *source,
       /* blank line before code is allowed */
     } else if (*trimmed == '#') {
       static const char directive_prefix[] = "# graphion:";
+      static const char warnings_off_value[] = "warnings=off";
       const size_t directive_prefix_len = sizeof(directive_prefix) - 1U;
+      const size_t warnings_off_len = sizeof(warnings_off_value) - 1U;
 
       if ((size_t)(line_end - trimmed) >= directive_prefix_len &&
           strncmp(trimmed, directive_prefix, directive_prefix_len) == 0) {
@@ -2023,8 +2025,8 @@ static int process_file_level_directives(const char *source,
         while (payload_end > payload && (payload_end[-1] == ' ' || payload_end[-1] == '\t' || payload_end[-1] == '\r')) {
           payload_end--;
         }
-        if ((size_t)(payload_end - payload) == strlen("warnings=off") &&
-            strncmp(payload, "warnings=off", strlen("warnings=off")) == 0) {
+        if ((size_t)(payload_end - payload) == warnings_off_len &&
+            strncmp(payload, warnings_off_value, warnings_off_len) == 0) {
           report->enabled = 0;
           report->count = 0U;
         } else {
@@ -3303,7 +3305,6 @@ static int execute_block(const runtime_source_line *lines,
         return rc;
       }
     }
-    continue;
   }
   *index = i;
   return GINT_OK;
