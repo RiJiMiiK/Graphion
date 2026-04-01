@@ -215,6 +215,9 @@ Rules:
 - `elif` can appear multiple times
 - `else` is optional
 - `else` must be last
+- nested `if` blocks are allowed
+- an `else` always binds to the `if` at the same indentation level
+- indentation decides the binding, not the nearest visible `if` token on the page
 
 Invalid examples:
 
@@ -231,6 +234,84 @@ print("bad")
 ```gion
 else:
     print("bad")
+```
+
+### Nested Conditionals
+
+You can place an `if` block inside another `if` block.
+
+```gion
+ready = true
+admin = false
+
+if ready:
+    if admin:
+        label = "admin"
+    else:
+        label = "user"
+else:
+    label = "offline"
+```
+
+In this example:
+
+- the inner `else` binds to `if admin:`
+- the outer `else` binds to `if ready:`
+
+That binding is determined by indentation, not by the nearest visible `if` keyword alone.
+
+### Multiline Conditions
+
+Long conditions can span multiple physical lines, but only when the full condition is wrapped in grouping parentheses.
+
+```gion
+if (
+    ready and
+    has_token and
+    level >= 3 and
+    not blocked
+):
+    print("ok")
+```
+
+Rules:
+
+- multiline conditions require outer grouping parentheses
+- the closing `)` must appear before the final `:`
+- line breaks inside the grouped condition are treated like spaces
+- multiline conditions without grouping parentheses are invalid
+
+Invalid example:
+
+```gion
+if ready and
+   has_token:
+    print("bad")
+```
+
+### Ternary Expressions
+
+Graphion also supports inline conditional expressions in the form:
+
+```gion
+result = "ready" if ready else "not ready"
+```
+
+Rules:
+
+- the shape is `true_value if condition else false_value`
+- the condition follows the same truth rules as `if` / `elif`
+- the whole ternary expression produces a single scalar value
+- nested ternary expressions are allowed, but become harder to read quickly
+
+Examples:
+
+```gion
+label = "ready" if ready else "not ready"
+```
+
+```gion
+label = "outer" if ready else "inner" if fallback else "none"
 ```
 
 ## Comments

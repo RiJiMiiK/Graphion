@@ -461,6 +461,13 @@ static int parse_expression(const char **cursor,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic);
 
+static int parse_or_expression(const char **cursor,
+                               graphion_runtime_program *program,
+                               parsed_expr_result *result_out,
+                               uint8_t base_reg,
+                               unsigned int line,
+                               graphion_runtime_diagnostic *diagnostic);
+
 static int parse_comparison_expression(const char **cursor,
                                        graphion_runtime_program *program,
                                        parsed_expr_result *result_out,
@@ -476,6 +483,102 @@ static int parse_additive_expression(const char **cursor,
                                      graphion_runtime_diagnostic *diagnostic);
 
 static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_runtime_program *program);
+
+static int copy_trimmed_segment(const char *start,
+                                const char *end,
+                                char *buffer,
+                                size_t buffer_size,
+                                unsigned int line,
+                                graphion_runtime_diagnostic *diagnostic) {
+  while (start < end && (*start == ' ' || *start == '\t' || *start == '\r')) {
+    start++;
+  }
+  while (end > start && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r')) {
+    end--;
+  }
+  if ((size_t)(end - start) >= buffer_size) {
+    return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+  }
+  memcpy(buffer, start, (size_t)(end - start));
+  buffer[end - start] = '\0';
+  return GINT_OK;
+}
+
+static int scan_ternary_segments(const char *cursor,
+                                 const char **true_end_out,
+                                 const char **condition_start_out,
+                                 const char **condition_end_out,
+                                 const char **false_start_out,
+                                 const char **expr_end_out) {
+  const char *scan = cursor;
+  const char *if_pos = NULL;
+  const char *else_pos = NULL;
+  int depth = 0;
+  int in_string = 0;
+
+  while (*scan != '\0') {
+    if (in_string) {
+      if (*scan == '"') {
+        in_string = 0;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == '"') {
+      in_string = 1;
+      scan++;
+      continue;
+    }
+    if (*scan == '(') {
+      depth++;
+      scan++;
+      continue;
+    }
+    if (*scan == ')') {
+      if (depth == 0) {
+        break;
+      }
+      depth--;
+      scan++;
+      continue;
+    }
+    if (depth == 0) {
+      if (if_pos == NULL && strncmp(scan, "if", 2U) == 0 && !is_ident_char(scan[2]) &&
+          (scan == cursor || !is_ident_char(scan[-1]))) {
+        if_pos = scan;
+        scan += 2;
+        continue;
+      }
+      if (if_pos != NULL && else_pos == NULL && strncmp(scan, "else", 4U) == 0 && !is_ident_char(scan[4]) &&
+          !is_ident_char(scan[-1])) {
+        else_pos = scan;
+        scan += 4;
+        continue;
+      }
+    }
+    scan++;
+  }
+
+  if (if_pos == NULL) {
+    return 0;
+  }
+
+  if (else_pos == NULL) {
+    *true_end_out = if_pos;
+    *condition_start_out = if_pos + 2U;
+    *condition_end_out = scan;
+    *false_start_out = scan;
+    *expr_end_out = scan;
+    return 2;
+  }
+
+  *true_end_out = if_pos;
+  *condition_start_out = if_pos + 2U;
+  *condition_end_out = else_pos;
+  *false_start_out = else_pos + 4U;
+  *expr_end_out = scan;
+  return 1;
+}
 
 static int parse_factor(const char **cursor,
                         graphion_runtime_program *program,
@@ -895,12 +998,12 @@ static int parse_and_expression(const char **cursor,
   return GINT_OK;
 }
 
-static int parse_expression(const char **cursor,
-                            graphion_runtime_program *program,
-                            parsed_expr_result *result_out,
-                            uint8_t base_reg,
-                            unsigned int line,
-                            graphion_runtime_diagnostic *diagnostic) {
+static int parse_or_expression(const char **cursor,
+                               graphion_runtime_program *program,
+                               parsed_expr_result *result_out,
+                               uint8_t base_reg,
+                               unsigned int line,
+                               graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
@@ -1011,6 +1114,134 @@ static int parse_expression(const char **cursor,
   }
   *result_out = lhs;
   return GINT_OK;
+}
+
+static int parse_expression(const char **cursor,
+                            graphion_runtime_program *program,
+                            parsed_expr_result *result_out,
+                            uint8_t base_reg,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
+  const char *true_end = NULL;
+  const char *condition_start = NULL;
+  const char *condition_end = NULL;
+  const char *false_start = NULL;
+  const char *expr_end = NULL;
+  int ternary_scan = scan_ternary_segments(*cursor,
+                                           &true_end,
+                                           &condition_start,
+                                           &condition_end,
+                                           &false_start,
+                                           &expr_end);
+
+  if (ternary_scan < 0) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (ternary_scan == 1 || ternary_scan == 2) {
+    char true_segment[512];
+    char condition_segment[512];
+    char false_segment[512];
+    const char *segment_cursor;
+    parsed_expr_result condition_result;
+    parsed_expr_result branch_result;
+    const uint8_t target_reg = base_reg;
+    size_t false_jump_index;
+    size_t end_jump_index;
+    int rc;
+
+    rc = copy_trimmed_segment(*cursor, true_end, true_segment, sizeof(true_segment), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (true_segment[0] == '\0') {
+      return fail(diagnostic, line, 1U, "expected expression before ternary if", GINT_ERR_PARSE);
+    }
+    rc = copy_trimmed_segment(condition_start, condition_end, condition_segment, sizeof(condition_segment), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (condition_segment[0] == '\0') {
+      return fail(diagnostic, line, 1U, "expected condition after ternary if", GINT_ERR_PARSE);
+    }
+    if (ternary_scan == 2) {
+      return fail(diagnostic, line, 1U, "expected else in ternary expression", GINT_ERR_PARSE);
+    }
+    rc = copy_trimmed_segment(false_start, expr_end, false_segment, sizeof(false_segment), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (false_segment[0] == '\0') {
+      return fail(diagnostic, line, 1U, "expected expression after ternary else", GINT_ERR_PARSE);
+    }
+
+    segment_cursor = condition_segment;
+    rc = parse_or_expression(&segment_cursor, program, &condition_result, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(&segment_cursor);
+    if (*segment_cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary condition", GINT_ERR_PARSE);
+    }
+    rc = ensure_expr_in_reg(program, &condition_result, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    false_jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP_IF_FALSE, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+
+    segment_cursor = true_segment;
+    rc = parse_expression(&segment_cursor, program, &branch_result, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(&segment_cursor);
+    if (*segment_cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary true branch", GINT_ERR_PARSE);
+    }
+    rc = ensure_expr_in_reg(program, &branch_result, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    end_jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP, 0U, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+
+    rc = program_patch_imm(program, false_jump_index, (int32_t)program->program_len, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    segment_cursor = false_segment;
+    rc = parse_expression(&segment_cursor, program, &branch_result, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(&segment_cursor);
+    if (*segment_cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary else branch", GINT_ERR_PARSE);
+    }
+    rc = ensure_expr_in_reg(program, &branch_result, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_patch_imm(program, end_jump_index, (int32_t)program->program_len, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    result_out->kind = EXPR_RESULT_REG;
+    result_out->reg_index = target_reg;
+    result_out->const_index = 0U;
+    result_out->global_index = 0U;
+    *cursor = expr_end;
+    return GINT_OK;
+  }
+
+  return parse_or_expression(cursor, program, result_out, base_reg, line, diagnostic);
 }
 
 static int parse_assignment(const char *line_text,
@@ -1580,70 +1811,189 @@ static size_t scan_block_end(const runtime_source_line *lines, size_t count, siz
   return i;
 }
 
-static int parse_control_condition_span(const char *cursor,
-                                        const char *keyword,
-                                        const char **cond_start_out,
-                                        const char **cond_end_out,
-                                        unsigned int line,
-                                        graphion_runtime_diagnostic *diagnostic) {
-  const size_t keyword_len = strlen(keyword);
-  const char *scan;
+static int condition_line_looks_incomplete(const char *text, size_t length) {
+  size_t end = length;
+
+  while (end > 0U && (text[end - 1U] == ' ' || text[end - 1U] == '\t' || text[end - 1U] == '\r')) {
+    end--;
+  }
+  if (end == 0U) {
+    return 1;
+  }
+  {
+    const char tail = text[end - 1U];
+    if (tail == '(' || tail == '=' || tail == '!' || tail == '<' || tail == '>' || tail == '+' || tail == '-' ||
+        tail == '*' || tail == '/' || tail == '%') {
+      return 1;
+    }
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "and", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  if (end >= 2U && strncmp(text + end - 2U, "or", 2U) == 0 && (end == 2U || !is_ident_char(text[end - 3U]))) {
+    return 1;
+  }
+  if (end >= 4U && strncmp(text + end - 4U, "nand", 4U) == 0 && (end == 4U || !is_ident_char(text[end - 5U]))) {
+    return 1;
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "nor", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "not", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  return 0;
+}
+
+static int collect_control_condition_text(const runtime_source_line *lines,
+                                          size_t count,
+                                          size_t start_index,
+                                          const char *keyword,
+                                          char *buffer,
+                                          size_t buffer_size,
+                                          size_t *header_end_index_out,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  const runtime_source_line *start_line;
+  const char *cursor;
+  size_t keyword_len;
+  size_t write_index = 0U;
+  size_t i;
   int depth = 0;
   int in_string = 0;
+  int multiline_allowed = 0;
+
+  if (lines == NULL || start_index >= count || keyword == NULL || buffer == NULL || buffer_size == 0U ||
+      header_end_index_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  keyword_len = strlen(keyword);
+
+  start_line = &lines[start_index];
+  cursor = line_content(start_line);
   if (strncmp(cursor, keyword, keyword_len) != 0 || is_ident_char(cursor[keyword_len])) {
     return fail(diagnostic, line, 1U, "invalid conditional header", GINT_ERR_PARSE);
   }
   cursor += keyword_len;
   skip_spaces(&cursor);
   if (*cursor == '\0') {
-    return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                1U,
+                strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
+                GINT_ERR_PARSE);
   }
-  *cond_start_out = cursor;
-  scan = cursor;
-  while (*scan != '\0') {
-    if (in_string) {
+
+  multiline_allowed = *cursor == '(' ? 1 : 0;
+
+  for (i = start_index; i < count; ++i) {
+    const char *scan = i == start_index ? cursor : line_content(&lines[i]);
+
+    if (i > start_index) {
+      if (!multiline_allowed) {
+        return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      if (write_index > 0U && buffer[write_index - 1U] != ' ') {
+        buffer[write_index++] = ' ';
+      }
+    }
+
+    while (*scan != '\0') {
+      if (in_string) {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (*scan == '"') {
+          in_string = 0;
+        }
+        scan++;
+        continue;
+      }
       if (*scan == '"') {
-        in_string = 0;
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        in_string = 1;
+        scan++;
+        continue;
       }
+      if (*scan == '(') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        depth++;
+        scan++;
+        continue;
+      }
+      if (*scan == ')') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (depth > 0) {
+          depth--;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == ':' && depth == 0) {
+        const char *tail = scan + 1;
+        while (write_index > 0U &&
+               (buffer[write_index - 1U] == ' ' || buffer[write_index - 1U] == '\t' || buffer[write_index - 1U] == '\r')) {
+          write_index--;
+        }
+        skip_spaces(&tail);
+        if (*tail != '\0') {
+          return fail(diagnostic, lines[i].line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+        }
+        if (write_index == 0U) {
+          return fail(diagnostic,
+                      line,
+                      1U,
+                      strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
+                      GINT_ERR_PARSE);
+        }
+        buffer[write_index] = '\0';
+        *header_end_index_out = i;
+        return GINT_OK;
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      buffer[write_index++] = *scan;
       scan++;
-      continue;
     }
-    if (*scan == '"') {
-      in_string = 1;
-      scan++;
-      continue;
-    }
-    if (*scan == '(') {
-      depth++;
-      scan++;
-      continue;
-    }
-    if (*scan == ')') {
-      if (depth > 0) {
-        depth--;
+
+    if (depth == 0) {
+      if (i == start_index) {
+        if (condition_line_looks_incomplete(buffer, write_index)) {
+          return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+        }
+        return fail(diagnostic,
+                    line,
+                    1U,
+                    strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+                    GINT_ERR_PARSE);
       }
-      scan++;
-      continue;
+      return fail(diagnostic,
+                  lines[i].line,
+                  1U,
+                  strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+                  GINT_ERR_PARSE);
     }
-    if (*scan == ':' && depth == 0) {
-      const char *tail = scan + 1;
-      const char *cond_end = scan;
-      while (cond_end > *cond_start_out && (cond_end[-1] == ' ' || cond_end[-1] == '\t' || cond_end[-1] == '\r')) {
-        cond_end--;
-      }
-      skip_spaces(&tail);
-      if (*tail != '\0') {
-        return fail(diagnostic, line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
-      }
-      if (cond_end == *cond_start_out) {
-        return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif", GINT_ERR_PARSE);
-      }
-      *cond_end_out = cond_end;
-      return GINT_OK;
-    }
-    scan++;
   }
-  return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition", GINT_ERR_PARSE);
+
+  return fail(diagnostic,
+              line,
+              1U,
+              strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+              GINT_ERR_PARSE);
 }
 
 static int parse_else_header(const char *cursor,
@@ -1842,23 +2192,17 @@ static int execute_if_chain(const runtime_source_line *lines,
     if (seen_else && (line_is_elif_clause(clause_line) || is_else_clause)) {
       return fail(diagnostic, clause_line->line, 1U, "else must be last in if chain", GINT_ERR_PARSE);
     }
-    body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
-    if (body_start >= count || lines[body_start].indent <= current_indent) {
-      return fail(diagnostic,
-                  clause_line->line,
-                  1U,
-                  is_else_clause ? "expected indented block after else" :
-                  line_is_elif_clause(clause_line) ? "expected indented block after elif" :
-                  "expected indented block after if",
-                  GINT_ERR_PARSE);
-    }
-    body_indent = lines[body_start].indent;
-    body_end = scan_block_end(lines, count, body_start, body_indent);
     if (is_else_clause) {
       int rc = parse_else_header(cursor, clause_line->line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
+      body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
+      if (body_start >= count || lines[body_start].indent <= current_indent) {
+        return fail(diagnostic, clause_line->line, 1U, "expected indented block after else", GINT_ERR_PARSE);
+      }
+      body_indent = lines[body_start].indent;
+      body_end = scan_block_end(lines, count, body_start, body_indent);
       seen_else = 1;
       if (!branch_taken) {
         size_t exec_index = body_start;
@@ -1870,21 +2214,35 @@ static int execute_if_chain(const runtime_source_line *lines,
         branch_taken = 1;
       }
     } else {
-      const char *cond_start = NULL;
-      const char *cond_end = NULL;
-      int rc = parse_control_condition_span(cursor,
-                                            line_is_elif_clause(clause_line) ? "elif" : "if",
-                                            &cond_start,
-                                            &cond_end,
-                                            clause_line->line,
-                                            diagnostic);
+      char condition_text[512];
+      size_t header_end_index = clause_index;
+      int rc = collect_control_condition_text(lines,
+                                              count,
+                                              clause_index,
+                                              line_is_elif_clause(clause_line) ? "elif" : "if",
+                                              condition_text,
+                                              sizeof(condition_text),
+                                              &header_end_index,
+                                              clause_line->line,
+                                              diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
+      body_start = find_next_nonblank_line(lines, count, header_end_index + 1U);
+      if (body_start >= count || lines[body_start].indent <= current_indent) {
+        return fail(diagnostic,
+                    clause_line->line,
+                    1U,
+                    line_is_elif_clause(clause_line) ? "expected indented block after elif" :
+                    "expected indented block after if",
+                    GINT_ERR_PARSE);
+      }
+      body_indent = lines[body_start].indent;
+      body_end = scan_block_end(lines, count, body_start, body_indent);
       if (!branch_taken) {
         int condition_true = 0;
-        rc = evaluate_condition_text(cond_start,
-                                     (size_t)(cond_end - cond_start),
+        rc = evaluate_condition_text(condition_text,
+                                     strlen(condition_text),
                                      scope,
                                      clause_line->line,
                                      diagnostic,

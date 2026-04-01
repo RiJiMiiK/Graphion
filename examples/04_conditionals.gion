@@ -93,12 +93,39 @@ if false or 1 == 1 or false:
 else:
     chained_or_branch = "bad"
 
+nested_ready = true
+nested_admin = false
+
+if nested_ready:
+    if nested_admin:
+        nested_branch = "admin branch"
+    else:
+        nested_branch = "user branch"
+else:
+    nested_branch = "offline branch"
+
 bool_bridge_true = 1 == true
 bool_bridge_false = 0 == false
 safe_short_and = false and 2
 safe_short_or = true or 2
 safe_short_nand = false nand 2
 safe_short_nor = true nor 2
+has_token = true
+level = 3
+blocked = false
+
+if (
+    branch_flag and
+    has_token and
+    level >= 3 and
+    not blocked
+):
+    multiline_branch = "grouped multiline condition works"
+else:
+    multiline_branch = "bad"
+
+ternary_branch = "ready ternary" if branch_flag else "fallback ternary"
+ternary_nested = "outer true" if branch_flag else "inner true" if other_branch else "inner false"
 
 print("if / elif / else with booleans -> branch_demo=" + branch_demo)
 print("if + else without elif -> optional_branch=" + optional_branch)
@@ -118,9 +145,13 @@ print("if with nor expression -> nor_branch=" + nor_branch)
 print("if with not expression -> not_branch=" + not_branch)
 print("if with chained and -> chained_and_branch=" + chained_and_branch)
 print("if with chained or -> chained_or_branch=" + chained_or_branch)
+print("if with nested blocks -> nested_branch=" + nested_branch)
 print("int and bool equality -> bool_bridge_true=" + bool_bridge_true)
 print("int and bool equality -> bool_bridge_false=" + bool_bridge_false)
 print("short-circuit and -> safe_short_and=" + safe_short_and)
 print("short-circuit or -> safe_short_or=" + safe_short_or)
 print("short-circuit nand -> safe_short_nand=" + safe_short_nand)
 print("short-circuit nor -> safe_short_nor=" + safe_short_nor)
+print("multiline grouped condition -> multiline_branch=" + multiline_branch)
+print("ternary condition -> ternary_branch=" + ternary_branch)
+print("nested ternary condition -> ternary_nested=" + ternary_nested)

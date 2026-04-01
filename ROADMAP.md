@@ -2,22 +2,23 @@
 
 > The rebuild is governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
 
-This roadmap tracks what is still ahead of us.
-Completed historical work is intentionally not repeated here.
+This roadmap is intentionally narrowed to the current feature lane.
+Completed work in this lane stays listed so we keep visible traceability.
 
 ## Current focus
 
-The current active lane is the `.gion` scalar language rebuild:
+The current active lane is conditional logic in the `.gion` scalar language.
 
-- source Graphion
-- tokens/parsing
-- internal representation
-- bytecode
-- VM
+## Conditionals
 
-The goal is to keep growing that path without reintroducing alternate semantic engines or benchmark-only shortcuts.
+### Control flow
 
-## Near-term language work
+- [x] `if`
+- [x] `elif`
+- [x] `else`
+- [x] support multiple `elif` clauses
+- [x] support nested `if` blocks
+- [x] accept strict boolean conditions plus integer `0` / `1`
 
 ### Comparisons
 
@@ -44,62 +45,28 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 - [x] decide and implement short-circuit behavior for `and` / `or`
 - [x] tests for precedence and short-circuit behavior after it exists
 
-### More builtins
+### Documentation and examples
 
-- [ ] decide and implement the next math-oriented builtins after `abs(...)`
-- [ ] document every builtin as soon as it becomes real
+- [x] document nested `if` blocks explicitly
+- [x] add a dedicated nested-`if` example in [examples/04_conditionals.gion](examples/04_conditionals.gion)
+- [x] clarify in the docs that `else` binds to the `if` at the same indentation level
 
-### Tuples and parentheses
+### Future condition features
 
-- [ ] introduce tuple semantics
-- [ ] preserve the intended rule that `(x)` becomes a tuple form later
-- [ ] clearly distinguish grouped arithmetic expressions from tuple syntax
-
-## Runtime / frontend rebuild
-
-- [ ] continue moving toward the explicit target pipeline:
-  - `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
-- [ ] reduce historical coupling between source handling and execution internals
-- [ ] keep unsupported forms as clear errors instead of fallbacks
-- [ ] keep the bytecode inspectable
-
-## VM work
-
-- [ ] keep VM-visible behavior aligned with the actively used `.gion` subset
-- [ ] document which opcodes are active for the scalar language path
-- [ ] continue validating the VM lane independently from the source lane
-- [ ] revisit VM documentation so it separates:
-  - active scalar/runtime work
-  - broader graph/hypergraph VM capabilities
-
-## Performance work
-
-- [ ] keep `VM / Rust < 1.15x` on representative VM lanes
-- [ ] work `.gion / Rust` toward the main target band `2x to 3x`
-- [ ] treat `< 2x` as a stretch goal only if general-purpose levers remain
-- [ ] keep benchmark variation below `10%` on accepted runs
-- [ ] continue using `scalar_values_print` as the current scalar-language benchmark lane
-
-## Documentation
-
-- [ ] keep the Graphion user docs aligned with the actually implemented subset
-- [ ] keep architecture / ISA / error docs aligned with real code, not historical intermediate states
-- [ ] expand the tutorial as new language features land
-- [ ] keep the HTML doc site as the primary documentation surface
-
-## Quality
-
-- [ ] keep growing targeted tests for each new language feature
-- [ ] keep adding error-case coverage, not just happy-path coverage
-- [ ] maintain cumulative integration tests as the language surface expands
-- [ ] revisit fuzzing once the language surface is larger
-
-## Later tracks
-
-These remain interesting, but they are not the current driver of the rebuild:
-
-- richer data types
-- graph/hypergraph user-facing language features
-- function model expansion
-- deeper runtime memory model work
-- broader assembly work beyond proven hot paths
+- [x] multiline conditions with required grouping parentheses
+  - target shape:
+    ```gion
+    if (
+        ready and
+        has_token and
+        level >= 3 and
+        not blocked
+    ):
+        print("ok")
+    ```
+  - multiline conditions without parentheses should remain invalid
+- [x] ternary conditional expressions
+  - target shape:
+    ```gion
+    label = "ready" if ready else "not ready"
+    ```

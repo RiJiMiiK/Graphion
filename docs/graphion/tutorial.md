@@ -327,6 +327,59 @@ Expected output:
 after if
 ```
 
+Nested `if` blocks are also supported:
+
+```gion
+ready = true
+admin = false
+
+if ready:
+    if admin:
+        print("admin")
+    else:
+        print("user")
+else:
+    print("offline")
+```
+
+Expected output:
+
+```text
+user
+```
+
+The important rule is that each `else` attaches to the `if` at the same indentation level.
+Indentation decides the binding, not just the nearest visible `if`.
+
+You can also split a longer condition across multiple lines when you wrap it in grouping parentheses:
+
+```gion
+if (
+    ready and
+    has_token and
+    level >= 3 and
+    not blocked
+):
+    print("ok")
+```
+
+Without the outer parentheses, that multiline form remains invalid.
+
+For simple value selection, you can also use a ternary expression:
+
+```gion
+label = "ready" if ready else "not ready"
+print(label)
+```
+
+Expected output:
+
+```text
+ready
+```
+
+The ternary condition follows the same truth rules as `if` / `elif`.
+
 Current conditions currently accept:
 
 - `true`

@@ -1658,6 +1658,14 @@ int test_gion_if_elif_else_control_flow(void) {
       "    not_branch = \"not condition works\"\n"
       "else:\n"
       "    not_branch = \"bad\"\n"
+      "if (\n"
+      "    flag and\n"
+      "    2 < 3 and\n"
+      "    not false\n"
+      "):\n"
+      "    multiline_branch = \"multiline condition works\"\n"
+      "else:\n"
+      "    multiline_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1683,6 +1691,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(or_branch)\n"
       "print(nor_branch)\n"
       "print(not_branch)\n"
+      "print(multiline_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1704,6 +1713,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *or_branch;
   const graphion_runtime_value *nor_branch;
   const graphion_runtime_value *not_branch;
+  const graphion_runtime_value *multiline_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1741,6 +1751,7 @@ int test_gion_if_elif_else_control_flow(void) {
   or_branch = graphion_runtime_scope_find(&scope, "or_branch");
   nor_branch = graphion_runtime_scope_find(&scope, "nor_branch");
   not_branch = graphion_runtime_scope_find(&scope, "not_branch");
+  multiline_branch = graphion_runtime_scope_find(&scope, "multiline_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1821,18 +1832,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 18);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (multiline_branch == NULL || multiline_branch->kind != GVM_VALUE_STRING ||
+      strcmp(multiline_branch->as.string_value, "multiline condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 19);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 20);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnor condition works\nnot condition works\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 21);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnor condition works\nnot condition works\nmultiline condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 22);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1863,6 +1879,10 @@ int test_gion_if_elif_else_errors(void) {
       {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "multiline condition requires grouping parentheses"},
+      {"if (\n    true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after if condition"},
+      {"if false:\n    print(1)\nelif true and\n    false:\n    print(2)\n", GINT_ERR_PARSE, 3U, "multiline condition requires grouping parentheses"},
+      {"if false:\n    print(1)\nelif (\n    true and\n    false:\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
       {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n", GINT_ERR_PARSE, 6U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelse:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_PARSE, 5U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelif true\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
@@ -3519,6 +3539,125 @@ int test_gion_nor_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc && rc != cases[i].alternate_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_ternary_expressions(void) {
+  const char *source =
+      "ready = true\n"
+      "fallback = false\n"
+      "label = \"ready\" if ready else \"not ready\"\n"
+      "int_label = \"int true\" if 1 else \"bad\"\n"
+      "compare_label = \"compare true\" if 2 < 3 else \"bad\"\n"
+      "logic_label = \"logic true\" if true and 1 else \"bad\"\n"
+      "nested = \"outer true\" if true else \"inner true\" if false else \"inner false\"\n"
+      "grouped = (\"grouped true\" if false else \"grouped false\")\n"
+      "print(label)\n"
+      "print(int_label)\n"
+      "print(compare_label)\n"
+      "print(logic_label)\n"
+      "print(nested)\n"
+      "print(grouped)\n";
+  const char *path = "gion_ternary_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *label;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  label = graphion_runtime_scope_find(&scope, "label");
+  if (label == NULL || label->kind != GVM_VALUE_STRING || strcmp(label->as.string_value, "ready") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  remove(path);
+  if (strcmp(output, "ready\nint true\ncompare true\nlogic true\nouter true\ngrouped false\n") != 0) {
+    return finish_scope_test(&scope, 5);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_ternary_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = \"ready\" if 2 else \"bad\"\n", 1U},
+      {"value = \"ready\" if 1.0 else \"bad\"\n", 1U},
+      {"value = \"ready\" if \"x\" else \"bad\"\n", 1U},
+      {"value = \"ready\" if 2 and true else \"bad\"\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_ternary_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    const char *message;
+  } cases[] = {
+      {"value = \"ready\" if ready\n", GINT_ERR_PARSE, "expected else in ternary expression"},
+      {"value = if ready else \"bad\"\n", GINT_ERR_PARSE, "expected expression before ternary if"},
+      {"value = \"ready\" if else \"bad\"\n", GINT_ERR_PARSE, "expected condition after ternary if"},
+      {"value = \"ready\" if ready else\n", GINT_ERR_PARSE, "expected expression after ternary else"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
