@@ -359,6 +359,51 @@ label = "outer" if ready else "inner" if fallback else "none"
 
 The last form is valid, but a block is usually easier to read once nested ternary logic grows.
 
+### Conditional Precedence
+
+When several conditional operators appear in the same expression, Graphion reads them in this order:
+
+| Level | Operators | Notes |
+| --- | --- | --- |
+| 1 | `(...)` | Explicit grouping always wins |
+| 2 | `==`, `!=`, `<`, `<=`, `>`, `>=` | Comparisons produce boolean results |
+| 3 | `not` | Unary boolean negation |
+| 4 | `and`, `nand` | `nand` shares the same level as `and` |
+| 5 | `or`, `nor` | `nor` shares the same level as `or` |
+| 6 | `value_if_true if condition else value_if_false` | Ternary expressions bind last among conditional forms |
+
+Examples:
+
+```gion
+true or false and false
+```
+
+is read as:
+
+```gion
+true or (false and false)
+```
+
+```gion
+not 1 == 2 and true
+```
+
+is read as:
+
+```gion
+(not (1 == 2)) and true
+```
+
+```gion
+"ready" if true or false and false else "fallback"
+```
+
+is read as:
+
+```gion
+"ready" if (true or (false and false)) else "fallback"
+```
+
 ### Match Blocks
 
 Graphion also supports value-based branching with `match`:
