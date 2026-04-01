@@ -17,11 +17,12 @@ Graphion is currently an early-stage language with a small but already usable su
 - compound assignments
 - boolean `if / elif / else` blocks
 - boolean `and`
+- boolean `nand`
 - boolean `or`
 - boolean `not`
 - line comments with `#`
 - block comments with `/* ... */`
-- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `or` / `not`
+- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `not`
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.

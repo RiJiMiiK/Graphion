@@ -213,13 +213,14 @@ Current behavior:
 
 ## Boolean Logic
 
-Graphion currently supports `and`, `or`, and `not`.
+Graphion currently supports `and`, `nand`, `or`, and `not`.
 
 ```gion
 both_true = true and true
 bridge_true = 1 and true
 bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
 any_ready = false or 1
 any_path = false or 1 == 1 or false
 inverted_ready = not false
@@ -229,6 +230,7 @@ print(both_true)
 print(bridge_true)
 print(bridge_false)
 print(all_ready)
+print(not_both_ready)
 print(any_ready)
 print(any_path)
 print(inverted_ready)
@@ -242,6 +244,7 @@ true
 true
 false
 true
+false
 true
 true
 true
@@ -253,19 +256,23 @@ Current behavior:
 - `and` accepts `bool`
 - `and` also accepts integer `0` / `1`
 - `and` can be chained multiple times
+- `nand` follows the same type rules as `and` and flips the final result
 - `or` follows the same type rules and can also be chained
 - `not` follows the same type rules as a unary operator
-- `not` currently binds tighter than `and`, and `and` binds tighter than `or`
+- `not` currently binds tighter than `and` / `nand`, and `and` / `nand` bind tighter than `or`
 - `2 and true` is a runtime error
 - `1.0 and true` is a runtime error
 - `"x" and true` is a runtime error
+- `2 nand true` is a runtime error
+- `1.0 nand true` is a runtime error
+- `"x" nand true` is a runtime error
 - `2 or true` is a runtime error
 - `1.0 or true` is a runtime error
 - `"x" or true` is a runtime error
 - `not 2` is a runtime error
 - `not 1.0` is a runtime error
 - `not "x"` is a runtime error
-- V1 `and` and `or` evaluate both sides; short-circuit is not implemented yet
+- V1 `and`, `nand`, and `or` evaluate both sides; short-circuit is not implemented yet
 
 ## Conditional Blocks
 

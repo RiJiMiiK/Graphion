@@ -65,6 +65,10 @@ if true and 1:
     and_branch = "true and 1 is true"
 else:
     and_branch = "bad"
+if true nand 1:
+    nand_branch = "bad"
+else:
+    nand_branch = "true nand 1 is false"
 
 if false or 1:
     or_branch = "false or 1 is true"
@@ -100,6 +104,7 @@ print("if with less-equal expression -> less_equal_branch=" + less_equal_branch)
 print("if with greater-than expression -> greater_than_branch=" + greater_than_branch)
 print("if with greater-equal expression -> greater_equal_branch=" + greater_equal_branch)
 print("if with and expression -> and_branch=" + and_branch)
+print("if with nand expression -> nand_branch=" + nand_branch)
 print("if with or expression -> or_branch=" + or_branch)
 print("if with not expression -> not_branch=" + not_branch)
 print("if with chained and -> chained_and_branch=" + chained_and_branch)

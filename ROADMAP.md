@@ -37,7 +37,7 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 - [x] `and`
 - [x] `or`
 - [x] `not`
-- [ ] `nand`
+- [x] `nand`
 - [ ] `nor`
 - [ ] documented truth rules
 - [x] fix boolean precedence so `and` / `nand` bind tighter than `or` / `nor`

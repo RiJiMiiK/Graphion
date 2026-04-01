@@ -389,10 +389,11 @@ Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime
 Currently supported boolean logic operators:
 
 - `and`
+- `nand`
 - `or`
 - `not`
 
-`and`, `or`, and `not` return a `bool`.
+`and`, `nand`, `or`, and `not` return a `bool`.
 
 Examples:
 
@@ -401,6 +402,7 @@ both_true = true and true
 bridge_true = 1 and true
 bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
 any_ready = false or 1
 any_path = false or 1 == 1 or false
 inverted_ready = not false
@@ -410,6 +412,7 @@ print(both_true)
 print(bridge_true)
 print(bridge_false)
 print(all_ready)
+print(not_both_ready)
 print(any_ready)
 print(any_path)
 print(inverted_ready)
@@ -426,6 +429,18 @@ true and 1 and 2 < 3
 
 is currently evaluated left to right as repeated `and` operations, with comparisons evaluated before `and`.
 
+`nand` currently follows the same precedence and type rules as `and`, but inverts the final boolean result.
+
+```gion
+true nand 1
+```
+
+currently evaluates to:
+
+```gion
+false
+```
+
 `or` can also be chained multiple times.
 
 This:
@@ -436,18 +451,18 @@ false or 1 == 1 or false
 
 is currently evaluated left to right as repeated `or` operations, with comparisons evaluated before `or`.
 
-When `and` and `or` are mixed, `and` currently binds tighter than `or`.
+When `and` / `nand` and `or` are mixed, `and` / `nand` currently bind tighter than `or`.
 
 So:
 
 ```gion
-true or false and false
+true or true nand true
 ```
 
 is currently interpreted as:
 
 ```gion
-true or (false and false)
+true or (true nand true)
 ```
 
 `not` currently binds tighter than both `and` and `or`.
@@ -477,6 +492,14 @@ These are currently runtime errors:
 
 `or` currently follows the same type rules as `and`, but returns true when either side is true.
 
+`nand` currently follows the same type rules as `and`, but returns the negation of `and`.
+
+These are currently runtime errors:
+
+- `2 nand true`
+- `1.0 nand true`
+- `"x" nand true`
+
 These are currently runtime errors:
 
 - `2 or true`
@@ -498,6 +521,7 @@ Current V1 note:
 
 - `not` currently evaluates its operand and negates the resulting boolean value
 - `and` currently evaluates both operands
+- `nand` currently evaluates both operands
 - `or` currently evaluates both operands
 - short-circuit behavior is not implemented yet
 
@@ -512,7 +536,7 @@ Current precedence order:
 5. `+`, `-`
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
 7. `not`
-8. `and`
+8. `and`, `nand`
 9. `or`
 
 Examples:

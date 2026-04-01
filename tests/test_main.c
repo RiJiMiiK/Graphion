@@ -43,6 +43,8 @@ int test_vm_or_opcode(void);
 int test_vm_or_incompatible_types_fail(void);
 int test_vm_not_opcode(void);
 int test_vm_not_incompatible_types_fail(void);
+int test_vm_nand_opcode(void);
+int test_vm_nand_incompatible_types_fail(void);
 int test_vm_string_addition_opcode(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
@@ -133,6 +135,9 @@ int test_gion_or_syntax_errors(void);
 int test_gion_not_expressions(void);
 int test_gion_not_runtime_errors(void);
 int test_gion_not_syntax_errors(void);
+int test_gion_nand_expressions(void);
+int test_gion_nand_runtime_errors(void);
+int test_gion_nand_syntax_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -207,6 +212,8 @@ int main(int argc, char **argv) {
     {"vm_or_incompatible_types_fail", test_vm_or_incompatible_types_fail},
     {"vm_not_opcode", test_vm_not_opcode},
     {"vm_not_incompatible_types_fail", test_vm_not_incompatible_types_fail},
+    {"vm_nand_opcode", test_vm_nand_opcode},
+    {"vm_nand_incompatible_types_fail", test_vm_nand_incompatible_types_fail},
       {"vm_string_addition_opcode", test_vm_string_addition_opcode},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
@@ -298,6 +305,9 @@ int main(int argc, char **argv) {
     {"gion_not_expressions", test_gion_not_expressions},
     {"gion_not_runtime_errors", test_gion_not_runtime_errors},
     {"gion_not_syntax_errors", test_gion_not_syntax_errors},
+    {"gion_nand_expressions", test_gion_nand_expressions},
+    {"gion_nand_runtime_errors", test_gion_nand_runtime_errors},
+    {"gion_nand_syntax_errors", test_gion_nand_syntax_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

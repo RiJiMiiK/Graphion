@@ -22,6 +22,7 @@ greater_number = 4 > 3
 same_or_greater = 4 >= 4
 both_ready = true and 1
 all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
 any_ready = false or 1
 any_path = false or 1 == 1 or false
 inverted_ready = not false
@@ -69,6 +70,10 @@ if true and 1:
     and_branch = "true and 1 is true"
 else:
     and_branch = "bad"
+if true nand 1:
+    nand_branch = "bad"
+else:
+    nand_branch = "true nand 1 is false"
 
 if false or 1:
     or_branch = "false or 1 is true"
@@ -96,6 +101,7 @@ print("overview greater-than on numbers -> greater_number=" + greater_number)
 print("overview greater-equal on numbers -> same_or_greater=" + same_or_greater)
 print("overview boolean logic -> both_ready=" + both_ready)
 print("overview chained and -> all_ready=" + all_ready)
+print("overview boolean nand -> not_both_ready=" + not_both_ready)
 print("overview boolean logic -> any_ready=" + any_ready)
 print("overview chained or -> any_path=" + any_path)
 print("overview boolean not -> inverted_ready=" + inverted_ready)
@@ -108,6 +114,7 @@ print("overview less-equal in condition -> less_equal_branch=" + less_equal_bran
 print("overview greater-than in condition -> greater_than_branch=" + greater_than_branch)
 print("overview greater-equal in condition -> greater_equal_branch=" + greater_equal_branch)
 print("overview and in condition -> and_branch=" + and_branch)
+print("overview nand in condition -> nand_branch=" + nand_branch)
 print("overview or in condition -> or_branch=" + or_branch)
 print("overview not in condition -> not_branch=" + not_branch)
 print("overview print coercion -> " + "Test " + 7)
