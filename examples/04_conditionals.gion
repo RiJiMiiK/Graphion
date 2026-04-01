@@ -46,6 +46,11 @@ if 2 < 3:
 else:
     less_than_branch = "bad"
 
+if 3 <= 3:
+    less_equal_branch = "3 <= 3 is true"
+else:
+    less_equal_branch = "bad"
+
 bool_bridge_true = 1 == true
 bool_bridge_false = 0 == false
 
@@ -57,5 +62,6 @@ print("if without else -> single_if_demo=" + single_if_demo)
 print("if with equality expression -> equality_branch=" + equality_branch)
 print("if with inequality expression -> inequality_branch=" + inequality_branch)
 print("if with less-than expression -> less_than_branch=" + less_than_branch)
+print("if with less-equal expression -> less_equal_branch=" + less_equal_branch)
 print("int and bool equality -> bool_bridge_true=" + bool_bridge_true)
 print("int and bool equality -> bool_bridge_false=" + bool_bridge_false)

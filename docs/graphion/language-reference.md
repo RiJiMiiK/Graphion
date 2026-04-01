@@ -327,8 +327,9 @@ Currently supported comparison operators:
 - `==`
 - `!=`
 - `<`
+- `<=`
 
-`==`, `!=`, and `<` return a `bool`.
+`==`, `!=`, `<`, and `<=` return a `bool`.
 
 Examples:
 
@@ -341,6 +342,7 @@ same_text = "ok" == "ok"
 different_int = 42 != 41
 different_text = "ok" != "no"
 smaller_number = 2 < 3
+same_or_smaller = 3 <= 3
 ```
 
 Current comparison semantics:
@@ -358,13 +360,15 @@ Other incompatible scalar kinds currently raise a runtime error.
 
 `!=` follows the same type rules as `==`, but negates the final boolean result.
 
-`<` currently supports numeric comparisons only:
+`<` and `<=` currently support numeric comparisons only:
 
 - `int < int`
 - `int < float`
 - `float < float`
 
-Using `<` with `bool` or `string` currently raises a runtime error.
+`<=` follows the same numeric-only rule.
+
+Using `<` or `<=` with `bool` or `string` currently raises a runtime error.
 
 ## Precedence
 
@@ -375,7 +379,7 @@ Current precedence order:
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
-6. `==`, `!=`, `<`
+6. `==`, `!=`, `<`, `<=`
 
 Examples:
 
