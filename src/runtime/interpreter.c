@@ -665,6 +665,9 @@ static int parse_expression(const char **cursor,
     } else if ((*cursor)[0] == '<' && (*cursor)[1] == '=') {
       cmp_op = GVM_OP_LE;
       *cursor += 2;
+    } else if ((*cursor)[0] == '>' && (*cursor)[1] == '=') {
+      cmp_op = GVM_OP_GE;
+      *cursor += 2;
     } else if ((*cursor)[0] == '<' && (*cursor)[1] != '=') {
       cmp_op = GVM_OP_LT;
       *cursor += 1;

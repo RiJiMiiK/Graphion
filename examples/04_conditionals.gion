@@ -56,6 +56,11 @@ if 4 > 3:
 else:
     greater_than_branch = "bad"
 
+if 4 >= 4:
+    greater_equal_branch = "4 >= 4 is true"
+else:
+    greater_equal_branch = "bad"
+
 bool_bridge_true = 1 == true
 bool_bridge_false = 0 == false
 
@@ -69,5 +74,6 @@ print("if with inequality expression -> inequality_branch=" + inequality_branch)
 print("if with less-than expression -> less_than_branch=" + less_than_branch)
 print("if with less-equal expression -> less_equal_branch=" + less_equal_branch)
 print("if with greater-than expression -> greater_than_branch=" + greater_than_branch)
+print("if with greater-equal expression -> greater_equal_branch=" + greater_equal_branch)
 print("int and bool equality -> bool_bridge_true=" + bool_bridge_true)
 print("int and bool equality -> bool_bridge_false=" + bool_bridge_false)
