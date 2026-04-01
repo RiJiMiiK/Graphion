@@ -25,8 +25,10 @@ int test_vm_floor_div_opcode(void);
 int test_vm_abs_opcode(void);
 int test_vm_eq_opcode(void);
 int test_vm_eq_incompatible_types_fail(void);
+int test_vm_eq_int_bool_out_of_range_fail(void);
 int test_vm_ne_opcode(void);
 int test_vm_ne_incompatible_types_fail(void);
+int test_vm_ne_int_bool_out_of_range_fail(void);
 int test_vm_lt_opcode(void);
 int test_vm_lt_incompatible_types_fail(void);
 int test_vm_le_opcode(void);
@@ -35,6 +37,17 @@ int test_vm_gt_opcode(void);
 int test_vm_gt_incompatible_types_fail(void);
 int test_vm_ge_opcode(void);
 int test_vm_ge_incompatible_types_fail(void);
+int test_vm_and_opcode(void);
+int test_vm_and_incompatible_types_fail(void);
+int test_vm_or_opcode(void);
+int test_vm_or_incompatible_types_fail(void);
+int test_vm_not_opcode(void);
+int test_vm_not_incompatible_types_fail(void);
+int test_vm_nand_opcode(void);
+int test_vm_nand_incompatible_types_fail(void);
+int test_vm_nor_opcode(void);
+int test_vm_nor_incompatible_types_fail(void);
+int test_vm_jump_opcode(void);
 int test_vm_string_addition_opcode(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
@@ -116,6 +129,23 @@ int test_gion_greater_than_syntax_errors(void);
 int test_gion_greater_equal_expressions(void);
 int test_gion_greater_equal_runtime_errors(void);
 int test_gion_greater_equal_syntax_errors(void);
+int test_gion_and_expressions(void);
+int test_gion_and_runtime_errors(void);
+int test_gion_and_syntax_errors(void);
+int test_gion_or_expressions(void);
+int test_gion_or_runtime_errors(void);
+int test_gion_or_syntax_errors(void);
+int test_gion_not_expressions(void);
+int test_gion_not_runtime_errors(void);
+int test_gion_not_syntax_errors(void);
+int test_gion_nand_expressions(void);
+int test_gion_nand_runtime_errors(void);
+int test_gion_nand_syntax_errors(void);
+int test_gion_nor_expressions(void);
+int test_gion_nor_runtime_errors(void);
+int test_gion_nor_syntax_errors(void);
+int test_gion_boolean_short_circuit(void);
+int test_gion_boolean_short_circuit_runtime_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -172,8 +202,10 @@ int main(int argc, char **argv) {
       {"vm_abs_opcode", test_vm_abs_opcode},
       {"vm_eq_opcode", test_vm_eq_opcode},
       {"vm_eq_incompatible_types_fail", test_vm_eq_incompatible_types_fail},
+      {"vm_eq_int_bool_out_of_range_fail", test_vm_eq_int_bool_out_of_range_fail},
       {"vm_ne_opcode", test_vm_ne_opcode},
       {"vm_ne_incompatible_types_fail", test_vm_ne_incompatible_types_fail},
+      {"vm_ne_int_bool_out_of_range_fail", test_vm_ne_int_bool_out_of_range_fail},
       {"vm_lt_opcode", test_vm_lt_opcode},
       {"vm_lt_incompatible_types_fail", test_vm_lt_incompatible_types_fail},
       {"vm_le_opcode", test_vm_le_opcode},
@@ -182,6 +214,17 @@ int main(int argc, char **argv) {
       {"vm_gt_incompatible_types_fail", test_vm_gt_incompatible_types_fail},
       {"vm_ge_opcode", test_vm_ge_opcode},
       {"vm_ge_incompatible_types_fail", test_vm_ge_incompatible_types_fail},
+    {"vm_and_opcode", test_vm_and_opcode},
+    {"vm_and_incompatible_types_fail", test_vm_and_incompatible_types_fail},
+    {"vm_or_opcode", test_vm_or_opcode},
+    {"vm_or_incompatible_types_fail", test_vm_or_incompatible_types_fail},
+    {"vm_not_opcode", test_vm_not_opcode},
+    {"vm_not_incompatible_types_fail", test_vm_not_incompatible_types_fail},
+    {"vm_nand_opcode", test_vm_nand_opcode},
+    {"vm_nand_incompatible_types_fail", test_vm_nand_incompatible_types_fail},
+    {"vm_nor_opcode", test_vm_nor_opcode},
+    {"vm_nor_incompatible_types_fail", test_vm_nor_incompatible_types_fail},
+    {"vm_jump_opcode", test_vm_jump_opcode},
       {"vm_string_addition_opcode", test_vm_string_addition_opcode},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
@@ -264,6 +307,23 @@ int main(int argc, char **argv) {
       {"gion_greater_equal_expressions", test_gion_greater_equal_expressions},
       {"gion_greater_equal_runtime_errors", test_gion_greater_equal_runtime_errors},
       {"gion_greater_equal_syntax_errors", test_gion_greater_equal_syntax_errors},
+    {"gion_and_expressions", test_gion_and_expressions},
+    {"gion_and_runtime_errors", test_gion_and_runtime_errors},
+    {"gion_and_syntax_errors", test_gion_and_syntax_errors},
+    {"gion_or_expressions", test_gion_or_expressions},
+    {"gion_or_runtime_errors", test_gion_or_runtime_errors},
+    {"gion_or_syntax_errors", test_gion_or_syntax_errors},
+    {"gion_not_expressions", test_gion_not_expressions},
+    {"gion_not_runtime_errors", test_gion_not_runtime_errors},
+    {"gion_not_syntax_errors", test_gion_not_syntax_errors},
+    {"gion_nand_expressions", test_gion_nand_expressions},
+    {"gion_nand_runtime_errors", test_gion_nand_runtime_errors},
+    {"gion_nand_syntax_errors", test_gion_nand_syntax_errors},
+    {"gion_nor_expressions", test_gion_nor_expressions},
+    {"gion_nor_runtime_errors", test_gion_nor_runtime_errors},
+    {"gion_nor_syntax_errors", test_gion_nor_syntax_errors},
+    {"gion_boolean_short_circuit", test_gion_boolean_short_circuit},
+    {"gion_boolean_short_circuit_runtime_errors", test_gion_boolean_short_circuit_runtime_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

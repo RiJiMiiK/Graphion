@@ -27,18 +27,22 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 - [x] `<=`
 - [x] `>`
 - [x] `>=`
-- [ ] finish and document comparison semantics across `int`, `float`, `bool`, and `string`
-  - current `==` and `!=` support numeric comparison, `int`/`bool` bridging for `0` and `1`, same-kind `bool`, same-kind `string`, and runtime errors for incompatible scalar kinds
+- [x] finish and document comparison semantics across `int`, `float`, `bool`, and `string`
+  - current `==` and `!=` support numeric comparison, same-kind `bool`, same-kind `string`, and a strict `int`/`bool` bridge only for `0` and `1`
+  - current `==` and `!=` reject `float`/`bool`, `string`/non-`string`, and `int`/`bool` comparisons when the integer is outside `0` or `1`
   - current `<`, `<=`, `>`, and `>=` support numeric comparison only and reject `bool` / `string`
-- [ ] decide whether later ordered comparisons should keep rejecting `bool` values or adopt a strict `0/1` ordering rule
 
 ### Boolean logic
 
-- [ ] `and`
-- [ ] `or`
-- [ ] `not`
-- [ ] documented truth rules
-- [ ] tests for precedence and short-circuit behavior if adopted
+- [x] `and`
+- [x] `or`
+- [x] `not`
+- [x] `nand`
+- [x] `nor`
+- [x] documented truth rules
+- [x] fix boolean precedence so `and` / `nand` bind tighter than `or` / `nor`
+- [x] decide and implement short-circuit behavior for `and` / `or`
+- [x] tests for precedence and short-circuit behavior after it exists
 
 ### More builtins
 

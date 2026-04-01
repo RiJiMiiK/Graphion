@@ -60,6 +60,9 @@ These names are currently reserved and cannot be assigned:
 - `if`
 - `elif`
 - `else`
+- `and`
+- `or`
+- `not`
 
 ## Literals
 
@@ -354,13 +357,20 @@ Current comparison semantics:
 - `int == int`
 - `int == float`
 - `float == float`
-- `int == bool` when the integer is `0` or `1`
+- `int == bool` only when the integer is `0` or `1`
+- `bool == int` only when the integer is `0` or `1`
 - `bool == bool`
 - `string == string`
 
-`1 == true` and `0 == false` currently return `true`.
+`1 == true`, `true == 1`, `0 == false`, and `false == 0` currently return `true`.
 
-Other incompatible scalar kinds currently raise a runtime error.
+These are currently runtime errors:
+
+- `2 == true`
+- `true == 2`
+- `1.0 == true`
+- `"1" == 1`
+- `"true" == true`
 
 `!=` follows the same type rules as `==`, but negates the final boolean result.
 
@@ -374,6 +384,273 @@ Other incompatible scalar kinds currently raise a runtime error.
 
 Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime error.
 
+## Boolean Logic
+
+Currently supported boolean logic operators:
+
+- `and`
+- `nand`
+- `or`
+- `nor`
+- `not`
+
+`and`, `nand`, `or`, `nor`, and `not` return a `bool`.
+
+## Truth Rules
+
+Graphion currently uses a strict boolean subset for boolean logic and conditions:
+
+- `true` is true
+- `false` is false
+- integer `1` is treated as true
+- integer `0` is treated as false
+- other integers are rejected
+- `float` values are rejected
+- `string` values are rejected
+
+This rule currently applies to:
+
+- `if` / `elif` conditions
+- `not`
+- `and` / `nand`
+- `or` / `nor`
+
+Examples:
+
+```gion
+if 1:
+    print("true")
+
+if 0:
+    print("bad")
+else:
+    print("false")
+
+print(not 1)
+print(false nor 0)
+```
+
+### Truth Tables
+
+`and`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `true` |
+| `true` | `false` | `false` |
+| `false` | `true` | `false` |
+| `false` | `false` | `false` |
+
+`nand`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `false` |
+| `true` | `false` | `true` |
+| `false` | `true` | `true` |
+| `false` | `false` | `true` |
+
+`or`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `true` |
+| `true` | `false` | `true` |
+| `false` | `true` | `true` |
+| `false` | `false` | `false` |
+
+`nor`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `false` |
+| `true` | `false` | `false` |
+| `false` | `true` | `false` |
+| `false` | `false` | `true` |
+
+`not`
+
+| value | result |
+| --- | --- |
+| `true` | `false` |
+| `false` | `true` |
+
+Examples:
+
+```gion
+both_true = true and true
+bridge_true = 1 and true
+bridge_false = false and 1
+all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
+any_ready = false or 1
+none_ready = false nor 0
+any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
+
+print(both_true)
+print(bridge_true)
+print(bridge_false)
+print(all_ready)
+print(not_both_ready)
+print(any_ready)
+print(none_ready)
+print(any_path)
+print(inverted_ready)
+print(inverted_path)
+```
+
+`and` can be chained multiple times.
+
+This:
+
+```gion
+true and 1 and 2 < 3
+```
+
+is currently evaluated left to right as repeated `and` operations, with comparisons evaluated before `and`.
+
+`nand` currently follows the same precedence and type rules as `and`, but inverts the final boolean result.
+
+```gion
+true nand 1
+```
+
+currently evaluates to:
+
+```gion
+false
+```
+
+`or` can also be chained multiple times.
+
+This:
+
+```gion
+false or 1 == 1 or false
+```
+
+is currently evaluated left to right as repeated `or` operations, with comparisons evaluated before `or`.
+
+`nor` currently follows the same precedence and type rules as `or`, but inverts the final boolean result.
+
+```gion
+false nor 0
+```
+
+currently evaluates to:
+
+```gion
+true
+```
+
+When `and` / `nand` and `or` / `nor` are mixed, `and` / `nand` currently bind tighter than `or` / `nor`.
+
+So:
+
+```gion
+true or true nand true
+```
+
+is currently interpreted as:
+
+```gion
+true or (true nand true)
+```
+
+`not` currently binds tighter than both `and` and `or`.
+
+```gion
+not false and false
+```
+
+is currently interpreted as:
+
+```gion
+(not false) and false
+```
+
+Current `and` rules:
+
+- `bool and bool`
+- `int and bool` only when the integer is `0` or `1`
+- `bool and int` only when the integer is `0` or `1`
+- `int and int` only when both integers are `0` or `1`
+
+These are currently runtime errors when the invalid side must actually be evaluated:
+
+- `2 and true`
+- `true and 2`
+- `1.0 and true`
+- `"x" and true`
+
+These currently succeed because the left side short-circuits first:
+
+- `false and 2`
+- `0 and "x"`
+
+`or` currently follows the same type rules as `and`, but returns true when either side is true.
+
+`nand` currently follows the same type rules as `and`, but returns the negation of `and`.
+
+These are currently runtime errors when the invalid side must actually be evaluated:
+
+- `2 nand true`
+- `true nand 2`
+- `1.0 nand true`
+- `"x" nand true`
+
+These currently succeed because the left side short-circuits first:
+
+- `false nand 2`
+- `0 nand "x"`
+
+These are currently runtime errors when the invalid side must actually be evaluated:
+
+- `2 or true`
+- `false or 2`
+- `1.0 or true`
+- `"x" or true`
+
+These currently succeed because the left side short-circuits first:
+
+- `true or 2`
+- `1 or "x"`
+
+`nor` currently follows the same type rules as `or`, but returns the negation of `or`.
+
+These are currently runtime errors when the invalid side must actually be evaluated:
+
+- `2 nor false`
+- `false nor 2`
+- `1.0 nor false`
+- `"x" nor false`
+
+These currently succeed because the left side short-circuits first:
+
+- `true nor 2`
+- `1 nor "x"`
+
+`not` currently accepts:
+
+- `bool`
+- integer `0` / `1`
+
+These are currently runtime errors:
+
+- `not 2`
+- `not 1.0`
+- `not "x"`
+
+Current evaluation note:
+
+- `not` evaluates its operand and negates the resulting boolean value
+- `and` short-circuits when the left side is `false` or `0`
+- `nand` short-circuits when the left side is `false` or `0`
+- `or` short-circuits when the left side is `true` or `1`
+- `nor` short-circuits when the left side is `true` or `1`
+
 ## Precedence
 
 Current precedence order:
@@ -384,6 +661,9 @@ Current precedence order:
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
+7. `not`
+8. `and`, `nand`
+9. `or`, `nor`
 
 Examples:
 

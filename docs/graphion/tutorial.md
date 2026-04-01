@@ -152,7 +152,7 @@ Expected output:
 
 ## Equality
 
-Graphion currently supports `==`, `!=`, and numeric `<` / `<=` / `>` / `>=`.
+Graphion currently supports `==`, `!=`, numeric `<` / `<=` / `>` / `>=`, and boolean `and` / `or`.
 
 It returns a boolean result:
 
@@ -202,12 +202,91 @@ Current behavior:
 
 - `int == int` works
 - `int == float` compares numerically
-- `1 == true` and `0 == false` work
+- `1 == true`, `true == 1`, `0 == false`, and `false == 0` work
 - `bool == bool` works
 - `string == string` works
-- incompatible scalar types raise a runtime error
+- `int == bool` is only allowed when the integer is `0` or `1`
+- `float == bool` raises a runtime error
+- `string` compared to a non-`string` raises a runtime error
 - `!=` follows the same type rules and flips the final result
 - `<`, `<=`, `>`, and `>=` currently work only on numeric values
+
+## Boolean Logic
+
+Graphion currently supports `and`, `nand`, `or`, `nor`, and `not`.
+
+```gion
+both_true = true and true
+bridge_true = 1 and true
+bridge_false = false and 1
+all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
+any_ready = false or 1
+none_ready = false nor 0
+any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
+
+print(both_true)
+print(bridge_true)
+print(bridge_false)
+print(all_ready)
+print(not_both_ready)
+print(any_ready)
+print(none_ready)
+print(any_path)
+print(inverted_ready)
+print(inverted_path)
+```
+
+Expected output:
+
+```text
+true
+true
+false
+true
+false
+true
+true
+true
+true
+true
+```
+
+Current behavior:
+
+- truth rules are strict:
+  - `true` and `1` behave as true
+  - `false` and `0` behave as false
+  - other integers, floats, and strings are rejected in boolean logic
+- `and` accepts `bool`
+- `and` also accepts integer `0` / `1`
+- `and` can be chained multiple times
+- `nand` follows the same type rules as `and` and flips the final result
+- `or` follows the same type rules and can also be chained
+- `nor` follows the same type rules as `or` and flips the final result
+- `not` follows the same type rules as a unary operator
+- `not` currently binds tighter than `and` / `nand`, and `and` / `nand` bind tighter than `or` / `nor`
+- `2 and true` is a runtime error
+- `1.0 and true` is a runtime error
+- `"x" and true` is a runtime error
+- `2 nand true` is a runtime error
+- `1.0 nand true` is a runtime error
+- `"x" nand true` is a runtime error
+- `2 or true` is a runtime error
+- `1.0 or true` is a runtime error
+- `"x" or true` is a runtime error
+- `2 nor false` is a runtime error
+- `1.0 nor false` is a runtime error
+- `"x" nor false` is a runtime error
+- `not 2` is a runtime error
+- `not 1.0` is a runtime error
+- `not "x"` is a runtime error
+- `false and 2` succeeds because `and` short-circuits on the left
+- `true or 2` succeeds because `or` short-circuits on the left
+- `false nand 2` succeeds because `nand` short-circuits on the left
+- `true nor 2` succeeds because `nor` short-circuits on the left
 
 ## Conditional Blocks
 

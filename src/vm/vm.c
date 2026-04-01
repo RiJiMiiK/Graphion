@@ -692,6 +692,14 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_LE:
       case GVM_OP_GT:
       case GVM_OP_GE:
+      case GVM_OP_AND:
+      case GVM_OP_OR:
+      case GVM_OP_NOT:
+      case GVM_OP_NAND:
+      case GVM_OP_NOR:
+      case GVM_OP_JUMP:
+      case GVM_OP_JUMP_IF_TRUE:
+      case GVM_OP_JUMP_IF_FALSE:
         return 0;
       case GVM_OP_MOV:
       case GVM_OP_LOAD_CONST:
@@ -995,6 +1003,9 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
     switch (in.op) {
       case GVM_OP_NOP:
       case GVM_OP_HALT:
+      case GVM_OP_JUMP:
+      case GVM_OP_JUMP_IF_TRUE:
+      case GVM_OP_JUMP_IF_FALSE:
         break;
       case GVM_OP_SUB:
       case GVM_OP_MUL:
@@ -1008,28 +1019,25 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_LE:
       case GVM_OP_GT:
       case GVM_OP_GE:
-        if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
-              in.op != GVM_OP_GT && in.op != GVM_OP_GE) {
+      case GVM_OP_AND:
+      case GVM_OP_OR:
+      case GVM_OP_NOT:
+      case GVM_OP_NAND:
+      case GVM_OP_NOR:
+        if (in.op == GVM_OP_NOT) {
+          if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
+              reg_kinds[in.a] != GVM_VALUE_BOOL) {
+            return 0;
+          }
+        } else {
+          if ((reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
+               reg_kinds[in.a] != GVM_VALUE_BOOL) ||
+              (reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT &&
+               reg_kinds[in.b] != GVM_VALUE_BOOL)) {
             return 0;
           }
         }
-        if (reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
-              in.op != GVM_OP_GT && in.op != GVM_OP_GE) {
-            return 0;
-          }
-        }
-        if (in.op == GVM_OP_EQ || in.op == GVM_OP_NE || in.op == GVM_OP_LT || in.op == GVM_OP_LE ||
-            in.op == GVM_OP_GT || in.op == GVM_OP_GE) {
-          reg_kinds[in.a] = GVM_VALUE_BOOL;
-          break;
-        }
-        reg_kinds[in.a] =
-            in.op == GVM_OP_DIV || in.op == GVM_OP_MOD || in.op == GVM_OP_POW || in.op == GVM_OP_FLOOR_DIV ||
-                reg_kinds[in.a] == GVM_VALUE_FLOAT || reg_kinds[in.b] == GVM_VALUE_FLOAT
-                ? GVM_VALUE_FLOAT
-                : GVM_VALUE_INT;
+        reg_kinds[in.a] = GVM_VALUE_BOOL;
         break;
       case GVM_OP_MOV:
         reg_kinds[in.a] = reg_kinds[in.b];
@@ -2813,8 +2821,14 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
     }
     result = lhs_f == rhs_f;
   } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_INT) {
+    if (rhs->as.int_value != 0 && rhs->as.int_value != 1) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
     result = rhs->as.int_value == (int64_t)lhs->as.bool_value;
   } else if (lhs->kind == GVM_VALUE_INT && rhs->kind == GVM_VALUE_BOOL) {
+    if (lhs->as.int_value != 0 && lhs->as.int_value != 1) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
     result = lhs->as.int_value == (int64_t)rhs->as.bool_value;
   } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
     result = lhs->as.bool_value == rhs->as.bool_value;
@@ -2952,6 +2966,145 @@ static int op_ge(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int vm_value_get_boolean(const graphion_vm_value *value, int *out) {
+  if (value == NULL || out == NULL) {
+    return 0;
+  }
+  if (value->kind == GVM_VALUE_BOOL) {
+    *out = value->as.bool_value != 0 ? 1 : 0;
+    return 1;
+  }
+  if (value->kind == GVM_VALUE_INT && (value->as.int_value == 0 || value->as.int_value == 1)) {
+    *out = (int)value->as.int_value;
+    return 1;
+  }
+  return 0;
+}
+
+static int op_and(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  int lhs_bool;
+  int rhs_bool;
+  int result;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+  if (!vm_value_get_boolean(lhs, &lhs_bool) || !vm_value_get_boolean(rhs, &rhs_bool)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  result = (lhs_bool != 0 && rhs_bool != 0) ? 1 : 0;
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], result);
+  return GVM_OK;
+}
+
+static int op_or(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  int lhs_bool;
+  int rhs_bool;
+  int result;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+  if (!vm_value_get_boolean(lhs, &lhs_bool) || !vm_value_get_boolean(rhs, &rhs_bool)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  result = (lhs_bool != 0 || rhs_bool != 0) ? 1 : 0;
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], result);
+  return GVM_OK;
+}
+
+static int op_not(graphion_vm *vm, const graphion_insn *in) {
+  int bool_value;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_boolean(&vm->regs[in->a], &bool_value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], bool_value == 0 ? 1 : 0);
+  return GVM_OK;
+}
+
+static int op_nand(graphion_vm *vm, const graphion_insn *in) {
+  int rc = op_and(vm, in);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm->regs[in->a].as.bool_value = vm->regs[in->a].as.bool_value == 0 ? 1 : 0;
+  return GVM_OK;
+}
+
+static int op_nor(graphion_vm *vm, const graphion_insn *in) {
+  int rc = op_or(vm, in);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm->regs[in->a].as.bool_value = vm->regs[in->a].as.bool_value == 0 ? 1 : 0;
+  return GVM_OK;
+}
+
+static int op_jump(graphion_vm *vm, const graphion_insn *in) {
+  (void)in;
+  if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm->pc = (size_t)in->imm;
+  return GVM_OK;
+}
+
+static int op_jump_if_true(graphion_vm *vm, const graphion_insn *in) {
+  int bool_value;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_boolean(&vm->regs[in->a], &bool_value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (bool_value != 0) {
+    if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm->pc = (size_t)in->imm;
+  }
+  return GVM_OK;
+}
+
+static int op_jump_if_false(graphion_vm *vm, const graphion_insn *in) {
+  int bool_value;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_boolean(&vm->regs[in->a], &bool_value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (bool_value == 0) {
+    if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm->pc = (size_t)in->imm;
+  }
+  return GVM_OK;
+}
+
 static int op_add(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_ADD);
 }
@@ -3002,6 +3155,26 @@ static int op_gt_cmp(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_ge_cmp(graphion_vm *vm, const graphion_insn *in) {
   return op_ge(vm, in);
+}
+
+static int op_and_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_and(vm, in);
+}
+
+static int op_or_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_or(vm, in);
+}
+
+static int op_not_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_not(vm, in);
+}
+
+static int op_nand_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_nand(vm, in);
+}
+
+static int op_nor_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_nor(vm, in);
 }
 
 static int op_abs(graphion_vm *vm, const graphion_insn *in) {
@@ -3448,6 +3621,30 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GE:
         rc = op_ge_cmp(vm, &in);
         break;
+      case GVM_OP_AND:
+        rc = op_and_cmp(vm, &in);
+        break;
+      case GVM_OP_OR:
+        rc = op_or_cmp(vm, &in);
+        break;
+      case GVM_OP_NOT:
+        rc = op_not_cmp(vm, &in);
+        break;
+      case GVM_OP_NAND:
+        rc = op_nand_cmp(vm, &in);
+        break;
+      case GVM_OP_NOR:
+        rc = op_nor_cmp(vm, &in);
+        break;
+      case GVM_OP_JUMP:
+        rc = op_jump(vm, &in);
+        break;
+      case GVM_OP_JUMP_IF_TRUE:
+        rc = op_jump_if_true(vm, &in);
+        break;
+      case GVM_OP_JUMP_IF_FALSE:
+        rc = op_jump_if_false(vm, &in);
+        break;
       case GVM_OP_ABS:
         rc = op_abs(vm, &in);
         break;
@@ -3577,6 +3774,14 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_LE] = op_le_cmp,
       [GVM_OP_GT] = op_gt_cmp,
       [GVM_OP_GE] = op_ge_cmp,
+      [GVM_OP_AND] = op_and_cmp,
+      [GVM_OP_OR] = op_or_cmp,
+      [GVM_OP_NOT] = op_not_cmp,
+      [GVM_OP_NAND] = op_nand_cmp,
+      [GVM_OP_NOR] = op_nor_cmp,
+      [GVM_OP_JUMP] = op_jump,
+      [GVM_OP_JUMP_IF_TRUE] = op_jump_if_true,
+      [GVM_OP_JUMP_IF_FALSE] = op_jump_if_false,
       [GVM_OP_ABS] = op_abs,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
@@ -3651,6 +3856,14 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_LE] = &&L_le,
       [GVM_OP_GT] = &&L_gt,
       [GVM_OP_GE] = &&L_ge,
+      [GVM_OP_AND] = &&L_and,
+      [GVM_OP_OR] = &&L_or,
+      [GVM_OP_NOT] = &&L_not,
+      [GVM_OP_NAND] = &&L_nand,
+      [GVM_OP_NOR] = &&L_nor,
+      [GVM_OP_JUMP] = &&L_jump,
+      [GVM_OP_JUMP_IF_TRUE] = &&L_jump_if_true,
+      [GVM_OP_JUMP_IF_FALSE] = &&L_jump_if_false,
       [GVM_OP_ABS] = &&L_abs,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
@@ -3785,6 +3998,54 @@ L_gt:
     continue;
 L_ge:
     rc = op_ge_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_and:
+    rc = op_and_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_or:
+    rc = op_or_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_not:
+    rc = op_not_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_nand:
+    rc = op_nand_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_nor:
+    rc = op_nor_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_jump:
+    rc = op_jump(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_jump_if_true:
+    rc = op_jump_if_true(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_jump_if_false:
+    rc = op_jump_if_false(vm, &in);
     if (rc != 0) {
       return rc;
     }

@@ -20,6 +20,18 @@ smaller_number = 2 < 3
 same_or_smaller = 3 <= 3
 greater_number = 4 > 3
 same_or_greater = 4 >= 4
+both_ready = true and 1
+all_ready = true and 1 and 2 < 3
+not_both_ready = true nand 1
+any_ready = false or 1
+none_ready = false nor 0
+any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
+safe_short_and = false and 2
+safe_short_or = true or 2
+safe_short_nand = false nand 2
+safe_short_nor = true nor 2
 
 count += 1
 message += "!"
@@ -59,6 +71,28 @@ if 4 >= 4:
 else:
     greater_equal_branch = "bad"
 
+if true and 1:
+    and_branch = "true and 1 is true"
+else:
+    and_branch = "bad"
+if true nand 1:
+    nand_branch = "bad"
+else:
+    nand_branch = "true nand 1 is false"
+
+if false or 1:
+    or_branch = "false or 1 is true"
+else:
+    or_branch = "bad"
+if false nor 0:
+    nor_branch = "false nor 0 is true"
+else:
+    nor_branch = "bad"
+if not false:
+    not_branch = "not false is true"
+else:
+    not_branch = "bad"
+
 /* block comments are also ignored */
 
 print("overview assignment -> count=" + count)
@@ -74,6 +108,18 @@ print("overview less-than on numbers -> smaller_number=" + smaller_number)
 print("overview less-equal on numbers -> same_or_smaller=" + same_or_smaller)
 print("overview greater-than on numbers -> greater_number=" + greater_number)
 print("overview greater-equal on numbers -> same_or_greater=" + same_or_greater)
+print("overview boolean logic -> both_ready=" + both_ready)
+print("overview chained and -> all_ready=" + all_ready)
+print("overview boolean nand -> not_both_ready=" + not_both_ready)
+print("overview boolean logic -> any_ready=" + any_ready)
+print("overview boolean nor -> none_ready=" + none_ready)
+print("overview chained or -> any_path=" + any_path)
+print("overview boolean not -> inverted_ready=" + inverted_ready)
+print("overview grouped not -> inverted_path=" + inverted_path)
+print("overview short-circuit and -> safe_short_and=" + safe_short_and)
+print("overview short-circuit or -> safe_short_or=" + safe_short_or)
+print("overview short-circuit nand -> safe_short_nand=" + safe_short_nand)
+print("overview short-circuit nor -> safe_short_nor=" + safe_short_nor)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)
@@ -81,4 +127,9 @@ print("overview less-than in condition -> less_than_branch=" + less_than_branch)
 print("overview less-equal in condition -> less_equal_branch=" + less_equal_branch)
 print("overview greater-than in condition -> greater_than_branch=" + greater_than_branch)
 print("overview greater-equal in condition -> greater_equal_branch=" + greater_equal_branch)
+print("overview and in condition -> and_branch=" + and_branch)
+print("overview nand in condition -> nand_branch=" + nand_branch)
+print("overview or in condition -> or_branch=" + or_branch)
+print("overview nor in condition -> nor_branch=" + nor_branch)
+print("overview not in condition -> not_branch=" + not_branch)
 print("overview print coercion -> " + "Test " + 7)

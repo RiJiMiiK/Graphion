@@ -47,7 +47,9 @@
     "cutovers"
     ,
     "toctree",
-    "elif"
+    "elif",
+    "nand",
+    "nor"
   ],
   "ignorePaths": [
     "build/**",
