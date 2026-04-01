@@ -15,6 +15,7 @@ short_bits = 0b10
 wide_bits = 0b0010
 same_bits = 0b10 == 0b0010
 different_bits = 0b10 != 0b0011
+masked_bits = 0b1100 & 0b1010
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -145,6 +146,7 @@ print("overview bits literal -> short_bits=" + short_bits)
 print("overview bits width preservation -> wide_bits=" + wide_bits)
 print("overview bits equality -> same_bits=" + same_bits)
 print("overview bits inequality -> different_bits=" + different_bits)
+print("overview bits and -> masked_bits=" + masked_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

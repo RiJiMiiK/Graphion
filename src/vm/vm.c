@@ -168,6 +168,15 @@ static void vm_value_set_bool(graphion_vm_value *value, int bool_value) {
   value->as.bool_value = bool_value != 0 ? 1 : 0;
 }
 
+static void vm_value_set_bits(graphion_vm_value *value, uint64_t bits_value, uint8_t width) {
+  if (value == NULL) {
+    return;
+  }
+  value->kind = GVM_VALUE_BITS;
+  value->reserved[0] = width;
+  value->as.int_value = (int64_t)bits_value;
+}
+
 static void vm_value_copy(graphion_vm_value *dst, const graphion_vm_value *src) {
   if (dst == NULL || src == NULL) {
     return;
@@ -1077,11 +1086,18 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_NOT:
       case GVM_OP_NAND:
       case GVM_OP_NOR:
+      case GVM_OP_BIT_AND:
         if (in.op == GVM_OP_NOT) {
           if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
               reg_kinds[in.a] != GVM_VALUE_BOOL) {
             return 0;
           }
+        } else if (in.op == GVM_OP_BIT_AND) {
+          if (reg_kinds[in.a] != GVM_VALUE_BITS || reg_kinds[in.b] != GVM_VALUE_BITS) {
+            return 0;
+          }
+          reg_kinds[in.a] = GVM_VALUE_BITS;
+          break;
         } else {
           if ((reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
                reg_kinds[in.a] != GVM_VALUE_BOOL) ||
@@ -3115,6 +3131,34 @@ static int op_nor(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_bit_and(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  uint8_t lhs_width;
+  uint8_t rhs_width;
+  uint64_t result;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+  if (lhs->kind != GVM_VALUE_BITS || rhs->kind != GVM_VALUE_BITS) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  lhs_width = vm_value_get_bits_width(lhs);
+  rhs_width = vm_value_get_bits_width(rhs);
+  if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  result = vm_value_get_bits_payload(lhs) & vm_value_get_bits_payload(rhs);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bits(&vm->regs[in->a], result, lhs_width);
+  return GVM_OK;
+}
+
 static int op_jump(graphion_vm *vm, const graphion_insn *in) {
   (void)in;
   if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
@@ -3230,6 +3274,10 @@ static int op_nand_cmp(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_nor_cmp(graphion_vm *vm, const graphion_insn *in) {
   return op_nor(vm, in);
+}
+
+static int op_bit_and_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_bit_and(vm, in);
 }
 
 static int op_abs(graphion_vm *vm, const graphion_insn *in) {
@@ -3676,6 +3724,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GE:
         rc = op_ge_cmp(vm, &in);
         break;
+      case GVM_OP_BIT_AND:
+        rc = op_bit_and_cmp(vm, &in);
+        break;
       case GVM_OP_AND:
         rc = op_and_cmp(vm, &in);
         break;
@@ -3829,6 +3880,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_LE] = op_le_cmp,
       [GVM_OP_GT] = op_gt_cmp,
       [GVM_OP_GE] = op_ge_cmp,
+      [GVM_OP_BIT_AND] = op_bit_and_cmp,
       [GVM_OP_AND] = op_and_cmp,
       [GVM_OP_OR] = op_or_cmp,
       [GVM_OP_NOT] = op_not_cmp,
@@ -3911,6 +3963,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_LE] = &&L_le,
       [GVM_OP_GT] = &&L_gt,
       [GVM_OP_GE] = &&L_ge,
+      [GVM_OP_BIT_AND] = &&L_bit_and,
       [GVM_OP_AND] = &&L_and,
       [GVM_OP_OR] = &&L_or,
       [GVM_OP_NOT] = &&L_not,
@@ -4053,6 +4106,12 @@ L_gt:
     continue;
 L_ge:
     rc = op_ge_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_bit_and:
+    rc = op_bit_and_cmp(vm, &in);
     if (rc != 0) {
       return rc;
     }

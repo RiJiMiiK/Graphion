@@ -575,9 +575,11 @@ Examples:
 ```gion
 short_bits = 0b10
 wide_bits = 0b0010
+masked_bits = 0b1100 & 0b1010
 
 print(short_bits)
 print(wide_bits)
+print(masked_bits)
 ```
 
 Current V1 rules:
@@ -588,9 +590,10 @@ Current V1 rules:
 - printing preserves that stored width
 - `==` currently compares normalized bit values, so `0b10 == 0b0010` is `true`
 - `!=` follows the same normalized-value rule, so `0b10 != 0b0010` is `false`
+- `&` currently works between `bits` values with the same stored width, so `0b1100 & 0b1010` yields `0b1000`
 - implicit mixing between `bits` and `int`, `float`, `bool`, or `string` is currently rejected in expressions
-- literal creation, copying, printing, `==`, and `!=` are supported so far
-- bitwise operators and `bits` comparisons are still tracked separately in the roadmap
+- literal creation, copying, printing, `==`, `!=`, and `&` are supported so far
+- the remaining bitwise operators and wider `bits` restrictions are still tracked separately in the roadmap
 
 ## Comparison Operators
 

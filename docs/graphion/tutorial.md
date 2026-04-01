@@ -167,12 +167,14 @@ wide_bits = 0b0010
 copied_bits = wide_bits
 same_bits = 0b10 == 0b0010
 different_bits = 0b10 != 0b0011
+masked_bits = 0b1100 & 0b1010
 
 print(short_bits)
 print(wide_bits)
 print(copied_bits)
 print(same_bits)
 print(different_bits)
+print(masked_bits)
 ```
 
 Expected output:
@@ -183,6 +185,7 @@ Expected output:
 0b0010
 true
 true
+0b1000
 ```
 
 Current behavior:
@@ -191,8 +194,10 @@ Current behavior:
 - `0b10` and `0b0010` therefore print differently
 - `==` compares normalized bit values, so `0b10 == 0b0010` is `true`
 - `!=` follows the same normalized-value rule
+- `&` works between `bits` values with the same stored width
+- `0b1100 & 0b1010` therefore produces `0b1000`
 - mixing `bits` with `int`, `float`, `bool`, or `string` is rejected
-- this first step covers literal creation, copying, printing, `==`, and `!=`
+- this first step covers literal creation, copying, printing, `==`, `!=`, and `&`
 
 ## Equality
 

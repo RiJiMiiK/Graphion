@@ -1471,6 +1471,80 @@ int test_gion_bits_mixed_type_errors(void) {
   return 0;
 }
 
+int test_gion_bits_and(void) {
+  const char *source =
+      "masked_value = 0b1100 & 0b1010\n"
+      "print(masked_value)\n";
+  const char *path = "gion_bits_and.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *masked_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  masked_value = graphion_runtime_scope_find(&scope, "masked_value");
+  if (masked_value == NULL || masked_value->kind != GVM_VALUE_BITS || masked_value->reserved[0] != 4U ||
+      (uint64_t)masked_value->as.int_value != 8U) {
+    remove(path);
+    return 3;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 4;
+  }
+  remove(path);
+  if (strcmp(output, "0b1000\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_gion_bits_and_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 & 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 & 1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;

@@ -110,7 +110,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `0b10 == 0b0010` should be `true`
 - [x] `bits != bits`
 - [x] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
-- [ ] `bits & bits`
+- [x] `bits & bits`
 - [ ] `bits | bits`
 - [ ] `bits ^ bits`
 - [ ] `~bits`
