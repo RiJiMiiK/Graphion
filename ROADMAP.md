@@ -99,28 +99,47 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 ### Arithmetic follow-up
 
 - [x] unary `-` on variables and grouped expressions
-- [ ] define and implement a dedicated `bits` scalar type
-  - literal syntax should use binary prefixes such as `0b0011`
-  - each `bits` value keeps the width defined by its literal spelling
-    - `0b10` has width `2`
-    - `0b0010` has width `4`
-  - width is fixed per value after creation
-  - `==` and `!=` compare normalized bit values, so leading zeroes do not affect equality
-    - `0b10 == 0b0010` should be `true`
-  - bitwise binary operators require matching widths
-    - `0b10 & 0b0010` should be rejected
-  - shifts and unary bitwise inversion keep the original width
-  - overflow and left-shift overflow should truncate back to the stored width
-  - V1 should support only dedicated bitwise operators:
-    - `&`
-    - `|`
-    - `^`
-    - `~`
-    - `<<`
-    - `>>`
-  - V1 should reject non-bitwise operators on `bits`
-    - arithmetic operators
-    - ordered comparisons
-    - boolean logic operators
-    - use of `bits` directly as a condition
-    - implicit mixing with `int`, `float`, `bool`, or `string`
+- [ ] `bits` literals with `0b...` syntax
+- [ ] dedicated scalar type `bits`
+- [ ] preserve `bits` width from literal spelling
+  - `0b10` has width `2`
+  - `0b0010` has width `4`
+- [ ] `print(bits)`
+- [ ] `bits == bits`
+  - equality should compare normalized values
+  - `0b10 == 0b0010` should be `true`
+- [ ] `bits != bits`
+- [ ] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
+- [ ] `bits & bits`
+- [ ] `bits | bits`
+- [ ] `bits ^ bits`
+- [ ] `~bits`
+- [ ] `bits << bits`
+- [ ] `bits >> bits`
+- [ ] require matching widths for binary bitwise operators
+  - `0b10 & 0b0010` should be rejected
+- [ ] preserve width across `~`, `<<`, and `>>`
+- [ ] truncate overflow back to stored `bits` width
+- [ ] reject non-bitwise arithmetic on `bits`
+  - `+`
+  - `-`
+  - `*`
+  - `/`
+  - `//`
+  - `%`
+  - `**`
+- [ ] reject ordered comparisons on `bits`
+  - `<`
+  - `<=`
+  - `>`
+  - `>=`
+- [ ] reject boolean logic on `bits`
+  - `and`
+  - `nand`
+  - `or`
+  - `nor`
+  - `not`
+- [ ] reject direct use of `bits` as a condition
+- [ ] document `bits`
+- [ ] add `bits` examples
+- [ ] add `bits` parser and runtime tests
