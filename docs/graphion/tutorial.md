@@ -157,6 +157,38 @@ Expected output:
 6
 ```
 
+## Bits Literals
+
+Graphion also supports `bits` literals with a `0b...` prefix.
+
+```gion
+short_bits = 0b10
+wide_bits = 0b0010
+copied_bits = wide_bits
+same_bits = 0b10 == 0b0010
+
+print(short_bits)
+print(wide_bits)
+print(copied_bits)
+print(same_bits)
+```
+
+Expected output:
+
+```text
+0b10
+0b0010
+0b0010
+true
+```
+
+Current behavior:
+
+- width is preserved from the literal spelling
+- `0b10` and `0b0010` therefore print differently
+- `==` compares normalized bit values, so `0b10 == 0b0010` is `true`
+- this first step covers literal creation, copying, printing, and `==`
+
 ## Equality
 
 Graphion currently supports `==`, `!=`, numeric `<` / `<=` / `>` / `>=`, and boolean `and` / `or`.

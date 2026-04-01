@@ -16,6 +16,8 @@ Files:
   - `if / elif / else`, nested conditionals, grouped multiline conditions, single-line and multiline ternary expressions, value-based `match` branching, equality/ordering conditions (`==`, `!=`, `<`, `<=`, `>`, `>=`), `and` / `nand` / `or` / `nor` / `not`, and accepted `0` / `1` conditions
 - `05_comments.gion`
   - line comments with `#` and block comments with `/* ... */`
+- `06_bits_literals.gion`
+  - `bits` literals with `0b...`, preserved width, and printing
 
 Run any example with:
 

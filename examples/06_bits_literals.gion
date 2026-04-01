@@ -1,0 +1,13 @@
+# 06_bits_literals.gion
+# This file demonstrates the current `bits` V1 literal subset.
+# Width is preserved from the literal spelling.
+
+short_bits = 0b10
+wide_bits = 0b0010
+copied_bits = wide_bits
+same_bits = 0b10 == 0b0010
+
+print("bits literal with width 2 -> short_bits=" + short_bits)
+print("bits literal with width 4 -> wide_bits=" + wide_bits)
+print("copied bits preserve width -> copied_bits=" + copied_bits)
+print("bits equality ignores leading zeroes -> same_bits=" + same_bits)

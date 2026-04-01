@@ -203,6 +203,41 @@ static int vm_value_get_numeric(const graphion_vm_value *value, int64_t *out_int
   }
 }
 
+static uint8_t vm_value_get_bits_width(const graphion_vm_value *value) {
+  if (value == NULL || value->kind != GVM_VALUE_BITS) {
+    return 0U;
+  }
+  return value->reserved[0];
+}
+
+static uint64_t vm_value_get_bits_payload(const graphion_vm_value *value) {
+  if (value == NULL || value->kind != GVM_VALUE_BITS) {
+    return 0U;
+  }
+  return (uint64_t)value->as.int_value;
+}
+
+static size_t vm_write_bits_text(char *buffer, size_t buffer_size, const graphion_vm_value *value, int include_newline) {
+  const uint8_t width = vm_value_get_bits_width(value);
+  const uint64_t payload = vm_value_get_bits_payload(value);
+  size_t i;
+  size_t pos = 0U;
+
+  if (buffer == NULL || buffer_size < (size_t)width + (include_newline ? 4U : 3U) || width == 0U) {
+    return 0U;
+  }
+  buffer[pos++] = '0';
+  buffer[pos++] = 'b';
+  for (i = 0U; i < (size_t)width; ++i) {
+    const size_t bit_index = (size_t)width - 1U - i;
+    buffer[pos++] = ((payload >> bit_index) & 1U) != 0U ? '1' : '0';
+  }
+  if (include_newline) {
+    buffer[pos++] = '\n';
+  }
+  return pos;
+}
+
 static void vm_free_owned_reg_string(graphion_vm *vm, uint8_t reg) {
   if (vm == NULL || !is_valid_reg(reg)) {
     return;
@@ -364,6 +399,9 @@ static int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
     case GVM_VALUE_STRING:
       *len_out = value->as.string_value != NULL ? strlen(value->as.string_value) + 1U : 1U;
       return GVM_OK;
+    case GVM_VALUE_BITS:
+      *len_out = (size_t)vm_value_get_bits_width(value) + 3U;
+      return GVM_OK;
     default:
       return GVM_ERR_TYPE_MISMATCH;
   }
@@ -416,6 +454,12 @@ static int vm_write_value_sink(const graphion_output_sink *output, const graphio
         return GVM_ERR_OUTPUT_UNBOUND;
       }
       return vm_write_bytes_sink(output, "\n", 1U);
+    case GVM_VALUE_BITS:
+      len = vm_write_bits_text(buffer, sizeof(buffer), value, 1);
+      if (len == 0U) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      return vm_write_bytes_sink(output, buffer, len);
     default:
       return GVM_ERR_TYPE_MISMATCH;
   }
@@ -455,6 +499,9 @@ static int vm_write_value_sink_inline(const graphion_output_sink *output, const 
       case GVM_VALUE_BOOL:
         *((uint64_t *)output->ctx) += value->as.bool_value != 0 ? 4U : 5U;
         return GVM_OK;
+      case GVM_VALUE_BITS:
+        *((uint64_t *)output->ctx) += (uint64_t)vm_value_get_bits_width(value) + 2U;
+        return GVM_OK;
       default:
         return GVM_ERR_TYPE_MISMATCH;
     }
@@ -480,6 +527,12 @@ static int vm_write_value_sink_inline(const graphion_output_sink *output, const 
       }
       len = strlen(value->as.string_value);
       return vm_write_bytes_sink(output, value->as.string_value, len);
+    case GVM_VALUE_BITS:
+      len = vm_write_bits_text(buffer, sizeof(buffer), value, 0);
+      if (len == 0U) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      return vm_write_bytes_sink(output, buffer, len);
     default:
       return GVM_ERR_TYPE_MISMATCH;
   }
@@ -2832,6 +2885,8 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
     result = lhs->as.int_value == (int64_t)rhs->as.bool_value;
   } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
     result = lhs->as.bool_value == rhs->as.bool_value;
+  } else if (lhs->kind == GVM_VALUE_BITS && rhs->kind == GVM_VALUE_BITS) {
+    result = (uint64_t)lhs->as.int_value == (uint64_t)rhs->as.int_value;
   } else if (lhs->kind == GVM_VALUE_STRING && rhs->kind == GVM_VALUE_STRING) {
     const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
     const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";

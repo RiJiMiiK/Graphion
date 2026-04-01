@@ -105,7 +105,8 @@ typedef enum {
   GVM_VALUE_STRING = 4,
   GVM_VALUE_GRAPH_REF = 5,
   GVM_VALUE_HYPERGRAPH_REF = 6,
-  GVM_VALUE_INT_SEQUENCE_REF = 7
+  GVM_VALUE_INT_SEQUENCE_REF = 7,
+  GVM_VALUE_BITS = 8
 } graphion_vm_value_kind;
 
 typedef struct {

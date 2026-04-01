@@ -99,13 +99,13 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 ### Arithmetic follow-up
 
 - [x] unary `-` on variables and grouped expressions
-- [ ] `bits` literals with `0b...` syntax
-- [ ] dedicated scalar type `bits`
-- [ ] preserve `bits` width from literal spelling
+- [x] `bits` literals with `0b...` syntax
+- [x] dedicated scalar type `bits`
+- [x] preserve `bits` width from literal spelling
   - `0b10` has width `2`
   - `0b0010` has width `4`
-- [ ] `print(bits)`
-- [ ] `bits == bits`
+- [x] `print(bits)`
+- [x] `bits == bits`
   - equality should compare normalized values
   - `0b10 == 0b0010` should be `true`
 - [ ] `bits != bits`
@@ -140,6 +140,6 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `nor`
   - `not`
 - [ ] reject direct use of `bits` as a condition
-- [ ] document `bits`
-- [ ] add `bits` examples
-- [ ] add `bits` parser and runtime tests
+- [ ] document `bits` operators and restrictions
+- [x] add `bits` literal examples
+- [x] add `bits` parser and runtime tests

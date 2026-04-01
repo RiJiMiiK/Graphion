@@ -1240,6 +1240,153 @@ int test_gion_arithmetic_syntax_errors(void) {
   return 0;
 }
 
+int test_gion_bits_literals(void) {
+  const char *source =
+      "bits_two = 0b10\n"
+      "bits_four = 0b0010\n"
+      "bits_copy = bits_four\n"
+      "print(bits_two)\n"
+      "print(bits_four)\n"
+      "print(bits_copy)\n";
+  const char *path = "gion_bits_literals.txt";
+  char output[64];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *bits_two;
+  const graphion_runtime_value *bits_four;
+  const graphion_runtime_value *bits_copy;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  bits_two = graphion_runtime_scope_find(&scope, "bits_two");
+  bits_four = graphion_runtime_scope_find(&scope, "bits_four");
+  bits_copy = graphion_runtime_scope_find(&scope, "bits_copy");
+
+  if (bits_two == NULL || bits_two->kind != GVM_VALUE_BITS || bits_two->reserved[0] != 2U || (uint64_t)bits_two->as.int_value != 2U) {
+    remove(path);
+    return 3;
+  }
+  if (bits_four == NULL || bits_four->kind != GVM_VALUE_BITS || bits_four->reserved[0] != 4U ||
+      (uint64_t)bits_four->as.int_value != 2U) {
+    remove(path);
+    return 4;
+  }
+  if (bits_copy == NULL || bits_copy->kind != GVM_VALUE_BITS || bits_copy->reserved[0] != 4U ||
+      (uint64_t)bits_copy->as.int_value != 2U) {
+    remove(path);
+    return 5;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 6;
+  }
+  remove(path);
+  if (strcmp(output, "0b10\n0b0010\n0b0010\n") != 0) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_gion_bits_literal_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b\n", "expected binary digits after 0b"},
+      {"value = 0b2\n", "expected binary digits after 0b"},
+      {"value = 0b102\n", "invalid bits literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_equality(void) {
+  const char *source =
+      "same_value = 0b10 == 0b0010\n"
+      "same_copy = 0b0010 == 0b0010\n"
+      "print(same_value)\n"
+      "print(same_copy)\n";
+  const char *path = "gion_bits_equality.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *same_value;
+  const graphion_runtime_value *same_copy;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  same_value = graphion_runtime_scope_find(&scope, "same_value");
+  same_copy = graphion_runtime_scope_find(&scope, "same_copy");
+  if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 1) {
+    remove(path);
+    return 3;
+  }
+  if (same_copy == NULL || same_copy->kind != GVM_VALUE_BOOL || same_copy->as.bool_value != 1) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "true\ntrue\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;

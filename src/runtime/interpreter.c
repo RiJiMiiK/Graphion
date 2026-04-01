@@ -424,6 +424,32 @@ static int parse_scalar_literal(graphion_runtime_program *program,
     *cursor += 5;
     return GINT_OK;
   }
+  if (start[0] == '0' && (start[1] == 'b' || start[1] == 'B')) {
+    const char *scan = start + 2;
+    uint64_t bits_value = 0U;
+    uint8_t width = 0U;
+
+    if (*scan != '0' && *scan != '1') {
+      return fail(diagnostic, line, 1U, "expected binary digits after 0b", GINT_ERR_PARSE);
+    }
+    while (*scan == '0' || *scan == '1') {
+      if (width == 64U) {
+        return fail(diagnostic, line, 1U, "bits literal too wide", GINT_ERR_PARSE);
+      }
+      bits_value = (bits_value << 1U) | (uint64_t)(*scan - '0');
+      width++;
+      scan++;
+    }
+    if (isdigit((unsigned char)*scan)) {
+      return fail(diagnostic, line, 1U, "invalid bits literal", GINT_ERR_PARSE);
+    }
+    vm_value_set_none(value_out);
+    value_out->kind = GVM_VALUE_BITS;
+    value_out->reserved[0] = width;
+    value_out->as.int_value = (int64_t)bits_value;
+    *cursor = scan;
+    return GINT_OK;
+  }
   if (*start == '-' || isdigit((unsigned char)*start)) {
     int saw_dot = 0;
     const char *scan = start;
@@ -539,6 +565,10 @@ static int scalar_values_match_equal(const graphion_vm_value *lhs,
     const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
     const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
     *equal_out = strcmp(lhs_text, rhs_text) == 0;
+    return 1;
+  }
+  if (lhs->kind == GVM_VALUE_BITS && rhs->kind == GVM_VALUE_BITS) {
+    *equal_out = (uint64_t)lhs->as.int_value == (uint64_t)rhs->as.int_value;
     return 1;
   }
 
