@@ -20,6 +20,8 @@ smaller_number = 2 < 3
 same_or_smaller = 3 <= 3
 greater_number = 4 > 3
 same_or_greater = 4 >= 4
+both_ready = true and 1
+all_ready = true and 1 and 2 < 3
 
 count += 1
 message += "!"
@@ -59,6 +61,11 @@ if 4 >= 4:
 else:
     greater_equal_branch = "bad"
 
+if true and 1:
+    and_branch = "true and 1 is true"
+else:
+    and_branch = "bad"
+
 /* block comments are also ignored */
 
 print("overview assignment -> count=" + count)
@@ -74,6 +81,8 @@ print("overview less-than on numbers -> smaller_number=" + smaller_number)
 print("overview less-equal on numbers -> same_or_smaller=" + same_or_smaller)
 print("overview greater-than on numbers -> greater_number=" + greater_number)
 print("overview greater-equal on numbers -> same_or_greater=" + same_or_greater)
+print("overview boolean logic -> both_ready=" + both_ready)
+print("overview chained and -> all_ready=" + all_ready)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)
@@ -81,4 +90,5 @@ print("overview less-than in condition -> less_than_branch=" + less_than_branch)
 print("overview less-equal in condition -> less_equal_branch=" + less_equal_branch)
 print("overview greater-than in condition -> greater_than_branch=" + greater_than_branch)
 print("overview greater-equal in condition -> greater_equal_branch=" + greater_equal_branch)
+print("overview and in condition -> and_branch=" + and_branch)
 print("overview print coercion -> " + "Test " + 7)

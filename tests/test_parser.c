@@ -556,6 +556,7 @@ int test_gion_reserved_name_errors(void) {
       {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
       {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
       {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
+      {"and = true\n", "reserved name cannot be assigned", "gion_reserved_and.gion"},
   };
   size_t i;
 
@@ -1633,6 +1634,10 @@ int test_gion_if_elif_else_control_flow(void) {
       "    greater_equal_branch = \"greater-equal condition works\"\n"
       "else:\n"
       "    greater_equal_branch = \"bad\"\n"
+      "if true and 1:\n"
+      "    and_branch = \"and condition works\"\n"
+      "else:\n"
+      "    and_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1653,6 +1658,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(less_equal_branch)\n"
       "print(greater_than_branch)\n"
       "print(greater_equal_branch)\n"
+      "print(and_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1669,6 +1675,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *less_equal_branch;
   const graphion_runtime_value *greater_than_branch;
   const graphion_runtime_value *greater_equal_branch;
+  const graphion_runtime_value *and_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1701,6 +1708,7 @@ int test_gion_if_elif_else_control_flow(void) {
   less_equal_branch = graphion_runtime_scope_find(&scope, "less_equal_branch");
   greater_than_branch = graphion_runtime_scope_find(&scope, "greater_than_branch");
   greater_equal_branch = graphion_runtime_scope_find(&scope, "greater_equal_branch");
+  and_branch = graphion_runtime_scope_find(&scope, "and_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1756,18 +1764,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 13);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (and_branch == NULL || and_branch->kind != GVM_VALUE_STRING ||
+      strcmp(and_branch->as.string_value, "and condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 14);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 15);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 16);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 17);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -2817,6 +2830,134 @@ int test_gion_greater_equal_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_and_expressions(void) {
+  const char *source =
+      "both_true = true and true\n"
+      "true_false = true and false\n"
+      "int_bool = 1 and true\n"
+      "bool_int = false and 1\n"
+      "ints = 1 and 0\n"
+      "comparisons = 1 == 1 and 2 < 3\n"
+      "precedence = 1 == 1 and 2 == 3\n"
+      "grouped = (1 == 1) and (3 >= 3)\n"
+      "print(both_true)\n"
+      "print(true_false)\n"
+      "print(int_bool)\n"
+      "print(bool_int)\n"
+      "print(ints)\n"
+      "print(comparisons)\n"
+      "print(precedence)\n"
+      "print(grouped)\n";
+  const char *path = "gion_and_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *both_true;
+  const graphion_runtime_value *precedence;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  both_true = graphion_runtime_scope_find(&scope, "both_true");
+  precedence = graphion_runtime_scope_find(&scope, "precedence");
+  if (both_true == NULL || both_true->kind != GVM_VALUE_BOOL || both_true->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (precedence == NULL || precedence->kind != GVM_VALUE_BOOL || precedence->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\ntrue\nfalse\nfalse\ntrue\nfalse\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 6);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_and_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = 2 and true\n", 1U},
+      {"value = true and 2\n", 1U},
+      {"value = 1.0 and true\n", 1U},
+      {"value = \"x\" and true\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_and_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    int alternate_rc;
+    const char *message;
+  } cases[] = {
+      {"value = true and\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = and true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"print(true and )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"if true and:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc && rc != cases[i].alternate_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {

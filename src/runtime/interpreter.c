@@ -91,7 +91,7 @@ static int is_ident_char(char ch) {
 static int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "if") == 0 || strcmp(name, "elif") == 0 ||
-         strcmp(name, "else") == 0;
+         strcmp(name, "else") == 0 || strcmp(name, "and") == 0;
 }
 
 static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
@@ -428,6 +428,13 @@ static int parse_expression(const char **cursor,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic);
 
+static int parse_comparison_expression(const char **cursor,
+                                       graphion_runtime_program *program,
+                                       parsed_expr_result *result_out,
+                                       uint8_t base_reg,
+                                       unsigned int line,
+                                       graphion_runtime_diagnostic *diagnostic);
+
 static int parse_additive_expression(const char **cursor,
                                      graphion_runtime_program *program,
                                      parsed_expr_result *result_out,
@@ -639,12 +646,12 @@ static int parse_additive_expression(const char **cursor,
   return GINT_OK;
 }
 
-static int parse_expression(const char **cursor,
-                            graphion_runtime_program *program,
-                            parsed_expr_result *result_out,
-                            uint8_t base_reg,
-                            unsigned int line,
-                            graphion_runtime_diagnostic *diagnostic) {
+static int parse_comparison_expression(const char **cursor,
+                                       graphion_runtime_program *program,
+                                       parsed_expr_result *result_out,
+                                       uint8_t base_reg,
+                                       unsigned int line,
+                                       graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
@@ -690,6 +697,51 @@ static int parse_expression(const char **cursor,
       return rc;
     }
     rc = program_emit(program, cmp_op, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+  *result_out = lhs;
+  return GINT_OK;
+}
+
+static int parse_expression(const char **cursor,
+                            graphion_runtime_program *program,
+                            parsed_expr_result *result_out,
+                            uint8_t base_reg,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc = parse_comparison_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (;;) {
+    parsed_expr_result rhs;
+    skip_spaces(cursor);
+    if (strncmp(*cursor, "and", 3U) != 0 || is_ident_char((*cursor)[3])) {
+      break;
+    }
+    *cursor += 3;
+    rc = parse_comparison_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_AND, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

@@ -152,7 +152,7 @@ Expected output:
 
 ## Equality
 
-Graphion currently supports `==`, `!=`, and numeric `<` / `<=` / `>` / `>=`.
+Graphion currently supports `==`, `!=`, numeric `<` / `<=` / `>` / `>=`, and boolean `and`.
 
 It returns a boolean result:
 
@@ -210,6 +210,41 @@ Current behavior:
 - `string` compared to a non-`string` raises a runtime error
 - `!=` follows the same type rules and flips the final result
 - `<`, `<=`, `>`, and `>=` currently work only on numeric values
+
+## Boolean Logic
+
+Graphion currently supports `and`.
+
+```gion
+both_true = true and true
+bridge_true = 1 and true
+bridge_false = false and 1
+all_ready = true and 1 and 2 < 3
+
+print(both_true)
+print(bridge_true)
+print(bridge_false)
+print(all_ready)
+```
+
+Expected output:
+
+```text
+true
+true
+false
+true
+```
+
+Current behavior:
+
+- `and` accepts `bool`
+- `and` also accepts integer `0` / `1`
+- `and` can be chained multiple times
+- `2 and true` is a runtime error
+- `1.0 and true` is a runtime error
+- `"x" and true` is a runtime error
+- V1 `and` evaluates both sides; short-circuit is not implemented yet
 
 ## Conditional Blocks
 

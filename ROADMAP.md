@@ -34,11 +34,12 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 
 ### Boolean logic
 
-- [ ] `and`
+- [x] `and`
 - [ ] `or`
 - [ ] `not`
 - [ ] documented truth rules
-- [ ] tests for precedence and short-circuit behavior if adopted
+- [ ] decide and implement short-circuit behavior for `and` / `or`
+- [ ] tests for precedence and short-circuit behavior after it exists
 
 ### More builtins
 

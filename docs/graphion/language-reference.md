@@ -60,6 +60,7 @@ These names are currently reserved and cannot be assigned:
 - `if`
 - `elif`
 - `else`
+- `and`
 
 ## Literals
 
@@ -381,6 +382,56 @@ These are currently runtime errors:
 
 Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime error.
 
+## Boolean Logic
+
+Currently supported boolean logic operators:
+
+- `and`
+
+`and` returns a `bool`.
+
+Examples:
+
+```gion
+both_true = true and true
+bridge_true = 1 and true
+bridge_false = false and 1
+all_ready = true and 1 and 2 < 3
+
+print(both_true)
+print(bridge_true)
+print(bridge_false)
+print(all_ready)
+```
+
+`and` can be chained multiple times.
+
+This:
+
+```gion
+true and 1 and 2 < 3
+```
+
+is currently evaluated left to right as repeated `and` operations, with comparisons evaluated before `and`.
+
+Current `and` rules:
+
+- `bool and bool`
+- `int and bool` only when the integer is `0` or `1`
+- `bool and int` only when the integer is `0` or `1`
+- `int and int` only when both integers are `0` or `1`
+
+These are currently runtime errors:
+
+- `2 and true`
+- `1.0 and true`
+- `"x" and true`
+
+Current V1 note:
+
+- `and` currently evaluates both operands
+- short-circuit behavior is not implemented yet
+
 ## Precedence
 
 Current precedence order:
@@ -391,6 +442,7 @@ Current precedence order:
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
+7. `and`
 
 Examples:
 
