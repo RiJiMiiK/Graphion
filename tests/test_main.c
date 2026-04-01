@@ -39,6 +39,8 @@ int test_vm_ge_opcode(void);
 int test_vm_ge_incompatible_types_fail(void);
 int test_vm_bit_and_opcode(void);
 int test_vm_bit_and_incompatible_types_fail(void);
+int test_vm_bit_or_opcode(void);
+int test_vm_bit_or_incompatible_types_fail(void);
 int test_vm_and_opcode(void);
 int test_vm_and_incompatible_types_fail(void);
 int test_vm_or_opcode(void);
@@ -105,6 +107,8 @@ int test_gion_bits_inequality(void);
 int test_gion_bits_mixed_type_errors(void);
 int test_gion_bits_and(void);
 int test_gion_bits_and_runtime_errors(void);
+int test_gion_bits_or(void);
+int test_gion_bits_or_runtime_errors(void);
 int test_gion_print_syntax_errors(void);
 int test_gion_unterminated_string_errors(void);
 int test_gion_invalid_identifier_errors(void);
@@ -232,6 +236,8 @@ int main(int argc, char **argv) {
       {"vm_ge_incompatible_types_fail", test_vm_ge_incompatible_types_fail},
       {"vm_bit_and_opcode", test_vm_bit_and_opcode},
       {"vm_bit_and_incompatible_types_fail", test_vm_bit_and_incompatible_types_fail},
+      {"vm_bit_or_opcode", test_vm_bit_or_opcode},
+      {"vm_bit_or_incompatible_types_fail", test_vm_bit_or_incompatible_types_fail},
       {"vm_and_opcode", test_vm_and_opcode},
       {"vm_and_incompatible_types_fail", test_vm_and_incompatible_types_fail},
       {"vm_or_opcode", test_vm_or_opcode},
@@ -299,6 +305,8 @@ int main(int argc, char **argv) {
       {"gion_bits_mixed_type_errors", test_gion_bits_mixed_type_errors},
       {"gion_bits_and", test_gion_bits_and},
       {"gion_bits_and_runtime_errors", test_gion_bits_and_runtime_errors},
+      {"gion_bits_or", test_gion_bits_or},
+      {"gion_bits_or_runtime_errors", test_gion_bits_or_runtime_errors},
       {"gion_print_syntax_errors", test_gion_print_syntax_errors},
       {"gion_unterminated_string_errors", test_gion_unterminated_string_errors},
       {"gion_invalid_identifier_errors", test_gion_invalid_identifier_errors},

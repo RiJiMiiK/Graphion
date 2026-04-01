@@ -111,7 +111,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] `bits != bits`
 - [x] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
 - [x] `bits & bits`
-- [ ] `bits | bits`
+- [x] `bits | bits`
 - [ ] `bits ^ bits`
 - [ ] `~bits`
 - [ ] `bits << bits`
