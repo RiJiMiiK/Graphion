@@ -191,6 +191,7 @@ Current behavior:
 - `0b10` and `0b0010` therefore print differently
 - `==` compares normalized bit values, so `0b10 == 0b0010` is `true`
 - `!=` follows the same normalized-value rule
+- mixing `bits` with `int`, `float`, `bool`, or `string` is rejected
 - this first step covers literal creation, copying, printing, `==`, and `!=`
 
 ## Equality

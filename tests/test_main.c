@@ -100,6 +100,7 @@ int test_gion_bits_literals(void);
 int test_gion_bits_literal_syntax_errors(void);
 int test_gion_bits_equality(void);
 int test_gion_bits_inequality(void);
+int test_gion_bits_mixed_type_errors(void);
 int test_gion_print_syntax_errors(void);
 int test_gion_unterminated_string_errors(void);
 int test_gion_invalid_identifier_errors(void);
@@ -289,6 +290,7 @@ int main(int argc, char **argv) {
       {"gion_bits_literal_syntax_errors", test_gion_bits_literal_syntax_errors},
       {"gion_bits_equality", test_gion_bits_equality},
       {"gion_bits_inequality", test_gion_bits_inequality},
+      {"gion_bits_mixed_type_errors", test_gion_bits_mixed_type_errors},
       {"gion_print_syntax_errors", test_gion_print_syntax_errors},
       {"gion_unterminated_string_errors", test_gion_unterminated_string_errors},
       {"gion_invalid_identifier_errors", test_gion_invalid_identifier_errors},

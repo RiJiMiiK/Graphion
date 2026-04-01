@@ -1441,6 +1441,36 @@ int test_gion_bits_inequality(void) {
   return 0;
 }
 
+int test_gion_bits_mixed_type_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 == 1\n", "incompatible operand types"},
+      {"value = 0b10 != 1.0\n", "incompatible operand types"},
+      {"value = 0b10 == true\n", "incompatible operand types"},
+      {"value = 0b10 + 1\n", "incompatible operand types"},
+      {"value = \"x\" + 0b10\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;

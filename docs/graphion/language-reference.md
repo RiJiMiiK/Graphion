@@ -588,6 +588,7 @@ Current V1 rules:
 - printing preserves that stored width
 - `==` currently compares normalized bit values, so `0b10 == 0b0010` is `true`
 - `!=` follows the same normalized-value rule, so `0b10 != 0b0010` is `false`
+- implicit mixing between `bits` and `int`, `float`, `bool`, or `string` is currently rejected in expressions
 - literal creation, copying, printing, `==`, and `!=` are supported so far
 - bitwise operators and `bits` comparisons are still tracked separately in the roadmap
 
