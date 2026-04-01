@@ -327,6 +327,29 @@ Expected output:
 after if
 ```
 
+Nested `if` blocks are also supported:
+
+```gion
+ready = true
+admin = false
+
+if ready:
+    if admin:
+        print("admin")
+    else:
+        print("user")
+else:
+    print("offline")
+```
+
+Expected output:
+
+```text
+user
+```
+
+The important rule is that each `else` attaches to the `if` at the same indentation level.
+
 Current conditions currently accept:
 
 - `true`

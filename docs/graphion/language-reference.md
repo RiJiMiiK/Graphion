@@ -215,6 +215,8 @@ Rules:
 - `elif` can appear multiple times
 - `else` is optional
 - `else` must be last
+- nested `if` blocks are allowed
+- an `else` always binds to the `if` at the same indentation level
 
 Invalid examples:
 
@@ -232,6 +234,30 @@ print("bad")
 else:
     print("bad")
 ```
+
+### Nested Conditionals
+
+You can place an `if` block inside another `if` block.
+
+```gion
+ready = true
+admin = false
+
+if ready:
+    if admin:
+        label = "admin"
+    else:
+        label = "user"
+else:
+    label = "offline"
+```
+
+In this example:
+
+- the inner `else` binds to `if admin:`
+- the outer `else` binds to `if ready:`
+
+That binding is determined by indentation, not by the nearest visible `if` keyword alone.
 
 ## Comments
 
