@@ -31,7 +31,6 @@ The goal is to keep growing that path without reintroducing alternate semantic e
   - current `==` and `!=` support numeric comparison, same-kind `bool`, same-kind `string`, and a strict `int`/`bool` bridge only for `0` and `1`
   - current `==` and `!=` reject `float`/`bool`, `string`/non-`string`, and `int`/`bool` comparisons when the integer is outside `0` or `1`
   - current `<`, `<=`, `>`, and `>=` support numeric comparison only and reject `bool` / `string`
-- [ ] decide whether later ordered comparisons should keep rejecting `bool` values or adopt a strict `0/1` ordering rule
 
 ### Boolean logic
 
