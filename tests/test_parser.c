@@ -1625,6 +1625,10 @@ int test_gion_if_elif_else_control_flow(void) {
       "    less_equal_branch = \"less-equal condition works\"\n"
       "else:\n"
       "    less_equal_branch = \"bad\"\n"
+      "if 4 > 3:\n"
+      "    greater_than_branch = \"greater-than condition works\"\n"
+      "else:\n"
+      "    greater_than_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1643,6 +1647,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(inequality_branch)\n"
       "print(less_than_branch)\n"
       "print(less_equal_branch)\n"
+      "print(greater_than_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1657,6 +1662,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *inequality_branch;
   const graphion_runtime_value *less_than_branch;
   const graphion_runtime_value *less_equal_branch;
+  const graphion_runtime_value *greater_than_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1687,6 +1693,7 @@ int test_gion_if_elif_else_control_flow(void) {
   inequality_branch = graphion_runtime_scope_find(&scope, "inequality_branch");
   less_than_branch = graphion_runtime_scope_find(&scope, "less_than_branch");
   less_equal_branch = graphion_runtime_scope_find(&scope, "less_equal_branch");
+  greater_than_branch = graphion_runtime_scope_find(&scope, "greater_than_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1732,18 +1739,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 11);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (greater_than_branch == NULL || greater_than_branch->kind != GVM_VALUE_STRING ||
+      strcmp(greater_than_branch->as.string_value, "greater-than condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 12);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 13);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 14);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 15);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -2492,6 +2504,130 @@ int test_gion_less_equal_syntax_errors(void) {
       {"value = <= 1\n", "expected scalar literal"},
       {"print(1 <= )\n", "expected scalar literal"},
       {"if 1 <=:\n    print(1)\n", "expected scalar literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_greater_than_expressions(void) {
+  const char *source =
+      "greater_int = 2 > 1\n"
+      "same_numeric = 2 > 2.0\n"
+      "mixed_numeric = 2.5 > 2\n"
+      "reverse_numeric = 2 > 3.0\n"
+      "grouped = (1 + 3) > 3\n"
+      "precedence = 1 + 3 > 3\n"
+      "power_cmp = 2 ** 3 > 7\n"
+      "print(greater_int)\n"
+      "print(same_numeric)\n"
+      "print(mixed_numeric)\n"
+      "print(reverse_numeric)\n"
+      "print(grouped)\n"
+      "print(precedence)\n"
+      "print(power_cmp)\n";
+  const char *path = "gion_greater_than_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *greater_int;
+  const graphion_runtime_value *mixed_numeric;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  greater_int = graphion_runtime_scope_find(&scope, "greater_int");
+  mixed_numeric = graphion_runtime_scope_find(&scope, "mixed_numeric");
+  if (greater_int == NULL || greater_int->kind != GVM_VALUE_BOOL || greater_int->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (mixed_numeric == NULL || mixed_numeric->kind != GVM_VALUE_BOOL || mixed_numeric->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\ntrue\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 6);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_greater_than_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = true > 1\n", 1U},
+      {"if true > 1:\n    print(1)\n", 1U},
+      {"value = \"x\" > \"y\"\n", 1U},
+      {"value = \"x\" > 1.5\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_greater_than_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 1 >\n", "expected scalar literal"},
+      {"value = > 1\n", "expected scalar literal"},
+      {"print(1 > )\n", "expected scalar literal"},
+      {"if 1 >:\n    print(1)\n", "expected scalar literal"},
   };
   size_t i;
 

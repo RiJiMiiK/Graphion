@@ -52,6 +52,7 @@ typedef enum {
   GVM_OP_NE = 44,
   GVM_OP_LT = 45,
   GVM_OP_LE = 46,
+  GVM_OP_GT = 47,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
