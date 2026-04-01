@@ -1985,6 +1985,62 @@ int test_vm_nor_incompatible_types_fail(void) {
   return 0;
 }
 
+int test_vm_jump_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[4];
+  graphion_vm_value globals[4];
+  const graphion_insn program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 0},
+      {GVM_OP_JUMP_IF_FALSE, 0, 0, 4},
+      {GVM_OP_MOV_IMM, 1, 0, 99},
+      {GVM_OP_JUMP, 0, 0, 5},
+      {GVM_OP_LOAD_CONST, 1, 0, 1},
+      {GVM_OP_STORE_GLOBAL, 1, 0, 0},
+      {GVM_OP_LOAD_CONST, 0, 0, 2},
+      {GVM_OP_JUMP_IF_TRUE, 0, 0, 10},
+      {GVM_OP_MOV_IMM, 2, 0, 77},
+      {GVM_OP_JUMP, 0, 0, 11},
+      {GVM_OP_LOAD_CONST, 2, 0, 3},
+      {GVM_OP_STORE_GLOBAL, 2, 0, 1},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+  size_t i;
+
+  test_set_value_bool(&const_pool[0], 0);
+  test_set_value_bool(&const_pool[1], 1);
+  test_set_value_int(&const_pool[2], 1);
+  test_set_value_bool(&const_pool[3], 1);
+  for (i = 0U; i < 4U; ++i) {
+    globals[i].kind = GVM_VALUE_NONE;
+    globals[i].as.int_value = 0;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 4U);
+  graphion_vm_bind_globals(&vm, globals, 4U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_BOOL || globals[0].as.bool_value != 1) {
+    graphion_vm_dispose(&vm);
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_BOOL || globals[1].as.bool_value != 1) {
+    graphion_vm_dispose(&vm);
+    return 4;
+  }
+  graphion_vm_dispose(&vm);
+  return 0;
+}
+
 int test_vm_string_addition_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[3];

@@ -283,7 +283,10 @@ Current behavior:
 - `not 2` is a runtime error
 - `not 1.0` is a runtime error
 - `not "x"` is a runtime error
-- V1 `and`, `nand`, `or`, and `nor` evaluate both sides; short-circuit is not implemented yet
+- `false and 2` succeeds because `and` short-circuits on the left
+- `true or 2` succeeds because `or` short-circuits on the left
+- `false nand 2` succeeds because `nand` short-circuits on the left
+- `true nor 2` succeeds because `nor` short-circuits on the left
 
 ## Conditional Blocks
 

@@ -28,6 +28,10 @@ none_ready = false nor 0
 any_path = false or 1 == 1 or false
 inverted_ready = not false
 inverted_path = not (false or 0)
+safe_short_and = false and 2
+safe_short_or = true or 2
+safe_short_nand = false nand 2
+safe_short_nor = true nor 2
 
 count += 1
 message += "!"
@@ -112,6 +116,10 @@ print("overview boolean nor -> none_ready=" + none_ready)
 print("overview chained or -> any_path=" + any_path)
 print("overview boolean not -> inverted_ready=" + inverted_ready)
 print("overview grouped not -> inverted_path=" + inverted_path)
+print("overview short-circuit and -> safe_short_and=" + safe_short_and)
+print("overview short-circuit or -> safe_short_or=" + safe_short_or)
+print("overview short-circuit nand -> safe_short_nand=" + safe_short_nand)
+print("overview short-circuit nor -> safe_short_nor=" + safe_short_nor)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)

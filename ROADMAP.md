@@ -41,8 +41,8 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 - [x] `nor`
 - [x] documented truth rules
 - [x] fix boolean precedence so `and` / `nand` bind tighter than `or` / `nor`
-- [ ] decide and implement short-circuit behavior for `and` / `or`
-- [ ] tests for precedence and short-circuit behavior after it exists
+- [x] decide and implement short-circuit behavior for `and` / `or`
+- [x] tests for precedence and short-circuit behavior after it exists
 
 ### More builtins
 

@@ -197,6 +197,37 @@ static int program_emit(graphion_runtime_program *program,
   return GINT_OK;
 }
 
+static int program_patch_imm(graphion_runtime_program *program,
+                             size_t insn_index,
+                             int32_t imm,
+                             unsigned int line,
+                             graphion_runtime_diagnostic *diagnostic) {
+  if (program == NULL || insn_index >= program->program_len) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  program->program[insn_index].imm = imm;
+  return GINT_OK;
+}
+
+static int program_emit_load_bool(graphion_runtime_program *program,
+                                  uint8_t reg,
+                                  int bool_value,
+                                  unsigned int line,
+                                  graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value value;
+  size_t const_index;
+  int rc;
+
+  vm_value_set_none(&value);
+  value.kind = GVM_VALUE_BOOL;
+  value.as.bool_value = bool_value != 0 ? 1 : 0;
+  rc = program_add_const(program, &value, line, diagnostic, &const_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_LOAD_CONST, reg, 0U, (int32_t)const_index, line, diagnostic);
+}
+
 static int parse_identifier_token(const char **cursor,
                                   char *buffer,
                                   size_t buffer_size,
@@ -761,14 +792,22 @@ static int parse_and_expression(const char **cursor,
   }
   for (;;) {
     parsed_expr_result rhs;
+    size_t jump_index;
+    size_t end_jump_index;
+    int short_result;
     skip_spaces(cursor);
     if (strncmp(*cursor, "nand", 4U) == 0 && !is_ident_char((*cursor)[4])) {
       *cursor += 4U;
-      rc = parse_not_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
-      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+      jump_index = program->program_len;
+      rc = program_emit(program, GVM_OP_JUMP_IF_FALSE, target_reg, 0U, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = parse_not_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
@@ -777,6 +816,24 @@ static int parse_and_expression(const char **cursor,
         return rc;
       }
       rc = program_emit(program, GVM_OP_NAND, target_reg, scratch_reg, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      end_jump_index = program->program_len;
+      rc = program_emit(program, GVM_OP_JUMP, 0U, 0U, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      short_result = 1;
+      rc = program_patch_imm(program, jump_index, (int32_t)program->program_len, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_emit_load_bool(program, target_reg, short_result, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_patch_imm(program, end_jump_index, (int32_t)program->program_len, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
@@ -790,11 +847,16 @@ static int parse_and_expression(const char **cursor,
       break;
     }
     *cursor += 3U;
-    rc = parse_not_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP_IF_FALSE, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = parse_not_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -803,6 +865,24 @@ static int parse_and_expression(const char **cursor,
       return rc;
     }
     rc = program_emit(program, GVM_OP_AND, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    end_jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP, 0U, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    short_result = 0;
+    rc = program_patch_imm(program, jump_index, (int32_t)program->program_len, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit_load_bool(program, target_reg, short_result, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_patch_imm(program, end_jump_index, (int32_t)program->program_len, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -830,14 +910,22 @@ static int parse_expression(const char **cursor,
   }
   for (;;) {
     parsed_expr_result rhs;
+    size_t jump_index;
+    size_t end_jump_index;
+    int short_result;
     skip_spaces(cursor);
     if (strncmp(*cursor, "nor", 3U) == 0 && !is_ident_char((*cursor)[3])) {
       *cursor += 3U;
-      rc = parse_and_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
-      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+      jump_index = program->program_len;
+      rc = program_emit(program, GVM_OP_JUMP_IF_TRUE, target_reg, 0U, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = parse_and_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
@@ -846,6 +934,24 @@ static int parse_expression(const char **cursor,
         return rc;
       }
       rc = program_emit(program, GVM_OP_NOR, target_reg, scratch_reg, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      end_jump_index = program->program_len;
+      rc = program_emit(program, GVM_OP_JUMP, 0U, 0U, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      short_result = 0;
+      rc = program_patch_imm(program, jump_index, (int32_t)program->program_len, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_emit_load_bool(program, target_reg, short_result, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_patch_imm(program, end_jump_index, (int32_t)program->program_len, line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
@@ -859,11 +965,16 @@ static int parse_expression(const char **cursor,
       break;
     }
     *cursor += 2;
-    rc = parse_and_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP_IF_TRUE, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = parse_and_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -872,6 +983,24 @@ static int parse_expression(const char **cursor,
       return rc;
     }
     rc = program_emit(program, GVM_OP_OR, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    end_jump_index = program->program_len;
+    rc = program_emit(program, GVM_OP_JUMP, 0U, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    short_result = 1;
+    rc = program_patch_imm(program, jump_index, (int32_t)program->program_len, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit_load_bool(program, target_reg, short_result, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_patch_imm(program, end_jump_index, (int32_t)program->program_len, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

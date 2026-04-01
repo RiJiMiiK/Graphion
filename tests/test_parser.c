@@ -2966,6 +2966,7 @@ int test_gion_and_runtime_errors(void) {
   } cases[] = {
       {"value = 2 and true\n", 1U},
       {"value = true and 2\n", 1U},
+      {"value = 1 and 2\n", 1U},
       {"value = 1.0 and true\n", 1U},
       {"value = \"x\" and true\n", 1U},
   };
@@ -3095,7 +3096,8 @@ int test_gion_or_runtime_errors(void) {
     unsigned int expected_line;
   } cases[] = {
       {"value = 2 or true\n", 1U},
-      {"value = true or 2\n", 1U},
+      {"value = false or 2\n", 1U},
+      {"value = 0 or 2\n", 1U},
       {"value = 1.0 or true\n", 1U},
       {"value = \"x\" or true\n", 1U},
   };
@@ -3347,6 +3349,7 @@ int test_gion_nand_runtime_errors(void) {
   } cases[] = {
       {"value = 2 nand true\n", 1U},
       {"value = true nand 2\n", 1U},
+      {"value = 1 nand 2\n", 1U},
       {"value = 1.0 nand true\n", 1U},
       {"value = \"x\" nand true\n", 1U},
   };
@@ -3469,6 +3472,7 @@ int test_gion_nor_runtime_errors(void) {
   } cases[] = {
       {"value = 2 nor false\n", 1U},
       {"value = false nor 2\n", 1U},
+      {"value = 0 nor 2\n", 1U},
       {"value = 1.0 nor false\n", 1U},
       {"value = \"x\" nor false\n", 1U},
   };
@@ -3518,6 +3522,96 @@ int test_gion_nor_syntax_errors(void) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_boolean_short_circuit(void) {
+  const char *source =
+      "safe_and = false and 2\n"
+      "safe_or = true or 2\n"
+      "safe_nand = false nand 2\n"
+      "safe_nor = true nor 2\n"
+      "mixed_safe = true or false and 2\n"
+      "print(safe_and)\n"
+      "print(safe_or)\n"
+      "print(safe_nand)\n"
+      "print(safe_nor)\n"
+      "print(mixed_safe)\n";
+  const char *path = "gion_boolean_short_circuit.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *safe_and;
+  const graphion_runtime_value *safe_or;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  safe_and = graphion_runtime_scope_find(&scope, "safe_and");
+  safe_or = graphion_runtime_scope_find(&scope, "safe_or");
+  if (safe_and == NULL || safe_and->kind != GVM_VALUE_BOOL || safe_and->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (safe_or == NULL || safe_or->kind != GVM_VALUE_BOOL || safe_or->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  remove(path);
+  if (strcmp(output, "false\ntrue\ntrue\nfalse\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 6);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_boolean_short_circuit_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = true and 2\n", 1U},
+      {"value = false or 2\n", 1U},
+      {"value = true nand 2\n", 1U},
+      {"value = false nor 2\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     graphion_runtime_scope_dispose(&scope);

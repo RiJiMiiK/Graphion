@@ -47,6 +47,7 @@ int test_vm_nand_opcode(void);
 int test_vm_nand_incompatible_types_fail(void);
 int test_vm_nor_opcode(void);
 int test_vm_nor_incompatible_types_fail(void);
+int test_vm_jump_opcode(void);
 int test_vm_string_addition_opcode(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
@@ -143,6 +144,8 @@ int test_gion_nand_syntax_errors(void);
 int test_gion_nor_expressions(void);
 int test_gion_nor_runtime_errors(void);
 int test_gion_nor_syntax_errors(void);
+int test_gion_boolean_short_circuit(void);
+int test_gion_boolean_short_circuit_runtime_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -221,6 +224,7 @@ int main(int argc, char **argv) {
     {"vm_nand_incompatible_types_fail", test_vm_nand_incompatible_types_fail},
     {"vm_nor_opcode", test_vm_nor_opcode},
     {"vm_nor_incompatible_types_fail", test_vm_nor_incompatible_types_fail},
+    {"vm_jump_opcode", test_vm_jump_opcode},
       {"vm_string_addition_opcode", test_vm_string_addition_opcode},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
@@ -318,6 +322,8 @@ int main(int argc, char **argv) {
     {"gion_nor_expressions", test_gion_nor_expressions},
     {"gion_nor_runtime_errors", test_gion_nor_runtime_errors},
     {"gion_nor_syntax_errors", test_gion_nor_syntax_errors},
+    {"gion_boolean_short_circuit", test_gion_boolean_short_circuit},
+    {"gion_boolean_short_circuit_runtime_errors", test_gion_boolean_short_circuit_runtime_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

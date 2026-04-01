@@ -578,35 +578,59 @@ Current `and` rules:
 - `bool and int` only when the integer is `0` or `1`
 - `int and int` only when both integers are `0` or `1`
 
-These are currently runtime errors:
+These are currently runtime errors when the invalid side must actually be evaluated:
 
 - `2 and true`
+- `true and 2`
 - `1.0 and true`
 - `"x" and true`
+
+These currently succeed because the left side short-circuits first:
+
+- `false and 2`
+- `0 and "x"`
 
 `or` currently follows the same type rules as `and`, but returns true when either side is true.
 
 `nand` currently follows the same type rules as `and`, but returns the negation of `and`.
 
-These are currently runtime errors:
+These are currently runtime errors when the invalid side must actually be evaluated:
 
 - `2 nand true`
+- `true nand 2`
 - `1.0 nand true`
 - `"x" nand true`
 
-These are currently runtime errors:
+These currently succeed because the left side short-circuits first:
+
+- `false nand 2`
+- `0 nand "x"`
+
+These are currently runtime errors when the invalid side must actually be evaluated:
 
 - `2 or true`
+- `false or 2`
 - `1.0 or true`
 - `"x" or true`
 
+These currently succeed because the left side short-circuits first:
+
+- `true or 2`
+- `1 or "x"`
+
 `nor` currently follows the same type rules as `or`, but returns the negation of `or`.
 
-These are currently runtime errors:
+These are currently runtime errors when the invalid side must actually be evaluated:
 
 - `2 nor false`
+- `false nor 2`
 - `1.0 nor false`
 - `"x" nor false`
+
+These currently succeed because the left side short-circuits first:
+
+- `true nor 2`
+- `1 nor "x"`
 
 `not` currently accepts:
 
@@ -619,14 +643,13 @@ These are currently runtime errors:
 - `not 1.0`
 - `not "x"`
 
-Current V1 note:
+Current evaluation note:
 
-- `not` currently evaluates its operand and negates the resulting boolean value
-- `and` currently evaluates both operands
-- `nand` currently evaluates both operands
-- `or` currently evaluates both operands
-- `nor` currently evaluates both operands
-- short-circuit behavior is not implemented yet
+- `not` evaluates its operand and negates the resulting boolean value
+- `and` short-circuits when the left side is `false` or `0`
+- `nand` short-circuits when the left side is `false` or `0`
+- `or` short-circuits when the left side is `true` or `1`
+- `nor` short-circuits when the left side is `true` or `1`
 
 ## Precedence
 
