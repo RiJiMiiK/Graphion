@@ -430,6 +430,17 @@ The key rules are:
 - `default` must be last
 - `1` and `1.0` are treated as duplicates because they compare equal in Graphion
 
+When you mix several conditional operators, the practical reading order is:
+
+- parentheses first
+- then comparisons like `==` and `<`
+- then `not`
+- then `and` / `nand`
+- then `or` / `nor`
+- ternary expressions last
+
+If an expression starts feeling dense, add parentheses instead of relying on memory.
+
 Current conditions currently accept:
 
 - `true`
