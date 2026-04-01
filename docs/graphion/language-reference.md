@@ -396,6 +396,85 @@ Currently supported boolean logic operators:
 
 `and`, `nand`, `or`, `nor`, and `not` return a `bool`.
 
+## Truth Rules
+
+Graphion currently uses a strict boolean subset for boolean logic and conditions:
+
+- `true` is true
+- `false` is false
+- integer `1` is treated as true
+- integer `0` is treated as false
+- other integers are rejected
+- `float` values are rejected
+- `string` values are rejected
+
+This rule currently applies to:
+
+- `if` / `elif` conditions
+- `not`
+- `and` / `nand`
+- `or` / `nor`
+
+Examples:
+
+```gion
+if 1:
+    print("true")
+
+if 0:
+    print("bad")
+else:
+    print("false")
+
+print(not 1)
+print(false nor 0)
+```
+
+### Truth Tables
+
+`and`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `true` |
+| `true` | `false` | `false` |
+| `false` | `true` | `false` |
+| `false` | `false` | `false` |
+
+`nand`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `false` |
+| `true` | `false` | `true` |
+| `false` | `true` | `true` |
+| `false` | `false` | `true` |
+
+`or`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `true` |
+| `true` | `false` | `true` |
+| `false` | `true` | `true` |
+| `false` | `false` | `false` |
+
+`nor`
+
+| left | right | result |
+| --- | --- | --- |
+| `true` | `true` | `false` |
+| `true` | `false` | `false` |
+| `false` | `true` | `false` |
+| `false` | `false` | `true` |
+
+`not`
+
+| value | result |
+| --- | --- |
+| `true` | `false` |
+| `false` | `true` |
+
 Examples:
 
 ```gion

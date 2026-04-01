@@ -256,6 +256,10 @@ true
 
 Current behavior:
 
+- truth rules are strict:
+  - `true` and `1` behave as true
+  - `false` and `0` behave as false
+  - other integers, floats, and strings are rejected in boolean logic
 - `and` accepts `bool`
 - `and` also accepts integer `0` / `1`
 - `and` can be chained multiple times
