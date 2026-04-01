@@ -633,12 +633,15 @@ int test_vm_eq_incompatible_types_fail(void) {
   graphion_vm_bind_globals(&vm, globals, 1U);
   rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
   if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
     return 10;
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_TYPE_MISMATCH) {
+    graphion_vm_dispose(&vm);
     return 11;
   }
+  graphion_vm_dispose(&vm);
   return 0;
 }
 
