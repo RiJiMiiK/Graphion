@@ -91,3 +91,36 @@ The current active lane is conditional logic in the `.gion` scalar language.
   - branch labels are scalar literals only in V1
   - `default` is optional, unique, and final
   - grouped case labels share the next non-empty indented block
+
+## Next arithmetic lane
+
+The next planned lane is arithmetic and bit-level scalar work after the conditional lane.
+
+### Arithmetic follow-up
+
+- [x] unary `-` on variables and grouped expressions
+- [ ] define and implement a dedicated `bits` scalar type
+  - literal syntax should use binary prefixes such as `0b0011`
+  - each `bits` value keeps the width defined by its literal spelling
+    - `0b10` has width `2`
+    - `0b0010` has width `4`
+  - width is fixed per value after creation
+  - `==` and `!=` compare normalized bit values, so leading zeroes do not affect equality
+    - `0b10 == 0b0010` should be `true`
+  - bitwise binary operators require matching widths
+    - `0b10 & 0b0010` should be rejected
+  - shifts and unary bitwise inversion keep the original width
+  - overflow and left-shift overflow should truncate back to the stored width
+  - V1 should support only dedicated bitwise operators:
+    - `&`
+    - `|`
+    - `^`
+    - `~`
+    - `<<`
+    - `>>`
+  - V1 should reject non-bitwise operators on `bits`
+    - arithmetic operators
+    - ordered comparisons
+    - boolean logic operators
+    - use of `bits` directly as a condition
+    - implicit mixing with `int`, `float`, `bool`, or `string`
