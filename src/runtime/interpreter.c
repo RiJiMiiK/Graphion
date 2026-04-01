@@ -816,7 +816,26 @@ static int parse_factor(const char **cursor,
   parsed_expr_result lhs;
   int rc;
   skip_spaces(cursor);
-  if (**cursor == '-' && !isdigit((unsigned char)(*cursor)[1])) {
+  if (**cursor == '~') {
+    const uint8_t target_reg = base_reg;
+    (*cursor)++;
+    rc = parse_factor(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_BIT_NOT, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (**cursor == '-' && !isdigit((unsigned char)(*cursor)[1])) {
     parsed_expr_result rhs;
     const uint8_t target_reg = base_reg;
     const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);

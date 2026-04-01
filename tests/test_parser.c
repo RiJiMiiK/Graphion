@@ -1693,6 +1693,78 @@ int test_gion_bits_xor_runtime_errors(void) {
   return 0;
 }
 
+int test_gion_bits_not(void) {
+  const char *source =
+      "not_wide = ~0b0010\n"
+      "not_short = ~0b10\n"
+      "print(not_wide)\n"
+      "print(not_short)\n";
+  const char *path = "gion_bits_not.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *not_wide;
+  const graphion_runtime_value *not_short;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  not_wide = graphion_runtime_scope_find(&scope, "not_wide");
+  not_short = graphion_runtime_scope_find(&scope, "not_short");
+  if (not_wide == NULL || not_wide->kind != GVM_VALUE_BITS || not_wide->reserved[0] != 4U ||
+      (uint64_t)not_wide->as.int_value != 13U) {
+    remove(path);
+    return 3;
+  }
+  if (not_short == NULL || not_short->kind != GVM_VALUE_BITS || not_short->reserved[0] != 2U ||
+      (uint64_t)not_short->as.int_value != 1U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b1101\n0b01\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_not_runtime_errors(void) {
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source("value = ~1\n", &scope, &diagnostic);
+  if (rc != GINT_ERR_RUN) {
+    return 1;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "incompatible operand types") != 0) {
+    return 2;
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;

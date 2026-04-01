@@ -170,6 +170,8 @@ different_bits = 0b10 != 0b0011
 masked_bits = 0b1100 & 0b1010
 merged_bits = 0b1100 | 0b1010
 xor_bits = 0b1100 ^ 0b1010
+not_wide_bits = ~0b0010
+not_short_bits = ~0b10
 
 print(short_bits)
 print(wide_bits)
@@ -179,6 +181,8 @@ print(different_bits)
 print(masked_bits)
 print(merged_bits)
 print(xor_bits)
+print(not_wide_bits)
+print(not_short_bits)
 ```
 
 Expected output:
@@ -192,6 +196,8 @@ true
 0b1000
 0b1110
 0b0110
+0b1101
+0b01
 ```
 
 Current behavior:
@@ -204,8 +210,9 @@ Current behavior:
 - `0b1100 & 0b1010` therefore produces `0b1000`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
+- `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`
 - mixing `bits` with `int`, `float`, `bool`, or `string` is rejected
-- this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, and `^`
+- this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, and `~`
 
 ## Equality
 

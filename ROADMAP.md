@@ -113,7 +113,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] `bits & bits`
 - [x] `bits | bits`
 - [x] `bits ^ bits`
-- [ ] `~bits`
+- [x] `~bits`
 - [ ] `bits << bits`
 - [ ] `bits >> bits`
 - [ ] require matching widths for binary bitwise operators

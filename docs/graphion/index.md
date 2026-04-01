@@ -12,7 +12,7 @@ Graphion is currently an early-stage language with a small but already usable su
   - `float`
   - `bool`
   - `string`
-  - `bits` through `0b...` literals, normalized equality, `&`, `|`, and `^`
+  - `bits` through `0b...` literals, normalized equality, `&`, `|`, `^`, and `~`
 - arithmetic expressions
 - grouped expressions with parentheses
 - compound assignments

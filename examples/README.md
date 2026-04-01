@@ -17,7 +17,7 @@ Files:
 - `05_comments.gion`
   - line comments with `#` and block comments with `/* ... */`
 - `06_bits_literals.gion`
-  - `bits` literals with `0b...`, preserved width, normalized equality, `&`, `|`, and `^`
+  - `bits` literals with `0b...`, preserved width, normalized equality, `&`, `|`, `^`, and `~`
 
 Run any example with:
 
