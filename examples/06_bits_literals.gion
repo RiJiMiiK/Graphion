@@ -9,6 +9,7 @@ same_bits = 0b10 == 0b0010
 different_bits = 0b10 != 0b0011
 masked_bits = 0b1100 & 0b1010
 merged_bits = 0b1100 | 0b1010
+xor_bits = 0b1100 ^ 0b1010
 
 print("bits literal with width 2 -> short_bits=" + short_bits)
 print("bits literal with width 4 -> wide_bits=" + wide_bits)
@@ -17,3 +18,4 @@ print("bits equality ignores leading zeroes -> same_bits=" + same_bits)
 print("bits inequality compares normalized values -> different_bits=" + different_bits)
 print("bits and keeps matching width -> masked_bits=" + masked_bits)
 print("bits or keeps matching width -> merged_bits=" + merged_bits)
+print("bits xor keeps matching width -> xor_bits=" + xor_bits)

@@ -1113,25 +1113,28 @@ static int parse_bitor_expression(const char **cursor,
   for (;;) {
     parsed_expr_result rhs;
     skip_spaces(cursor);
-    if (**cursor != '|') {
+    if (**cursor != '|' && **cursor != '^') {
       break;
     }
-    (*cursor)++;
-    rc = parse_bitand_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
-    }
-    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
-    }
-    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
-    }
-    rc = program_emit(program, GVM_OP_BIT_OR, target_reg, scratch_reg, 0, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
+    {
+      const graphion_opcode bit_op = **cursor == '|' ? GVM_OP_BIT_OR : GVM_OP_BIT_XOR;
+      (*cursor)++;
+      rc = parse_bitand_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_emit(program, bit_op, target_reg, scratch_reg, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
     }
     lhs.kind = EXPR_RESULT_REG;
     lhs.reg_index = target_reg;
