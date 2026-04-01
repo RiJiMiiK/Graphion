@@ -23,13 +23,14 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 
 - [x] `==`
 - [x] `!=`
-- [ ] `<`
+- [x] `<`
 - [ ] `<=`
 - [ ] `>`
 - [ ] `>=`
 - [ ] finish and document comparison semantics across `int`, `float`, `bool`, and `string`
   - current `==` and `!=` support numeric comparison, `int`/`bool` bridging for `0` and `1`, same-kind `bool`, same-kind `string`, and runtime errors for incompatible scalar kinds
-- [ ] decide whether ordered comparisons should reject `bool` values entirely or support a strict `0/1` ordering rule
+  - current `<` supports numeric comparison only and rejects `bool` / `string`
+- [ ] decide whether later ordered comparisons should keep rejecting `bool` values or adopt a strict `0/1` ordering rule
 
 ### Boolean logic
 
