@@ -100,12 +100,17 @@ Negative values work across arithmetic expressions.
 negative_add = -5 + 2
 negative_div = -7 / 2
 negative_floor = -7 // 2
+count = 5
+neg_count = -count
+neg_group = -(1 + 2)
 negative_power = (-2) ** 3
 negative_remainder = -10 % 4
 
 print(negative_add)
 print(negative_div)
 print(negative_floor)
+print(neg_count)
+print(neg_group)
 print(negative_power)
 print(negative_remainder)
 ```
@@ -116,6 +121,8 @@ Expected output:
 -3
 -3.5
 -4
+-5
+-3
 -8
 -2
 ```

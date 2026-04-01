@@ -653,6 +653,10 @@ int test_gion_arithmetic_expressions(void) {
       "power = 2 ** 3\n"
       "negative_power = (-2) ** 3\n"
       "negative_exponent = 2 ** -1\n"
+      "count = 5\n"
+      "neg_count = -count\n"
+      "neg_group = -(1 + 2)\n"
+      "neg_abs = -abs(-3)\n"
       "right_assoc = 2 ** 3 ** 2\n"
       "powered_group = (1 + 2) ** 2\n"
       "abs_int = abs(-42)\n"
@@ -678,6 +682,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(power)\n"
       "print(negative_power)\n"
       "print(negative_exponent)\n"
+      "print(neg_count)\n"
+      "print(neg_group)\n"
+      "print(neg_abs)\n"
       "print(right_assoc)\n"
       "print(powered_group)\n"
       "print(abs_int)\n"
@@ -709,6 +716,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *power;
   const graphion_runtime_value *negative_power;
   const graphion_runtime_value *negative_exponent;
+  const graphion_runtime_value *neg_count;
+  const graphion_runtime_value *neg_group;
+  const graphion_runtime_value *neg_abs;
   const graphion_runtime_value *right_assoc;
   const graphion_runtime_value *powered_group;
   const graphion_runtime_value *abs_int;
@@ -755,6 +765,9 @@ int test_gion_arithmetic_expressions(void) {
   power = graphion_runtime_scope_find(&scope, "power");
   negative_power = graphion_runtime_scope_find(&scope, "negative_power");
   negative_exponent = graphion_runtime_scope_find(&scope, "negative_exponent");
+  neg_count = graphion_runtime_scope_find(&scope, "neg_count");
+  neg_group = graphion_runtime_scope_find(&scope, "neg_group");
+  neg_abs = graphion_runtime_scope_find(&scope, "neg_abs");
   right_assoc = graphion_runtime_scope_find(&scope, "right_assoc");
   powered_group = graphion_runtime_scope_find(&scope, "powered_group");
   abs_int = graphion_runtime_scope_find(&scope, "abs_int");
@@ -828,6 +841,18 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 18;
   }
+  if (neg_count == NULL || neg_count->kind != GVM_VALUE_INT || neg_count->as.int_value != -5) {
+    remove(path);
+    return 181;
+  }
+  if (neg_group == NULL || neg_group->kind != GVM_VALUE_INT || neg_group->as.int_value != -3) {
+    remove(path);
+    return 182;
+  }
+  if (neg_abs == NULL || neg_abs->kind != GVM_VALUE_INT || neg_abs->as.int_value != -3) {
+    remove(path);
+    return 183;
+  }
   if (right_assoc == NULL || right_assoc->kind != GVM_VALUE_FLOAT || right_assoc->as.float_value != 512.0) {
     remove(path);
     return 19;
@@ -869,7 +894,7 @@ int test_gion_arithmetic_expressions(void) {
     return 28;
   }
   remove(path);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n512\n9\n42\n3.5\n3\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1186,6 +1211,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = abs()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = abs(1 + 2\n", GINT_ERR_PARSE, "expected ')' after abs argument"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
+      {"value = -\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = -(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = 1 + (2 * 3\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = ()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print(1 + )\n", GINT_ERR_PARSE, "expected scalar literal"},
@@ -4196,4 +4223,3 @@ int test_gion_capacity_errors(void) {
 
   return 0;
 }
-

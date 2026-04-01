@@ -558,6 +558,14 @@ Supported arithmetic operators:
 `**`
 : power, right-associative
 
+Unary minus is also supported on variables and grouped expressions, for example:
+
+```gion
+count = 5
+neg_count = -count
+neg_group = -(1 + 2)
+```
+
 ## Comparison Operators
 
 Currently supported comparison operators:

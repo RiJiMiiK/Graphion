@@ -312,6 +312,25 @@ static int program_emit_load_bool(graphion_runtime_program *program,
   return program_emit(program, GVM_OP_LOAD_CONST, reg, 0U, (int32_t)const_index, line, diagnostic);
 }
 
+static int program_emit_load_int(graphion_runtime_program *program,
+                                 uint8_t reg,
+                                 int64_t int_value,
+                                 unsigned int line,
+                                 graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value value;
+  size_t const_index;
+  int rc;
+
+  vm_value_set_none(&value);
+  value.kind = GVM_VALUE_INT;
+  value.as.int_value = int_value;
+  rc = program_add_const(program, &value, line, diagnostic, &const_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_LOAD_CONST, reg, 0U, (int32_t)const_index, line, diagnostic);
+}
+
 static int parse_identifier_token(const char **cursor,
                                   char *buffer,
                                   size_t buffer_size,
@@ -753,7 +772,32 @@ static int parse_factor(const char **cursor,
   parsed_expr_result lhs;
   int rc;
   skip_spaces(cursor);
-  if (strncmp(*cursor, "abs", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+  if (**cursor == '-' && !isdigit((unsigned char)(*cursor)[1])) {
+    parsed_expr_result rhs;
+    const uint8_t target_reg = base_reg;
+    const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+    (*cursor)++;
+    rc = parse_factor(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit_load_int(program, target_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_SUB, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "abs", 3U) == 0 && !is_ident_char((*cursor)[3])) {
     const uint8_t target_reg = base_reg;
     const char *after_name = *cursor + 3;
     skip_spaces(&after_name);

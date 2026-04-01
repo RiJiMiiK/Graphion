@@ -9,7 +9,7 @@ Files:
 - `01_scalars_and_print.gion`
   - scalar assignments, variable copies, and `print(...)`
 - `02_arithmetic.gion`
-  - arithmetic operators, precedence, negative operands, and `abs(...)`
+  - arithmetic operators, precedence, negative operands, unary minus, and `abs(...)`
 - `03_compound_assignments.gion`
   - `+=`, `-=`, `*=`, `/=`, `//=`, `%=`, `**=`
 - `04_conditionals.gion`
