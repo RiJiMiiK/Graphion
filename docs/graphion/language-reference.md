@@ -314,6 +314,32 @@ label = "ready" if ready else "not ready"
 label = "outer" if ready else "inner" if fallback else "none"
 ```
 
+### Reading Tips
+
+To keep conditions and ternary expressions readable:
+
+- prefer grouping parentheses when mixing several boolean operators
+- prefer multiline grouped conditions once a single line starts to feel dense
+- keep nested ternary expressions short
+- switch back to a full `if` / `elif` / `else` block when the ternary stops being immediately obvious
+
+Examples:
+
+```gion
+if (ready and has_token) or fallback:
+    print("ok")
+```
+
+```gion
+label = "ready" if ready else "not ready"
+```
+
+```gion
+label = "outer" if ready else "inner" if fallback else "none"
+```
+
+The last form is valid, but a block is usually easier to read once nested ternary logic grows.
+
 ## Comments
 
 Graphion currently supports two comment forms:

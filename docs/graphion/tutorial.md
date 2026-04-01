@@ -380,6 +380,12 @@ ready
 
 The ternary condition follows the same truth rules as `if` / `elif`.
 
+As ternary expressions grow, readability drops quickly. A good rule of thumb is:
+
+- keep simple ternaries on one line
+- use grouped multiline conditions for long boolean tests
+- switch back to a full block when the ternary starts nesting
+
 Current conditions currently accept:
 
 - `true`
