@@ -53,7 +53,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
 
 ### Future condition features
 
-- [ ] multiline conditions with required grouping parentheses
+- [x] multiline conditions with required grouping parentheses
   - target shape:
     ```gion
     if (

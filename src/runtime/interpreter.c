@@ -1646,6 +1646,190 @@ static int parse_control_condition_span(const char *cursor,
   return fail(diagnostic, line, 1U, strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition", GINT_ERR_PARSE);
 }
 
+static int condition_line_looks_incomplete(const char *text, size_t length) {
+  size_t end = length;
+
+  while (end > 0U && (text[end - 1U] == ' ' || text[end - 1U] == '\t' || text[end - 1U] == '\r')) {
+    end--;
+  }
+  if (end == 0U) {
+    return 1;
+  }
+  {
+    const char tail = text[end - 1U];
+    if (tail == '(' || tail == '=' || tail == '!' || tail == '<' || tail == '>' || tail == '+' || tail == '-' ||
+        tail == '*' || tail == '/' || tail == '%') {
+      return 1;
+    }
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "and", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  if (end >= 2U && strncmp(text + end - 2U, "or", 2U) == 0 && (end == 2U || !is_ident_char(text[end - 3U]))) {
+    return 1;
+  }
+  if (end >= 4U && strncmp(text + end - 4U, "nand", 4U) == 0 && (end == 4U || !is_ident_char(text[end - 5U]))) {
+    return 1;
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "nor", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  if (end >= 3U && strncmp(text + end - 3U, "not", 3U) == 0 && (end == 3U || !is_ident_char(text[end - 4U]))) {
+    return 1;
+  }
+  return 0;
+}
+
+static int collect_control_condition_text(const runtime_source_line *lines,
+                                          size_t count,
+                                          size_t start_index,
+                                          const char *keyword,
+                                          char *buffer,
+                                          size_t buffer_size,
+                                          size_t *header_end_index_out,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  const runtime_source_line *start_line;
+  const char *cursor;
+  const size_t keyword_len = strlen(keyword);
+  size_t write_index = 0U;
+  size_t i;
+  int depth = 0;
+  int in_string = 0;
+  int multiline_allowed = 0;
+
+  if (lines == NULL || start_index >= count || keyword == NULL || buffer == NULL || buffer_size == 0U ||
+      header_end_index_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+
+  start_line = &lines[start_index];
+  cursor = line_content(start_line);
+  if (strncmp(cursor, keyword, keyword_len) != 0 || is_ident_char(cursor[keyword_len])) {
+    return fail(diagnostic, line, 1U, "invalid conditional header", GINT_ERR_PARSE);
+  }
+  cursor += keyword_len;
+  skip_spaces(&cursor);
+  if (*cursor == '\0') {
+    return fail(diagnostic,
+                line,
+                1U,
+                strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
+                GINT_ERR_PARSE);
+  }
+
+  multiline_allowed = *cursor == '(' ? 1 : 0;
+
+  for (i = start_index; i < count; ++i) {
+    const char *scan = i == start_index ? cursor : line_content(&lines[i]);
+
+    if (i > start_index) {
+      if (!multiline_allowed) {
+        return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      if (write_index > 0U && buffer[write_index - 1U] != ' ') {
+        buffer[write_index++] = ' ';
+      }
+    }
+
+    while (*scan != '\0') {
+      if (in_string) {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (*scan == '"') {
+          in_string = 0;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == '"') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        in_string = 1;
+        scan++;
+        continue;
+      }
+      if (*scan == '(') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        depth++;
+        scan++;
+        continue;
+      }
+      if (*scan == ')') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (depth > 0) {
+          depth--;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == ':' && depth == 0) {
+        const char *tail = scan + 1;
+        while (write_index > 0U &&
+               (buffer[write_index - 1U] == ' ' || buffer[write_index - 1U] == '\t' || buffer[write_index - 1U] == '\r')) {
+          write_index--;
+        }
+        skip_spaces(&tail);
+        if (*tail != '\0') {
+          return fail(diagnostic, lines[i].line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+        }
+        if (write_index == 0U) {
+          return fail(diagnostic,
+                      line,
+                      1U,
+                      strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
+                      GINT_ERR_PARSE);
+        }
+        buffer[write_index] = '\0';
+        *header_end_index_out = i;
+        return GINT_OK;
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      buffer[write_index++] = *scan;
+      scan++;
+    }
+
+    if (depth == 0) {
+      if (i == start_index) {
+        if (condition_line_looks_incomplete(buffer, write_index)) {
+          return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+        }
+        return fail(diagnostic,
+                    line,
+                    1U,
+                    strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+                    GINT_ERR_PARSE);
+      }
+      return fail(diagnostic,
+                  lines[i].line,
+                  1U,
+                  strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+                  GINT_ERR_PARSE);
+    }
+  }
+
+  return fail(diagnostic,
+              line,
+              1U,
+              strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
+              GINT_ERR_PARSE);
+}
+
 static int parse_else_header(const char *cursor,
                              unsigned int line,
                              graphion_runtime_diagnostic *diagnostic) {
@@ -1842,23 +2026,17 @@ static int execute_if_chain(const runtime_source_line *lines,
     if (seen_else && (line_is_elif_clause(clause_line) || is_else_clause)) {
       return fail(diagnostic, clause_line->line, 1U, "else must be last in if chain", GINT_ERR_PARSE);
     }
-    body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
-    if (body_start >= count || lines[body_start].indent <= current_indent) {
-      return fail(diagnostic,
-                  clause_line->line,
-                  1U,
-                  is_else_clause ? "expected indented block after else" :
-                  line_is_elif_clause(clause_line) ? "expected indented block after elif" :
-                  "expected indented block after if",
-                  GINT_ERR_PARSE);
-    }
-    body_indent = lines[body_start].indent;
-    body_end = scan_block_end(lines, count, body_start, body_indent);
     if (is_else_clause) {
       int rc = parse_else_header(cursor, clause_line->line, diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
+      body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
+      if (body_start >= count || lines[body_start].indent <= current_indent) {
+        return fail(diagnostic, clause_line->line, 1U, "expected indented block after else", GINT_ERR_PARSE);
+      }
+      body_indent = lines[body_start].indent;
+      body_end = scan_block_end(lines, count, body_start, body_indent);
       seen_else = 1;
       if (!branch_taken) {
         size_t exec_index = body_start;
@@ -1870,21 +2048,35 @@ static int execute_if_chain(const runtime_source_line *lines,
         branch_taken = 1;
       }
     } else {
-      const char *cond_start = NULL;
-      const char *cond_end = NULL;
-      int rc = parse_control_condition_span(cursor,
-                                            line_is_elif_clause(clause_line) ? "elif" : "if",
-                                            &cond_start,
-                                            &cond_end,
-                                            clause_line->line,
-                                            diagnostic);
+      char condition_text[512];
+      size_t header_end_index = clause_index;
+      int rc = collect_control_condition_text(lines,
+                                              count,
+                                              clause_index,
+                                              line_is_elif_clause(clause_line) ? "elif" : "if",
+                                              condition_text,
+                                              sizeof(condition_text),
+                                              &header_end_index,
+                                              clause_line->line,
+                                              diagnostic);
       if (rc != GINT_OK) {
         return rc;
       }
+      body_start = find_next_nonblank_line(lines, count, header_end_index + 1U);
+      if (body_start >= count || lines[body_start].indent <= current_indent) {
+        return fail(diagnostic,
+                    clause_line->line,
+                    1U,
+                    line_is_elif_clause(clause_line) ? "expected indented block after elif" :
+                    "expected indented block after if",
+                    GINT_ERR_PARSE);
+      }
+      body_indent = lines[body_start].indent;
+      body_end = scan_block_end(lines, count, body_start, body_indent);
       if (!branch_taken) {
         int condition_true = 0;
-        rc = evaluate_condition_text(cond_start,
-                                     (size_t)(cond_end - cond_start),
+        rc = evaluate_condition_text(condition_text,
+                                     strlen(condition_text),
                                      scope,
                                      clause_line->line,
                                      diagnostic,

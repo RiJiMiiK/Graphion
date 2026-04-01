@@ -260,6 +260,35 @@ In this example:
 
 That binding is determined by indentation, not by the nearest visible `if` keyword alone.
 
+### Multiline Conditions
+
+Long conditions can span multiple physical lines, but only when the full condition is wrapped in grouping parentheses.
+
+```gion
+if (
+    ready and
+    has_token and
+    level >= 3 and
+    not blocked
+):
+    print("ok")
+```
+
+Rules:
+
+- multiline conditions require outer grouping parentheses
+- the closing `)` must appear before the final `:`
+- line breaks inside the grouped condition are treated like spaces
+- multiline conditions without grouping parentheses are invalid
+
+Invalid example:
+
+```gion
+if ready and
+   has_token:
+    print("bad")
+```
+
 ## Comments
 
 Graphion currently supports two comment forms:

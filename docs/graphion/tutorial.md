@@ -351,6 +351,20 @@ user
 The important rule is that each `else` attaches to the `if` at the same indentation level.
 Indentation decides the binding, not just the nearest visible `if`.
 
+You can also split a longer condition across multiple lines when you wrap it in grouping parentheses:
+
+```gion
+if (
+    ready and
+    has_token and
+    level >= 3 and
+    not blocked
+):
+    print("ok")
+```
+
+Without the outer parentheses, that multiline form remains invalid.
+
 Current conditions currently accept:
 
 - `true`

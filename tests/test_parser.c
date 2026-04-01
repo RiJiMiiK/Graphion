@@ -1658,6 +1658,14 @@ int test_gion_if_elif_else_control_flow(void) {
       "    not_branch = \"not condition works\"\n"
       "else:\n"
       "    not_branch = \"bad\"\n"
+      "if (\n"
+      "    flag and\n"
+      "    2 < 3 and\n"
+      "    not false\n"
+      "):\n"
+      "    multiline_branch = \"multiline condition works\"\n"
+      "else:\n"
+      "    multiline_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1683,6 +1691,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(or_branch)\n"
       "print(nor_branch)\n"
       "print(not_branch)\n"
+      "print(multiline_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1704,6 +1713,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *or_branch;
   const graphion_runtime_value *nor_branch;
   const graphion_runtime_value *not_branch;
+  const graphion_runtime_value *multiline_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1741,6 +1751,7 @@ int test_gion_if_elif_else_control_flow(void) {
   or_branch = graphion_runtime_scope_find(&scope, "or_branch");
   nor_branch = graphion_runtime_scope_find(&scope, "nor_branch");
   not_branch = graphion_runtime_scope_find(&scope, "not_branch");
+  multiline_branch = graphion_runtime_scope_find(&scope, "multiline_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1821,18 +1832,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 18);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (multiline_branch == NULL || multiline_branch->kind != GVM_VALUE_STRING ||
+      strcmp(multiline_branch->as.string_value, "multiline condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 19);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 20);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnor condition works\nnot condition works\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 21);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnor condition works\nnot condition works\nmultiline condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 22);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1863,6 +1879,10 @@ int test_gion_if_elif_else_errors(void) {
       {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "multiline condition requires grouping parentheses"},
+      {"if (\n    true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after if condition"},
+      {"if false:\n    print(1)\nelif true and\n    false:\n    print(2)\n", GINT_ERR_PARSE, 3U, "multiline condition requires grouping parentheses"},
+      {"if false:\n    print(1)\nelif (\n    true and\n    false:\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
       {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n", GINT_ERR_PARSE, 6U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelse:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_PARSE, 5U, "else must be last in if chain"},
       {"if false:\n    print(1)\nelif true\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after elif condition"},
