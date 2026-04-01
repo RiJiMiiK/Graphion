@@ -112,6 +112,24 @@ ternary_multiline = (
     if ready
     else "fallback multiline ternary"
 )
+status = "ready"
+match_branch = "unset"
+match_group = "unset"
+
+match status:
+    "waiting":
+        match_branch = "waiting branch"
+    "ready":
+        match_branch = "ready branch"
+    default:
+        match_branch = "default branch"
+
+match 2:
+    1:
+    2:
+        match_group = "grouped number branch"
+    default:
+        match_group = "default number branch"
 
 /* block comments are also ignored */
 
@@ -143,6 +161,8 @@ print("overview short-circuit nor -> safe_short_nor=" + safe_short_nor)
 print("overview multiline grouped condition -> multiline_branch=" + multiline_branch)
 print("overview ternary condition -> ternary_branch=" + ternary_branch)
 print("overview multiline ternary condition -> ternary_multiline=" + ternary_multiline)
+print("overview match on string -> match_branch=" + match_branch)
+print("overview match grouped cases -> match_group=" + match_group)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)

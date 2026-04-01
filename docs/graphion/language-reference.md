@@ -359,6 +359,61 @@ label = "outer" if ready else "inner" if fallback else "none"
 
 The last form is valid, but a block is usually easier to read once nested ternary logic grows.
 
+### Match Blocks
+
+Graphion also supports value-based branching with `match`:
+
+```gion
+match status:
+    "ready":
+        print("go")
+    "waiting":
+        print("hold")
+    default:
+        print("unknown")
+```
+
+Rules:
+
+- `match` is a statement, not an expression
+- each non-`default` branch starts with a scalar literal followed by `:`
+- supported case literals are `int`, `float`, `bool`, and `string`
+- `default:` is optional, may appear at most once, and must be last
+- grouped cases are allowed by stacking labels above the same block
+- the matched expression is evaluated once, then branches are tested from top to bottom
+- the first matching branch wins
+- incompatible case types do not raise an error during execution; they simply do not match
+- if the matched expression is a scalar literal and a case can never match it, Graphion emits a pre-execution warning unless warnings are disabled
+
+Grouped cases:
+
+```gion
+match level:
+    1:
+    2:
+        print("small")
+    default:
+        print("other")
+```
+
+Invalid examples:
+
+```gion
+match value:
+    default:
+        print("x")
+    1:
+        print("y")
+```
+
+```gion
+match value:
+    1:
+        print("x")
+    1.0:
+        print("y")
+```
+
 ## Comments
 
 Graphion currently supports two comment forms:

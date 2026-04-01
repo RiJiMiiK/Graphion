@@ -556,6 +556,8 @@ int test_gion_reserved_name_errors(void) {
       {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
       {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
       {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
+      {"match = true\n", "reserved name cannot be assigned", "gion_reserved_match.gion"},
+      {"default = true\n", "reserved name cannot be assigned", "gion_reserved_default.gion"},
       {"and = true\n", "reserved name cannot be assigned", "gion_reserved_and.gion"},
       {"nand = true\n", "reserved name cannot be assigned", "gion_reserved_nand.gion"},
       {"or = true\n", "reserved name cannot be assigned", "gion_reserved_or.gion"},
@@ -1908,6 +1910,191 @@ int test_gion_if_elif_else_errors(void) {
     if (cases[i].expected_rc == GINT_OK) {
       graphion_runtime_scope_dispose(&scope);
       continue;
+    }
+    if (diagnostic.line != cases[i].expected_line) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_match_control_flow(void) {
+  const char *source =
+      "status = \"ready\"\n"
+      "level = 2\n"
+      "flag = true\n"
+      "branch_string = \"unset\"\n"
+      "grouped_number = \"unset\"\n"
+      "bool_branch = \"unset\"\n"
+      "nested = \"unset\"\n"
+      "no_default = \"unchanged\"\n"
+      "numeric_match = \"unset\"\n"
+      "bool_int_match = \"unset\"\n"
+      "match status:\n"
+      "    \"waiting\":\n"
+      "        branch_string = \"hold\"\n"
+      "    \"ready\":\n"
+      "        branch_string = \"go\"\n"
+      "    default:\n"
+      "        branch_string = \"other\"\n"
+      "match level:\n"
+      "    1:\n"
+      "    2:\n"
+      "        grouped_number = \"small\"\n"
+      "    3:\n"
+      "        grouped_number = \"three\"\n"
+      "    default:\n"
+      "        grouped_number = \"other\"\n"
+      "match flag:\n"
+      "    false:\n"
+      "        bool_branch = \"false\"\n"
+      "    true:\n"
+      "        bool_branch = \"true\"\n"
+      "if true:\n"
+      "    match 1:\n"
+      "        0:\n"
+      "            nested = \"bad\"\n"
+      "        1:\n"
+      "            nested = \"match in if\"\n"
+      "match 0:\n"
+      "    1:\n"
+      "        no_default = \"bad\"\n"
+      "match 1:\n"
+      "    1.0:\n"
+      "        numeric_match = \"float matches int\"\n"
+      "match true:\n"
+      "    1:\n"
+      "        bool_int_match = \"bool matches one\"\n"
+      "print(branch_string)\n"
+      "print(grouped_number)\n"
+      "print(bool_branch)\n"
+      "print(nested)\n"
+      "print(no_default)\n"
+      "print(numeric_match)\n"
+      "print(bool_int_match)\n";
+  const char *path = "gion_match_control_flow.txt";
+  char output[256];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *branch_string;
+  const graphion_runtime_value *grouped_number;
+  const graphion_runtime_value *bool_branch;
+  const graphion_runtime_value *nested;
+  const graphion_runtime_value *no_default;
+  const graphion_runtime_value *numeric_match;
+  const graphion_runtime_value *bool_int_match;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+
+  branch_string = graphion_runtime_scope_find(&scope, "branch_string");
+  grouped_number = graphion_runtime_scope_find(&scope, "grouped_number");
+  bool_branch = graphion_runtime_scope_find(&scope, "bool_branch");
+  nested = graphion_runtime_scope_find(&scope, "nested");
+  no_default = graphion_runtime_scope_find(&scope, "no_default");
+  numeric_match = graphion_runtime_scope_find(&scope, "numeric_match");
+  bool_int_match = graphion_runtime_scope_find(&scope, "bool_int_match");
+
+  if (branch_string == NULL || branch_string->kind != GVM_VALUE_STRING ||
+      strcmp(branch_string->as.string_value, "go") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (grouped_number == NULL || grouped_number->kind != GVM_VALUE_STRING ||
+      strcmp(grouped_number->as.string_value, "small") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (bool_branch == NULL || bool_branch->kind != GVM_VALUE_STRING ||
+      strcmp(bool_branch->as.string_value, "true") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (nested == NULL || nested->kind != GVM_VALUE_STRING || strcmp(nested->as.string_value, "match in if") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (no_default == NULL || no_default->kind != GVM_VALUE_STRING ||
+      strcmp(no_default->as.string_value, "unchanged") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (numeric_match == NULL || numeric_match->kind != GVM_VALUE_STRING ||
+      strcmp(numeric_match->as.string_value, "float matches int") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  if (bool_int_match == NULL || bool_int_match->kind != GVM_VALUE_STRING ||
+      strcmp(bool_int_match->as.string_value, "bool matches one") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 9);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 10);
+  }
+  remove(path);
+  if (strcmp(output, "go\nsmall\ntrue\nmatch in if\nunchanged\nfloat matches int\nbool matches one\n") != 0) {
+    return finish_scope_test(&scope, 11);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_match_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    const char *message;
+  } cases[] = {
+      {"match:\n    1:\n        print(1)\n", GINT_ERR_PARSE, 1U, "expected expression after match"},
+      {"match 1\n    1:\n        print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after match expression"},
+      {"match 1: extra\n    1:\n        print(1)\n", GINT_ERR_PARSE, 1U, "unexpected trailing tokens after match"},
+      {"match 1:\nprint(1)\n", GINT_ERR_PARSE, 1U, "expected indented match block"},
+      {"default:\n    print(1)\n", GINT_ERR_PARSE, 1U, "default without matching match"},
+      {"match 1:\n    1\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected ':' after match case"},
+      {"match 1:\n    1: extra\n        print(1)\n", GINT_ERR_PARSE, 2U, "unexpected trailing tokens after match case"},
+      {"match 1:\n    default\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected ':' after default"},
+      {"match 1:\n    1:\n    2:\nprint(1)\n", GINT_ERR_PARSE, 2U, "expected indented block after match case"},
+      {"match 1:\n    1:\n        print(1)\n    1:\n        print(2)\n", GINT_ERR_PARSE, 4U, "duplicate match case"},
+      {"match 1:\n    1:\n        print(1)\n    1.0:\n        print(2)\n", GINT_ERR_PARSE, 4U, "duplicate match case"},
+      {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
+      {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
+      {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
+      {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected scalar literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != cases[i].expected_line) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
@@ -3721,6 +3908,25 @@ int test_gion_warning_directives(void) {
   }
   if (report.count != 0U) {
     return 11;
+  }
+
+  rc = graphion_collect_source_warnings("match \"a\":\n    1:\n        print(1)\n    default:\n        print(2)\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 12;
+  }
+  if (!report.enabled) {
+    return 13;
+  }
+  if (report.count != 1U) {
+    return 14;
+  }
+  if (strcmp(report.items[0].message, "match case can never match a string value") != 0) {
+    return 15;
+  }
+  if (report.items[0].line != 2U) {
+    return 16;
   }
 
   return 0;

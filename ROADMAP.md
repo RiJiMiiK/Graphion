@@ -86,4 +86,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
     # graphion: warnings=off
     ```
   - errors must remain blocking even when warnings are disabled
-- [ ] value-based branching with `match` / `switch`
+- [x] value-based branching with `match`
+  - branch labels are scalar literals only in V1
+  - `default` is optional, unique, and final
+  - grouped case labels share the next non-empty indented block

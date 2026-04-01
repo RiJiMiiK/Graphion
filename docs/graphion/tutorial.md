@@ -398,6 +398,38 @@ As ternary expressions grow, readability drops quickly. A good rule of thumb is:
 - use grouped multiline conditions for long boolean tests
 - switch back to a full block when the ternary starts nesting
 
+For value-based branching, use `match`:
+
+```gion
+status = "ready"
+
+match status:
+    "waiting":
+        print("hold")
+    "ready":
+        print("go")
+    default:
+        print("unknown")
+```
+
+You can also group several case labels so they share the same block:
+
+```gion
+match level:
+    1:
+    2:
+        print("small")
+    default:
+        print("other")
+```
+
+The key rules are:
+
+- cases are scalar literals only in this V1
+- `default` is optional
+- `default` must be last
+- `1` and `1.0` are treated as duplicates because they compare equal in Graphion
+
 Current conditions currently accept:
 
 - `true`

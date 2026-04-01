@@ -109,6 +109,8 @@ int test_gion_mixed_scalar_values(void);
 int test_gion_capacity_errors(void);
 int test_gion_if_elif_else_control_flow(void);
 int test_gion_if_elif_else_errors(void);
+int test_gion_match_control_flow(void);
+int test_gion_match_errors(void);
 int test_gion_comments(void);
 int test_gion_comment_errors(void);
 int test_gion_equality_expressions(void);
@@ -292,6 +294,8 @@ int main(int argc, char **argv) {
       {"gion_capacity_errors", test_gion_capacity_errors},
       {"gion_if_elif_else_control_flow", test_gion_if_elif_else_control_flow},
       {"gion_if_elif_else_errors", test_gion_if_elif_else_errors},
+      {"gion_match_control_flow", test_gion_match_control_flow},
+      {"gion_match_errors", test_gion_match_errors},
       {"gion_comments", test_gion_comments},
       {"gion_comment_errors", test_gion_comment_errors},
       {"gion_equality_expressions", test_gion_equality_expressions},

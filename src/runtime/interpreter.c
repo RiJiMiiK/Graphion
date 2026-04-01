@@ -36,6 +36,11 @@ typedef struct {
   unsigned int indent;
 } runtime_source_line;
 
+typedef struct {
+  graphion_vm_value value;
+  char *owned_string;
+} runtime_match_case_value;
+
 static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -115,6 +120,44 @@ static void runtime_free_string(char **text) {
   *text = NULL;
 }
 
+static void runtime_match_case_value_init(runtime_match_case_value *entry) {
+  if (entry == NULL) {
+    return;
+  }
+  memset(entry, 0, sizeof(*entry));
+  entry->value.kind = GVM_VALUE_NONE;
+}
+
+static void runtime_match_case_value_dispose(runtime_match_case_value *entry) {
+  if (entry == NULL) {
+    return;
+  }
+  runtime_free_string(&entry->owned_string);
+  entry->value.kind = GVM_VALUE_NONE;
+  entry->value.as.string_value = NULL;
+}
+
+static int runtime_match_case_value_clone(runtime_match_case_value *entry,
+                                          const graphion_vm_value *value,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  runtime_match_case_value_init(entry);
+  if (entry == NULL || value == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  entry->value = *value;
+  if (value->kind == GVM_VALUE_STRING && value->as.string_value != NULL) {
+    const size_t len = strlen(value->as.string_value);
+    entry->owned_string = (char *)malloc(len + 1U);
+    if (entry->owned_string == NULL) {
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    memcpy(entry->owned_string, value->as.string_value, len + 1U);
+    entry->value.as.string_value = entry->owned_string;
+  }
+  return GINT_OK;
+}
+
 static void skip_spaces(const char **cursor) {
   while (cursor != NULL && *cursor != NULL && (**cursor == ' ' || **cursor == '\t' || **cursor == '\r')) {
     (*cursor)++;
@@ -132,9 +175,9 @@ static int is_ident_char(char ch) {
 static int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "if") == 0 || strcmp(name, "elif") == 0 ||
-         strcmp(name, "else") == 0 || strcmp(name, "and") == 0 || strcmp(name, "or") == 0 ||
-         strcmp(name, "nand") == 0 || strcmp(name, "nor") == 0 ||
-         strcmp(name, "not") == 0;
+         strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||
+         strcmp(name, "and") == 0 || strcmp(name, "or") == 0 || strcmp(name, "nand") == 0 ||
+         strcmp(name, "nor") == 0 || strcmp(name, "not") == 0;
 }
 
 static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
@@ -402,6 +445,86 @@ static int parse_scalar_literal(graphion_runtime_program *program,
     return GINT_OK;
   }
   return fail(diagnostic, line, 1U, "expected scalar literal", GINT_ERR_PARSE);
+}
+
+static int runtime_value_get_numeric(const graphion_vm_value *value,
+                                     int64_t *int_out,
+                                     double *float_out,
+                                     int *is_float_out) {
+  if (value == NULL || int_out == NULL || float_out == NULL || is_float_out == NULL) {
+    return 0;
+  }
+  if (value->kind == GVM_VALUE_INT) {
+    *int_out = value->as.int_value;
+    *float_out = (double)value->as.int_value;
+    *is_float_out = 0;
+    return 1;
+  }
+  if (value->kind == GVM_VALUE_FLOAT) {
+    *int_out = (int64_t)value->as.float_value;
+    *float_out = value->as.float_value;
+    *is_float_out = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static int scalar_values_match_equal(const graphion_vm_value *lhs,
+                                     const graphion_vm_value *rhs,
+                                     int *compatible_out,
+                                     int *equal_out) {
+  if (compatible_out == NULL || equal_out == NULL || lhs == NULL || rhs == NULL) {
+    return 0;
+  }
+  *compatible_out = 1;
+  *equal_out = 0;
+
+  if ((lhs->kind == GVM_VALUE_INT || lhs->kind == GVM_VALUE_FLOAT) &&
+      (rhs->kind == GVM_VALUE_INT || rhs->kind == GVM_VALUE_FLOAT)) {
+    int64_t lhs_i = 0;
+    int64_t rhs_i = 0;
+    double lhs_f = 0.0;
+    double rhs_f = 0.0;
+    int lhs_is_float = 0;
+    int rhs_is_float = 0;
+
+    if (!runtime_value_get_numeric(lhs, &lhs_i, &lhs_f, &lhs_is_float) ||
+        !runtime_value_get_numeric(rhs, &rhs_i, &rhs_f, &rhs_is_float)) {
+      *compatible_out = 0;
+      return 1;
+    }
+    *equal_out = lhs_f == rhs_f;
+    return 1;
+  }
+  if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_INT) {
+    if (rhs->as.int_value != 0 && rhs->as.int_value != 1) {
+      *compatible_out = 0;
+      return 1;
+    }
+    *equal_out = rhs->as.int_value == (int64_t)lhs->as.bool_value;
+    return 1;
+  }
+  if (lhs->kind == GVM_VALUE_INT && rhs->kind == GVM_VALUE_BOOL) {
+    if (lhs->as.int_value != 0 && lhs->as.int_value != 1) {
+      *compatible_out = 0;
+      return 1;
+    }
+    *equal_out = lhs->as.int_value == (int64_t)rhs->as.bool_value;
+    return 1;
+  }
+  if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
+    *equal_out = lhs->as.bool_value == rhs->as.bool_value;
+    return 1;
+  }
+  if (lhs->kind == GVM_VALUE_STRING && rhs->kind == GVM_VALUE_STRING) {
+    const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
+    const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
+    *equal_out = strcmp(lhs_text, rhs_text) == 0;
+    return 1;
+  }
+
+  *compatible_out = 0;
+  return 1;
 }
 
 static int parse_operand(const char **cursor,
@@ -1684,6 +1807,35 @@ static int line_is_else_clause(const runtime_source_line *line) {
   return line_starts_with_keyword(line, "else") && !line_keyword_is_assignment_like(line, "else");
 }
 
+static int line_is_match_clause(const runtime_source_line *line) {
+  return line_starts_with_keyword(line, "match") && !line_keyword_is_assignment_like(line, "match");
+}
+
+static int line_is_default_clause(const runtime_source_line *line) {
+  return line_starts_with_keyword(line, "default") && !line_keyword_is_assignment_like(line, "default");
+}
+
+static size_t find_next_nonblank_line(const runtime_source_line *lines, size_t count, size_t start);
+
+static size_t scan_block_end(const runtime_source_line *lines, size_t count, size_t start, unsigned int block_indent);
+
+static int collect_match_expression_text(const runtime_source_line *lines,
+                                         size_t count,
+                                         size_t start_index,
+                                         char *buffer,
+                                         size_t buffer_size,
+                                         size_t *header_end_index_out,
+                                         unsigned int line,
+                                         graphion_runtime_diagnostic *diagnostic);
+
+static int parse_match_case_header(const char *cursor,
+                                   graphion_vm_value *value_out,
+                                   runtime_match_case_value *owned_value,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic);
+
+static const char *scalar_kind_name(const graphion_vm_value *value);
+
 static int copy_source_without_comments(const char *source,
                                         char **clean_out,
                                         graphion_runtime_diagnostic *diagnostic) {
@@ -1895,9 +2047,127 @@ static int process_file_level_directives(const char *source,
   return GINT_OK;
 }
 
+static int collect_match_warnings(const runtime_source_line *lines,
+                                  size_t count,
+                                  graphion_runtime_warning_report *report,
+                                  graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  for (i = 0U; i < count; ++i) {
+    char match_expression[512];
+    size_t header_end_index = i;
+    graphion_runtime_program program;
+    const char *cursor;
+    graphion_vm_value match_literal;
+    size_t clause_index;
+    unsigned int branch_indent;
+    int rc;
+
+    if (!line_is_match_clause(&lines[i])) {
+      continue;
+    }
+
+    rc = collect_match_expression_text(lines,
+                                       count,
+                                       i,
+                                       match_expression,
+                                       sizeof(match_expression),
+                                       &header_end_index,
+                                       lines[i].line,
+                                       diagnostic);
+    if (rc != GINT_OK) {
+      continue;
+    }
+
+    graphion_runtime_program_init(&program);
+    cursor = match_expression;
+    rc = parse_scalar_literal(&program, &cursor, &match_literal, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      graphion_runtime_program_dispose(&program);
+      i = header_end_index;
+      continue;
+    }
+    skip_spaces(&cursor);
+    if (*cursor != '\0') {
+      graphion_runtime_program_dispose(&program);
+      i = header_end_index;
+      continue;
+    }
+
+    clause_index = find_next_nonblank_line(lines, count, header_end_index + 1U);
+    if (clause_index >= count || lines[clause_index].indent <= lines[i].indent) {
+      graphion_runtime_program_dispose(&program);
+      i = header_end_index;
+      continue;
+    }
+    branch_indent = lines[clause_index].indent;
+
+    while (clause_index < count) {
+      runtime_match_case_value case_value;
+      graphion_vm_value parsed_value;
+      int compatible = 0;
+      int equal = 0;
+
+      if (line_is_blank(&lines[clause_index])) {
+        clause_index++;
+        continue;
+      }
+      if (lines[clause_index].indent < branch_indent) {
+        break;
+      }
+      if (lines[clause_index].indent > branch_indent) {
+        clause_index++;
+        continue;
+      }
+      if (line_is_default_clause(&lines[clause_index])) {
+        clause_index = scan_block_end(lines,
+                                      count,
+                                      find_next_nonblank_line(lines, count, clause_index + 1U),
+                                      find_next_nonblank_line(lines, count, clause_index + 1U) < count
+                                          ? lines[find_next_nonblank_line(lines, count, clause_index + 1U)].indent
+                                          : branch_indent + 1U);
+        continue;
+      }
+
+      runtime_match_case_value_init(&case_value);
+      rc = parse_match_case_header(line_content(&lines[clause_index]),
+                                   &parsed_value,
+                                   &case_value,
+                                   lines[clause_index].line,
+                                   diagnostic);
+      if (rc == GINT_OK) {
+        scalar_values_match_equal(&match_literal, &parsed_value, &compatible, &equal);
+        if (!compatible) {
+          char message[GRAPHION_RUNTIME_WARNING_MESSAGE_MAX];
+          snprintf(message,
+                   sizeof(message),
+                   "match case can never match a %s value",
+                   scalar_kind_name(&match_literal));
+          rc = add_warning(report, lines[clause_index].line, 1U, message, diagnostic);
+          runtime_match_case_value_dispose(&case_value);
+          if (rc != GINT_OK) {
+            graphion_runtime_program_dispose(&program);
+            return rc;
+          }
+        } else {
+          runtime_match_case_value_dispose(&case_value);
+        }
+      }
+      clause_index++;
+    }
+
+    graphion_runtime_program_dispose(&program);
+    i = clause_index > 0U ? clause_index - 1U : i;
+  }
+
+  return GINT_OK;
+}
+
 int graphion_collect_source_warnings(const char *source,
                                      graphion_runtime_warning_report *report,
                                      graphion_runtime_diagnostic *diagnostic) {
+  runtime_source_line lines[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t line_count = 0U;
   int rc;
 
   if (report == NULL) {
@@ -1913,6 +2183,19 @@ int graphion_collect_source_warnings(const char *source,
   }
 
   rc = process_file_level_directives(source, report, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_warning_report_clear(report);
+    return rc;
+  }
+  if (!report->enabled) {
+    return GINT_OK;
+  }
+  rc = split_source_lines(source, lines, GRAPHION_RUNTIME_PROGRAM_MAX, &line_count, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_warning_report_clear(report);
+    return rc;
+  }
+  rc = collect_match_warnings(lines, line_count, report, diagnostic);
   if (rc != GINT_OK) {
     graphion_runtime_warning_report_clear(report);
     return rc;
@@ -2177,6 +2460,204 @@ static int parse_else_header(const char *cursor,
   return GINT_OK;
 }
 
+static int collect_match_expression_text(const runtime_source_line *lines,
+                                         size_t count,
+                                         size_t start_index,
+                                         char *buffer,
+                                         size_t buffer_size,
+                                         size_t *header_end_index_out,
+                                         unsigned int line,
+                                         graphion_runtime_diagnostic *diagnostic) {
+  const runtime_source_line *start_line;
+  const char *cursor;
+  size_t write_index = 0U;
+  size_t i;
+  int depth = 0;
+  int in_string = 0;
+  int multiline_allowed = 0;
+
+  if (lines == NULL || start_index >= count || buffer == NULL || buffer_size == 0U || header_end_index_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+
+  start_line = &lines[start_index];
+  cursor = line_content(start_line);
+  if (strncmp(cursor, "match", 5U) != 0 || is_ident_char(cursor[5])) {
+    return fail(diagnostic, line, 1U, "invalid match header", GINT_ERR_PARSE);
+  }
+  cursor += 5;
+  skip_spaces(&cursor);
+  if (*cursor == '\0') {
+    return fail(diagnostic, line, 1U, "expected expression after match", GINT_ERR_PARSE);
+  }
+
+  multiline_allowed = *cursor == '(' ? 1 : 0;
+  for (i = start_index; i < count; ++i) {
+    const char *scan = i == start_index ? cursor : line_content(&lines[i]);
+
+    if (i > start_index) {
+      if (!multiline_allowed) {
+        return fail(diagnostic, line, 1U, "multiline match expression requires grouping parentheses", GINT_ERR_PARSE);
+      }
+      if (write_index > 0U && buffer[write_index - 1U] != ' ') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = ' ';
+      }
+    }
+
+    while (*scan != '\0') {
+      if (in_string) {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (*scan == '"') {
+          in_string = 0;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == '"') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        in_string = 1;
+        scan++;
+        continue;
+      }
+      if (*scan == '(') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        depth++;
+        scan++;
+        continue;
+      }
+      if (*scan == ')') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (depth > 0) {
+          depth--;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == ':' && depth == 0) {
+        const char *tail = scan + 1;
+        while (write_index > 0U &&
+               (buffer[write_index - 1U] == ' ' || buffer[write_index - 1U] == '\t' || buffer[write_index - 1U] == '\r')) {
+          write_index--;
+        }
+        skip_spaces(&tail);
+        if (*tail != '\0') {
+          return fail(diagnostic, lines[i].line, 1U, "unexpected trailing tokens after match", GINT_ERR_PARSE);
+        }
+        if (write_index == 0U) {
+          return fail(diagnostic, line, 1U, "expected expression after match", GINT_ERR_PARSE);
+        }
+        buffer[write_index] = '\0';
+        *header_end_index_out = i;
+        return GINT_OK;
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      buffer[write_index++] = *scan;
+      scan++;
+    }
+
+    if (depth == 0) {
+      if (i == start_index) {
+        return fail(diagnostic, line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+      }
+      return fail(diagnostic, lines[i].line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+    }
+  }
+
+  return fail(diagnostic, line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+}
+
+static int parse_match_case_header(const char *cursor,
+                                   graphion_vm_value *value_out,
+                                   runtime_match_case_value *owned_value,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic) {
+  graphion_runtime_program program;
+  int rc;
+
+  if (cursor == NULL || value_out == NULL || owned_value == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  graphion_runtime_program_init(&program);
+  skip_spaces(&cursor);
+  rc = parse_scalar_literal(&program, &cursor, value_out, line, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    graphion_runtime_program_dispose(&program);
+    return fail(diagnostic, line, 1U, "expected ':' after match case", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    graphion_runtime_program_dispose(&program);
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after match case", GINT_ERR_PARSE);
+  }
+  rc = runtime_match_case_value_clone(owned_value, value_out, line, diagnostic);
+  graphion_runtime_program_dispose(&program);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  *value_out = owned_value->value;
+  return GINT_OK;
+}
+
+static int parse_default_header(const char *cursor,
+                                unsigned int line,
+                                graphion_runtime_diagnostic *diagnostic) {
+  if (strncmp(cursor, "default", 7U) != 0 || is_ident_char(cursor[7])) {
+    return fail(diagnostic, line, 1U, "invalid default header", GINT_ERR_PARSE);
+  }
+  cursor += 7;
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    return fail(diagnostic, line, 1U, "expected ':' after default", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after default", GINT_ERR_PARSE);
+  }
+  return GINT_OK;
+}
+
+static const char *scalar_kind_name(const graphion_vm_value *value) {
+  if (value == NULL) {
+    return "unknown";
+  }
+  switch (value->kind) {
+    case GVM_VALUE_INT:
+      return "int";
+    case GVM_VALUE_FLOAT:
+      return "float";
+    case GVM_VALUE_BOOL:
+      return "bool";
+    case GVM_VALUE_STRING:
+      return "string";
+    default:
+      return "unknown";
+  }
+}
+
 static int execute_condition_program(const graphion_runtime_program *program,
                                      graphion_runtime_scope *scope,
                                      uint8_t reg_index,
@@ -2217,26 +2698,25 @@ static int execute_condition_program(const graphion_runtime_program *program,
   return GINT_OK;
 }
 
-static int evaluate_condition_text(const char *condition_text,
-                                   size_t condition_len,
-                                   graphion_runtime_scope *scope,
-                                   unsigned int line,
-                                   graphion_runtime_diagnostic *diagnostic,
-                                   int *result_out) {
-  char condition_buffer[512];
-  const char *cursor = condition_buffer;
+static int evaluate_expression_text_to_value(const char *expression_text,
+                                             size_t expression_len,
+                                             graphion_runtime_scope *scope,
+                                             unsigned int line,
+                                             graphion_runtime_diagnostic *diagnostic,
+                                             graphion_vm_value *value_out) {
+  char expression_buffer[512];
+  const char *cursor = expression_buffer;
   parsed_expr_result expr;
   graphion_runtime_program program;
-  graphion_vm_value value;
   int rc;
-  if (scope == NULL || condition_text == NULL || result_out == NULL) {
+  if (scope == NULL || expression_text == NULL || value_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
-  if (condition_len >= sizeof(condition_buffer)) {
+  if (expression_len >= sizeof(expression_buffer)) {
     return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
   }
-  memcpy(condition_buffer, condition_text, condition_len);
-  condition_buffer[condition_len] = '\0';
+  memcpy(expression_buffer, expression_text, expression_len);
+  expression_buffer[expression_len] = '\0';
   seed_program_from_scope(&program, scope);
   rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
@@ -2246,34 +2726,39 @@ static int evaluate_condition_text(const char *condition_text,
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after expression", GINT_ERR_PARSE);
   }
   if (expr.kind == EXPR_RESULT_LITERAL) {
-    value = program.const_pool[expr.const_index];
+    *value_out = program.const_pool[expr.const_index];
   } else if (expr.kind == EXPR_RESULT_GLOBAL) {
-    value = scope->globals[expr.global_index];
+    *value_out = scope->globals[expr.global_index];
   } else {
     rc = program_emit(&program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
     if (rc != GINT_OK) {
       graphion_runtime_program_dispose(&program);
       return rc;
     }
-    rc = execute_condition_program(&program, scope, expr.reg_index, line, diagnostic, &value);
+    rc = execute_condition_program(&program, scope, expr.reg_index, line, diagnostic, value_out);
     graphion_runtime_program_dispose(&program);
-    if (rc != GINT_OK) {
-      return rc;
-    }
-    if (value.kind == GVM_VALUE_BOOL) {
-      *result_out = value.as.bool_value != 0;
-      return GINT_OK;
-    }
-    if (value.kind == GVM_VALUE_INT && (value.as.int_value == 0 || value.as.int_value == 1)) {
-      *result_out = value.as.int_value != 0;
-      return GINT_OK;
-    }
-    return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
+    return rc;
   }
   graphion_runtime_program_dispose(&program);
+  return GINT_OK;
+}
+
+static int evaluate_condition_text(const char *condition_text,
+                                   size_t condition_len,
+                                   graphion_runtime_scope *scope,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic,
+                                   int *result_out) {
+  graphion_vm_value value;
+  int rc;
+
+  rc = evaluate_expression_text_to_value(condition_text, condition_len, scope, line, diagnostic, &value);
+  if (rc != GINT_OK) {
+    return rc;
+  }
   if (value.kind == GVM_VALUE_BOOL) {
     *result_out = value.as.bool_value != 0;
     return GINT_OK;
@@ -2592,6 +3077,184 @@ static int execute_if_chain(const runtime_source_line *lines,
   return GINT_OK;
 }
 
+static int execute_match_statement(const runtime_source_line *lines,
+                                   size_t count,
+                                   size_t *index,
+                                   unsigned int current_indent,
+                                   graphion_runtime_scope *scope,
+                                   graphion_runtime_diagnostic *diagnostic,
+                                   FILE *output) {
+  char match_expression[512];
+  graphion_vm_value match_value;
+  runtime_match_case_value seen_cases[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t seen_case_count = 0U;
+  size_t header_end_index = *index;
+  size_t clause_index;
+  unsigned int branch_indent;
+  int branch_taken = 0;
+  int seen_default = 0;
+  int rc;
+  size_t i;
+
+  for (i = 0U; i < GRAPHION_RUNTIME_WARNING_MAX; ++i) {
+    runtime_match_case_value_init(&seen_cases[i]);
+  }
+
+  rc = collect_match_expression_text(lines,
+                                     count,
+                                     *index,
+                                     match_expression,
+                                     sizeof(match_expression),
+                                     &header_end_index,
+                                     lines[*index].line,
+                                     diagnostic);
+  if (rc != GINT_OK) {
+    goto cleanup;
+  }
+
+  rc = evaluate_expression_text_to_value(match_expression,
+                                         strlen(match_expression),
+                                         scope,
+                                         lines[*index].line,
+                                         diagnostic,
+                                         &match_value);
+  if (rc != GINT_OK) {
+    goto cleanup;
+  }
+
+  clause_index = find_next_nonblank_line(lines, count, header_end_index + 1U);
+  if (clause_index >= count || lines[clause_index].indent <= current_indent) {
+    rc = fail(diagnostic, lines[*index].line, 1U, "expected indented match block", GINT_ERR_PARSE);
+    goto cleanup;
+  }
+  branch_indent = lines[clause_index].indent;
+
+  while (clause_index < count) {
+    size_t label_start = clause_index;
+    size_t label_index = clause_index;
+    size_t body_start;
+    size_t body_end;
+    int label_matches = 0;
+    int is_default = 0;
+
+    if (line_is_blank(&lines[clause_index])) {
+      clause_index++;
+      continue;
+    }
+    if (lines[clause_index].indent < branch_indent) {
+      break;
+    }
+    if (lines[clause_index].indent > branch_indent) {
+      rc = fail(diagnostic, lines[clause_index].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      goto cleanup;
+    }
+
+    if (line_is_default_clause(&lines[clause_index])) {
+      is_default = 1;
+      if (seen_default) {
+        rc = fail(diagnostic, lines[clause_index].line, 1U, "default can only appear once", GINT_ERR_PARSE);
+        goto cleanup;
+      }
+      rc = parse_default_header(line_content(&lines[clause_index]), lines[clause_index].line, diagnostic);
+      if (rc != GINT_OK) {
+        goto cleanup;
+      }
+      seen_default = 1;
+      label_index = clause_index + 1U;
+    } else {
+      while (label_index < count) {
+        runtime_match_case_value case_value;
+        graphion_vm_value parsed_value;
+        int compatible = 0;
+        int equal = 0;
+        size_t existing_index;
+
+        runtime_match_case_value_init(&case_value);
+        if (line_is_blank(&lines[label_index])) {
+          label_index++;
+          continue;
+        }
+        if (lines[label_index].indent != branch_indent || line_is_default_clause(&lines[label_index])) {
+          break;
+        }
+        rc = parse_match_case_header(line_content(&lines[label_index]),
+                                     &parsed_value,
+                                     &case_value,
+                                     lines[label_index].line,
+                                     diagnostic);
+        if (rc != GINT_OK) {
+          runtime_match_case_value_dispose(&case_value);
+          goto cleanup;
+        }
+        for (existing_index = 0U; existing_index < seen_case_count; ++existing_index) {
+          scalar_values_match_equal(&seen_cases[existing_index].value, &parsed_value, &compatible, &equal);
+          if (compatible && equal) {
+            runtime_match_case_value_dispose(&case_value);
+            rc = fail(diagnostic, lines[label_index].line, 1U, "duplicate match case", GINT_ERR_PARSE);
+            goto cleanup;
+          }
+        }
+        if (seen_case_count >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+          runtime_match_case_value_dispose(&case_value);
+          rc = fail(diagnostic, lines[label_index].line, 1U, "too many match cases", GINT_ERR_CAPACITY);
+          goto cleanup;
+        }
+        seen_cases[seen_case_count++] = case_value;
+        scalar_values_match_equal(&match_value, &parsed_value, &compatible, &equal);
+        if (compatible && equal) {
+          label_matches = 1;
+        }
+        label_index++;
+        if (label_index >= count || line_is_blank(&lines[label_index]) || lines[label_index].indent != branch_indent) {
+          break;
+        }
+      }
+      if (label_index == label_start) {
+        rc = fail(diagnostic, lines[clause_index].line, 1U, "expected scalar literal", GINT_ERR_PARSE);
+        goto cleanup;
+      }
+    }
+
+    body_start = find_next_nonblank_line(lines, count, label_index);
+    if (body_start >= count || lines[body_start].indent <= branch_indent) {
+      rc = fail(diagnostic,
+                lines[label_start].line,
+                1U,
+                is_default ? "expected indented block after default" : "expected indented block after match case",
+                GINT_ERR_PARSE);
+      goto cleanup;
+    }
+    body_end = scan_block_end(lines, count, body_start, lines[body_start].indent);
+
+    if (is_default && find_next_nonblank_line(lines, count, body_end) < count &&
+        lines[find_next_nonblank_line(lines, count, body_end)].indent == branch_indent) {
+      rc = fail(diagnostic, lines[label_start].line, 1U, "default must be last in match", GINT_ERR_PARSE);
+      goto cleanup;
+    }
+
+    if (!branch_taken && (is_default || label_matches)) {
+      size_t exec_index = body_start;
+      rc = execute_block(lines, count, &exec_index, lines[body_start].indent, scope, diagnostic, output);
+      if (rc != GINT_OK) {
+        goto cleanup;
+      }
+      body_end = exec_index;
+      branch_taken = 1;
+    }
+
+    clause_index = body_end;
+  }
+
+  *index = clause_index;
+  rc = GINT_OK;
+
+cleanup:
+  for (i = 0U; i < seen_case_count; ++i) {
+    runtime_match_case_value_dispose(&seen_cases[i]);
+  }
+  return rc;
+}
+
 static int execute_block(const runtime_source_line *lines,
                          size_t count,
                          size_t *index,
@@ -2617,8 +3280,18 @@ static int execute_block(const runtime_source_line *lines,
     if (line_is_else_clause(&lines[i])) {
       return fail(diagnostic, lines[i].line, 1U, "else without matching if", GINT_ERR_PARSE);
     }
+    if (line_is_default_clause(&lines[i])) {
+      return fail(diagnostic, lines[i].line, 1U, "default without matching match", GINT_ERR_PARSE);
+    }
     if (line_is_if_clause(&lines[i])) {
       int rc = execute_if_chain(lines, count, &i, block_indent, scope, diagnostic, output);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      continue;
+    }
+    if (line_is_match_clause(&lines[i])) {
+      int rc = execute_match_statement(lines, count, &i, block_indent, scope, diagnostic, output);
       if (rc != GINT_OK) {
         return rc;
       }
