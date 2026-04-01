@@ -45,6 +45,18 @@ static void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   diagnostic->message = NULL;
 }
 
+void graphion_runtime_warning_report_init(graphion_runtime_warning_report *report) {
+  if (report == NULL) {
+    return;
+  }
+  memset(report, 0, sizeof(*report));
+  report->enabled = 1;
+}
+
+void graphion_runtime_warning_report_clear(graphion_runtime_warning_report *report) {
+  graphion_runtime_warning_report_init(report);
+}
+
 static int fail(graphion_runtime_diagnostic *diagnostic,
                 unsigned int line,
                 unsigned int column,
@@ -56,6 +68,35 @@ static int fail(graphion_runtime_diagnostic *diagnostic,
     diagnostic->message = message;
   }
   return code;
+}
+
+static int add_warning(graphion_runtime_warning_report *report,
+                       unsigned int line,
+                       unsigned int column,
+                       const char *message,
+                       graphion_runtime_diagnostic *diagnostic) {
+  graphion_runtime_warning *warning;
+  size_t len;
+
+  if (report == NULL || message == NULL) {
+    return fail(diagnostic, line, column, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (!report->enabled) {
+    return GINT_OK;
+  }
+  if (report->count >= GRAPHION_RUNTIME_WARNING_MAX) {
+    return fail(diagnostic, line, column, "warning capacity exceeded", GINT_ERR_CAPACITY);
+  }
+  warning = &report->items[report->count++];
+  warning->line = line;
+  warning->column = column;
+  len = strlen(message);
+  if (len >= sizeof(warning->message)) {
+    len = sizeof(warning->message) - 1U;
+  }
+  memcpy(warning->message, message, len);
+  warning->message[len] = '\0';
+  return GINT_OK;
 }
 
 static void vm_value_set_none(graphion_vm_value *value) {
@@ -1786,6 +1827,112 @@ static int split_source_lines(const char *source,
   free(clean_source);
   *count_out = count;
   return GINT_OK;
+}
+
+static int process_file_level_directives(const char *source,
+                                         graphion_runtime_warning_report *report,
+                                         graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor;
+  unsigned int line;
+
+  if (source == NULL || report == NULL) {
+    clear_diagnostic(diagnostic);
+    return GINT_ERR_INVALID_ARG;
+  }
+
+  cursor = source;
+  line = 1U;
+  for (;;) {
+    const char *line_start = cursor;
+    const char *line_end = cursor;
+    const char *trimmed;
+
+    while (*line_end != '\0' && *line_end != '\n') {
+      line_end++;
+    }
+    trimmed = line_start;
+    while (trimmed < line_end && (*trimmed == ' ' || *trimmed == '\t' || *trimmed == '\r')) {
+      trimmed++;
+    }
+
+    if (trimmed == line_end) {
+      /* blank line before code is allowed */
+    } else if (*trimmed == '#') {
+      static const char directive_prefix[] = "# graphion:";
+      const size_t directive_prefix_len = sizeof(directive_prefix) - 1U;
+
+      if ((size_t)(line_end - trimmed) >= directive_prefix_len &&
+          strncmp(trimmed, directive_prefix, directive_prefix_len) == 0) {
+        const char *payload = trimmed + directive_prefix_len;
+        const char *payload_end = line_end;
+        while (payload < payload_end && (*payload == ' ' || *payload == '\t' || *payload == '\r')) {
+          payload++;
+        }
+        while (payload_end > payload && (payload_end[-1] == ' ' || payload_end[-1] == '\t' || payload_end[-1] == '\r')) {
+          payload_end--;
+        }
+        if ((size_t)(payload_end - payload) == strlen("warnings=off") &&
+            strncmp(payload, "warnings=off", strlen("warnings=off")) == 0) {
+          report->enabled = 0;
+          report->count = 0U;
+        } else {
+          int rc = add_warning(report, line, 1U, "unknown graphion directive", diagnostic);
+          if (rc != GINT_OK) {
+            return rc;
+          }
+        }
+      }
+    } else {
+      break;
+    }
+
+    if (*line_end == '\0') {
+      break;
+    }
+    cursor = line_end + 1;
+    line++;
+  }
+  return GINT_OK;
+}
+
+int graphion_collect_source_warnings(const char *source,
+                                     graphion_runtime_warning_report *report,
+                                     graphion_runtime_diagnostic *diagnostic) {
+  int rc;
+
+  if (report == NULL) {
+    clear_diagnostic(diagnostic);
+    return GINT_ERR_INVALID_ARG;
+  }
+  graphion_runtime_warning_report_init(report);
+  if (diagnostic != NULL) {
+    clear_diagnostic(diagnostic);
+  }
+  if (source == NULL) {
+    return fail(diagnostic, 1U, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+
+  rc = process_file_level_directives(source, report, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_warning_report_clear(report);
+    return rc;
+  }
+  return GINT_OK;
+}
+
+void graphion_emit_warning_report(const graphion_runtime_warning_report *report, FILE *stream) {
+  size_t i;
+
+  if (report == NULL || stream == NULL || !report->enabled) {
+    return;
+  }
+  for (i = 0U; i < report->count; ++i) {
+    fprintf(stream,
+            "warning:%u:%u: %s\n",
+            report->items[i].line,
+            report->items[i].column,
+            report->items[i].message);
+  }
 }
 
 static size_t find_next_nonblank_line(const runtime_source_line *lines, size_t count, size_t start) {

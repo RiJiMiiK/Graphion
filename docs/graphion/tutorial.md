@@ -434,6 +434,15 @@ Graphion currently supports two comment styles:
 - `#` for line comments
 - `/* ... */` for block comments
 
+At the top of a file, `#` also supports this Graphion directive:
+
+```gion
+# graphion: warnings=off
+```
+
+That directive suppresses pre-execution warnings for the file only. Parse errors and runtime errors still stop
+execution.
+
 Line comments can appear on their own line or after a statement:
 
 ```gion

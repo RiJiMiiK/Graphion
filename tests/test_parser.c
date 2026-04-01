@@ -3677,6 +3677,90 @@ int test_gion_ternary_syntax_errors(void) {
   return 0;
 }
 
+int test_gion_warning_directives(void) {
+  graphion_runtime_warning_report report;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  rc = graphion_collect_source_warnings("# graphion: unknown=off\nprint(1)\n", &report, &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  if (!report.enabled) {
+    return 2;
+  }
+  if (report.count != 1U) {
+    return 3;
+  }
+  if (report.items[0].line != 1U || report.items[0].column != 1U) {
+    return 4;
+  }
+  if (strcmp(report.items[0].message, "unknown graphion directive") != 0) {
+    return 5;
+  }
+
+  rc = graphion_collect_source_warnings("# graphion: warnings=off\n# graphion: unknown=off\nprint(1)\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 6;
+  }
+  if (report.enabled) {
+    return 7;
+  }
+  if (report.count != 0U) {
+    return 8;
+  }
+
+  rc = graphion_collect_source_warnings("print(1)\n# graphion: unknown=off\n", &report, &diagnostic);
+  if (rc != GINT_OK) {
+    return 9;
+  }
+  if (!report.enabled) {
+    return 10;
+  }
+  if (report.count != 0U) {
+    return 11;
+  }
+
+  return 0;
+}
+
+int test_gion_warning_directives_from_path(void) {
+  const char *path = "gion_warning_directives_path.gion";
+  graphion_runtime_warning_report report;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  fputs("# graphion: warnings=off\n# graphion: unknown=off\nprint(1)\n", fp);
+  fclose(fp);
+
+  rc = graphion_collect_gion_path_warnings(path, &report, &diagnostic);
+  remove(path);
+  if (rc != GENTRY_OK) {
+    return 2;
+  }
+  if (report.enabled) {
+    return 3;
+  }
+  if (report.count != 0U) {
+    return 4;
+  }
+
+  return 0;
+}
+
 int test_gion_boolean_short_circuit(void) {
   const char *source =
       "safe_and = false and 2\n"

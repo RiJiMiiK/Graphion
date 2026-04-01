@@ -79,7 +79,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
         else "not ready"
     )
     ```
-- [ ] pre-execution warnings with file-level opt-out
+- [x] pre-execution warnings with file-level opt-out
   - warnings should be collected and emitted before execution starts
   - a file-level directive should disable them globally:
     ```gion

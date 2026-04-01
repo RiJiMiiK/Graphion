@@ -75,3 +75,29 @@ int graphion_run_gion_path(const char *path,
   }
   return GENTRY_OK;
 }
+
+int graphion_collect_gion_path_warnings(const char *path,
+                                        graphion_runtime_warning_report *report,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  char source[GENTRY_SOURCE_MAX];
+  int rc;
+
+  if (path == NULL || report == NULL) {
+    return GENTRY_ERR_INVALID_ARG;
+  }
+  if (!graphion_source_path_is_gion(path)) {
+    return GENTRY_ERR_EXTENSION;
+  }
+  rc = read_source_file(path, source, sizeof(source));
+  if (rc != GENTRY_OK) {
+    return rc;
+  }
+  rc = graphion_collect_source_warnings(source, report, diagnostic);
+  if (rc == GINT_ERR_PARSE || rc == GINT_ERR_RESERVED_NAME) {
+    return GENTRY_ERR_PARSE;
+  }
+  if (rc != GINT_OK) {
+    return GENTRY_ERR_RUN;
+  }
+  return GENTRY_OK;
+}

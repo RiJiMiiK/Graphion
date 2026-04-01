@@ -23,4 +23,8 @@ int graphion_run_gion_path(const char *path,
                            graphion_runtime_scope *scope,
                            graphion_runtime_diagnostic *diagnostic);
 
+int graphion_collect_gion_path_warnings(const char *path,
+                                        graphion_runtime_warning_report *report,
+                                        graphion_runtime_diagnostic *diagnostic);
+
 #endif
