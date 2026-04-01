@@ -146,6 +146,9 @@ int test_gion_nor_runtime_errors(void);
 int test_gion_nor_syntax_errors(void);
 int test_gion_boolean_short_circuit(void);
 int test_gion_boolean_short_circuit_runtime_errors(void);
+int test_gion_ternary_expressions(void);
+int test_gion_ternary_runtime_errors(void);
+int test_gion_ternary_syntax_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -324,6 +327,9 @@ int main(int argc, char **argv) {
     {"gion_nor_syntax_errors", test_gion_nor_syntax_errors},
     {"gion_boolean_short_circuit", test_gion_boolean_short_circuit},
     {"gion_boolean_short_circuit_runtime_errors", test_gion_boolean_short_circuit_runtime_errors},
+    {"gion_ternary_expressions", test_gion_ternary_expressions},
+    {"gion_ternary_runtime_errors", test_gion_ternary_runtime_errors},
+    {"gion_ternary_syntax_errors", test_gion_ternary_syntax_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

@@ -365,6 +365,21 @@ if (
 
 Without the outer parentheses, that multiline form remains invalid.
 
+For simple value selection, you can also use a ternary expression:
+
+```gion
+label = "ready" if ready else "not ready"
+print(label)
+```
+
+Expected output:
+
+```text
+ready
+```
+
+The ternary condition follows the same truth rules as `if` / `elif`.
+
 Current conditions currently accept:
 
 - `true`

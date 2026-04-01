@@ -106,6 +106,8 @@ if (
 else:
     multiline_branch = "bad"
 
+ternary_branch = "ready ternary" if ready else "fallback ternary"
+
 /* block comments are also ignored */
 
 print("overview assignment -> count=" + count)
@@ -134,6 +136,7 @@ print("overview short-circuit or -> safe_short_or=" + safe_short_or)
 print("overview short-circuit nand -> safe_short_nand=" + safe_short_nand)
 print("overview short-circuit nor -> safe_short_nor=" + safe_short_nor)
 print("overview multiline grouped condition -> multiline_branch=" + multiline_branch)
+print("overview ternary condition -> ternary_branch=" + ternary_branch)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)

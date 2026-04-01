@@ -289,6 +289,31 @@ if ready and
     print("bad")
 ```
 
+### Ternary Expressions
+
+Graphion also supports inline conditional expressions in the form:
+
+```gion
+result = "ready" if ready else "not ready"
+```
+
+Rules:
+
+- the shape is `true_value if condition else false_value`
+- the condition follows the same truth rules as `if` / `elif`
+- the whole ternary expression produces a single scalar value
+- nested ternary expressions are allowed, but become harder to read quickly
+
+Examples:
+
+```gion
+label = "ready" if ready else "not ready"
+```
+
+```gion
+label = "outer" if ready else "inner" if fallback else "none"
+```
+
 ## Comments
 
 Graphion currently supports two comment forms:

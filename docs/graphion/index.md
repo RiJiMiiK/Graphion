@@ -17,6 +17,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - compound assignments
 - boolean `if / elif / else` blocks
 - grouped multiline conditions
+- ternary expressions
 - boolean `and`
 - boolean `nand`
 - boolean `or`

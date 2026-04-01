@@ -124,6 +124,9 @@ if (
 else:
     multiline_branch = "bad"
 
+ternary_branch = "ready ternary" if branch_flag else "fallback ternary"
+ternary_nested = "outer true" if branch_flag else "inner true" if other_branch else "inner false"
+
 print("if / elif / else with booleans -> branch_demo=" + branch_demo)
 print("if + else without elif -> optional_branch=" + optional_branch)
 print("if with integer 1 -> integer_bool_branch=" + integer_bool_branch)
@@ -150,3 +153,5 @@ print("short-circuit or -> safe_short_or=" + safe_short_or)
 print("short-circuit nand -> safe_short_nand=" + safe_short_nand)
 print("short-circuit nor -> safe_short_nor=" + safe_short_nor)
 print("multiline grouped condition -> multiline_branch=" + multiline_branch)
+print("ternary condition -> ternary_branch=" + ternary_branch)
+print("nested ternary condition -> ternary_nested=" + ternary_nested)

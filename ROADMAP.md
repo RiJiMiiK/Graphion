@@ -65,7 +65,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
         print("ok")
     ```
   - multiline conditions without parentheses should remain invalid
-- [ ] ternary conditional expressions
+- [x] ternary conditional expressions
   - target shape:
     ```gion
     label = "ready" if ready else "not ready"
