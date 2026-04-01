@@ -48,7 +48,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
 ### Documentation and examples
 
 - [x] document nested `if` blocks explicitly
-- [ ] add a dedicated nested-`if` example in [examples/04_conditionals.gion](examples/04_conditionals.gion)
+- [x] add a dedicated nested-`if` example in [examples/04_conditionals.gion](examples/04_conditionals.gion)
 - [ ] clarify in the docs that `else` binds to the `if` at the same indentation level
 
 ### Future condition features
