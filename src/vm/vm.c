@@ -696,6 +696,7 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_OR:
       case GVM_OP_NOT:
       case GVM_OP_NAND:
+      case GVM_OP_NOR:
         return 0;
       case GVM_OP_MOV:
       case GVM_OP_LOAD_CONST:
@@ -1016,23 +1017,24 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_OR:
       case GVM_OP_NOT:
       case GVM_OP_NAND:
+      case GVM_OP_NOR:
         if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
           if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
               in.op != GVM_OP_GT && in.op != GVM_OP_GE && in.op != GVM_OP_AND && in.op != GVM_OP_OR &&
-              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND) {
+              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND && in.op != GVM_OP_NOR) {
             return 0;
           }
         }
         if (in.op != GVM_OP_NOT && reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT) {
           if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
               in.op != GVM_OP_GT && in.op != GVM_OP_GE && in.op != GVM_OP_AND && in.op != GVM_OP_OR &&
-              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND) {
+              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND && in.op != GVM_OP_NOR) {
             return 0;
           }
         }
         if (in.op == GVM_OP_EQ || in.op == GVM_OP_NE || in.op == GVM_OP_LT || in.op == GVM_OP_LE ||
             in.op == GVM_OP_GT || in.op == GVM_OP_GE || in.op == GVM_OP_AND || in.op == GVM_OP_OR ||
-            in.op == GVM_OP_NOT || in.op == GVM_OP_NAND) {
+            in.op == GVM_OP_NOT || in.op == GVM_OP_NAND || in.op == GVM_OP_NOR) {
           reg_kinds[in.a] = GVM_VALUE_BOOL;
           break;
         }
@@ -3054,6 +3056,15 @@ static int op_nand(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_nor(graphion_vm *vm, const graphion_insn *in) {
+  int rc = op_or(vm, in);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm->regs[in->a].as.bool_value = vm->regs[in->a].as.bool_value == 0 ? 1 : 0;
+  return GVM_OK;
+}
+
 static int op_add(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_ADD);
 }
@@ -3120,6 +3131,10 @@ static int op_not_cmp(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_nand_cmp(graphion_vm *vm, const graphion_insn *in) {
   return op_nand(vm, in);
+}
+
+static int op_nor_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_nor(vm, in);
 }
 
 static int op_abs(graphion_vm *vm, const graphion_insn *in) {
@@ -3578,6 +3593,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_NAND:
         rc = op_nand_cmp(vm, &in);
         break;
+      case GVM_OP_NOR:
+        rc = op_nor_cmp(vm, &in);
+        break;
       case GVM_OP_ABS:
         rc = op_abs(vm, &in);
         break;
@@ -3711,6 +3729,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_OR] = op_or_cmp,
       [GVM_OP_NOT] = op_not_cmp,
       [GVM_OP_NAND] = op_nand_cmp,
+      [GVM_OP_NOR] = op_nor_cmp,
       [GVM_OP_ABS] = op_abs,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
@@ -3789,6 +3808,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_OR] = &&L_or,
       [GVM_OP_NOT] = &&L_not,
       [GVM_OP_NAND] = &&L_nand,
+      [GVM_OP_NOR] = &&L_nor,
       [GVM_OP_ABS] = &&L_abs,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
@@ -3947,6 +3967,12 @@ L_not:
     continue;
 L_nand:
     rc = op_nand_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_nor:
+    rc = op_nor_cmp(vm, &in);
     if (rc != 0) {
       return rc;
     }

@@ -92,7 +92,7 @@ static int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "if") == 0 || strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "and") == 0 || strcmp(name, "or") == 0 ||
-         strcmp(name, "nand") == 0 ||
+         strcmp(name, "nand") == 0 || strcmp(name, "nor") == 0 ||
          strcmp(name, "not") == 0;
 }
 
@@ -831,6 +831,30 @@ static int parse_expression(const char **cursor,
   for (;;) {
     parsed_expr_result rhs;
     skip_spaces(cursor);
+    if (strncmp(*cursor, "nor", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+      *cursor += 3U;
+      rc = parse_and_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      rc = program_emit(program, GVM_OP_NOR, target_reg, scratch_reg, 0, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      lhs.kind = EXPR_RESULT_REG;
+      lhs.reg_index = target_reg;
+      lhs.const_index = 0U;
+      lhs.global_index = 0U;
+      continue;
+    }
     if (strncmp(*cursor, "or", 2U) != 0 || is_ident_char((*cursor)[2])) {
       break;
     }

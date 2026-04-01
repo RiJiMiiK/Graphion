@@ -391,9 +391,10 @@ Currently supported boolean logic operators:
 - `and`
 - `nand`
 - `or`
+- `nor`
 - `not`
 
-`and`, `nand`, `or`, and `not` return a `bool`.
+`and`, `nand`, `or`, `nor`, and `not` return a `bool`.
 
 Examples:
 
@@ -404,6 +405,7 @@ bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
 not_both_ready = true nand 1
 any_ready = false or 1
+none_ready = false nor 0
 any_path = false or 1 == 1 or false
 inverted_ready = not false
 inverted_path = not (false or 0)
@@ -414,6 +416,7 @@ print(bridge_false)
 print(all_ready)
 print(not_both_ready)
 print(any_ready)
+print(none_ready)
 print(any_path)
 print(inverted_ready)
 print(inverted_path)
@@ -451,7 +454,19 @@ false or 1 == 1 or false
 
 is currently evaluated left to right as repeated `or` operations, with comparisons evaluated before `or`.
 
-When `and` / `nand` and `or` are mixed, `and` / `nand` currently bind tighter than `or`.
+`nor` currently follows the same precedence and type rules as `or`, but inverts the final boolean result.
+
+```gion
+false nor 0
+```
+
+currently evaluates to:
+
+```gion
+true
+```
+
+When `and` / `nand` and `or` / `nor` are mixed, `and` / `nand` currently bind tighter than `or` / `nor`.
 
 So:
 
@@ -506,6 +521,14 @@ These are currently runtime errors:
 - `1.0 or true`
 - `"x" or true`
 
+`nor` currently follows the same type rules as `or`, but returns the negation of `or`.
+
+These are currently runtime errors:
+
+- `2 nor false`
+- `1.0 nor false`
+- `"x" nor false`
+
 `not` currently accepts:
 
 - `bool`
@@ -523,6 +546,7 @@ Current V1 note:
 - `and` currently evaluates both operands
 - `nand` currently evaluates both operands
 - `or` currently evaluates both operands
+- `nor` currently evaluates both operands
 - short-circuit behavior is not implemented yet
 
 ## Precedence
@@ -537,7 +561,7 @@ Current precedence order:
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
 7. `not`
 8. `and`, `nand`
-9. `or`
+9. `or`, `nor`
 
 Examples:
 

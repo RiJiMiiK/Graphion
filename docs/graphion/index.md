@@ -19,10 +19,11 @@ Graphion is currently an early-stage language with a small but already usable su
 - boolean `and`
 - boolean `nand`
 - boolean `or`
+- boolean `nor`
 - boolean `not`
 - line comments with `#`
 - block comments with `/* ... */`
-- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `not`
+- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.

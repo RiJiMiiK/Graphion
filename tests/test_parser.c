@@ -559,6 +559,7 @@ int test_gion_reserved_name_errors(void) {
       {"and = true\n", "reserved name cannot be assigned", "gion_reserved_and.gion"},
       {"nand = true\n", "reserved name cannot be assigned", "gion_reserved_nand.gion"},
       {"or = true\n", "reserved name cannot be assigned", "gion_reserved_or.gion"},
+      {"nor = true\n", "reserved name cannot be assigned", "gion_reserved_nor.gion"},
       {"not = true\n", "reserved name cannot be assigned", "gion_reserved_not.gion"},
   };
   size_t i;
@@ -1649,6 +1650,10 @@ int test_gion_if_elif_else_control_flow(void) {
       "    or_branch = \"or condition works\"\n"
       "else:\n"
       "    or_branch = \"bad\"\n"
+      "if false nor 0:\n"
+      "    nor_branch = \"nor condition works\"\n"
+      "else:\n"
+      "    nor_branch = \"bad\"\n"
       "if not false:\n"
       "    not_branch = \"not condition works\"\n"
       "else:\n"
@@ -1676,6 +1681,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(and_branch)\n"
       "print(nand_branch)\n"
       "print(or_branch)\n"
+      "print(nor_branch)\n"
       "print(not_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
@@ -1696,6 +1702,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *and_branch;
   const graphion_runtime_value *nand_branch;
   const graphion_runtime_value *or_branch;
+  const graphion_runtime_value *nor_branch;
   const graphion_runtime_value *not_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
@@ -1732,6 +1739,7 @@ int test_gion_if_elif_else_control_flow(void) {
   and_branch = graphion_runtime_scope_find(&scope, "and_branch");
   nand_branch = graphion_runtime_scope_find(&scope, "nand_branch");
   or_branch = graphion_runtime_scope_find(&scope, "or_branch");
+  nor_branch = graphion_runtime_scope_find(&scope, "nor_branch");
   not_branch = graphion_runtime_scope_find(&scope, "not_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
@@ -1803,23 +1811,28 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 16);
   }
+  if (nor_branch == NULL || nor_branch->kind != GVM_VALUE_STRING ||
+      strcmp(nor_branch->as.string_value, "nor condition works") != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 17);
+  }
   if (not_branch == NULL || not_branch->kind != GVM_VALUE_STRING ||
       strcmp(not_branch->as.string_value, "not condition works") != 0) {
     remove(path);
-    return finish_scope_test(&scope, 17);
+    return finish_scope_test(&scope, 18);
   }
   if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
       strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
-    return finish_scope_test(&scope, 18);
+    return finish_scope_test(&scope, 19);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return finish_scope_test(&scope, 19);
+    return finish_scope_test(&scope, 20);
   }
   remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnot condition works\nnested if branch\n") != 0) {
-    return finish_scope_test(&scope, 20);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nless-than condition works\nless-equal condition works\ngreater-than condition works\ngreater-equal condition works\nand condition works\nnand condition works\nor condition works\nnor condition works\nnot condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 21);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -3369,6 +3382,128 @@ int test_gion_nand_syntax_errors(void) {
       {"value = nand true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
       {"print(true nand )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
       {"if true nand:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc && rc != cases[i].alternate_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_nor_expressions(void) {
+  const char *source =
+      "both_false = false nor false\n"
+      "true_false = true nor false\n"
+      "int_bool = 0 nor false\n"
+      "bool_int = false nor 1\n"
+      "ints = 0 nor 1\n"
+      "comparisons = 1 == 2 nor 2 == 3\n"
+      "precedence_with_and = false nor true and false\n"
+      "grouped = (1 == 2) nor (3 < 2)\n"
+      "print(both_false)\n"
+      "print(true_false)\n"
+      "print(int_bool)\n"
+      "print(bool_int)\n"
+      "print(ints)\n"
+      "print(comparisons)\n"
+      "print(precedence_with_and)\n"
+      "print(grouped)\n";
+  const char *path = "gion_nor_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *both_false;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  both_false = graphion_runtime_scope_find(&scope, "both_false");
+  if (both_false == NULL || both_false->kind != GVM_VALUE_BOOL || both_false->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 5);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_nor_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = 2 nor false\n", 1U},
+      {"value = false nor 2\n", 1U},
+      {"value = 1.0 nor false\n", 1U},
+      {"value = \"x\" nor false\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_nor_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    int alternate_rc;
+    const char *message;
+  } cases[] = {
+      {"value = false nor\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = nor false\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"print(false nor )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"if false nor:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
   };
   size_t i;
 
