@@ -325,8 +325,9 @@ Supported arithmetic operators:
 Currently supported comparison operators:
 
 - `==`
+- `!=`
 
-`==` returns a `bool`.
+`==` and `!=` return a `bool`.
 
 Examples:
 
@@ -336,6 +337,8 @@ same_number = 42 == 42.0
 same_bool_bridge = 1 == true
 same_false_bridge = 0 == false
 same_text = "ok" == "ok"
+different_int = 42 != 41
+different_text = "ok" != "no"
 ```
 
 Current comparison semantics:
@@ -351,6 +354,8 @@ Current comparison semantics:
 
 Other incompatible scalar kinds currently raise a runtime error.
 
+`!=` follows the same type rules as `==`, but negates the final boolean result.
+
 ## Precedence
 
 Current precedence order:
@@ -360,7 +365,7 @@ Current precedence order:
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
-6. `==`
+6. `==`, `!=`
 
 Examples:
 

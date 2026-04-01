@@ -687,6 +687,7 @@ static int is_arith_only_fastpath_candidate(const graphion_insn *program,
       case GVM_OP_POW:
       case GVM_OP_FLOOR_DIV:
       case GVM_OP_EQ:
+      case GVM_OP_NE:
         return 0;
       case GVM_OP_MOV:
       case GVM_OP_LOAD_CONST:
@@ -998,17 +999,18 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_POW:
       case GVM_OP_FLOOR_DIV:
       case GVM_OP_EQ:
+      case GVM_OP_NE:
         if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ) {
+          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE) {
             return 0;
           }
         }
         if (reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ) {
+          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE) {
             return 0;
           }
         }
-        if (in.op == GVM_OP_EQ) {
+        if (in.op == GVM_OP_EQ || in.op == GVM_OP_NE) {
           reg_kinds[in.a] = GVM_VALUE_BOOL;
           break;
         }
@@ -2818,6 +2820,15 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_ne(graphion_vm *vm, const graphion_insn *in) {
+  int rc = op_eq(vm, in);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm->regs[in->a].as.bool_value = vm->regs[in->a].as.bool_value == 0 ? 1 : 0;
+  return GVM_OK;
+}
+
 static int op_add(graphion_vm *vm, const graphion_insn *in) {
   return op_numeric_binary(vm, in, GVM_OP_ADD);
 }
@@ -2848,6 +2859,10 @@ static int op_floor_div(graphion_vm *vm, const graphion_insn *in) {
 
 static int op_eq_cmp(graphion_vm *vm, const graphion_insn *in) {
   return op_eq(vm, in);
+}
+
+static int op_ne_cmp(graphion_vm *vm, const graphion_insn *in) {
+  return op_ne(vm, in);
 }
 
 static int op_abs(graphion_vm *vm, const graphion_insn *in) {
@@ -3279,6 +3294,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_EQ:
         rc = op_eq_cmp(vm, &in);
         break;
+      case GVM_OP_NE:
+        rc = op_ne_cmp(vm, &in);
+        break;
       case GVM_OP_ABS:
         rc = op_abs(vm, &in);
         break;
@@ -3403,6 +3421,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_POW] = op_pow,
       [GVM_OP_FLOOR_DIV] = op_floor_div,
       [GVM_OP_EQ] = op_eq_cmp,
+      [GVM_OP_NE] = op_ne_cmp,
       [GVM_OP_ABS] = op_abs,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
@@ -3472,6 +3491,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_POW] = &&L_pow,
       [GVM_OP_FLOOR_DIV] = &&L_floor_div,
       [GVM_OP_EQ] = &&L_eq,
+      [GVM_OP_NE] = &&L_ne,
       [GVM_OP_ABS] = &&L_abs,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
@@ -3576,6 +3596,12 @@ L_floor_div:
     continue;
 L_eq:
     rc = op_eq_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_ne:
+    rc = op_ne_cmp(vm, &in);
     if (rc != 0) {
       return rc;
     }

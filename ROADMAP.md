@@ -22,14 +22,14 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 ### Comparisons
 
 - [x] `==`
-- [ ] `!=`
+- [x] `!=`
 - [ ] `<`
 - [ ] `<=`
 - [ ] `>`
 - [ ] `>=`
 - [ ] finish and document comparison semantics across `int`, `float`, `bool`, and `string`
-  - current `==` supports numeric comparison, same-kind `bool`, same-kind `string`, and `false` for incompatible scalar kinds
-- [ ] revisit whether later comparison operators should also use `false` on incompatible scalar kinds or raise a dedicated runtime error
+  - current `==` and `!=` support numeric comparison, `int`/`bool` bridging for `0` and `1`, same-kind `bool`, same-kind `string`, and runtime errors for incompatible scalar kinds
+- [ ] decide whether ordered comparisons should reject `bool` values entirely or support a strict `0/1` ordering rule
 
 ### Boolean logic
 

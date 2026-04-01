@@ -654,11 +654,17 @@ static int parse_expression(const char **cursor,
   }
   for (;;) {
     parsed_expr_result rhs;
+    graphion_opcode cmp_op;
     skip_spaces(cursor);
-    if ((*cursor)[0] != '=' || (*cursor)[1] != '=') {
+    if ((*cursor)[0] == '=' && (*cursor)[1] == '=') {
+      cmp_op = GVM_OP_EQ;
+      *cursor += 2;
+    } else if ((*cursor)[0] == '!' && (*cursor)[1] == '=') {
+      cmp_op = GVM_OP_NE;
+      *cursor += 2;
+    } else {
       break;
     }
-    *cursor += 2;
     rc = parse_additive_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -671,7 +677,7 @@ static int parse_expression(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = program_emit(program, GVM_OP_EQ, target_reg, scratch_reg, 0, line, diagnostic);
+    rc = program_emit(program, cmp_op, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

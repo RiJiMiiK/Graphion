@@ -36,6 +36,11 @@ if 1 + 1 == 2:
 else:
     equality_branch = "bad"
 
+if 2 + 2 != 5:
+    inequality_branch = "2 + 2 != 5 is true"
+else:
+    inequality_branch = "bad"
+
 bool_bridge_true = 1 == true
 bool_bridge_false = 0 == false
 
@@ -45,5 +50,6 @@ print("if with integer 1 -> integer_bool_branch=" + integer_bool_branch)
 print("if with integer 0 -> integer_zero_branch=" + integer_zero_branch)
 print("if without else -> single_if_demo=" + single_if_demo)
 print("if with equality expression -> equality_branch=" + equality_branch)
+print("if with inequality expression -> inequality_branch=" + inequality_branch)
 print("int and bool equality -> bool_bridge_true=" + bool_bridge_true)
 print("int and bool equality -> bool_bridge_false=" + bool_bridge_false)

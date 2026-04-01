@@ -18,7 +18,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - boolean `if / elif / else` blocks
 - line comments with `#`
 - block comments with `/* ... */`
-- equality comparisons with `==`
+- equality comparisons with `==` and `!=`
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.
@@ -69,7 +69,7 @@ This user guide describes the current implemented subset, not the long-term targ
 
 That means some areas are intentionally still missing or incomplete, including:
 
-- most comparisons beyond `==`
+- most comparisons beyond `==` and `!=`
 - boolean logic operators
 - tuples
 - functions

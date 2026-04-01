@@ -1613,6 +1613,10 @@ int test_gion_if_elif_else_control_flow(void) {
       "    equality_branch = \"equality condition works\"\n"
       "else:\n"
       "    equality_branch = \"bad\"\n"
+      "if 2 + 2 != 5:\n"
+      "    inequality_branch = \"inequality condition works\"\n"
+      "else:\n"
+      "    inequality_branch = \"bad\"\n"
       "if nested:\n"
       "    nested_result = \"bad\"\n"
       "elif false:\n"
@@ -1628,6 +1632,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(optional)\n"
       "print(single)\n"
       "print(equality_branch)\n"
+      "print(inequality_branch)\n"
       "print(nested_result)\n";
   const char *path = "gion_if_elif_else_control_flow.txt";
   char output[512];
@@ -1639,6 +1644,7 @@ int test_gion_if_elif_else_control_flow(void) {
   const graphion_runtime_value *int_true_branch;
   const graphion_runtime_value *int_false_branch;
   const graphion_runtime_value *equality_branch;
+  const graphion_runtime_value *inequality_branch;
   const graphion_runtime_value *nested_result;
   FILE *fp = NULL;
   int rc;
@@ -1666,6 +1672,7 @@ int test_gion_if_elif_else_control_flow(void) {
   int_true_branch = graphion_runtime_scope_find(&scope, "int_true_branch");
   int_false_branch = graphion_runtime_scope_find(&scope, "int_false_branch");
   equality_branch = graphion_runtime_scope_find(&scope, "equality_branch");
+  inequality_branch = graphion_runtime_scope_find(&scope, "inequality_branch");
   nested_result = graphion_runtime_scope_find(&scope, "nested_result");
   if (selected == NULL || selected->kind != GVM_VALUE_STRING || strcmp(selected->as.string_value, "if branch") != 0) {
     remove(path);
@@ -1696,18 +1703,23 @@ int test_gion_if_elif_else_control_flow(void) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
-      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
+  if (inequality_branch == NULL || inequality_branch->kind != GVM_VALUE_STRING ||
+      strcmp(inequality_branch->as.string_value, "inequality condition works") != 0) {
     remove(path);
     return finish_scope_test(&scope, 9);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (nested_result == NULL || nested_result->kind != GVM_VALUE_STRING ||
+      strcmp(nested_result->as.string_value, "nested if branch") != 0) {
     remove(path);
     return finish_scope_test(&scope, 10);
   }
-  remove(path);
-  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\nnested if branch\n") != 0) {
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
     return finish_scope_test(&scope, 11);
+  }
+  remove(path);
+  if (strcmp(output, "if branch\nif else without elif\nif without else stays optional\nequality condition works\ninequality condition works\nnested if branch\n") != 0) {
+    return finish_scope_test(&scope, 12);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -2052,6 +2064,162 @@ int test_gion_equality_syntax_errors(void) {
       {"value = == 1\n", "expected scalar literal"},
       {"print(1 == )\n", "expected scalar literal"},
       {"if 1 ==:\n    print(1)\n", "expected scalar literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_inequality_expressions(void) {
+  const char *source =
+      "different_int = 42 != 41\n"
+      "same_numeric = 42 != 42.0\n"
+      "int_true_bool = 1 != true\n"
+      "int_false_bool = 0 != false\n"
+      "different_numeric = 42 != 43\n"
+      "different_bool = true != false\n"
+      "same_string = \"ok\" != \"ok\"\n"
+      "different_string = \"ok\" != \"no\"\n"
+      "grouped = (1 + 2) != 4\n"
+      "precedence = 1 + 2 != 4\n"
+      "power_cmp = 2 ** 3 != 9\n"
+      "print(different_int)\n"
+      "print(same_numeric)\n"
+      "print(int_true_bool)\n"
+      "print(int_false_bool)\n"
+      "print(different_numeric)\n"
+      "print(different_bool)\n"
+      "print(same_string)\n"
+      "print(different_string)\n"
+      "print(grouped)\n"
+      "print(precedence)\n"
+      "print(power_cmp)\n";
+  const char *path = "gion_inequality_expressions.txt";
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *different_int;
+  const graphion_runtime_value *same_numeric;
+  const graphion_runtime_value *int_true_bool;
+  const graphion_runtime_value *int_false_bool;
+  const graphion_runtime_value *different_numeric;
+  const graphion_runtime_value *different_string;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  different_int = graphion_runtime_scope_find(&scope, "different_int");
+  same_numeric = graphion_runtime_scope_find(&scope, "same_numeric");
+  int_true_bool = graphion_runtime_scope_find(&scope, "int_true_bool");
+  int_false_bool = graphion_runtime_scope_find(&scope, "int_false_bool");
+  different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
+  different_string = graphion_runtime_scope_find(&scope, "different_string");
+  if (different_int == NULL || different_int->kind != GVM_VALUE_BOOL || different_int->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  if (same_numeric == NULL || same_numeric->kind != GVM_VALUE_BOOL || same_numeric->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (int_true_bool == NULL || int_true_bool->kind != GVM_VALUE_BOOL || int_true_bool->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (int_false_bool == NULL || int_false_bool->kind != GVM_VALUE_BOOL || int_false_bool->as.bool_value != 0) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (different_string == NULL || different_string->kind != GVM_VALUE_BOOL || different_string->as.bool_value != 1) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 9);
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\ntrue\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 10);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_inequality_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+  } cases[] = {
+      {"value = 1 != \"1\"\n", 1U},
+      {"if 1 != \"1\":\n    print(1)\n", 1U},
+      {"value = \"true\" != true\n", 1U},
+      {"value = \"x\" != 1.5\n", 1U},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "incompatible operand types") != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_inequality_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 1 !=\n", "expected scalar literal"},
+      {"value = != 1\n", "expected scalar literal"},
+      {"print(1 != )\n", "expected scalar literal"},
+      {"if 1 !=:\n    print(1)\n", "expected scalar literal"},
   };
   size_t i;
 

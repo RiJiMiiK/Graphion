@@ -152,7 +152,7 @@ Expected output:
 
 ## Equality
 
-Graphion currently supports `==`.
+Graphion currently supports `==` and `!=`.
 
 It returns a boolean result:
 
@@ -162,17 +162,23 @@ same_number = 42 == 42.0
 same_bool_bridge = 1 == true
 same_false_bridge = 0 == false
 same_text = "graphion" == "graphion"
+different_number = 42 != 41
+different_text = "graphion" != "graph"
 
 print(same_int)
 print(same_number)
 print(same_bool_bridge)
 print(same_false_bridge)
 print(same_text)
+print(different_number)
+print(different_text)
 ```
 
 Expected output:
 
 ```text
+true
+true
 true
 true
 true
@@ -188,6 +194,7 @@ Current behavior:
 - `bool == bool` works
 - `string == string` works
 - incompatible scalar types raise a runtime error
+- `!=` follows the same type rules and flips the final result
 
 ## Conditional Blocks
 
