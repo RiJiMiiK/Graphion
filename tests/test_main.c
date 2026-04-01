@@ -25,8 +25,10 @@ int test_vm_floor_div_opcode(void);
 int test_vm_abs_opcode(void);
 int test_vm_eq_opcode(void);
 int test_vm_eq_incompatible_types_fail(void);
+int test_vm_eq_int_bool_out_of_range_fail(void);
 int test_vm_ne_opcode(void);
 int test_vm_ne_incompatible_types_fail(void);
+int test_vm_ne_int_bool_out_of_range_fail(void);
 int test_vm_lt_opcode(void);
 int test_vm_lt_incompatible_types_fail(void);
 int test_vm_le_opcode(void);
@@ -172,8 +174,10 @@ int main(int argc, char **argv) {
       {"vm_abs_opcode", test_vm_abs_opcode},
       {"vm_eq_opcode", test_vm_eq_opcode},
       {"vm_eq_incompatible_types_fail", test_vm_eq_incompatible_types_fail},
+      {"vm_eq_int_bool_out_of_range_fail", test_vm_eq_int_bool_out_of_range_fail},
       {"vm_ne_opcode", test_vm_ne_opcode},
       {"vm_ne_incompatible_types_fail", test_vm_ne_incompatible_types_fail},
+      {"vm_ne_int_bool_out_of_range_fail", test_vm_ne_int_bool_out_of_range_fail},
       {"vm_lt_opcode", test_vm_lt_opcode},
       {"vm_lt_incompatible_types_fail", test_vm_lt_incompatible_types_fail},
       {"vm_le_opcode", test_vm_le_opcode},

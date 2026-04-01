@@ -202,10 +202,12 @@ Current behavior:
 
 - `int == int` works
 - `int == float` compares numerically
-- `1 == true` and `0 == false` work
+- `1 == true`, `true == 1`, `0 == false`, and `false == 0` work
 - `bool == bool` works
 - `string == string` works
-- incompatible scalar types raise a runtime error
+- `int == bool` is only allowed when the integer is `0` or `1`
+- `float == bool` raises a runtime error
+- `string` compared to a non-`string` raises a runtime error
 - `!=` follows the same type rules and flips the final result
 - `<`, `<=`, `>`, and `>=` currently work only on numeric values
 

@@ -1841,6 +1841,8 @@ int test_gion_equality_expressions(void) {
       "mixed_numeric = 42 == 42.0\n"
       "int_true_bool = 1 == true\n"
       "int_false_bool = 0 == false\n"
+      "bool_true_int = true == 1\n"
+      "bool_false_int = false == 0\n"
       "different_numeric = 42 == 41\n"
       "same_bool = true == true\n"
       "different_bool = true == false\n"
@@ -1853,6 +1855,8 @@ int test_gion_equality_expressions(void) {
       "print(mixed_numeric)\n"
       "print(int_true_bool)\n"
       "print(int_false_bool)\n"
+      "print(bool_true_int)\n"
+      "print(bool_false_int)\n"
       "print(different_numeric)\n"
       "print(same_bool)\n"
       "print(different_bool)\n"
@@ -1862,13 +1866,15 @@ int test_gion_equality_expressions(void) {
       "print(precedence)\n"
       "print(power_cmp)\n";
   const char *path = "gion_equality_expressions.txt";
-  char output[128];
+  char output[160];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *same_int;
   const graphion_runtime_value *mixed_numeric;
   const graphion_runtime_value *int_true_bool;
   const graphion_runtime_value *int_false_bool;
+  const graphion_runtime_value *bool_true_int;
+  const graphion_runtime_value *bool_false_int;
   const graphion_runtime_value *different_numeric;
   const graphion_runtime_value *same_string;
   FILE *fp = NULL;
@@ -1895,6 +1901,8 @@ int test_gion_equality_expressions(void) {
   mixed_numeric = graphion_runtime_scope_find(&scope, "mixed_numeric");
   int_true_bool = graphion_runtime_scope_find(&scope, "int_true_bool");
   int_false_bool = graphion_runtime_scope_find(&scope, "int_false_bool");
+  bool_true_int = graphion_runtime_scope_find(&scope, "bool_true_int");
+  bool_false_int = graphion_runtime_scope_find(&scope, "bool_false_int");
   different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
   same_string = graphion_runtime_scope_find(&scope, "same_string");
   if (same_int == NULL || same_int->kind != GVM_VALUE_BOOL || same_int->as.bool_value != 1) {
@@ -1913,21 +1921,30 @@ int test_gion_equality_expressions(void) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 0) {
+  if (bool_true_int == NULL || bool_true_int->kind != GVM_VALUE_BOOL || bool_true_int->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
-  if (same_string == NULL || same_string->kind != GVM_VALUE_BOOL || same_string->as.bool_value != 1) {
+  if (bool_false_int == NULL || bool_false_int->kind != GVM_VALUE_BOOL || bool_false_int->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL ||
+      different_numeric->as.bool_value != 0) {
     remove(path);
     return finish_scope_test(&scope, 9);
   }
-  remove(path);
-  if (strcmp(output, "true\ntrue\ntrue\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+  if (same_string == NULL || same_string->kind != GVM_VALUE_BOOL || same_string->as.bool_value != 1) {
+    remove(path);
     return finish_scope_test(&scope, 10);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 11);
+  }
+  remove(path);
+  if (strcmp(output, "true\ntrue\ntrue\ntrue\ntrue\ntrue\nfalse\ntrue\nfalse\ntrue\nfalse\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 12);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1941,6 +1958,10 @@ int test_gion_equality_runtime_errors(void) {
       {"if 1 == \"1\":\n    print(1)\n", 1U},
       {"value = \"true\" == true\n", 1U},
       {"value = \"x\" == 1.5\n", 1U},
+      {"value = 2 == true\n", 1U},
+      {"value = true == 2\n", 1U},
+      {"value = 1.0 == true\n", 1U},
+      {"value = false == 0.0\n", 1U},
   };
   size_t i;
 
@@ -2139,6 +2160,8 @@ int test_gion_inequality_expressions(void) {
       "same_numeric = 42 != 42.0\n"
       "int_true_bool = 1 != true\n"
       "int_false_bool = 0 != false\n"
+      "bool_true_int = true != 1\n"
+      "bool_false_int = false != 0\n"
       "different_numeric = 42 != 43\n"
       "different_bool = true != false\n"
       "same_string = \"ok\" != \"ok\"\n"
@@ -2150,6 +2173,8 @@ int test_gion_inequality_expressions(void) {
       "print(same_numeric)\n"
       "print(int_true_bool)\n"
       "print(int_false_bool)\n"
+      "print(bool_true_int)\n"
+      "print(bool_false_int)\n"
       "print(different_numeric)\n"
       "print(different_bool)\n"
       "print(same_string)\n"
@@ -2158,13 +2183,15 @@ int test_gion_inequality_expressions(void) {
       "print(precedence)\n"
       "print(power_cmp)\n";
   const char *path = "gion_inequality_expressions.txt";
-  char output[128];
+  char output[160];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *different_int;
   const graphion_runtime_value *same_numeric;
   const graphion_runtime_value *int_true_bool;
   const graphion_runtime_value *int_false_bool;
+  const graphion_runtime_value *bool_true_int;
+  const graphion_runtime_value *bool_false_int;
   const graphion_runtime_value *different_numeric;
   const graphion_runtime_value *different_string;
   FILE *fp = NULL;
@@ -2191,6 +2218,8 @@ int test_gion_inequality_expressions(void) {
   same_numeric = graphion_runtime_scope_find(&scope, "same_numeric");
   int_true_bool = graphion_runtime_scope_find(&scope, "int_true_bool");
   int_false_bool = graphion_runtime_scope_find(&scope, "int_false_bool");
+  bool_true_int = graphion_runtime_scope_find(&scope, "bool_true_int");
+  bool_false_int = graphion_runtime_scope_find(&scope, "bool_false_int");
   different_numeric = graphion_runtime_scope_find(&scope, "different_numeric");
   different_string = graphion_runtime_scope_find(&scope, "different_string");
   if (different_int == NULL || different_int->kind != GVM_VALUE_BOOL || different_int->as.bool_value != 1) {
@@ -2209,21 +2238,30 @@ int test_gion_inequality_expressions(void) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL || different_numeric->as.bool_value != 1) {
+  if (bool_true_int == NULL || bool_true_int->kind != GVM_VALUE_BOOL || bool_true_int->as.bool_value != 0) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
-  if (different_string == NULL || different_string->kind != GVM_VALUE_BOOL || different_string->as.bool_value != 1) {
+  if (bool_false_int == NULL || bool_false_int->kind != GVM_VALUE_BOOL || bool_false_int->as.bool_value != 0) {
     remove(path);
     return finish_scope_test(&scope, 8);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (different_numeric == NULL || different_numeric->kind != GVM_VALUE_BOOL ||
+      different_numeric->as.bool_value != 1) {
     remove(path);
     return finish_scope_test(&scope, 9);
   }
-  remove(path);
-  if (strcmp(output, "true\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\ntrue\ntrue\ntrue\ntrue\n") != 0) {
+  if (different_string == NULL || different_string->kind != GVM_VALUE_BOOL || different_string->as.bool_value != 1) {
+    remove(path);
     return finish_scope_test(&scope, 10);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 11);
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\ntrue\ntrue\ntrue\ntrue\n") != 0) {
+    return finish_scope_test(&scope, 12);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -2237,6 +2275,10 @@ int test_gion_inequality_runtime_errors(void) {
       {"if 1 != \"1\":\n    print(1)\n", 1U},
       {"value = \"true\" != true\n", 1U},
       {"value = \"x\" != 1.5\n", 1U},
+      {"value = 2 != true\n", 1U},
+      {"value = true != 2\n", 1U},
+      {"value = 1.0 != true\n", 1U},
+      {"value = false != 0.0\n", 1U},
   };
   size_t i;
 

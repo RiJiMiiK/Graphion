@@ -354,13 +354,20 @@ Current comparison semantics:
 - `int == int`
 - `int == float`
 - `float == float`
-- `int == bool` when the integer is `0` or `1`
+- `int == bool` only when the integer is `0` or `1`
+- `bool == int` only when the integer is `0` or `1`
 - `bool == bool`
 - `string == string`
 
-`1 == true` and `0 == false` currently return `true`.
+`1 == true`, `true == 1`, `0 == false`, and `false == 0` currently return `true`.
 
-Other incompatible scalar kinds currently raise a runtime error.
+These are currently runtime errors:
+
+- `2 == true`
+- `true == 2`
+- `1.0 == true`
+- `"1" == 1`
+- `"true" == true`
 
 `!=` follows the same type rules as `==`, but negates the final boolean result.
 
