@@ -3559,12 +3559,18 @@ int test_gion_ternary_expressions(void) {
       "logic_label = \"logic true\" if true and 1 else \"bad\"\n"
       "nested = \"outer true\" if true else \"inner true\" if false else \"inner false\"\n"
       "grouped = (\"grouped true\" if false else \"grouped false\")\n"
+      "multiline = (\n"
+      "    \"ready multi\"\n"
+      "    if ready\n"
+      "    else \"not ready multi\"\n"
+      ")\n"
       "print(label)\n"
       "print(int_label)\n"
       "print(compare_label)\n"
       "print(logic_label)\n"
       "print(nested)\n"
-      "print(grouped)\n";
+      "print(grouped)\n"
+      "print(multiline)\n";
   const char *path = "gion_ternary_expressions.txt";
   char output[128];
   graphion_runtime_scope scope;
@@ -3600,7 +3606,7 @@ int test_gion_ternary_expressions(void) {
     return finish_scope_test(&scope, 4);
   }
   remove(path);
-  if (strcmp(output, "ready\nint true\ncompare true\nlogic true\nouter true\ngrouped false\n") != 0) {
+  if (strcmp(output, "ready\nint true\ncompare true\nlogic true\nouter true\ngrouped false\nready multi\n") != 0) {
     return finish_scope_test(&scope, 5);
   }
   return finish_scope_test(&scope, 0);
@@ -3647,6 +3653,9 @@ int test_gion_ternary_syntax_errors(void) {
       {"value = if ready else \"bad\"\n", GINT_ERR_PARSE, "expected expression before ternary if"},
       {"value = \"ready\" if else \"bad\"\n", GINT_ERR_PARSE, "expected condition after ternary if"},
       {"value = \"ready\" if ready else\n", GINT_ERR_PARSE, "expected expression after ternary else"},
+      {"value = \"ready\" if\n    ready else \"bad\"\n", GINT_ERR_PARSE, "multiline assignment expression requires grouping parentheses"},
+      {"value = \"ready\" if ready else\n    \"bad\"\n", GINT_ERR_PARSE, "multiline assignment expression requires grouping parentheses"},
+      {"value = (\n    \"ready\"\n    if ready\n    else \"bad\"\n", GINT_ERR_PARSE, "expected ')' after expression"},
   };
   size_t i;
 

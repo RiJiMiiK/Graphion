@@ -380,6 +380,18 @@ ready
 
 The ternary condition follows the same truth rules as `if` / `elif`.
 
+If a ternary grows across multiple lines, wrap the whole expression in grouping parentheses:
+
+```gion
+label = (
+    "ready"
+    if ready
+    else "not ready"
+)
+```
+
+Without the outer parentheses, that multiline ternary form remains invalid.
+
 As ternary expressions grow, readability drops quickly. A good rule of thumb is:
 
 - keep simple ternaries on one line

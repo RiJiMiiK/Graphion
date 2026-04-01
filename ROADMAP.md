@@ -70,7 +70,7 @@ The current active lane is conditional logic in the `.gion` scalar language.
     ```gion
     label = "ready" if ready else "not ready"
     ```
-- [ ] multiline ternary expressions with required grouping parentheses
+- [x] multiline ternary expressions with required grouping parentheses
   - target shape:
     ```gion
     label = (

@@ -297,12 +297,23 @@ Graphion also supports inline conditional expressions in the form:
 result = "ready" if ready else "not ready"
 ```
 
+Long ternary expressions can also span multiple physical lines when the whole expression is wrapped in grouping parentheses:
+
+```gion
+label = (
+    "ready"
+    if ready
+    else "not ready"
+)
+```
+
 Rules:
 
 - the shape is `true_value if condition else false_value`
 - the condition follows the same truth rules as `if` / `elif`
 - the whole ternary expression produces a single scalar value
 - nested ternary expressions are allowed, but become harder to read quickly
+- multiline ternary expressions require outer grouping parentheses
 
 Examples:
 
@@ -312,6 +323,14 @@ label = "ready" if ready else "not ready"
 
 ```gion
 label = "outer" if ready else "inner" if fallback else "none"
+```
+
+Invalid example:
+
+```gion
+label = "ready"
+if ready
+else "not ready"
 ```
 
 ### Reading Tips

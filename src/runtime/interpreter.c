@@ -1845,6 +1845,21 @@ static int condition_line_looks_incomplete(const char *text, size_t length) {
   return 0;
 }
 
+static int ternary_line_looks_incomplete(const char *text, size_t length) {
+  size_t end = length;
+
+  while (end > 0U && (text[end - 1U] == ' ' || text[end - 1U] == '\t' || text[end - 1U] == '\r')) {
+    end--;
+  }
+  if (end >= 2U && strncmp(text + end - 2U, "if", 2U) == 0 && (end == 2U || !is_ident_char(text[end - 3U]))) {
+    return 1;
+  }
+  if (end >= 4U && strncmp(text + end - 4U, "else", 4U) == 0 && (end == 4U || !is_ident_char(text[end - 5U]))) {
+    return 1;
+  }
+  return 0;
+}
+
 static int collect_control_condition_text(const runtime_source_line *lines,
                                           size_t count,
                                           size_t start_index,
@@ -2123,14 +2138,172 @@ static int evaluate_condition_text(const char *condition_text,
   return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
 }
 
-static int execute_statement_source_line(const runtime_source_line *line,
+static int collect_assignment_statement_text(const runtime_source_line *lines,
+                                             size_t count,
+                                             size_t start_index,
+                                             char *buffer,
+                                             size_t buffer_size,
+                                             size_t *end_index_out,
+                                             unsigned int line,
+                                             graphion_runtime_diagnostic *diagnostic) {
+  const runtime_source_line *start_line;
+  const char *cursor;
+  const char *rhs_cursor;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  size_t write_index = 0U;
+  size_t i;
+  int depth = 0;
+  int in_string = 0;
+  int multiline_allowed = 0;
+  int saw_nonblank_continuation = 0;
+  int rc;
+
+  if (lines == NULL || start_index >= count || buffer == NULL || buffer_size == 0U || end_index_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+
+  start_line = &lines[start_index];
+  cursor = line_content(start_line);
+  rhs_cursor = cursor;
+  rc = parse_identifier_token(&rhs_cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&rhs_cursor);
+  if (rhs_cursor[0] == '*' && rhs_cursor[1] == '*' && rhs_cursor[2] == '=') {
+    rhs_cursor += 3;
+  } else if (rhs_cursor[0] == '/' && rhs_cursor[1] == '/' && rhs_cursor[2] == '=') {
+    rhs_cursor += 3;
+  } else if ((rhs_cursor[0] == '+' || rhs_cursor[0] == '-' || rhs_cursor[0] == '*' || rhs_cursor[0] == '/' ||
+              rhs_cursor[0] == '%') &&
+             rhs_cursor[1] == '=') {
+    rhs_cursor += 2;
+  } else if (*rhs_cursor == '=') {
+    rhs_cursor++;
+  } else {
+    return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
+  }
+  skip_spaces(&rhs_cursor);
+  multiline_allowed = *rhs_cursor == '(' ? 1 : 0;
+
+  for (i = start_index; i < count; ++i) {
+    const char *scan = i == start_index ? cursor : line_content(&lines[i]);
+
+    if (i > start_index) {
+      if (line_is_blank(&lines[i])) {
+        continue;
+      }
+      saw_nonblank_continuation = 1;
+      if (!multiline_allowed) {
+        return fail(diagnostic, line, 1U, "multiline assignment expression requires grouping parentheses", GINT_ERR_PARSE);
+      }
+      if (write_index > 0U && buffer[write_index - 1U] != ' ') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = ' ';
+      }
+    }
+
+    while (*scan != '\0') {
+      if (in_string) {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (*scan == '"') {
+          in_string = 0;
+        }
+        scan++;
+        continue;
+      }
+      if (*scan == '"') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        in_string = 1;
+        scan++;
+        continue;
+      }
+      if (*scan == '(') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        depth++;
+        scan++;
+        continue;
+      }
+      if (*scan == ')') {
+        if (write_index + 1U >= buffer_size) {
+          return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+        }
+        buffer[write_index++] = *scan;
+        if (depth > 0) {
+          depth--;
+        }
+        scan++;
+        continue;
+      }
+      if (write_index + 1U >= buffer_size) {
+        return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+      }
+      buffer[write_index++] = *scan;
+      scan++;
+    }
+
+    while (write_index > 0U &&
+           (buffer[write_index - 1U] == ' ' || buffer[write_index - 1U] == '\t' || buffer[write_index - 1U] == '\r')) {
+      write_index--;
+    }
+    if (depth == 0) {
+      if (i == start_index && ternary_line_looks_incomplete(buffer, write_index) &&
+          find_next_nonblank_line(lines, count, i + 1U) < count) {
+        return fail(diagnostic, line, 1U, "multiline assignment expression requires grouping parentheses", GINT_ERR_PARSE);
+      }
+      buffer[write_index] = '\0';
+      *end_index_out = i;
+      return GINT_OK;
+    }
+  }
+
+  if (!saw_nonblank_continuation) {
+    buffer[write_index] = '\0';
+    *end_index_out = start_index;
+    return GINT_OK;
+  }
+  return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+}
+
+static int execute_statement_source_line(const runtime_source_line *lines,
+                                         size_t count,
+                                         size_t *index,
                                          graphion_runtime_scope *scope,
                                          graphion_runtime_diagnostic *diagnostic,
                                          FILE *output) {
+  char statement_text[512];
+  const char *statement_source = line_content(&lines[*index]);
   graphion_runtime_program program;
+  size_t statement_end = *index;
   int rc;
+
+  if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5]))) {
+    rc = collect_assignment_statement_text(lines,
+                                           count,
+                                           *index,
+                                           statement_text,
+                                           sizeof(statement_text),
+                                           &statement_end,
+                                           lines[*index].line,
+                                           diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    statement_source = statement_text;
+  }
   seed_program_from_scope(&program, scope);
-  rc = parse_statement_line(line_content(line), scope, &program, line->line, diagnostic);
+  rc = parse_statement_line(statement_source, scope, &program, lines[*index].line, diagnostic);
   if (rc != GINT_OK) {
     graphion_runtime_program_dispose(&program);
     return rc;
@@ -2138,9 +2311,13 @@ static int execute_statement_source_line(const runtime_source_line *line,
   if (program.program_len > 0U) {
     rc = graphion_execute_program(&program, scope, diagnostic, output);
     graphion_runtime_program_dispose(&program);
-    return rc;
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  } else {
+    graphion_runtime_program_dispose(&program);
   }
-  graphion_runtime_program_dispose(&program);
+  *index = statement_end + 1U;
   return GINT_OK;
 }
 
@@ -2301,12 +2478,12 @@ static int execute_block(const runtime_source_line *lines,
       continue;
     }
     {
-      int rc = execute_statement_source_line(&lines[i], scope, diagnostic, output);
+      int rc = execute_statement_source_line(lines, count, &i, scope, diagnostic, output);
       if (rc != GINT_OK) {
         return rc;
       }
     }
-    i++;
+    continue;
   }
   *index = i;
   return GINT_OK;
