@@ -1856,7 +1856,7 @@ static int collect_control_condition_text(const runtime_source_line *lines,
                                           graphion_runtime_diagnostic *diagnostic) {
   const runtime_source_line *start_line;
   const char *cursor;
-  const size_t keyword_len = strlen(keyword);
+  size_t keyword_len;
   size_t write_index = 0U;
   size_t i;
   int depth = 0;
@@ -1867,6 +1867,7 @@ static int collect_control_condition_text(const runtime_source_line *lines,
       header_end_index_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
+  keyword_len = strlen(keyword);
 
   start_line = &lines[start_index];
   cursor = line_content(start_line);
