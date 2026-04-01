@@ -79,5 +79,5 @@ value = abs("graphion")
 Current message:
 
 ```text
-arithmetic requires numeric operands
+incompatible operand types
 ```

@@ -153,6 +153,7 @@ Current conditions must evaluate to:
 - `false`
 - `1`
 - `0`
+- an expression that evaluates to `bool`, such as `1 + 1 == 2`
 
 Valid condition examples:
 
@@ -176,6 +177,11 @@ if 1:
 
 if 0:
     print("never")
+```
+
+```gion
+if 1 + 1 == 2:
+    print("taken")
 ```
 
 Invalid examples:
@@ -314,6 +320,42 @@ Supported arithmetic operators:
 `**`
 : power, right-associative
 
+## Comparison Operators
+
+Currently supported comparison operators:
+
+- `==`
+- `!=`
+
+`==` and `!=` return a `bool`.
+
+Examples:
+
+```gion
+same_int = 42 == 42
+same_number = 42 == 42.0
+same_bool_bridge = 1 == true
+same_false_bridge = 0 == false
+same_text = "ok" == "ok"
+different_int = 42 != 41
+different_text = "ok" != "no"
+```
+
+Current comparison semantics:
+
+- `int == int`
+- `int == float`
+- `float == float`
+- `int == bool` when the integer is `0` or `1`
+- `bool == bool`
+- `string == string`
+
+`1 == true` and `0 == false` currently return `true`.
+
+Other incompatible scalar kinds currently raise a runtime error.
+
+`!=` follows the same type rules as `==`, but negates the final boolean result.
+
 ## Precedence
 
 Current precedence order:
@@ -323,6 +365,7 @@ Current precedence order:
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
+6. `==`, `!=`
 
 Examples:
 
@@ -424,5 +467,5 @@ Examples:
 `division by zero`
 : runtime arithmetic error
 
-`arithmetic requires numeric operands`
+`incompatible operand types`
 : runtime type error for numeric operators

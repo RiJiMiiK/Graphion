@@ -23,6 +23,10 @@ int test_vm_modulo_opcode(void);
 int test_vm_power_opcode(void);
 int test_vm_floor_div_opcode(void);
 int test_vm_abs_opcode(void);
+int test_vm_eq_opcode(void);
+int test_vm_eq_incompatible_types_fail(void);
+int test_vm_ne_opcode(void);
+int test_vm_ne_incompatible_types_fail(void);
 int test_vm_string_addition_opcode(void);
 int test_vm_print_scalar_opcodes(void);
 int test_vm_print_reg_opcode(void);
@@ -86,6 +90,12 @@ int test_gion_if_elif_else_control_flow(void);
 int test_gion_if_elif_else_errors(void);
 int test_gion_comments(void);
 int test_gion_comment_errors(void);
+int test_gion_equality_expressions(void);
+int test_gion_equality_runtime_errors(void);
+int test_gion_equality_syntax_errors(void);
+int test_gion_inequality_expressions(void);
+int test_gion_inequality_runtime_errors(void);
+int test_gion_inequality_syntax_errors(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -140,6 +150,10 @@ int main(int argc, char **argv) {
       {"vm_power_opcode", test_vm_power_opcode},
       {"vm_floor_div_opcode", test_vm_floor_div_opcode},
       {"vm_abs_opcode", test_vm_abs_opcode},
+      {"vm_eq_opcode", test_vm_eq_opcode},
+      {"vm_eq_incompatible_types_fail", test_vm_eq_incompatible_types_fail},
+      {"vm_ne_opcode", test_vm_ne_opcode},
+      {"vm_ne_incompatible_types_fail", test_vm_ne_incompatible_types_fail},
       {"vm_string_addition_opcode", test_vm_string_addition_opcode},
       {"vm_print_scalar_opcodes", test_vm_print_scalar_opcodes},
       {"vm_print_reg_opcode", test_vm_print_reg_opcode},
@@ -204,6 +218,12 @@ int main(int argc, char **argv) {
       {"gion_if_elif_else_errors", test_gion_if_elif_else_errors},
       {"gion_comments", test_gion_comments},
       {"gion_comment_errors", test_gion_comment_errors},
+      {"gion_equality_expressions", test_gion_equality_expressions},
+      {"gion_equality_runtime_errors", test_gion_equality_runtime_errors},
+      {"gion_equality_syntax_errors", test_gion_equality_syntax_errors},
+      {"gion_inequality_expressions", test_gion_inequality_expressions},
+      {"gion_inequality_runtime_errors", test_gion_inequality_runtime_errors},
+      {"gion_inequality_syntax_errors", test_gion_inequality_syntax_errors},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},
@@ -224,10 +244,12 @@ int main(int argc, char **argv) {
     if (!should_run_test(tests[i].name, argc, argv)) {
       continue;
     }
-    const int rc = tests[i].fn();
-    if (rc != 0) {
-      fprintf(stderr, "[FAIL] %s (rc=%d)\n", tests[i].name, rc);
-      return EXIT_FAILURE;
+    {
+      const int rc = tests[i].fn();
+      if (rc != 0) {
+        fprintf(stderr, "[FAIL] %s (rc=%d)\n", tests[i].name, rc);
+        return EXIT_FAILURE;
+      }
     }
     fprintf(stdout, "[OK] %s\n", tests[i].name);
     executed++;

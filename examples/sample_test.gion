@@ -10,6 +10,12 @@ count = 42
 ratio = 7 / 2
 message = "graph" + "ion"
 ready = true
+same_number = 42 == 42
+same_text = "graphion" == "graphion"
+int_bool_true = 1 == true
+int_bool_false = 0 == false
+different_number = 42 != 41
+different_text = "graphion" != "graph"
 
 count += 1
 message += "!"
@@ -19,10 +25,28 @@ if ready:
 else:
     branch = "fallback branch"
 
+if 1 + 1 == 2:
+    equality_branch = "1 + 1 == 2 is true"
+else:
+    equality_branch = "bad"
+
+if 2 + 2 != 5:
+    inequality_branch = "2 + 2 != 5 is true"
+else:
+    inequality_branch = "bad"
+
 /* block comments are also ignored */
 
 print("overview assignment -> count=" + count)
 print("overview arithmetic -> ratio=" + ratio)
 print("overview string concat -> message=" + message)
+print("overview equality on numbers -> same_number=" + same_number)
+print("overview equality on strings -> same_text=" + same_text)
+print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)
+print("overview equality on int/bool false -> int_bool_false=" + int_bool_false)
+print("overview inequality on numbers -> different_number=" + different_number)
+print("overview inequality on strings -> different_text=" + different_text)
 print("overview conditional -> branch=" + branch)
+print("overview equality in condition -> equality_branch=" + equality_branch)
+print("overview inequality in condition -> inequality_branch=" + inequality_branch)
 print("overview print coercion -> " + "Test " + 7)

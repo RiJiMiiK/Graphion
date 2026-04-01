@@ -428,6 +428,13 @@ static int parse_expression(const char **cursor,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic);
 
+static int parse_additive_expression(const char **cursor,
+                                     graphion_runtime_program *program,
+                                     parsed_expr_result *result_out,
+                                     uint8_t base_reg,
+                                     unsigned int line,
+                                     graphion_runtime_diagnostic *diagnostic);
+
 static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_runtime_program *program);
 
 static int parse_factor(const char **cursor,
@@ -579,12 +586,12 @@ static int parse_term(const char **cursor,
   return GINT_OK;
 }
 
-static int parse_expression(const char **cursor,
-                            graphion_runtime_program *program,
-                            parsed_expr_result *result_out,
-                            uint8_t base_reg,
-                            unsigned int line,
-                            graphion_runtime_diagnostic *diagnostic) {
+static int parse_additive_expression(const char **cursor,
+                                     graphion_runtime_program *program,
+                                     parsed_expr_result *result_out,
+                                     uint8_t base_reg,
+                                     unsigned int line,
+                                     graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
@@ -620,6 +627,57 @@ static int parse_expression(const char **cursor,
                       0,
                       line,
                       diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+  *result_out = lhs;
+  return GINT_OK;
+}
+
+static int parse_expression(const char **cursor,
+                            graphion_runtime_program *program,
+                            parsed_expr_result *result_out,
+                            uint8_t base_reg,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc = parse_additive_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (;;) {
+    parsed_expr_result rhs;
+    graphion_opcode cmp_op;
+    skip_spaces(cursor);
+    if ((*cursor)[0] == '=' && (*cursor)[1] == '=') {
+      cmp_op = GVM_OP_EQ;
+      *cursor += 2;
+    } else if ((*cursor)[0] == '!' && (*cursor)[1] == '=') {
+      cmp_op = GVM_OP_NE;
+      *cursor += 2;
+    } else {
+      break;
+    }
+    rc = parse_additive_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, cmp_op, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -1312,7 +1370,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
       return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, line, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+      return fail(diagnostic, line, 1U, "incompatible operand types", GINT_ERR_RUN);
     }
     return fail(diagnostic, line, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }
@@ -1746,7 +1804,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
       return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, 1U, 1U, "arithmetic requires numeric operands", GINT_ERR_RUN);
+      return fail(diagnostic, 1U, 1U, "incompatible operand types", GINT_ERR_RUN);
     }
     return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
   }

@@ -86,7 +86,7 @@ Examples:
 Typical messages include:
 
 - `division by zero`
-- `arithmetic requires numeric operands`
+- `incompatible operand types`
 
 ## Current `.gion` behavior examples
 
@@ -140,7 +140,7 @@ value = "x" + 1
 Typical result:
 
 - runtime failure
-- message `arithmetic requires numeric operands`
+- message `incompatible operand types`
 
 ## Bytecode decode errors
 
