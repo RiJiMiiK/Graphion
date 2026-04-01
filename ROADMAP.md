@@ -108,7 +108,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] `bits == bits`
   - equality should compare normalized values
   - `0b10 == 0b0010` should be `true`
-- [ ] `bits != bits`
+- [x] `bits != bits`
 - [ ] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
 - [ ] `bits & bits`
 - [ ] `bits | bits`

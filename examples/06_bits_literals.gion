@@ -6,8 +6,10 @@ short_bits = 0b10
 wide_bits = 0b0010
 copied_bits = wide_bits
 same_bits = 0b10 == 0b0010
+different_bits = 0b10 != 0b0011
 
 print("bits literal with width 2 -> short_bits=" + short_bits)
 print("bits literal with width 4 -> wide_bits=" + wide_bits)
 print("copied bits preserve width -> copied_bits=" + copied_bits)
 print("bits equality ignores leading zeroes -> same_bits=" + same_bits)
+print("bits inequality compares normalized values -> different_bits=" + different_bits)

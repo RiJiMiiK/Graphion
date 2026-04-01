@@ -587,7 +587,8 @@ Current V1 rules:
 - `0b0010` has width `4`
 - printing preserves that stored width
 - `==` currently compares normalized bit values, so `0b10 == 0b0010` is `true`
-- literal creation, copying, printing, and `==` are supported so far
+- `!=` follows the same normalized-value rule, so `0b10 != 0b0010` is `false`
+- literal creation, copying, printing, `==`, and `!=` are supported so far
 - bitwise operators and `bits` comparisons are still tracked separately in the roadmap
 
 ## Comparison Operators

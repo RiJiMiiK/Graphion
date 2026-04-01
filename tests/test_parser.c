@@ -1387,6 +1387,60 @@ int test_gion_bits_equality(void) {
   return 0;
 }
 
+int test_gion_bits_inequality(void) {
+  const char *source =
+      "different_value = 0b10 != 0b0011\n"
+      "same_value = 0b10 != 0b0010\n"
+      "print(different_value)\n"
+      "print(same_value)\n";
+  const char *path = "gion_bits_inequality.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *different_value;
+  const graphion_runtime_value *same_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  different_value = graphion_runtime_scope_find(&scope, "different_value");
+  same_value = graphion_runtime_scope_find(&scope, "same_value");
+  if (different_value == NULL || different_value->kind != GVM_VALUE_BOOL || different_value->as.bool_value != 1) {
+    remove(path);
+    return 3;
+  }
+  if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 0) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;
