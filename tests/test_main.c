@@ -109,6 +109,8 @@ int test_gion_mixed_scalar_values(void);
 int test_gion_capacity_errors(void);
 int test_gion_if_elif_else_control_flow(void);
 int test_gion_if_elif_else_errors(void);
+int test_gion_match_control_flow(void);
+int test_gion_match_errors(void);
 int test_gion_comments(void);
 int test_gion_comment_errors(void);
 int test_gion_equality_expressions(void);
@@ -149,6 +151,8 @@ int test_gion_boolean_short_circuit_runtime_errors(void);
 int test_gion_ternary_expressions(void);
 int test_gion_ternary_runtime_errors(void);
 int test_gion_ternary_syntax_errors(void);
+int test_gion_warning_directives(void);
+int test_gion_warning_directives_from_path(void);
 int test_isa_decode_golden_fixtures(void);
 int test_isa_execute_golden_fixtures(void);
 int test_graph_init_and_neighbors(void);
@@ -290,6 +294,8 @@ int main(int argc, char **argv) {
       {"gion_capacity_errors", test_gion_capacity_errors},
       {"gion_if_elif_else_control_flow", test_gion_if_elif_else_control_flow},
       {"gion_if_elif_else_errors", test_gion_if_elif_else_errors},
+      {"gion_match_control_flow", test_gion_match_control_flow},
+      {"gion_match_errors", test_gion_match_errors},
       {"gion_comments", test_gion_comments},
       {"gion_comment_errors", test_gion_comment_errors},
       {"gion_equality_expressions", test_gion_equality_expressions},
@@ -327,9 +333,11 @@ int main(int argc, char **argv) {
     {"gion_nor_syntax_errors", test_gion_nor_syntax_errors},
     {"gion_boolean_short_circuit", test_gion_boolean_short_circuit},
     {"gion_boolean_short_circuit_runtime_errors", test_gion_boolean_short_circuit_runtime_errors},
-    {"gion_ternary_expressions", test_gion_ternary_expressions},
-    {"gion_ternary_runtime_errors", test_gion_ternary_runtime_errors},
-    {"gion_ternary_syntax_errors", test_gion_ternary_syntax_errors},
+      {"gion_ternary_expressions", test_gion_ternary_expressions},
+      {"gion_ternary_runtime_errors", test_gion_ternary_runtime_errors},
+      {"gion_ternary_syntax_errors", test_gion_ternary_syntax_errors},
+      {"gion_warning_directives", test_gion_warning_directives},
+      {"gion_warning_directives_from_path", test_gion_warning_directives_from_path},
       {"isa_decode_golden_fixtures", test_isa_decode_golden_fixtures},
       {"isa_execute_golden_fixtures", test_isa_execute_golden_fixtures},
       {"graph_init_and_neighbors", test_graph_init_and_neighbors},

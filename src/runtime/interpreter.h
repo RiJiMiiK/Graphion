@@ -20,6 +20,23 @@ typedef struct {
   const char *message;
 } graphion_runtime_diagnostic;
 
+enum {
+  GRAPHION_RUNTIME_WARNING_MAX = 32,
+  GRAPHION_RUNTIME_WARNING_MESSAGE_MAX = 128
+};
+
+typedef struct {
+  unsigned int line;
+  unsigned int column;
+  char message[GRAPHION_RUNTIME_WARNING_MESSAGE_MAX];
+} graphion_runtime_warning;
+
+typedef struct {
+  graphion_runtime_warning items[GRAPHION_RUNTIME_WARNING_MAX];
+  size_t count;
+  int enabled;
+} graphion_runtime_warning_report;
+
 typedef graphion_vm_value graphion_runtime_value;
 
 typedef struct {
@@ -83,5 +100,15 @@ int graphion_interpret_source_with_output(const char *source,
                                           graphion_runtime_scope *scope,
                                           graphion_runtime_diagnostic *diagnostic,
                                           FILE *output);
+
+void graphion_runtime_warning_report_init(graphion_runtime_warning_report *report);
+
+void graphion_runtime_warning_report_clear(graphion_runtime_warning_report *report);
+
+int graphion_collect_source_warnings(const char *source,
+                                     graphion_runtime_warning_report *report,
+                                     graphion_runtime_diagnostic *diagnostic);
+
+void graphion_emit_warning_report(const graphion_runtime_warning_report *report, FILE *stream);
 
 #endif

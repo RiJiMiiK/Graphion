@@ -380,6 +380,56 @@ ready
 
 The ternary condition follows the same truth rules as `if` / `elif`.
 
+If a ternary grows across multiple lines, wrap the whole expression in grouping parentheses:
+
+```gion
+label = (
+    "ready"
+    if ready
+    else "not ready"
+)
+```
+
+Without the outer parentheses, that multiline ternary form remains invalid.
+
+As ternary expressions grow, readability drops quickly. A good rule of thumb is:
+
+- keep simple ternaries on one line
+- use grouped multiline conditions for long boolean tests
+- switch back to a full block when the ternary starts nesting
+
+For value-based branching, use `match`:
+
+```gion
+status = "ready"
+
+match status:
+    "waiting":
+        print("hold")
+    "ready":
+        print("go")
+    default:
+        print("unknown")
+```
+
+You can also group several case labels so they share the same block:
+
+```gion
+match level:
+    1:
+    2:
+        print("small")
+    default:
+        print("other")
+```
+
+The key rules are:
+
+- cases are scalar literals only in this V1
+- `default` is optional
+- `default` must be last
+- `1` and `1.0` are treated as duplicates because they compare equal in Graphion
+
 Current conditions currently accept:
 
 - `true`
@@ -415,6 +465,15 @@ Graphion currently supports two comment styles:
 
 - `#` for line comments
 - `/* ... */` for block comments
+
+At the top of a file, `#` also supports this Graphion directive:
+
+```gion
+# graphion: warnings=off
+```
+
+That directive suppresses pre-execution warnings for the file only. Parse errors and runtime errors still stop
+execution.
 
 Line comments can appear on their own line or after a statement:
 

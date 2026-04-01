@@ -18,6 +18,9 @@ Graphion is currently an early-stage language with a small but already usable su
 - boolean `if / elif / else` blocks
 - grouped multiline conditions
 - ternary expressions
+- grouped multiline ternary expressions
+- value-based `match` blocks with `default`
+- pre-execution warnings with `# graphion: warnings=off`
 - boolean `and`
 - boolean `nand`
 - boolean `or`

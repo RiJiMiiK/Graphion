@@ -297,12 +297,23 @@ Graphion also supports inline conditional expressions in the form:
 result = "ready" if ready else "not ready"
 ```
 
+Long ternary expressions can also span multiple physical lines when the whole expression is wrapped in grouping parentheses:
+
+```gion
+label = (
+    "ready"
+    if ready
+    else "not ready"
+)
+```
+
 Rules:
 
 - the shape is `true_value if condition else false_value`
 - the condition follows the same truth rules as `if` / `elif`
 - the whole ternary expression produces a single scalar value
 - nested ternary expressions are allowed, but become harder to read quickly
+- multiline ternary expressions require outer grouping parentheses
 
 Examples:
 
@@ -314,12 +325,110 @@ label = "ready" if ready else "not ready"
 label = "outer" if ready else "inner" if fallback else "none"
 ```
 
+Invalid example:
+
+```gion
+label = "ready"
+if ready
+else "not ready"
+```
+
+### Reading Tips
+
+To keep conditions and ternary expressions readable:
+
+- prefer grouping parentheses when mixing several boolean operators
+- prefer multiline grouped conditions once a single line starts to feel dense
+- keep nested ternary expressions short
+- switch back to a full `if` / `elif` / `else` block when the ternary stops being immediately obvious
+
+Examples:
+
+```gion
+if (ready and has_token) or fallback:
+    print("ok")
+```
+
+```gion
+label = "ready" if ready else "not ready"
+```
+
+```gion
+label = "outer" if ready else "inner" if fallback else "none"
+```
+
+The last form is valid, but a block is usually easier to read once nested ternary logic grows.
+
+### Match Blocks
+
+Graphion also supports value-based branching with `match`:
+
+```gion
+match status:
+    "ready":
+        print("go")
+    "waiting":
+        print("hold")
+    default:
+        print("unknown")
+```
+
+Rules:
+
+- `match` is a statement, not an expression
+- each non-`default` branch starts with a scalar literal followed by `:`
+- supported case literals are `int`, `float`, `bool`, and `string`
+- `default:` is optional, may appear at most once, and must be last
+- grouped cases are allowed by stacking labels above the same block
+- the matched expression is evaluated once, then branches are tested from top to bottom
+- the first matching branch wins
+- incompatible case types do not raise an error during execution; they simply do not match
+- if the matched expression is a scalar literal and a case can never match it, Graphion emits a pre-execution warning unless warnings are disabled
+
+Grouped cases:
+
+```gion
+match level:
+    1:
+    2:
+        print("small")
+    default:
+        print("other")
+```
+
+Invalid examples:
+
+```gion
+match value:
+    default:
+        print("x")
+    1:
+        print("y")
+```
+
+```gion
+match value:
+    1:
+        print("x")
+    1.0:
+        print("y")
+```
+
 ## Comments
 
 Graphion currently supports two comment forms:
 
 - `#` for line comments
 - `/* ... */` for block comments
+
+At the top of a file, `#` also supports a reserved Graphion directive form:
+
+```gion
+# graphion: warnings=off
+```
+
+When this directive appears before the first real statement, pre-execution warnings are suppressed for the file. It
+does not suppress parse errors or runtime errors.
 
 ### Line Comments
 

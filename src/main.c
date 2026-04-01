@@ -7,6 +7,7 @@
 int main(int argc, char **argv) {
   graphion_runtime_scope *scope;
   graphion_runtime_diagnostic diagnostic;
+  graphion_runtime_warning_report warnings;
   int rc;
 
   scope = (graphion_runtime_scope *)calloc(1U, sizeof(*scope));
@@ -23,6 +24,10 @@ int main(int argc, char **argv) {
     fprintf(stderr, "usage: graphion <program.gion>\n");
     free(scope);
     return 1;
+  }
+  rc = graphion_collect_gion_path_warnings(argv[1], &warnings, &diagnostic);
+  if (rc == GENTRY_OK) {
+    graphion_emit_warning_report(&warnings, stderr);
   }
   rc = graphion_run_gion_path(argv[1], scope, &diagnostic);
   if (rc == GENTRY_ERR_EXTENSION) {

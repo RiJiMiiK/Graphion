@@ -70,3 +70,23 @@ The current active lane is conditional logic in the `.gion` scalar language.
     ```gion
     label = "ready" if ready else "not ready"
     ```
+- [x] multiline ternary expressions with required grouping parentheses
+  - target shape:
+    ```gion
+    label = (
+        "ready"
+        if ready
+        else "not ready"
+    )
+    ```
+- [x] pre-execution warnings with file-level opt-out
+  - warnings should be collected and emitted before execution starts
+  - a file-level directive should disable them globally:
+    ```gion
+    # graphion: warnings=off
+    ```
+  - errors must remain blocking even when warnings are disabled
+- [x] value-based branching with `match`
+  - branch labels are scalar literals only in V1
+  - `default` is optional, unique, and final
+  - grouped case labels share the next non-empty indented block
