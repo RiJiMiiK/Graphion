@@ -749,10 +749,10 @@ static int parse_not_expression(const char **cursor,
                                 unsigned int line,
                                 graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result inner;
-  int rc;
 
   skip_spaces(cursor);
   if (strncmp(*cursor, "not", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    int rc;
     *cursor += 3;
     rc = parse_not_expression(cursor, program, &inner, base_reg, line, diagnostic);
     if (rc != GINT_OK) {

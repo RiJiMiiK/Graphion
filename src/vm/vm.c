@@ -1024,31 +1024,20 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_NOT:
       case GVM_OP_NAND:
       case GVM_OP_NOR:
-        if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
-              in.op != GVM_OP_GT && in.op != GVM_OP_GE && in.op != GVM_OP_AND && in.op != GVM_OP_OR &&
-              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND && in.op != GVM_OP_NOR) {
+        if (in.op == GVM_OP_NOT) {
+          if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
+              reg_kinds[in.a] != GVM_VALUE_BOOL) {
+            return 0;
+          }
+        } else {
+          if ((reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
+               reg_kinds[in.a] != GVM_VALUE_BOOL) ||
+              (reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT &&
+               reg_kinds[in.b] != GVM_VALUE_BOOL)) {
             return 0;
           }
         }
-        if (in.op != GVM_OP_NOT && reg_kinds[in.b] != GVM_VALUE_INT && reg_kinds[in.b] != GVM_VALUE_FLOAT) {
-          if (in.op != GVM_OP_EQ && in.op != GVM_OP_NE && in.op != GVM_OP_LT && in.op != GVM_OP_LE &&
-              in.op != GVM_OP_GT && in.op != GVM_OP_GE && in.op != GVM_OP_AND && in.op != GVM_OP_OR &&
-              in.op != GVM_OP_NOT && in.op != GVM_OP_NAND && in.op != GVM_OP_NOR) {
-            return 0;
-          }
-        }
-        if (in.op == GVM_OP_EQ || in.op == GVM_OP_NE || in.op == GVM_OP_LT || in.op == GVM_OP_LE ||
-            in.op == GVM_OP_GT || in.op == GVM_OP_GE || in.op == GVM_OP_AND || in.op == GVM_OP_OR ||
-            in.op == GVM_OP_NOT || in.op == GVM_OP_NAND || in.op == GVM_OP_NOR) {
-          reg_kinds[in.a] = GVM_VALUE_BOOL;
-          break;
-        }
-        reg_kinds[in.a] =
-            in.op == GVM_OP_DIV || in.op == GVM_OP_MOD || in.op == GVM_OP_POW || in.op == GVM_OP_FLOOR_DIV ||
-                reg_kinds[in.a] == GVM_VALUE_FLOAT || reg_kinds[in.b] == GVM_VALUE_FLOAT
-                ? GVM_VALUE_FLOAT
-                : GVM_VALUE_INT;
+        reg_kinds[in.a] = GVM_VALUE_BOOL;
         break;
       case GVM_OP_MOV:
         reg_kinds[in.a] = reg_kinds[in.b];
