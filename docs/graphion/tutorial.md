@@ -349,6 +349,7 @@ user
 ```
 
 The important rule is that each `else` attaches to the `if` at the same indentation level.
+Indentation decides the binding, not just the nearest visible `if`.
 
 Current conditions currently accept:
 

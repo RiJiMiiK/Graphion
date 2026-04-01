@@ -217,6 +217,7 @@ Rules:
 - `else` must be last
 - nested `if` blocks are allowed
 - an `else` always binds to the `if` at the same indentation level
+- indentation decides the binding, not the nearest visible `if` token on the page
 
 Invalid examples:
 
