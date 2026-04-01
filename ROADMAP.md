@@ -36,7 +36,7 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 
 - [x] `and`
 - [x] `or`
-- [ ] `not`
+- [x] `not`
 - [ ] `nand`
 - [ ] `nor`
 - [ ] documented truth rules

@@ -91,7 +91,8 @@ static int is_ident_char(char ch) {
 static int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "if") == 0 || strcmp(name, "elif") == 0 ||
-         strcmp(name, "else") == 0 || strcmp(name, "and") == 0 || strcmp(name, "or") == 0;
+         strcmp(name, "else") == 0 || strcmp(name, "and") == 0 || strcmp(name, "or") == 0 ||
+         strcmp(name, "not") == 0;
 }
 
 static void copy_name(char dst[GRAPHION_RUNTIME_NAME_MAX], const char *src) {
@@ -709,6 +710,41 @@ static int parse_comparison_expression(const char **cursor,
   return GINT_OK;
 }
 
+static int parse_not_expression(const char **cursor,
+                                graphion_runtime_program *program,
+                                parsed_expr_result *result_out,
+                                uint8_t base_reg,
+                                unsigned int line,
+                                graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result inner;
+  int rc;
+
+  skip_spaces(cursor);
+  if (strncmp(*cursor, "not", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    *cursor += 3;
+    rc = parse_not_expression(cursor, program, &inner, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &inner, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_NOT, base_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    inner.kind = EXPR_RESULT_REG;
+    inner.reg_index = base_reg;
+    inner.const_index = 0U;
+    inner.global_index = 0U;
+    *result_out = inner;
+    return GINT_OK;
+  }
+
+  return parse_comparison_expression(cursor, program, result_out, base_reg, line, diagnostic);
+}
+
 static int parse_and_expression(const char **cursor,
                                 graphion_runtime_program *program,
                                 parsed_expr_result *result_out,
@@ -718,26 +754,18 @@ static int parse_and_expression(const char **cursor,
   parsed_expr_result lhs;
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
-  int rc = parse_comparison_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+  int rc = parse_not_expression(cursor, program, &lhs, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
   for (;;) {
     parsed_expr_result rhs;
-    graphion_opcode logic_op;
-    size_t token_len;
     skip_spaces(cursor);
-    if (strncmp(*cursor, "and", 3U) == 0 && !is_ident_char((*cursor)[3])) {
-      logic_op = GVM_OP_AND;
-      token_len = 3U;
-    } else if (strncmp(*cursor, "or", 2U) == 0 && !is_ident_char((*cursor)[2])) {
-      logic_op = GVM_OP_OR;
-      token_len = 2U;
-    } else {
+    if (strncmp(*cursor, "and", 3U) != 0 || is_ident_char((*cursor)[3])) {
       break;
     }
-    *cursor += token_len;
-    rc = parse_comparison_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    *cursor += 3U;
+    rc = parse_not_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -749,7 +777,7 @@ static int parse_and_expression(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = program_emit(program, logic_op, target_reg, scratch_reg, 0, line, diagnostic);
+    rc = program_emit(program, GVM_OP_AND, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

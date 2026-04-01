@@ -24,6 +24,8 @@ both_ready = true and 1
 all_ready = true and 1 and 2 < 3
 any_ready = false or 1
 any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
 
 count += 1
 message += "!"
@@ -72,6 +74,10 @@ if false or 1:
     or_branch = "false or 1 is true"
 else:
     or_branch = "bad"
+if not false:
+    not_branch = "not false is true"
+else:
+    not_branch = "bad"
 
 /* block comments are also ignored */
 
@@ -92,6 +98,8 @@ print("overview boolean logic -> both_ready=" + both_ready)
 print("overview chained and -> all_ready=" + all_ready)
 print("overview boolean logic -> any_ready=" + any_ready)
 print("overview chained or -> any_path=" + any_path)
+print("overview boolean not -> inverted_ready=" + inverted_ready)
+print("overview grouped not -> inverted_path=" + inverted_path)
 print("overview conditional -> branch=" + branch)
 print("overview equality in condition -> equality_branch=" + equality_branch)
 print("overview inequality in condition -> inequality_branch=" + inequality_branch)
@@ -101,4 +109,5 @@ print("overview greater-than in condition -> greater_than_branch=" + greater_tha
 print("overview greater-equal in condition -> greater_equal_branch=" + greater_equal_branch)
 print("overview and in condition -> and_branch=" + and_branch)
 print("overview or in condition -> or_branch=" + or_branch)
+print("overview not in condition -> not_branch=" + not_branch)
 print("overview print coercion -> " + "Test " + 7)

@@ -213,7 +213,7 @@ Current behavior:
 
 ## Boolean Logic
 
-Graphion currently supports `and` and `or`.
+Graphion currently supports `and`, `or`, and `not`.
 
 ```gion
 both_true = true and true
@@ -222,6 +222,8 @@ bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
 any_ready = false or 1
 any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
 
 print(both_true)
 print(bridge_true)
@@ -229,6 +231,8 @@ print(bridge_false)
 print(all_ready)
 print(any_ready)
 print(any_path)
+print(inverted_ready)
+print(inverted_path)
 ```
 
 Expected output:
@@ -240,6 +244,8 @@ false
 true
 true
 true
+true
+true
 ```
 
 Current behavior:
@@ -248,13 +254,17 @@ Current behavior:
 - `and` also accepts integer `0` / `1`
 - `and` can be chained multiple times
 - `or` follows the same type rules and can also be chained
-- `and` currently binds tighter than `or`
+- `not` follows the same type rules as a unary operator
+- `not` currently binds tighter than `and`, and `and` binds tighter than `or`
 - `2 and true` is a runtime error
 - `1.0 and true` is a runtime error
 - `"x" and true` is a runtime error
 - `2 or true` is a runtime error
 - `1.0 or true` is a runtime error
 - `"x" or true` is a runtime error
+- `not 2` is a runtime error
+- `not 1.0` is a runtime error
+- `not "x"` is a runtime error
 - V1 `and` and `or` evaluate both sides; short-circuit is not implemented yet
 
 ## Conditional Blocks

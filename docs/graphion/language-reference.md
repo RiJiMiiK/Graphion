@@ -62,6 +62,7 @@ These names are currently reserved and cannot be assigned:
 - `else`
 - `and`
 - `or`
+- `not`
 
 ## Literals
 
@@ -389,8 +390,9 @@ Currently supported boolean logic operators:
 
 - `and`
 - `or`
+- `not`
 
-`and` and `or` return a `bool`.
+`and`, `or`, and `not` return a `bool`.
 
 Examples:
 
@@ -401,6 +403,8 @@ bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
 any_ready = false or 1
 any_path = false or 1 == 1 or false
+inverted_ready = not false
+inverted_path = not (false or 0)
 
 print(both_true)
 print(bridge_true)
@@ -408,6 +412,8 @@ print(bridge_false)
 print(all_ready)
 print(any_ready)
 print(any_path)
+print(inverted_ready)
+print(inverted_path)
 ```
 
 `and` can be chained multiple times.
@@ -444,6 +450,18 @@ is currently interpreted as:
 true or (false and false)
 ```
 
+`not` currently binds tighter than both `and` and `or`.
+
+```gion
+not false and false
+```
+
+is currently interpreted as:
+
+```gion
+(not false) and false
+```
+
 Current `and` rules:
 
 - `bool and bool`
@@ -465,8 +483,20 @@ These are currently runtime errors:
 - `1.0 or true`
 - `"x" or true`
 
+`not` currently accepts:
+
+- `bool`
+- integer `0` / `1`
+
+These are currently runtime errors:
+
+- `not 2`
+- `not 1.0`
+- `not "x"`
+
 Current V1 note:
 
+- `not` currently evaluates its operand and negates the resulting boolean value
 - `and` currently evaluates both operands
 - `or` currently evaluates both operands
 - short-circuit behavior is not implemented yet
@@ -481,8 +511,9 @@ Current precedence order:
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
-7. `and`
-8. `or`
+7. `not`
+8. `and`
+9. `or`
 
 Examples:
 
