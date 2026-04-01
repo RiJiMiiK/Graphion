@@ -61,6 +61,7 @@ These names are currently reserved and cannot be assigned:
 - `elif`
 - `else`
 - `and`
+- `or`
 
 ## Literals
 
@@ -387,8 +388,9 @@ Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime
 Currently supported boolean logic operators:
 
 - `and`
+- `or`
 
-`and` returns a `bool`.
+`and` and `or` return a `bool`.
 
 Examples:
 
@@ -397,11 +399,15 @@ both_true = true and true
 bridge_true = 1 and true
 bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
+any_ready = false or 1
+any_path = false or 1 == 1 or false
 
 print(both_true)
 print(bridge_true)
 print(bridge_false)
 print(all_ready)
+print(any_ready)
+print(any_path)
 ```
 
 `and` can be chained multiple times.
@@ -413,6 +419,30 @@ true and 1 and 2 < 3
 ```
 
 is currently evaluated left to right as repeated `and` operations, with comparisons evaluated before `and`.
+
+`or` can also be chained multiple times.
+
+This:
+
+```gion
+false or 1 == 1 or false
+```
+
+is currently evaluated left to right as repeated `or` operations, with comparisons evaluated before `or`.
+
+When `and` and `or` are mixed, `and` currently binds tighter than `or`.
+
+So:
+
+```gion
+true or false and false
+```
+
+is currently interpreted as:
+
+```gion
+true or (false and false)
+```
 
 Current `and` rules:
 
@@ -427,9 +457,18 @@ These are currently runtime errors:
 - `1.0 and true`
 - `"x" and true`
 
+`or` currently follows the same type rules as `and`, but returns true when either side is true.
+
+These are currently runtime errors:
+
+- `2 or true`
+- `1.0 or true`
+- `"x" or true`
+
 Current V1 note:
 
 - `and` currently evaluates both operands
+- `or` currently evaluates both operands
 - short-circuit behavior is not implemented yet
 
 ## Precedence
@@ -443,6 +482,7 @@ Current precedence order:
 5. `+`, `-`
 6. `==`, `!=`, `<`, `<=`, `>`, `>=`
 7. `and`
+8. `or`
 
 Examples:
 

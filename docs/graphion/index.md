@@ -17,9 +17,10 @@ Graphion is currently an early-stage language with a small but already usable su
 - compound assignments
 - boolean `if / elif / else` blocks
 - boolean `and`
+- boolean `or`
 - line comments with `#`
 - block comments with `/* ... */`
-- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and`
+- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `or`
 - the `abs()` builtin
 
 This guide only documents behavior that is implemented today.
@@ -71,7 +72,7 @@ This user guide describes the current implemented subset, not the long-term targ
 That means some areas are intentionally still missing or incomplete, including:
 
 - any broader comparison semantics beyond the current numeric `<` / `<=` / `>` / `>=`
-- the remaining boolean logic operators beyond `and`
+- the remaining boolean logic operators beyond `and` / `or`
 - tuples
 - functions
 - graph-specific language constructs in the `.gion` frontend path

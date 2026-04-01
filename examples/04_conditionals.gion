@@ -66,10 +66,20 @@ if true and 1:
 else:
     and_branch = "bad"
 
+if false or 1:
+    or_branch = "false or 1 is true"
+else:
+    or_branch = "bad"
+
 if 1 != 2 and 1 == 1 and true:
     chained_and_branch = "multiple and conditions work"
 else:
     chained_and_branch = "bad"
+
+if false or 1 == 1 or false:
+    chained_or_branch = "multiple or conditions work"
+else:
+    chained_or_branch = "bad"
 
 bool_bridge_true = 1 == true
 bool_bridge_false = 0 == false
@@ -86,6 +96,8 @@ print("if with less-equal expression -> less_equal_branch=" + less_equal_branch)
 print("if with greater-than expression -> greater_than_branch=" + greater_than_branch)
 print("if with greater-equal expression -> greater_equal_branch=" + greater_equal_branch)
 print("if with and expression -> and_branch=" + and_branch)
+print("if with or expression -> or_branch=" + or_branch)
 print("if with chained and -> chained_and_branch=" + chained_and_branch)
+print("if with chained or -> chained_or_branch=" + chained_or_branch)
 print("int and bool equality -> bool_bridge_true=" + bool_bridge_true)
 print("int and bool equality -> bool_bridge_false=" + bool_bridge_false)

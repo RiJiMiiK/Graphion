@@ -152,7 +152,7 @@ Expected output:
 
 ## Equality
 
-Graphion currently supports `==`, `!=`, numeric `<` / `<=` / `>` / `>=`, and boolean `and`.
+Graphion currently supports `==`, `!=`, numeric `<` / `<=` / `>` / `>=`, and boolean `and` / `or`.
 
 It returns a boolean result:
 
@@ -213,18 +213,22 @@ Current behavior:
 
 ## Boolean Logic
 
-Graphion currently supports `and`.
+Graphion currently supports `and` and `or`.
 
 ```gion
 both_true = true and true
 bridge_true = 1 and true
 bridge_false = false and 1
 all_ready = true and 1 and 2 < 3
+any_ready = false or 1
+any_path = false or 1 == 1 or false
 
 print(both_true)
 print(bridge_true)
 print(bridge_false)
 print(all_ready)
+print(any_ready)
+print(any_path)
 ```
 
 Expected output:
@@ -234,6 +238,8 @@ true
 true
 false
 true
+true
+true
 ```
 
 Current behavior:
@@ -241,10 +247,15 @@ Current behavior:
 - `and` accepts `bool`
 - `and` also accepts integer `0` / `1`
 - `and` can be chained multiple times
+- `or` follows the same type rules and can also be chained
+- `and` currently binds tighter than `or`
 - `2 and true` is a runtime error
 - `1.0 and true` is a runtime error
 - `"x" and true` is a runtime error
-- V1 `and` evaluates both sides; short-circuit is not implemented yet
+- `2 or true` is a runtime error
+- `1.0 or true` is a runtime error
+- `"x" or true` is a runtime error
+- V1 `and` and `or` evaluate both sides; short-circuit is not implemented yet
 
 ## Conditional Blocks
 

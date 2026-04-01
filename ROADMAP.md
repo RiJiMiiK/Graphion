@@ -35,9 +35,12 @@ The goal is to keep growing that path without reintroducing alternate semantic e
 ### Boolean logic
 
 - [x] `and`
-- [ ] `or`
+- [x] `or`
 - [ ] `not`
+- [ ] `nand`
+- [ ] `nor`
 - [ ] documented truth rules
+- [x] fix boolean precedence so `and` / `nand` bind tighter than `or` / `nor`
 - [ ] decide and implement short-circuit behavior for `and` / `or`
 - [ ] tests for precedence and short-circuit behavior after it exists
 
