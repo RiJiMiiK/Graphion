@@ -130,12 +130,12 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `//`
   - `%`
   - `**`
-- [ ] reject ordered comparisons on `bits`
+- [x] reject ordered comparisons on `bits`
   - `<`
   - `<=`
   - `>`
   - `>=`
-- [ ] reject boolean logic on `bits`
+- [x] reject boolean logic on `bits`
   - `and`
   - `nand`
   - `or`

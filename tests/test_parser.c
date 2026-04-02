@@ -3401,6 +3401,7 @@ int test_gion_less_than_runtime_errors(void) {
       {"if true < 1:\n    print(1)\n", 1U},
       {"value = \"x\" < \"y\"\n", 1U},
       {"value = \"x\" < 1.5\n", 1U},
+      {"value = 0b10 < 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3525,6 +3526,7 @@ int test_gion_less_equal_runtime_errors(void) {
       {"if true <= 1:\n    print(1)\n", 1U},
       {"value = \"x\" <= \"y\"\n", 1U},
       {"value = \"x\" <= 1.5\n", 1U},
+      {"value = 0b10 <= 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3649,6 +3651,7 @@ int test_gion_greater_than_runtime_errors(void) {
       {"if true > 1:\n    print(1)\n", 1U},
       {"value = \"x\" > \"y\"\n", 1U},
       {"value = \"x\" > 1.5\n", 1U},
+      {"value = 0b10 > 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3773,6 +3776,7 @@ int test_gion_greater_equal_runtime_errors(void) {
       {"if true >= 1:\n    print(1)\n", 1U},
       {"value = \"x\" >= \"y\"\n", 1U},
       {"value = \"x\" >= 1.5\n", 1U},
+      {"value = 0b10 >= 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3902,6 +3906,8 @@ int test_gion_and_runtime_errors(void) {
       {"value = 1 and 2\n", 1U},
       {"value = 1.0 and true\n", 1U},
       {"value = \"x\" and true\n", 1U},
+      {"value = 0b10 and true\n", 1U},
+      {"value = true and 0b10\n", 1U},
   };
   size_t i;
 
@@ -4033,6 +4039,8 @@ int test_gion_or_runtime_errors(void) {
       {"value = 0 or 2\n", 1U},
       {"value = 1.0 or true\n", 1U},
       {"value = \"x\" or true\n", 1U},
+      {"value = 0b10 or true\n", 1U},
+      {"value = false or 0b10\n", 1U},
   };
   size_t i;
 
@@ -4163,6 +4171,7 @@ int test_gion_not_runtime_errors(void) {
       {"value = not 1.0\n", 1U},
       {"value = not \"x\"\n", 1U},
       {"value = true and not 2\n", 1U},
+      {"value = not 0b10\n", 1U},
   };
   size_t i;
 
@@ -4285,6 +4294,8 @@ int test_gion_nand_runtime_errors(void) {
       {"value = 1 nand 2\n", 1U},
       {"value = 1.0 nand true\n", 1U},
       {"value = \"x\" nand true\n", 1U},
+      {"value = 0b10 nand true\n", 1U},
+      {"value = true nand 0b10\n", 1U},
   };
   size_t i;
 
@@ -4408,6 +4419,8 @@ int test_gion_nor_runtime_errors(void) {
       {"value = 0 nor 2\n", 1U},
       {"value = 1.0 nor false\n", 1U},
       {"value = \"x\" nor false\n", 1U},
+      {"value = 0b10 nor false\n", 1U},
+      {"value = false nor 0b10\n", 1U},
   };
   size_t i;
 
