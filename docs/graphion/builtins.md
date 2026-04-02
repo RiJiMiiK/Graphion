@@ -442,6 +442,52 @@ incompatible operand types
 log requires x > 0 and base > 0 with base != 1
 ```
 
+## `log2(x)`
+
+`log2(x)` returns the base-2 logarithm of a numeric expression.
+
+Examples:
+
+```gion
+print(log2(8))
+print(log2(2.0))
+print(log2(2 ** 6))
+```
+
+Expected output:
+
+```text
+3
+1
+6
+```
+
+### Valid Inputs
+
+`log2(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = log2("graphion")
+value = log2(0)
+value = log2(-1)
+```
+
+Current messages:
+
+```text
+incompatible operand types
+log requires x > 0 and base > 0 with base != 1
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.
