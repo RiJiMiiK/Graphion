@@ -15,6 +15,7 @@ int parse_assignment(const char *line_text,
   int floor_div_assign = 0;
   int bit_and_assign = 0;
   int bit_or_assign = 0;
+  int bit_xor_assign = 0;
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -40,6 +41,10 @@ int parse_assignment(const char *line_text,
   } else if (cursor[0] == '|' && cursor[1] == '=') {
     assign_op = '|';
     bit_or_assign = 1;
+    cursor += 2;
+  } else if (cursor[0] == '^' && cursor[1] == '=') {
+    assign_op = '^';
+    bit_xor_assign = 1;
     cursor += 2;
   } else if ((*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/' || *cursor == '%') &&
       cursor[1] == '=') {
@@ -83,6 +88,7 @@ int parse_assignment(const char *line_text,
                       power_assign ? GVM_OP_POW :
                       bit_and_assign ? GVM_OP_BIT_AND :
                       bit_or_assign ? GVM_OP_BIT_OR :
+                      bit_xor_assign ? GVM_OP_BIT_XOR :
                       floor_div_assign ? GVM_OP_FLOOR_DIV :
                       assign_op == '+' ? GVM_OP_ADD :
                       assign_op == '-' ? GVM_OP_SUB :
@@ -358,4 +364,3 @@ int parse_statement_line(const char *line_text,
   }
   return program_emit(program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
 }
-

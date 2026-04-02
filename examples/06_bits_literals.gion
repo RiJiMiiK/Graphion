@@ -23,6 +23,8 @@ compound_mask_bits = 0b1100
 compound_mask_bits &= 0b1010
 compound_merge_bits = 0b1100
 compound_merge_bits |= 0b0011
+compound_flip_bits = 0b1100
+compound_flip_bits ^= 0b1010
 
 print("bits literal with width 2 -> short_bits=" + short_bits)
 print("bits literal with width 4 -> wide_bits=" + wide_bits)
@@ -43,3 +45,4 @@ print("bits not binds before bits and -> not_then_mask_bits=" + not_then_mask_bi
 print("bits shift count can be an int expression -> shift_count_expression_bits=" + shift_count_expression_bits)
 print("bits compound and assignment keeps width -> compound_mask_bits=" + compound_mask_bits)
 print("bits compound or assignment keeps width -> compound_merge_bits=" + compound_merge_bits)
+print("bits compound xor assignment keeps width -> compound_flip_bits=" + compound_flip_bits)

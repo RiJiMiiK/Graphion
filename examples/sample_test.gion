@@ -31,6 +31,8 @@ compound_mask_bits = 0b1100
 compound_mask_bits &= 0b1010
 compound_merge_bits = 0b1100
 compound_merge_bits |= 0b0011
+compound_flip_bits = 0b1100
+compound_flip_bits ^= 0b1010
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -175,6 +177,7 @@ print("overview bits not before and -> not_then_mask_bits=" + not_then_mask_bits
 print("overview bits shift count expression -> shift_count_expression_bits=" + shift_count_expression_bits)
 print("overview bits compound and assignment -> compound_mask_bits=" + compound_mask_bits)
 print("overview bits compound or assignment -> compound_merge_bits=" + compound_merge_bits)
+print("overview bits compound xor assignment -> compound_flip_bits=" + compound_flip_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

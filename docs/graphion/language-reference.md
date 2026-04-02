@@ -981,6 +981,7 @@ Current `bits` support includes:
 - `>>` with an integer shift count
 - `&=` with another `bits` value of the same stored width
 - `|=` with another `bits` value of the same stored width
+- `^=` with another `bits` value of the same stored width
 
 Examples:
 
@@ -1000,6 +1001,7 @@ Current behavior:
 - `&`, `|`, and `^` currently require matching widths
 - `&=` follows the same width and type rules as `&`
 - `|=` follows the same width and type rules as `|`
+- `^=` follows the same width and type rules as `^`
 - `~` keeps the stored width
 - `<<` takes a `bits` value on the left and a non-negative `int` shift count on the right
 - `<<` keeps the stored width and truncates overflow back to that width
@@ -1119,6 +1121,7 @@ These are currently runtime errors:
 - `0b10 & 0b0010`
 - `mask = 0b10` followed by `mask &= 0b0010`
 - `merge = 0b10` followed by `merge |= 0b0010`
+- `flip = 0b10` followed by `flip ^= 0b0010`
 - `0b10 | 0b0010`
 - `0b10 ^ 0b0010`
 - `0b10 << 0b0010`
