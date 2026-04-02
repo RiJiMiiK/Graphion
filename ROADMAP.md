@@ -145,3 +145,10 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] document `bits` operators and restrictions
 - [x] add `bits` literal examples
 - [x] add `bits` parser and runtime tests
+- [ ] bitwise compound assignments for `bits`
+  - `&=`
+  - `|=`
+  - `^=`
+  - `<<=`
+  - `>>=`
+  - `<<=` and `>>=` should keep the same `bits << int` / `bits >> int` rules
