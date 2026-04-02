@@ -71,6 +71,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_MIN`
 - `GVM_OP_MAX`
 - `GVM_OP_CLAMP`
+- `GVM_OP_SQRT`
 
 These back the current `.gion` scalar language features:
 
@@ -85,6 +86,7 @@ These back the current `.gion` scalar language features:
 - `min(a, b)`
 - `max(a, b)`
 - `clamp(x, lo, hi)`
+- `sqrt(x)`
 
 ## Other VM opcode families present in the repo
 
@@ -121,6 +123,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_INVALID_GLOBAL_INDEX`
 - `GVM_ERR_OUTPUT_UNBOUND`
 - `GVM_ERR_DIVIDE_BY_ZERO`
+- `GVM_ERR_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

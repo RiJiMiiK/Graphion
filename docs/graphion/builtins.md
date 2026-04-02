@@ -213,3 +213,48 @@ Current message:
 ```text
 incompatible operand types
 ```
+
+## `sqrt(x)`
+
+`sqrt(x)` returns the square root of a numeric expression.
+
+Examples:
+
+```gion
+print(sqrt(9))
+print(sqrt(2.25))
+print(sqrt(1 + 8))
+```
+
+Expected output:
+
+```text
+3
+1.5
+3
+```
+
+### Valid Inputs
+
+`sqrt(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = sqrt("graphion")
+value = sqrt(-1)
+```
+
+Current messages:
+
+```text
+incompatible operand types
+sqrt requires non-negative input
+```

@@ -31,6 +31,9 @@ static int execute_condition_program(const graphion_runtime_program *program,
     if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
       return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
     }
+    if (rc == GVM_ERR_DOMAIN) {
+      return fail(diagnostic, line, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
+    }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
       return fail(diagnostic, line, 1U, "incompatible operand types", GINT_ERR_RUN);
     }
@@ -696,6 +699,9 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     graphion_vm_dispose(&vm);
     if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
       return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_DOMAIN) {
+      return fail(diagnostic, 1U, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_TYPE_MISMATCH) {
       return fail(diagnostic, 1U, 1U, "incompatible operand types", GINT_ERR_RUN);

@@ -162,5 +162,5 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - returns `lo` when `x < lo`
   - returns `hi` when `x > hi`
   - otherwise returns `x`
-- [ ] builtin `sqrt(x)`
+- [x] builtin `sqrt(x)`
 - [ ] builtin `len(x)`
