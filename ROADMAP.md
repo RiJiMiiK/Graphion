@@ -150,7 +150,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] `bits ^= bits`
 - [x] `bits <<= int`
   - should keep the same `bits << int` rules
-- [ ] `bits >>= int`
+- [x] `bits >>= int`
   - should keep the same `bits >> int` rules
 - [ ] reject invalid mixed-type compound assignments on `bits`
 - [ ] document `bits` compound assignments

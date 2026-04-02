@@ -37,6 +37,10 @@ compound_shift_bits = 0b0011
 compound_shift_bits <<= 1
 compound_shift_overflow_bits = 0b1111
 compound_shift_overflow_bits <<= 1
+compound_right_shift_bits = 0b1010
+compound_right_shift_bits >>= 1
+compound_right_shift_clear_bits = 0b1010
+compound_right_shift_clear_bits >>= 4
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -184,6 +188,8 @@ print("overview bits compound or assignment -> compound_merge_bits=" + compound_
 print("overview bits compound xor assignment -> compound_flip_bits=" + compound_flip_bits)
 print("overview bits compound left shift assignment -> compound_shift_bits=" + compound_shift_bits)
 print("overview bits compound left shift truncation -> compound_shift_overflow_bits=" + compound_shift_overflow_bits)
+print("overview bits compound right shift assignment -> compound_right_shift_bits=" + compound_right_shift_bits)
+print("overview bits compound right shift zero-fill -> compound_right_shift_clear_bits=" + compound_right_shift_clear_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

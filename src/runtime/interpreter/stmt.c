@@ -17,6 +17,7 @@ int parse_assignment(const char *line_text,
   int bit_or_assign = 0;
   int bit_xor_assign = 0;
   int bit_shl_assign = 0;
+  int bit_shr_assign = 0;
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -38,6 +39,10 @@ int parse_assignment(const char *line_text,
   } else if (cursor[0] == '<' && cursor[1] == '<' && cursor[2] == '=') {
     assign_op = '<';
     bit_shl_assign = 1;
+    cursor += 3;
+  } else if (cursor[0] == '>' && cursor[1] == '>' && cursor[2] == '=') {
+    assign_op = '>';
+    bit_shr_assign = 1;
     cursor += 3;
   } else if (cursor[0] == '&' && cursor[1] == '=') {
     assign_op = '&';
@@ -92,6 +97,7 @@ int parse_assignment(const char *line_text,
     rc = program_emit(program,
                       power_assign ? GVM_OP_POW :
                       bit_shl_assign ? GVM_OP_BIT_SHL :
+                      bit_shr_assign ? GVM_OP_BIT_SHR :
                       bit_and_assign ? GVM_OP_BIT_AND :
                       bit_or_assign ? GVM_OP_BIT_OR :
                       bit_xor_assign ? GVM_OP_BIT_XOR :
