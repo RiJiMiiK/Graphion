@@ -123,3 +123,45 @@ Current message:
 ```text
 incompatible operand types
 ```
+
+## `max(a, b)`
+
+`max(a, b)` returns the larger of two numeric expressions.
+
+Examples:
+
+```gion
+print(max(7, 3))
+print(max(3.5, 2))
+print(max(10 - 2, 3 * 3))
+```
+
+Expected output:
+
+```text
+7
+3.5
+9
+```
+
+### Valid Inputs
+
+`max(a, b)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+### Invalid Inputs
+
+This is a runtime error:
+
+```gion
+value = max("graphion", 1)
+```
+
+Current message:
+
+```text
+incompatible operand types
+```

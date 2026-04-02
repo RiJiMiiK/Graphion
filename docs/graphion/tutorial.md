@@ -715,7 +715,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides `abs(...)` and `min(a, b)` for numeric values.
+Graphion currently provides `abs(...)`, `min(a, b)`, and `max(a, b)` for numeric values.
 
 ```gion
 abs_int = abs(-42)
@@ -724,6 +724,9 @@ abs_expr = abs(-5 + 2)
 min_int = min(7, 3)
 min_float = min(3.5, 2)
 min_expr = min(10 - 2, 3 * 3)
+max_int = max(7, 3)
+max_float = max(3.5, 2)
+max_expr = max(10 - 2, 3 * 3)
 
 print(abs_int)
 print(abs_float)
@@ -731,6 +734,9 @@ print(abs_expr)
 print(min_int)
 print(min_float)
 print(min_expr)
+print(max_int)
+print(max_float)
+print(max_expr)
 ```
 
 Expected output:
@@ -742,4 +748,7 @@ Expected output:
 3
 2
 8
+7
+3.5
+9
 ```

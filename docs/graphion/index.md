@@ -31,7 +31,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - line comments with `#`
 - block comments with `/* ... */`
 - equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`
-- the `abs()` and `min()` builtins
+- the `abs()`, `min()`, and `max()` builtins
 
 This guide only documents behavior that is implemented today.
 

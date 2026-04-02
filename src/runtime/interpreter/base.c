@@ -98,7 +98,8 @@ int is_ident_char(char ch) {
 
 int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
-         strcmp(name, "abs") == 0 || strcmp(name, "min") == 0 || strcmp(name, "if") == 0 ||
+         strcmp(name, "abs") == 0 || strcmp(name, "min") == 0 || strcmp(name, "max") == 0 ||
+         strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||
          strcmp(name, "and") == 0 || strcmp(name, "or") == 0 || strcmp(name, "nand") == 0 ||

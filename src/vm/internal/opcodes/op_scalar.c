@@ -647,3 +647,28 @@ int op_min(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_max(graphion_vm *vm, const graphion_insn *in) {
+  int64_t lhs_i;
+  int64_t rhs_i;
+  double lhs_f;
+  double rhs_f;
+  int lhs_is_float;
+  int rhs_is_float;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &lhs_i, &lhs_f, &lhs_is_float) ||
+      !vm_value_get_numeric(&vm->regs[in->b], &rhs_i, &rhs_f, &rhs_is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  if (!lhs_is_float && !rhs_is_float) {
+    vm_value_set_int(&vm->regs[in->a], lhs_i > rhs_i ? lhs_i : rhs_i);
+    return GVM_OK;
+  }
+  vm_value_set_float(&vm->regs[in->a], lhs_f > rhs_f ? lhs_f : rhs_f);
+  return GVM_OK;
+}
+
