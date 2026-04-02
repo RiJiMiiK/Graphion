@@ -28,6 +28,7 @@ int test_vm_max_opcode(void);
 int test_vm_clamp_opcode(void);
 int test_vm_sqrt_opcode(void);
 int test_vm_len_opcode(void);
+int test_vm_factorial_opcode(void);
 int test_vm_eq_opcode(void);
 int test_vm_eq_incompatible_types_fail(void);
 int test_vm_eq_int_bool_out_of_range_fail(void);
@@ -246,6 +247,7 @@ int main(int argc, char **argv) {
       {"vm_clamp_opcode", test_vm_clamp_opcode},
       {"vm_sqrt_opcode", test_vm_sqrt_opcode},
       {"vm_len_opcode", test_vm_len_opcode},
+      {"vm_factorial_opcode", test_vm_factorial_opcode},
       {"vm_eq_opcode", test_vm_eq_opcode},
       {"vm_eq_incompatible_types_fail", test_vm_eq_incompatible_types_fail},
       {"vm_eq_int_bool_out_of_range_fail", test_vm_eq_int_bool_out_of_range_fail},

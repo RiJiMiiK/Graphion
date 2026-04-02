@@ -387,6 +387,25 @@ static int parse_factor(const char **cursor,
     lhs.const_index = 0U;
     lhs.global_index = 0U;
   }
+  skip_spaces(cursor);
+  while (**cursor == '!' && (*cursor)[1] != '=') {
+    const uint8_t target_reg = base_reg;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_FACTORIAL, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+    (*cursor)++;
+    skip_spaces(cursor);
+  }
+
   *result_out = lhs;
   return GINT_OK;
 }

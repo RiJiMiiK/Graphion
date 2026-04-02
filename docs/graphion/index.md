@@ -14,6 +14,7 @@ Graphion is currently an early-stage language with a small but already usable su
   - `string`
   - `bits` through `0b...` literals, normalized equality, `&`, `|`, `^`, `~`, `<<`, and `>>`
 - arithmetic expressions
+- postfix factorial `!`
 - grouped expressions with parentheses
 - compound assignments
 - boolean `if / elif / else` blocks
@@ -31,7 +32,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - line comments with `#`
 - block comments with `/* ... */`
 - equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`
-- the `abs()`, `min()`, `max()`, `clamp()`, `sqrt()`, and `len()` builtins
+- the `abs()`, `min()`, `max()`, `clamp()`, `sqrt()`, and `len()` builtins, plus postfix factorial `!`
 
 This guide only documents behavior that is implemented today.
 

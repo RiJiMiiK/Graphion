@@ -751,3 +751,28 @@ int op_len(graphion_vm *vm, const graphion_insn *in) {
   vm_value_set_int(&vm->regs[in->a], (int64_t)len);
   return GVM_OK;
 }
+
+int op_factorial(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value;
+  int64_t result;
+  int64_t i;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_int(&vm->regs[in->a], &value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (value < 0) {
+    return GVM_ERR_FACTORIAL_DOMAIN;
+  }
+
+  result = 1;
+  for (i = 2; i <= value; ++i) {
+    result = wrap_mul_i64(result, i);
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_int(&vm->regs[in->a], result);
+  return GVM_OK;
+}

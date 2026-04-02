@@ -757,6 +757,52 @@ int test_vm_len_opcode(void) {
   return 0;
 }
 
+int test_vm_factorial_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value globals[3];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 0},
+      {GVM_OP_FACTORIAL, 0, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_MOV_IMM, 1, 0, 5},
+      {GVM_OP_FACTORIAL, 1, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 1, 0, 1},
+      {GVM_OP_MOV_IMM, 2, 0, 3},
+      {GVM_OP_FACTORIAL, 2, 0, 0},
+      {GVM_OP_FACTORIAL, 2, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 2, 0, 2},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+  size_t i;
+
+  for (i = 0U; i < 3U; ++i) {
+    globals[i].kind = GVM_VALUE_NONE;
+    globals[i].as.int_value = 0;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_globals(&vm, globals, 3U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 1) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_INT || globals[1].as.int_value != 120) {
+    return 4;
+  }
+  if (globals[2].kind != GVM_VALUE_INT || globals[2].as.int_value != 720) {
+    return 5;
+  }
+  return 0;
+}
+
 int test_vm_eq_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[12];

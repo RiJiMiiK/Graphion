@@ -88,6 +88,7 @@ Typical messages include:
 - `division by zero`
 - `incompatible operand types`
 - `sqrt requires non-negative input`
+- `factorial requires non-negative integer input`
 
 ## Current `.gion` behavior examples
 
@@ -142,6 +143,17 @@ Typical result:
 
 - runtime failure
 - message `incompatible operand types`
+
+Input:
+
+```gion
+value = (-1)!
+```
+
+Typical result:
+
+- runtime failure
+- message `factorial requires non-negative integer input`
 
 ## Bytecode decode errors
 

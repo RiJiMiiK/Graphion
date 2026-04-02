@@ -568,6 +568,7 @@ Supported arithmetic operators:
 - `//`
 - `%`
 - `**`
+- postfix `!`
 
 ### Operator Notes
 
@@ -583,6 +584,9 @@ Supported arithmetic operators:
 `**`
 : power, right-associative
 
+`!`
+: postfix factorial, valid for non-negative integers only
+
 Unary minus is also supported on variables and grouped expressions, for example:
 
 ```gion
@@ -590,6 +594,18 @@ count = 5
 neg_count = -count
 neg_group = -(1 + 2)
 ```
+
+Factorial is also supported as a postfix operator:
+
+```gion
+count = 5!
+grouped = (1 + 2)!
+```
+
+These are currently runtime errors:
+
+- `(-1)!`
+- `1.5!`
 
 ## Comparison Operators
 
@@ -925,13 +941,14 @@ Current precedence order:
 
 1. grouped expressions with parentheses
 2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `len(...)`
-3. `**`
-4. `*`, `/`, `//`, `%`
-5. `+`, `-`
-6. `==`, `!=`, `<`, `<=`, `>`, `>=`
-7. `not`
-8. `and`, `nand`
-9. `or`, `nor`
+3. postfix factorial `!`
+4. `**`
+5. `*`, `/`, `//`, `%`
+6. `+`, `-`
+7. `==`, `!=`, `<`, `<=`, `>`, `>=`
+8. `not`
+9. `and`, `nand`
+10. `or`, `nor`
 
 Examples:
 
@@ -955,6 +972,18 @@ is interpreted as:
 
 ```gion
 value = 2 ** (3 ** 2)
+```
+
+And:
+
+```gion
+value = 2 ** 3!
+```
+
+is interpreted as:
+
+```gion
+value = 2 ** (3!)
 ```
 
 ## Parentheses

@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
-# negative operands, numeric builtins such as abs(), min(), max(), clamp(), and sqrt(),
-# and the string builtin len().
+# negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
+# clamp(), and sqrt(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -28,6 +28,9 @@ negative_power = (-2) ** 3
 negative_exponent = 2 ** -1
 right_assoc = 2 ** 3 ** 2
 powered_group = (1 + 2) ** 2
+factorial_zero = 0!
+factorial_count = 5!
+factorial_group = (1 + 2)!
 
 remainder = 10 % 4
 negative_remainder = -10 % 4
@@ -73,6 +76,9 @@ print("power with a negative base -> negative_power=" + negative_power)
 print("power with a negative exponent -> negative_exponent=" + negative_exponent)
 print("power is right-associative -> right_assoc=" + right_assoc)
 print("power with parentheses -> powered_group=" + powered_group)
+print("factorial of zero -> factorial_zero=" + factorial_zero)
+print("factorial of an integer -> factorial_count=" + factorial_count)
+print("factorial of a grouped expression -> factorial_group=" + factorial_group)
 print("integer modulo -> remainder=" + remainder)
 print("modulo with negative numbers -> negative_remainder=" + negative_remainder)
 print("float modulo -> float_remainder=" + float_remainder)

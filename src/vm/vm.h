@@ -73,6 +73,7 @@ typedef enum {
   GVM_OP_CLAMP = 65,
   GVM_OP_SQRT = 66,
   GVM_OP_LEN = 67,
+  GVM_OP_FACTORIAL = 68,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -106,7 +107,8 @@ typedef enum {
   GVM_ERR_INVALID_GLOBAL_INDEX = -20,
   GVM_ERR_OUTPUT_UNBOUND = -21,
   GVM_ERR_DIVIDE_BY_ZERO = -22,
-  GVM_ERR_DOMAIN = -23
+  GVM_ERR_DOMAIN = -23,
+  GVM_ERR_FACTORIAL_DOMAIN = -24
 } graphion_vm_result;
 
 typedef enum {

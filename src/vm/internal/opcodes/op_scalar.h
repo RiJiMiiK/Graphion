@@ -41,5 +41,6 @@ int op_max(graphion_vm *vm, const graphion_insn *in);
 int op_clamp(graphion_vm *vm, const graphion_insn *in);
 int op_sqrt(graphion_vm *vm, const graphion_insn *in);
 int op_len(graphion_vm *vm, const graphion_insn *in);
+int op_factorial(graphion_vm *vm, const graphion_insn *in);
 
 #endif

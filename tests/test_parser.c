@@ -338,6 +338,21 @@ static int test_read_file_text(const char *path, char *buffer, size_t capacity) 
   return 1;
 }
 
+static void normalize_text_newlines(char *text) {
+  size_t read_index = 0U;
+  size_t write_index = 0U;
+  if (text == NULL) {
+    return;
+  }
+  while (text[read_index] != '\0') {
+    if (text[read_index] != '\r') {
+      text[write_index++] = text[read_index];
+    }
+    ++read_index;
+  }
+  text[write_index] = '\0';
+}
+
 int test_gion_scalar_assignments_and_prints(void) {
   const char *source =
       "count = 42\n"
@@ -354,7 +369,7 @@ int test_gion_scalar_assignments_and_prints(void) {
       "print(ready)\n"
       "print(copy)\n";
   const char *path = "gion_scalar_assignments_and_prints.txt";
-  char output[128];
+  char output[1024];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *count;
@@ -680,6 +695,9 @@ int test_gion_arithmetic_expressions(void) {
       "sqrt_int = sqrt(9)\n"
       "sqrt_float = sqrt(2.25)\n"
       "sqrt_expr = sqrt(1 + 8)\n"
+      "factorial_zero = 0!\n"
+      "factorial_int = 5!\n"
+      "factorial_group = (1 + 2)!\n"
       "len_empty = len(\"\")\n"
       "len_text = len(\"graphion\")\n"
       "len_concat = len(\"graph\" + \"ion\")\n"
@@ -724,6 +742,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(sqrt_int)\n"
       "print(sqrt_float)\n"
       "print(sqrt_expr)\n"
+      "print(factorial_zero)\n"
+      "print(factorial_int)\n"
+      "print(factorial_group)\n"
       "print(len_empty)\n"
       "print(len_text)\n"
       "print(len_concat)\n"
@@ -734,7 +755,7 @@ int test_gion_arithmetic_expressions(void) {
       "print((3 + 4) * 2)\n"
       "print(10 % 4)\n";
   const char *path = "gion_arithmetic_expressions.txt";
-  char output[128];
+  char output[1024];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *sum;
@@ -774,6 +795,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *sqrt_int;
   const graphion_runtime_value *sqrt_float;
   const graphion_runtime_value *sqrt_expr;
+  const graphion_runtime_value *factorial_zero;
+  const graphion_runtime_value *factorial_int;
+  const graphion_runtime_value *factorial_group;
   const graphion_runtime_value *len_empty;
   const graphion_runtime_value *len_text;
   const graphion_runtime_value *len_concat;
@@ -839,6 +863,9 @@ int test_gion_arithmetic_expressions(void) {
   sqrt_int = graphion_runtime_scope_find(&scope, "sqrt_int");
   sqrt_float = graphion_runtime_scope_find(&scope, "sqrt_float");
   sqrt_expr = graphion_runtime_scope_find(&scope, "sqrt_expr");
+  factorial_zero = graphion_runtime_scope_find(&scope, "factorial_zero");
+  factorial_int = graphion_runtime_scope_find(&scope, "factorial_int");
+  factorial_group = graphion_runtime_scope_find(&scope, "factorial_group");
   len_empty = graphion_runtime_scope_find(&scope, "len_empty");
   len_text = graphion_runtime_scope_find(&scope, "len_text");
   len_concat = graphion_runtime_scope_find(&scope, "len_concat");
@@ -994,17 +1021,29 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 243;
   }
-  if (len_empty == NULL || len_empty->kind != GVM_VALUE_INT || len_empty->as.int_value != 0) {
+  if (factorial_zero == NULL || factorial_zero->kind != GVM_VALUE_INT || factorial_zero->as.int_value != 1) {
     remove(path);
     return 244;
   }
-  if (len_text == NULL || len_text->kind != GVM_VALUE_INT || len_text->as.int_value != 8) {
+  if (factorial_int == NULL || factorial_int->kind != GVM_VALUE_INT || factorial_int->as.int_value != 120) {
     remove(path);
     return 245;
   }
-  if (len_concat == NULL || len_concat->kind != GVM_VALUE_INT || len_concat->as.int_value != 8) {
+  if (factorial_group == NULL || factorial_group->kind != GVM_VALUE_INT || factorial_group->as.int_value != 6) {
     remove(path);
     return 246;
+  }
+  if (len_empty == NULL || len_empty->kind != GVM_VALUE_INT || len_empty->as.int_value != 0) {
+    remove(path);
+    return 247;
+  }
+  if (len_text == NULL || len_text->kind != GVM_VALUE_INT || len_text->as.int_value != 8) {
+    remove(path);
+    return 248;
+  }
+  if (len_concat == NULL || len_concat->kind != GVM_VALUE_INT || len_concat->as.int_value != 8) {
+    remove(path);
+    return 249;
   }
   if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
     remove(path);
@@ -1027,7 +1066,8 @@ int test_gion_arithmetic_expressions(void) {
     return 28;
   }
   remove(path);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  normalize_text_newlines(output);
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1387,6 +1427,8 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = clamp(1, 0, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(-1)\n", GINT_ERR_RUN, "sqrt requires non-negative input"},
+      {"value = (-1)!\n", GINT_ERR_RUN, "factorial requires non-negative integer input"},
+      {"value = 1.5!\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = len(1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"print(\"x\" / 2)\n", GINT_ERR_RUN, "incompatible operand types"},
   };
@@ -1445,6 +1487,7 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = clamp(1 2, 3)\n", GINT_ERR_PARSE, "expected ',' after clamp value"},
       {"value = sqrt()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = sqrt(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sqrt argument"},
+      {"value = !\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len(\"x\"\n", GINT_ERR_PARSE, "expected ')' after len argument"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},

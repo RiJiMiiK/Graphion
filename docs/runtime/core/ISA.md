@@ -73,6 +73,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_CLAMP`
 - `GVM_OP_SQRT`
 - `GVM_OP_LEN`
+- `GVM_OP_FACTORIAL`
 
 These back the current `.gion` scalar language features:
 
@@ -83,6 +84,7 @@ These back the current `.gion` scalar language features:
 - `//`
 - `%`
 - `**`
+- postfix `!`
 - `abs(...)`
 - `min(a, b)`
 - `max(a, b)`

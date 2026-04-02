@@ -59,6 +59,7 @@ Supported arithmetic operators:
 - `//`
 - `%`
 - `**`
+- postfix `!`
 
 Example:
 
@@ -69,6 +70,9 @@ grouped = (1 + 2) * 3
 half = 7 / 2
 floor_half = 7 // 2
 power = 2 ** 3
+factorial_zero = 0!
+factorial_int = 5!
+factorial_group = (1 + 2)!
 remainder = 10 % 4
 
 print(sum)
@@ -77,6 +81,9 @@ print(grouped)
 print(half)
 print(floor_half)
 print(power)
+print(factorial_zero)
+print(factorial_int)
+print(factorial_group)
 print(remainder)
 ```
 
@@ -89,6 +96,9 @@ Expected output:
 3.5
 3
 8
+1
+120
+6
 2
 ```
 
@@ -715,7 +725,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, and `sqrt(x)` for numeric values, plus `len(x)` for strings.
+Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, and `sqrt(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
@@ -734,6 +744,9 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_int = sqrt(9)
 sqrt_float = sqrt(2.25)
 sqrt_expr = sqrt(1 + 8)
+factorial_zero = 0!
+factorial_int = 5!
+factorial_group = (1 + 2)!
 len_text = len("graphion")
 len_concat = len("graph" + "ion")
 
@@ -753,6 +766,9 @@ print(clamp_float)
 print(sqrt_int)
 print(sqrt_float)
 print(sqrt_expr)
+print(factorial_zero)
+print(factorial_int)
+print(factorial_group)
 print(len_text)
 print(len_concat)
 ```
@@ -776,6 +792,9 @@ Expected output:
 3
 1.5
 3
+1
+120
+6
 8
 8
 ```
