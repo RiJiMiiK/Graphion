@@ -179,6 +179,8 @@ cleared_right_shift_bits = 0b1010 >> 4
 grouped_mask_then_shift_bits = (0b1100 & 0b1010) >> 1
 not_then_mask_bits = ~0b0011 & 0b1111
 shift_count_expression_bits = 0b0011 << (1 + 1)
+compound_mask_bits = 0b1100
+compound_mask_bits &= 0b1010
 
 print(short_bits)
 print(wide_bits)
@@ -197,6 +199,7 @@ print(cleared_right_shift_bits)
 print(grouped_mask_then_shift_bits)
 print(not_then_mask_bits)
 print(shift_count_expression_bits)
+print(compound_mask_bits)
 ```
 
 Expected output:
@@ -219,6 +222,7 @@ true
 0b0100
 0b1100
 0b1100
+0b1000
 ```
 
 Current behavior:
@@ -229,6 +233,7 @@ Current behavior:
 - `!=` follows the same normalized-value rule
 - `&` works between `bits` values with the same stored width
 - `0b1100 & 0b1010` therefore produces `0b1000`
+- `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`

@@ -1006,6 +1006,8 @@ int test_gion_compound_assignments(void) {
       "count **= 3\n"
       "text = \"debut\"\n"
       "text += \"fin\"\n"
+      "mask = 0b1100\n"
+      "mask &= 0b1010\n"
       "print(count)\n"
       "print(text)\n";
   const char *path = "gion_compound_assignments.txt";
@@ -1014,6 +1016,7 @@ int test_gion_compound_assignments(void) {
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *count;
   const graphion_runtime_value *text;
+  const graphion_runtime_value *mask;
   FILE *fp = NULL;
   int rc;
 
@@ -1036,6 +1039,7 @@ int test_gion_compound_assignments(void) {
   }
   count = graphion_runtime_scope_find(&scope, "count");
   text = graphion_runtime_scope_find(&scope, "text");
+  mask = graphion_runtime_scope_find(&scope, "mask");
   if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 1.0) {
     remove(path);
     return finish_scope_test(&scope, 3);
@@ -1049,8 +1053,12 @@ int test_gion_compound_assignments(void) {
     return finish_scope_test(&scope, 5);
   }
   remove(path);
-  if (strcmp(output, "1\ndebutfin\n") != 0) {
+  if (mask == NULL || mask->kind != GVM_VALUE_BITS || mask->reserved[0] != 4U ||
+      (uint64_t)mask->as.int_value != 0x8ULL) {
     return finish_scope_test(&scope, 6);
+  }
+  if (strcmp(output, "1\ndebutfin\n") != 0) {
+    return finish_scope_test(&scope, 7);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1069,12 +1077,15 @@ int test_gion_compound_assignment_errors(void) {
       {"count = 1\ncount //=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount %=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount **=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"mask = 0b11\nmask &=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount %= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
       {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"mask = 0b10\nmask &= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"mask = 0b10\nmask &= 1\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = \"Test \" + 7\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "incompatible operand types"},
