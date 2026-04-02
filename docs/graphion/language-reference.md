@@ -1002,6 +1002,48 @@ Current behavior:
 - `>>` takes a `bits` value on the left and a non-negative `int` shift count on the right
 - `>>` keeps the stored width and shifts in zeroes from the left
 
+Current precedence for `bits` operators:
+
+1. grouping parentheses
+2. `~`
+3. `+` / `-` inside shift counts
+4. `<<` / `>>`
+5. `&`
+6. `|` / `^`
+7. comparisons
+
+Examples:
+
+```gion
+~0b0011 & 0b1111
+```
+
+is read as:
+
+```gion
+(~0b0011) & 0b1111
+```
+
+```gion
+0b0011 << 1 + 1
+```
+
+is read as:
+
+```gion
+0b0011 << (1 + 1)
+```
+
+```gion
+0b1111 >> 1 & 0b0111
+```
+
+is read as:
+
+```gion
+(0b1111 >> 1) & 0b0111
+```
+
 Current restrictions:
 
 - non-bitwise arithmetic on `bits` is rejected:
@@ -1083,6 +1125,11 @@ These are currently runtime errors:
 - `0b10 < 0b0010`
 - `0b10 and true`
 - `if 0b10:`
+
+Error wording:
+
+- invalid `bits` operators currently report `incompatible operand types`
+- invalid direct `if` conditions currently report `if condition must be boolean or 0/1`
 
 ## Strings
 

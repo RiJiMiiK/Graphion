@@ -24,6 +24,9 @@ shifted_bits = 0b0011 << 1
 truncated_shift_bits = 0b1111 << 1
 right_shifted_bits = 0b1010 >> 1
 cleared_right_shift_bits = 0b1010 >> 4
+grouped_mask_then_shift_bits = (0b1100 & 0b1010) >> 1
+not_then_mask_bits = ~0b0011 & 0b1111
+shift_count_expression_bits = 0b0011 << (1 + 1)
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -163,6 +166,9 @@ print("overview bits left shift -> shifted_bits=" + shifted_bits)
 print("overview bits left shift truncation -> truncated_shift_bits=" + truncated_shift_bits)
 print("overview bits right shift -> right_shifted_bits=" + right_shifted_bits)
 print("overview bits right shift zero-fill -> cleared_right_shift_bits=" + cleared_right_shift_bits)
+print("overview bits grouped and then right shift -> grouped_mask_then_shift_bits=" + grouped_mask_then_shift_bits)
+print("overview bits not before and -> not_then_mask_bits=" + not_then_mask_bits)
+print("overview bits shift count expression -> shift_count_expression_bits=" + shift_count_expression_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

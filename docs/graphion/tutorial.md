@@ -229,12 +229,21 @@ Current behavior:
 - `>>` keeps the stored width and shifts in zeroes from the left
 - `0b1010 >> 1` therefore produces `0b0101`
 - `0b1010 >> 4` therefore produces `0b0000`
+- current operator order for `bits` reads as:
+  - parentheses
+  - `~`
+  - `<<` / `>>`
+  - `&`
+  - `|` / `^`
+- `~0b0011 & 0b1111` therefore reads as `(~0b0011) & 0b1111`
+- `0b0011 << 1 + 1` therefore reads as `0b0011 << (1 + 1)`
 - `&`, `|`, and `^` reject non-`bits` operands
 - `<<` and `>>` accept a non-negative `int` shift count on the right
 - other `bits` / `int` mixes are still rejected
 - ordered comparisons on `bits` are rejected
 - boolean logic on `bits` is rejected
 - `bits` cannot be used directly as an `if` condition or ternary condition
+- invalid `bits` operators currently report `incompatible operand types`
 - this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, `~`, `<<`, and `>>`
 
 ## Equality
