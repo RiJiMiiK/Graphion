@@ -727,7 +727,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, and `log2(x)` for numeric values, plus `len(x)` for strings.
+Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, and `floor(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
@@ -761,6 +761,9 @@ log10_expr = log10(10 ** 4)
 log2_int = log2(8)
 log2_float = log2(2.0)
 log2_expr = log2(2 ** 6)
+floor_int = floor(7)
+floor_float = floor(7.5)
+floor_negative = floor(-3.2)
 pi_value = pi
 e_value = e
 factorial_zero = 0!
@@ -837,6 +840,9 @@ Expected output:
 3
 1
 6
+7
+7
+-4
 3.14159
 2.71828
 1

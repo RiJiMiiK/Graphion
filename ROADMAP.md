@@ -172,7 +172,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `log(x, base)`
 - [x] builtin `log10(x)`
 - [x] builtin `log2(x)`
-- [ ] builtin `floor(x)`
+- [x] builtin `floor(x)`
 - [ ] builtin `ceil(x)`
 - [ ] builtin `round(x)`
 - [ ] builtin `trunc(x)`

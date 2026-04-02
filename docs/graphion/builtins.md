@@ -488,6 +488,49 @@ incompatible operand types
 log requires x > 0 and base > 0 with base != 1
 ```
 
+## `floor(x)`
+
+`floor(x)` rounds a numeric expression down to the greatest integer less than or equal to it.
+
+Examples:
+
+```gion
+print(floor(7))
+print(floor(7.5))
+print(floor(-3.2))
+```
+
+Expected output:
+
+```text
+7
+7
+-4
+```
+
+### Valid Inputs
+
+`floor(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+Integer inputs stay as `int`. Float inputs currently return a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = floor("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

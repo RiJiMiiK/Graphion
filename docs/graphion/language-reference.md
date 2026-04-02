@@ -952,7 +952,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
@@ -1245,6 +1245,7 @@ Current builtin functions:
 - `log(x, base)`
 - `log10(x)`
 - `log2(x)`
+- `floor(x)`
 - `len(x)`
 
 See [Builtins](builtins.md).
