@@ -257,13 +257,6 @@ Current behavior:
 - `!=` follows the same normalized-value rule
 - `&` works between `bits` values with the same stored width
 - `0b1100 & 0b1010` therefore produces `0b1000`
-- `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
-- `|=` follows the same rule, so `merge = 0b1100` then `merge |= 0b0011` produces `0b1111`
-- `^=` follows the same rule, so `flip = 0b1100` then `flip ^= 0b1010` produces `0b0110`
-- `<<=` follows the same rule, so `shift = 0b0011` then `shift <<= 1` produces `0b0110`
-- `<<=` also keeps truncation, so `shift_overflow = 0b1111` then `shift_overflow <<= 1` produces `0b1110`
-- `>>=` follows the same rule, so `shift_right = 0b1010` then `shift_right >>= 1` produces `0b0101`
-- `>>=` also keeps zero-fill, so `shift_right_clear = 0b1010` then `shift_right_clear >>= 4` produces `0b0000`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`
@@ -273,6 +266,13 @@ Current behavior:
 - `>>` keeps the stored width and shifts in zeroes from the left
 - `0b1010 >> 1` therefore produces `0b0101`
 - `0b1010 >> 4` therefore produces `0b0000`
+- `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
+- `|=` follows the same rule, so `merge = 0b1100` then `merge |= 0b0011` produces `0b1111`
+- `^=` follows the same rule, so `flip = 0b1100` then `flip ^= 0b1010` produces `0b0110`
+- `<<=` follows the same rule, so `shift = 0b0011` then `shift <<= 1` produces `0b0110`
+- `<<=` also keeps truncation, so `shift_overflow = 0b1111` then `shift_overflow <<= 1` produces `0b1110`
+- `>>=` follows the same rule, so `shift_right = 0b1010` then `shift_right >>= 1` produces `0b0101`
+- `>>=` also keeps zero-fill, so `shift_right_clear = 0b1010` then `shift_right_clear >>= 4` produces `0b0000`
 - current operator order for `bits` reads as:
   - parentheses
   - `~`
