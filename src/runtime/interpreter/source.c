@@ -80,6 +80,9 @@ int line_keyword_is_assignment_like(const runtime_source_line *line, const char 
   if (cursor[0] == '/' && cursor[1] == '/' && cursor[2] == '=') {
     return 1;
   }
+  if (cursor[0] == '<' && cursor[1] == '<' && cursor[2] == '=') {
+    return 1;
+  }
   return 0;
 }
 
@@ -940,4 +943,3 @@ const char *scalar_kind_name(const graphion_vm_value *value) {
       return "unknown";
   }
 }
-

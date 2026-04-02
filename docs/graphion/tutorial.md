@@ -185,6 +185,10 @@ compound_merge_bits = 0b1100
 compound_merge_bits |= 0b0011
 compound_flip_bits = 0b1100
 compound_flip_bits ^= 0b1010
+compound_shift_bits = 0b0011
+compound_shift_bits <<= 1
+compound_shift_overflow_bits = 0b1111
+compound_shift_overflow_bits <<= 1
 
 print(short_bits)
 print(wide_bits)
@@ -206,6 +210,8 @@ print(shift_count_expression_bits)
 print(compound_mask_bits)
 print(compound_merge_bits)
 print(compound_flip_bits)
+print(compound_shift_bits)
+print(compound_shift_overflow_bits)
 ```
 
 Expected output:
@@ -231,6 +237,8 @@ true
 0b1000
 0b1111
 0b0110
+0b0110
+0b1110
 ```
 
 Current behavior:
@@ -244,6 +252,8 @@ Current behavior:
 - `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
 - `|=` follows the same rule, so `merge = 0b1100` then `merge |= 0b0011` produces `0b1111`
 - `^=` follows the same rule, so `flip = 0b1100` then `flip ^= 0b1010` produces `0b0110`
+- `<<=` follows the same rule, so `shift = 0b0011` then `shift <<= 1` produces `0b0110`
+- `<<=` also keeps truncation, so `shift_overflow = 0b1111` then `shift_overflow <<= 1` produces `0b1110`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`

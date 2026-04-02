@@ -1012,6 +1012,10 @@ int test_gion_compound_assignments(void) {
       "merge |= 0b0011\n"
       "flip = 0b1100\n"
       "flip ^= 0b1010\n"
+      "shift = 0b0011\n"
+      "shift <<= 1\n"
+      "shift_overflow = 0b1111\n"
+      "shift_overflow <<= 1\n"
       "print(count)\n"
       "print(text)\n";
   const char *path = "gion_compound_assignments.txt";
@@ -1023,6 +1027,8 @@ int test_gion_compound_assignments(void) {
   const graphion_runtime_value *mask;
   const graphion_runtime_value *merge;
   const graphion_runtime_value *flip;
+  const graphion_runtime_value *shift;
+  const graphion_runtime_value *shift_overflow;
   FILE *fp = NULL;
   int rc;
 
@@ -1048,6 +1054,8 @@ int test_gion_compound_assignments(void) {
   mask = graphion_runtime_scope_find(&scope, "mask");
   merge = graphion_runtime_scope_find(&scope, "merge");
   flip = graphion_runtime_scope_find(&scope, "flip");
+  shift = graphion_runtime_scope_find(&scope, "shift");
+  shift_overflow = graphion_runtime_scope_find(&scope, "shift_overflow");
   if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 1.0) {
     remove(path);
     return finish_scope_test(&scope, 3);
@@ -1073,8 +1081,16 @@ int test_gion_compound_assignments(void) {
       (uint64_t)flip->as.int_value != 0x6ULL) {
     return finish_scope_test(&scope, 8);
   }
-  if (strcmp(output, "1\ndebutfin\n") != 0) {
+  if (shift == NULL || shift->kind != GVM_VALUE_BITS || shift->reserved[0] != 4U ||
+      (uint64_t)shift->as.int_value != 0x6ULL) {
     return finish_scope_test(&scope, 9);
+  }
+  if (shift_overflow == NULL || shift_overflow->kind != GVM_VALUE_BITS || shift_overflow->reserved[0] != 4U ||
+      (uint64_t)shift_overflow->as.int_value != 0xEULL) {
+    return finish_scope_test(&scope, 10);
+  }
+  if (strcmp(output, "1\ndebutfin\n") != 0) {
+    return finish_scope_test(&scope, 11);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1096,6 +1112,7 @@ int test_gion_compound_assignment_errors(void) {
       {"mask = 0b11\nmask &=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"merge = 0b11\nmerge |=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"flip = 0b11\nflip ^=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"shift = 0b11\nshift <<=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
@@ -1108,6 +1125,9 @@ int test_gion_compound_assignment_errors(void) {
       {"merge = 0b10\nmerge |= 1\n", GINT_ERR_RUN, "incompatible operand types"},
       {"flip = 0b10\nflip ^= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
       {"flip = 0b10\nflip ^= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 1.0\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= -1\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = \"Test \" + 7\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "incompatible operand types"},
