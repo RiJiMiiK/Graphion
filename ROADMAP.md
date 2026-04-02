@@ -141,7 +141,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `or`
   - `nor`
   - `not`
-- [ ] reject direct use of `bits` as a condition
+- [x] reject direct use of `bits` as a condition
 - [ ] document `bits` operators and restrictions
 - [x] add `bits` literal examples
 - [x] add `bits` parser and runtime tests

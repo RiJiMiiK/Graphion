@@ -2606,6 +2606,7 @@ int test_gion_if_elif_else_errors(void) {
       {"if 0.0:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 0b10:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "multiline condition requires grouping parentheses"},
       {"if (\n    true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after if condition"},
@@ -4546,6 +4547,7 @@ int test_gion_ternary_runtime_errors(void) {
       {"value = \"ready\" if 2 else \"bad\"\n", 1U},
       {"value = \"ready\" if 1.0 else \"bad\"\n", 1U},
       {"value = \"ready\" if \"x\" else \"bad\"\n", 1U},
+      {"value = \"ready\" if 0b10 else \"bad\"\n", 1U},
       {"value = \"ready\" if 2 and true else \"bad\"\n", 1U},
   };
   size_t i;
