@@ -232,6 +232,9 @@ Current behavior:
 - `&`, `|`, and `^` reject non-`bits` operands
 - `<<` and `>>` accept a non-negative `int` shift count on the right
 - other `bits` / `int` mixes are still rejected
+- ordered comparisons on `bits` are rejected
+- boolean logic on `bits` is rejected
+- `bits` cannot be used directly as an `if` condition or ternary condition
 - this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, `~`, `<<`, and `>>`
 
 ## Equality

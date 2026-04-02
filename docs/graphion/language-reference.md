@@ -587,44 +587,6 @@ neg_count = -count
 neg_group = -(1 + 2)
 ```
 
-## Bits Literals
-
-Graphion currently supports a dedicated `bits` scalar type through `0b...` literals.
-
-Examples:
-
-```gion
-short_bits = 0b10
-wide_bits = 0b0010
-masked_bits = 0b1100 & 0b1010
-merged_bits = 0b1100 | 0b1010
-xor_bits = 0b1100 ^ 0b1010
-not_bits = ~0b0010
-
-print(short_bits)
-print(wide_bits)
-print(masked_bits)
-print(merged_bits)
-print(xor_bits)
-print(not_bits)
-```
-
-Current V1 rules:
-
-- each `bits` value keeps the width from its literal spelling
-- `0b10` has width `2`
-- `0b0010` has width `4`
-- printing preserves that stored width
-- `==` currently compares normalized bit values, so `0b10 == 0b0010` is `true`
-- `!=` follows the same normalized-value rule, so `0b10 != 0b0010` is `false`
-- `&` currently works between `bits` values with the same stored width, so `0b1100 & 0b1010` yields `0b1000`
-- `|` follows the same width rule, so `0b1100 | 0b1010` yields `0b1110`
-- `^` follows the same width rule, so `0b1100 ^ 0b1010` yields `0b0110`
-- `~` preserves width and flips bits within that stored width, so `~0b0010` yields `0b1101`
-- implicit mixing between `bits` and `int`, `float`, `bool`, or `string` is currently rejected in expressions
-- literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, and `~` are supported so far
-- the remaining bitwise operators and wider `bits` restrictions are still tracked separately in the roadmap
-
 ## Comparison Operators
 
 Currently supported comparison operators:
@@ -1040,6 +1002,30 @@ Current behavior:
 - `>>` takes a `bits` value on the left and a non-negative `int` shift count on the right
 - `>>` keeps the stored width and shifts in zeroes from the left
 
+Current restrictions:
+
+- non-bitwise arithmetic on `bits` is rejected:
+  - `+`
+  - `-`
+  - `*`
+  - `/`
+  - `//`
+  - `%`
+  - `**`
+- ordered comparisons on `bits` are rejected:
+  - `<`
+  - `<=`
+  - `>`
+  - `>=`
+- boolean logic on `bits` is rejected:
+  - `and`
+  - `nand`
+  - `or`
+  - `nor`
+  - `not`
+- direct use of `bits` as an `if` condition is rejected
+- direct use of `bits` as a ternary condition is rejected
+
 Examples:
 
 ```gion
@@ -1093,6 +1079,10 @@ These are currently runtime errors:
 - `0b10 >> 0b0010`
 - `0b10 >> 1.0`
 - `0b10 >> -1`
+- `0b10 + 1`
+- `0b10 < 0b0010`
+- `0b10 and true`
+- `if 0b10:`
 
 ## Strings
 
