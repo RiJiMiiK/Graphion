@@ -259,6 +259,49 @@ incompatible operand types
 sqrt requires non-negative input
 ```
 
+## `exp(x)`
+
+`exp(x)` returns `e` raised to the value of a numeric expression.
+
+Examples:
+
+```gion
+print(exp(1))
+print(exp(0.0))
+print(exp(1 + 1))
+```
+
+Expected output:
+
+```text
+2.71828
+1
+7.38906
+```
+
+### Valid Inputs
+
+`exp(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+This is a runtime error:
+
+```gion
+value = exp("graphion")
+```
+
+Current message:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

@@ -27,6 +27,7 @@ int test_vm_min_opcode(void);
 int test_vm_max_opcode(void);
 int test_vm_clamp_opcode(void);
 int test_vm_sqrt_opcode(void);
+int test_vm_exp_opcode(void);
 int test_vm_len_opcode(void);
 int test_vm_factorial_opcode(void);
 int test_vm_eq_opcode(void);
@@ -246,6 +247,7 @@ int main(int argc, char **argv) {
       {"vm_max_opcode", test_vm_max_opcode},
       {"vm_clamp_opcode", test_vm_clamp_opcode},
       {"vm_sqrt_opcode", test_vm_sqrt_opcode},
+      {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_len_opcode", test_vm_len_opcode},
       {"vm_factorial_opcode", test_vm_factorial_opcode},
       {"vm_eq_opcode", test_vm_eq_opcode},

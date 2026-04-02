@@ -100,7 +100,8 @@ int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "pi") == 0 || strcmp(name, "e") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "min") == 0 || strcmp(name, "max") == 0 ||
-         strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "len") == 0 ||
+         strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "exp") == 0 ||
+         strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

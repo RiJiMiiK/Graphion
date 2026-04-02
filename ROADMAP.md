@@ -167,7 +167,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] postfix factorial `n!`
 - [x] constant `pi`
 - [x] constant `e`
-- [ ] builtin `exp(x)`
+- [x] builtin `exp(x)`
 - [ ] builtin `ln(x)`
 - [ ] builtin `log(x, base)`
 - [ ] builtin `log10(x)`
