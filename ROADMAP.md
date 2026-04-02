@@ -121,7 +121,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `&`, `|`, and `^` reject width mismatches
   - `0b10 & 0b0010` should be rejected
 - [x] preserve width across `~`, `<<`, and `>>`
-- [ ] truncate overflow back to stored `bits` width
+- [x] truncate overflow back to stored `bits` width
 - [ ] reject non-bitwise arithmetic on `bits`
   - `+`
   - `-`
