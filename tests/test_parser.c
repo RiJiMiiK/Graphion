@@ -1006,6 +1006,20 @@ int test_gion_compound_assignments(void) {
       "count **= 3\n"
       "text = \"debut\"\n"
       "text += \"fin\"\n"
+      "mask = 0b1100\n"
+      "mask &= 0b1010\n"
+      "merge = 0b1100\n"
+      "merge |= 0b0011\n"
+      "flip = 0b1100\n"
+      "flip ^= 0b1010\n"
+      "shift = 0b0011\n"
+      "shift <<= 1\n"
+      "shift_overflow = 0b1111\n"
+      "shift_overflow <<= 1\n"
+      "shift_right = 0b1010\n"
+      "shift_right >>= 1\n"
+      "shift_right_clear = 0b1010\n"
+      "shift_right_clear >>= 4\n"
       "print(count)\n"
       "print(text)\n";
   const char *path = "gion_compound_assignments.txt";
@@ -1014,6 +1028,13 @@ int test_gion_compound_assignments(void) {
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *count;
   const graphion_runtime_value *text;
+  const graphion_runtime_value *mask;
+  const graphion_runtime_value *merge;
+  const graphion_runtime_value *flip;
+  const graphion_runtime_value *shift;
+  const graphion_runtime_value *shift_overflow;
+  const graphion_runtime_value *shift_right;
+  const graphion_runtime_value *shift_right_clear;
   FILE *fp = NULL;
   int rc;
 
@@ -1036,6 +1057,13 @@ int test_gion_compound_assignments(void) {
   }
   count = graphion_runtime_scope_find(&scope, "count");
   text = graphion_runtime_scope_find(&scope, "text");
+  mask = graphion_runtime_scope_find(&scope, "mask");
+  merge = graphion_runtime_scope_find(&scope, "merge");
+  flip = graphion_runtime_scope_find(&scope, "flip");
+  shift = graphion_runtime_scope_find(&scope, "shift");
+  shift_overflow = graphion_runtime_scope_find(&scope, "shift_overflow");
+  shift_right = graphion_runtime_scope_find(&scope, "shift_right");
+  shift_right_clear = graphion_runtime_scope_find(&scope, "shift_right_clear");
   if (count == NULL || count->kind != GVM_VALUE_FLOAT || count->as.float_value != 1.0) {
     remove(path);
     return finish_scope_test(&scope, 3);
@@ -1049,8 +1077,36 @@ int test_gion_compound_assignments(void) {
     return finish_scope_test(&scope, 5);
   }
   remove(path);
-  if (strcmp(output, "1\ndebutfin\n") != 0) {
+  if (mask == NULL || mask->kind != GVM_VALUE_BITS || mask->reserved[0] != 4U ||
+      (uint64_t)mask->as.int_value != 0x8ULL) {
     return finish_scope_test(&scope, 6);
+  }
+  if (merge == NULL || merge->kind != GVM_VALUE_BITS || merge->reserved[0] != 4U ||
+      (uint64_t)merge->as.int_value != 0xFULL) {
+    return finish_scope_test(&scope, 7);
+  }
+  if (flip == NULL || flip->kind != GVM_VALUE_BITS || flip->reserved[0] != 4U ||
+      (uint64_t)flip->as.int_value != 0x6ULL) {
+    return finish_scope_test(&scope, 8);
+  }
+  if (shift == NULL || shift->kind != GVM_VALUE_BITS || shift->reserved[0] != 4U ||
+      (uint64_t)shift->as.int_value != 0x6ULL) {
+    return finish_scope_test(&scope, 9);
+  }
+  if (shift_overflow == NULL || shift_overflow->kind != GVM_VALUE_BITS || shift_overflow->reserved[0] != 4U ||
+      (uint64_t)shift_overflow->as.int_value != 0xEULL) {
+    return finish_scope_test(&scope, 10);
+  }
+  if (shift_right == NULL || shift_right->kind != GVM_VALUE_BITS || shift_right->reserved[0] != 4U ||
+      (uint64_t)shift_right->as.int_value != 0x5ULL) {
+    return finish_scope_test(&scope, 11);
+  }
+  if (shift_right_clear == NULL || shift_right_clear->kind != GVM_VALUE_BITS || shift_right_clear->reserved[0] != 4U ||
+      (uint64_t)shift_right_clear->as.int_value != 0x0ULL) {
+    return finish_scope_test(&scope, 12);
+  }
+  if (strcmp(output, "1\ndebutfin\n") != 0) {
+    return finish_scope_test(&scope, 13);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -1069,12 +1125,29 @@ int test_gion_compound_assignment_errors(void) {
       {"count = 1\ncount //=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount %=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount **=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"mask = 0b11\nmask &=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"merge = 0b11\nmerge |=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"flip = 0b11\nflip ^=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"shift = 0b11\nshift <<=\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"shift = 0b11\nshift >>=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 1\ncount %= 0\n", GINT_ERR_RUN, "division by zero"},
       {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
       {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"mask = 0b10\nmask &= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"mask = 0b10\nmask &= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"merge = 0b10\nmerge |= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"merge = 0b10\nmerge |= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"flip = 0b10\nflip ^= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"flip = 0b10\nflip ^= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 1.0\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= -1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift >>= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift >>= 1.0\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift >>= -1\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = \"Test \" + 7\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "incompatible operand types"},
       {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "incompatible operand types"},

@@ -13,6 +13,11 @@ int parse_assignment(const char *line_text,
   char assign_op = '=';
   int power_assign = 0;
   int floor_div_assign = 0;
+  int bit_and_assign = 0;
+  int bit_or_assign = 0;
+  int bit_xor_assign = 0;
+  int bit_shl_assign = 0;
+  int bit_shr_assign = 0;
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -31,6 +36,26 @@ int parse_assignment(const char *line_text,
     assign_op = '/';
     floor_div_assign = 1;
     cursor += 3;
+  } else if (cursor[0] == '<' && cursor[1] == '<' && cursor[2] == '=') {
+    assign_op = '<';
+    bit_shl_assign = 1;
+    cursor += 3;
+  } else if (cursor[0] == '>' && cursor[1] == '>' && cursor[2] == '=') {
+    assign_op = '>';
+    bit_shr_assign = 1;
+    cursor += 3;
+  } else if (cursor[0] == '&' && cursor[1] == '=') {
+    assign_op = '&';
+    bit_and_assign = 1;
+    cursor += 2;
+  } else if (cursor[0] == '|' && cursor[1] == '=') {
+    assign_op = '|';
+    bit_or_assign = 1;
+    cursor += 2;
+  } else if (cursor[0] == '^' && cursor[1] == '=') {
+    assign_op = '^';
+    bit_xor_assign = 1;
+    cursor += 2;
   } else if ((*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/' || *cursor == '%') &&
       cursor[1] == '=') {
     assign_op = *cursor;
@@ -71,6 +96,11 @@ int parse_assignment(const char *line_text,
     }
     rc = program_emit(program,
                       power_assign ? GVM_OP_POW :
+                      bit_shl_assign ? GVM_OP_BIT_SHL :
+                      bit_shr_assign ? GVM_OP_BIT_SHR :
+                      bit_and_assign ? GVM_OP_BIT_AND :
+                      bit_or_assign ? GVM_OP_BIT_OR :
+                      bit_xor_assign ? GVM_OP_BIT_XOR :
                       floor_div_assign ? GVM_OP_FLOOR_DIV :
                       assign_op == '+' ? GVM_OP_ADD :
                       assign_op == '-' ? GVM_OP_SUB :
@@ -346,4 +376,3 @@ int parse_statement_line(const char *line_text,
   }
   return program_emit(program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
 }
-

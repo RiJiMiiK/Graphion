@@ -145,3 +145,14 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] document `bits` operators and restrictions
 - [x] add `bits` literal examples
 - [x] add `bits` parser and runtime tests
+- [x] `bits &= bits`
+- [x] `bits |= bits`
+- [x] `bits ^= bits`
+- [x] `bits <<= int`
+  - should keep the same `bits << int` rules
+- [x] `bits >>= int`
+  - should keep the same `bits >> int` rules
+- [x] reject invalid mixed-type compound assignments on `bits`
+- [x] document `bits` compound assignments
+- [x] add `bits` compound assignment examples
+- [x] add `bits` compound assignment tests

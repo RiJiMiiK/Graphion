@@ -27,6 +27,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - boolean `or`
 - boolean `nor`
 - boolean `not`
+- `bits` literals and bitwise operators
 - line comments with `#`
 - block comments with `/* ... */`
 - equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`

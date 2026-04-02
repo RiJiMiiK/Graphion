@@ -176,6 +176,23 @@ shifted_bits = 0b0011 << 1
 truncated_shift_bits = 0b1111 << 1
 right_shifted_bits = 0b1010 >> 1
 cleared_right_shift_bits = 0b1010 >> 4
+grouped_mask_then_shift_bits = (0b1100 & 0b1010) >> 1
+not_then_mask_bits = ~0b0011 & 0b1111
+shift_count_expression_bits = 0b0011 << (1 + 1)
+compound_mask_bits = 0b1100
+compound_mask_bits &= 0b1010
+compound_merge_bits = 0b1100
+compound_merge_bits |= 0b0011
+compound_flip_bits = 0b1100
+compound_flip_bits ^= 0b1010
+compound_shift_bits = 0b0011
+compound_shift_bits <<= 1
+compound_shift_overflow_bits = 0b1111
+compound_shift_overflow_bits <<= 1
+compound_right_shift_bits = 0b1010
+compound_right_shift_bits >>= 1
+compound_right_shift_clear_bits = 0b1010
+compound_right_shift_clear_bits >>= 4
 
 print(short_bits)
 print(wide_bits)
@@ -191,6 +208,16 @@ print(shifted_bits)
 print(truncated_shift_bits)
 print(right_shifted_bits)
 print(cleared_right_shift_bits)
+print(grouped_mask_then_shift_bits)
+print(not_then_mask_bits)
+print(shift_count_expression_bits)
+print(compound_mask_bits)
+print(compound_merge_bits)
+print(compound_flip_bits)
+print(compound_shift_bits)
+print(compound_shift_overflow_bits)
+print(compound_right_shift_bits)
+print(compound_right_shift_clear_bits)
 ```
 
 Expected output:
@@ -210,6 +237,16 @@ true
 0b1110
 0b0101
 0b0000
+0b0100
+0b1100
+0b1100
+0b1000
+0b1111
+0b0110
+0b0110
+0b1110
+0b0101
+0b0000
 ```
 
 Current behavior:
@@ -220,6 +257,13 @@ Current behavior:
 - `!=` follows the same normalized-value rule
 - `&` works between `bits` values with the same stored width
 - `0b1100 & 0b1010` therefore produces `0b1000`
+- `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
+- `|=` follows the same rule, so `merge = 0b1100` then `merge |= 0b0011` produces `0b1111`
+- `^=` follows the same rule, so `flip = 0b1100` then `flip ^= 0b1010` produces `0b0110`
+- `<<=` follows the same rule, so `shift = 0b0011` then `shift <<= 1` produces `0b0110`
+- `<<=` also keeps truncation, so `shift_overflow = 0b1111` then `shift_overflow <<= 1` produces `0b1110`
+- `>>=` follows the same rule, so `shift_right = 0b1010` then `shift_right >>= 1` produces `0b0101`
+- `>>=` also keeps zero-fill, so `shift_right_clear = 0b1010` then `shift_right_clear >>= 4` produces `0b0000`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`
@@ -229,12 +273,21 @@ Current behavior:
 - `>>` keeps the stored width and shifts in zeroes from the left
 - `0b1010 >> 1` therefore produces `0b0101`
 - `0b1010 >> 4` therefore produces `0b0000`
+- current operator order for `bits` reads as:
+  - parentheses
+  - `~`
+  - `<<` / `>>`
+  - `&`
+  - `|` / `^`
+- `~0b0011 & 0b1111` therefore reads as `(~0b0011) & 0b1111`
+- `0b0011 << 1 + 1` therefore reads as `0b0011 << (1 + 1)`
 - `&`, `|`, and `^` reject non-`bits` operands
 - `<<` and `>>` accept a non-negative `int` shift count on the right
 - other `bits` / `int` mixes are still rejected
 - ordered comparisons on `bits` are rejected
 - boolean logic on `bits` is rejected
 - `bits` cannot be used directly as an `if` condition or ternary condition
+- invalid `bits` operators currently report `incompatible operand types`
 - this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, `~`, `<<`, and `>>`
 
 ## Equality

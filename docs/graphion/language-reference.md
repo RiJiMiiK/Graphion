@@ -979,6 +979,11 @@ Current `bits` support includes:
 - `~`
 - `<<` with an integer shift count
 - `>>` with an integer shift count
+- `&=` with another `bits` value of the same stored width
+- `|=` with another `bits` value of the same stored width
+- `^=` with another `bits` value of the same stored width
+- `<<=` with a non-negative `int` shift count
+- `>>=` with a non-negative `int` shift count
 
 Examples:
 
@@ -996,11 +1001,58 @@ Current behavior:
 - `==` and `!=` compare normalized values, so leading zeroes do not affect equality
 - `&`, `|`, and `^` require both operands to be `bits`
 - `&`, `|`, and `^` currently require matching widths
+- `&=` follows the same width and type rules as `&`
+- `|=` follows the same width and type rules as `|`
+- `^=` follows the same width and type rules as `^`
+- `<<=` follows the same width, truncation, and shift-count rules as `<<`
+- `>>=` follows the same width, zero-fill, and shift-count rules as `>>`
 - `~` keeps the stored width
 - `<<` takes a `bits` value on the left and a non-negative `int` shift count on the right
 - `<<` keeps the stored width and truncates overflow back to that width
 - `>>` takes a `bits` value on the left and a non-negative `int` shift count on the right
 - `>>` keeps the stored width and shifts in zeroes from the left
+
+Current precedence for `bits` operators:
+
+1. grouping parentheses
+2. `~`
+3. `+` / `-` inside shift counts
+4. `<<` / `>>`
+5. `&`
+6. `|` / `^`
+7. comparisons
+
+Examples:
+
+```gion
+~0b0011 & 0b1111
+```
+
+is read as:
+
+```gion
+(~0b0011) & 0b1111
+```
+
+```gion
+0b0011 << 1 + 1
+```
+
+is read as:
+
+```gion
+0b0011 << (1 + 1)
+```
+
+```gion
+0b1111 >> 1 & 0b0111
+```
+
+is read as:
+
+```gion
+(0b1111 >> 1) & 0b0111
+```
 
 Current restrictions:
 
@@ -1071,6 +1123,15 @@ produces:
 These are currently runtime errors:
 
 - `0b10 & 0b0010`
+- `mask = 0b10` followed by `mask &= 0b0010`
+- `merge = 0b10` followed by `merge |= 0b0010`
+- `flip = 0b10` followed by `flip ^= 0b0010`
+- `shift = 0b10` followed by `shift <<= 0b0010`
+- `shift = 0b10` followed by `shift <<= 1.0`
+- `shift = 0b10` followed by `shift <<= -1`
+- `shift = 0b10` followed by `shift >>= 0b0010`
+- `shift = 0b10` followed by `shift >>= 1.0`
+- `shift = 0b10` followed by `shift >>= -1`
 - `0b10 | 0b0010`
 - `0b10 ^ 0b0010`
 - `0b10 << 0b0010`
@@ -1083,6 +1144,11 @@ These are currently runtime errors:
 - `0b10 < 0b0010`
 - `0b10 and true`
 - `if 0b10:`
+
+Error wording:
+
+- invalid `bits` operators currently report `incompatible operand types`
+- invalid direct `if` conditions currently report `if condition must be boolean or 0/1`
 
 ## Strings
 
