@@ -81,3 +81,45 @@ Current message:
 ```text
 incompatible operand types
 ```
+
+## `min(a, b)`
+
+`min(a, b)` returns the smaller of two numeric expressions.
+
+Examples:
+
+```gion
+print(min(7, 3))
+print(min(3.5, 2))
+print(min(10 - 2, 3 * 3))
+```
+
+Expected output:
+
+```text
+3
+2
+8
+```
+
+### Valid Inputs
+
+`min(a, b)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+### Invalid Inputs
+
+This is a runtime error:
+
+```gion
+value = min("graphion", 1)
+```
+
+Current message:
+
+```text
+incompatible operand types
+```

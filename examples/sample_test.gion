@@ -9,6 +9,8 @@
 
 count = 42
 ratio = 7 / 2
+smallest = min(7, 3)
+smallest_mixed = min(3.5, 2)
 message = "graph" + "ion"
 ready = true
 short_bits = 0b10
@@ -166,6 +168,8 @@ match 2:
 
 print("overview assignment -> count=" + count)
 print("overview arithmetic -> ratio=" + ratio)
+print("overview min builtin -> smallest=" + smallest)
+print("overview min builtin on mixed numeric values -> smallest_mixed=" + smallest_mixed)
 print("overview string concat -> message=" + message)
 print("overview bits literal -> short_bits=" + short_bits)
 print("overview bits width preservation -> wide_bits=" + wide_bits)

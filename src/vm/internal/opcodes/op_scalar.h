@@ -36,6 +36,7 @@ int op_bit_shl_cmp(graphion_vm *vm, const graphion_insn *in);
 int op_bit_shr_cmp(graphion_vm *vm, const graphion_insn *in);
 
 int op_abs(graphion_vm *vm, const graphion_insn *in);
+int op_min(graphion_vm *vm, const graphion_insn *in);
 
 #endif
 

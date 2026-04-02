@@ -713,18 +713,24 @@ For example, this is still invalid:
 value = "count=" + 7
 ```
 
-## Absolute Value
+## Numeric Builtins
 
-Graphion currently provides `abs(...)` as a builtin for numeric values.
+Graphion currently provides `abs(...)` and `min(a, b)` for numeric values.
 
 ```gion
 abs_int = abs(-42)
 abs_float = abs(-3.5)
 abs_expr = abs(-5 + 2)
+min_int = min(7, 3)
+min_float = min(3.5, 2)
+min_expr = min(10 - 2, 3 * 3)
 
 print(abs_int)
 print(abs_float)
 print(abs_expr)
+print(min_int)
+print(min_float)
+print(min_expr)
 ```
 
 Expected output:
@@ -733,4 +739,7 @@ Expected output:
 42
 3.5
 3
+3
+2
+8
 ```

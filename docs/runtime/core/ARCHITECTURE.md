@@ -39,7 +39,7 @@ The currently supported user-facing subset is centered on scalar values and expr
 - arithmetic expressions
 - grouped expressions with parentheses
 - compound assignments
-- builtin `abs(...)`
+- builtins `abs(...)` and `min(a, b)`
 
 ### Scalar values
 

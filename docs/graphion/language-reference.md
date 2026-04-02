@@ -58,6 +58,7 @@ These names are currently reserved and cannot be assigned:
 - `true`
 - `false`
 - `abs`
+- `min`
 - `if`
 - `elif`
 - `else`
@@ -920,7 +921,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`
+2. `abs(...)`, `min(...)`
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
@@ -1191,6 +1192,7 @@ print("count=" + count)
 Current builtin functions:
 
 - `abs(...)`
+- `min(a, b)`
 
 See [Builtins](builtins.md).
 
