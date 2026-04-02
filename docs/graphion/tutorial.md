@@ -176,6 +176,9 @@ shifted_bits = 0b0011 << 1
 truncated_shift_bits = 0b1111 << 1
 right_shifted_bits = 0b1010 >> 1
 cleared_right_shift_bits = 0b1010 >> 4
+grouped_mask_then_shift_bits = (0b1100 & 0b1010) >> 1
+not_then_mask_bits = ~0b0011 & 0b1111
+shift_count_expression_bits = 0b0011 << (1 + 1)
 
 print(short_bits)
 print(wide_bits)
@@ -191,6 +194,9 @@ print(shifted_bits)
 print(truncated_shift_bits)
 print(right_shifted_bits)
 print(cleared_right_shift_bits)
+print(grouped_mask_then_shift_bits)
+print(not_then_mask_bits)
+print(shift_count_expression_bits)
 ```
 
 Expected output:
@@ -210,6 +216,9 @@ true
 0b1110
 0b0101
 0b0000
+0b0100
+0b1100
+0b1100
 ```
 
 Current behavior:
