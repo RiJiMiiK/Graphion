@@ -555,6 +555,7 @@ int test_gion_reserved_name_errors(void) {
       {"abs = 1\n", "reserved name cannot be assigned", "gion_reserved_abs.gion"},
       {"min = 1\n", "reserved name cannot be assigned", "gion_reserved_min.gion"},
       {"max = 1\n", "reserved name cannot be assigned", "gion_reserved_max.gion"},
+      {"clamp = 1\n", "reserved name cannot be assigned", "gion_reserved_clamp.gion"},
       {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
       {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
       {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
@@ -670,6 +671,10 @@ int test_gion_arithmetic_expressions(void) {
       "max_int = max(7, 3)\n"
       "max_float = max(3.5, 2)\n"
       "max_expr = max(10 - 2, 3 * 3)\n"
+      "clamp_low = clamp(-2, 0, 10)\n"
+      "clamp_mid = clamp(5, 0, 10)\n"
+      "clamp_high = clamp(17, 0, 10)\n"
+      "clamp_float = clamp(12.5, 0, 10)\n"
       "total = base + ratio * 2\n"
       "remainder = 10 % 4\n"
       "negative_remainder = -10 % 4\n"
@@ -704,6 +709,10 @@ int test_gion_arithmetic_expressions(void) {
       "print(max_int)\n"
       "print(max_float)\n"
       "print(max_expr)\n"
+      "print(clamp_low)\n"
+      "print(clamp_mid)\n"
+      "print(clamp_high)\n"
+      "print(clamp_float)\n"
       "print(remainder)\n"
       "print(negative_remainder)\n"
       "print(float_remainder)\n"
@@ -744,6 +753,10 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *max_int;
   const graphion_runtime_value *max_float;
   const graphion_runtime_value *max_expr;
+  const graphion_runtime_value *clamp_low;
+  const graphion_runtime_value *clamp_mid;
+  const graphion_runtime_value *clamp_high;
+  const graphion_runtime_value *clamp_float;
   const graphion_runtime_value *total;
   const graphion_runtime_value *remainder;
   const graphion_runtime_value *negative_remainder;
@@ -799,6 +812,10 @@ int test_gion_arithmetic_expressions(void) {
   max_int = graphion_runtime_scope_find(&scope, "max_int");
   max_float = graphion_runtime_scope_find(&scope, "max_float");
   max_expr = graphion_runtime_scope_find(&scope, "max_expr");
+  clamp_low = graphion_runtime_scope_find(&scope, "clamp_low");
+  clamp_mid = graphion_runtime_scope_find(&scope, "clamp_mid");
+  clamp_high = graphion_runtime_scope_find(&scope, "clamp_high");
+  clamp_float = graphion_runtime_scope_find(&scope, "clamp_float");
   total = graphion_runtime_scope_find(&scope, "total");
   remainder = graphion_runtime_scope_find(&scope, "remainder");
   negative_remainder = graphion_runtime_scope_find(&scope, "negative_remainder");
@@ -923,6 +940,22 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 236;
   }
+  if (clamp_low == NULL || clamp_low->kind != GVM_VALUE_INT || clamp_low->as.int_value != 0) {
+    remove(path);
+    return 237;
+  }
+  if (clamp_mid == NULL || clamp_mid->kind != GVM_VALUE_INT || clamp_mid->as.int_value != 5) {
+    remove(path);
+    return 238;
+  }
+  if (clamp_high == NULL || clamp_high->kind != GVM_VALUE_INT || clamp_high->as.int_value != 10) {
+    remove(path);
+    return 239;
+  }
+  if (clamp_float == NULL || clamp_float->kind != GVM_VALUE_FLOAT || clamp_float->as.float_value != 10.0) {
+    remove(path);
+    return 240;
+  }
   if (total == NULL || total->kind != GVM_VALUE_FLOAT || total->as.float_value != 15.0) {
     remove(path);
     return 24;
@@ -944,7 +977,7 @@ int test_gion_arithmetic_expressions(void) {
     return 28;
   }
   remove(path);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1299,6 +1332,9 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = min(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = max(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = max(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = clamp(\"x\", 0, 1)\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = clamp(1, \"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = clamp(1, 0, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"print(\"x\" / 2)\n", GINT_ERR_RUN, "incompatible operand types"},
   };
   size_t i;
@@ -1347,6 +1383,13 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = max(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = max(1, 2\n", GINT_ERR_PARSE, "expected ')' after max arguments"},
       {"value = max(1 2)\n", GINT_ERR_PARSE, "expected ',' between max arguments"},
+      {"value = clamp()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = clamp(1)\n", GINT_ERR_PARSE, "expected ',' after clamp value"},
+      {"value = clamp(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = clamp(1, 2)\n", GINT_ERR_PARSE, "expected ',' after clamp lower bound"},
+      {"value = clamp(1, 2,)\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = clamp(1, 2, 3\n", GINT_ERR_PARSE, "expected ')' after clamp arguments"},
+      {"value = clamp(1 2, 3)\n", GINT_ERR_PARSE, "expected ',' after clamp value"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = -\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = -(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},

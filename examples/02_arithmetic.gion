@@ -1,6 +1,6 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
-# negative operands, and numeric builtins such as abs(), min(), and max().
+# negative operands, and numeric builtins such as abs(), min(), max(), and clamp().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -41,6 +41,10 @@ min_expression = min(10 - 2, 3 * 3)
 max_count = max(7, 3)
 max_ratio = max(3.5, 2)
 max_expression = max(10 - 2, 3 * 3)
+clamp_low = clamp(-2, 0, 10)
+clamp_mid = clamp(5, 0, 10)
+clamp_high = clamp(17, 0, 10)
+clamp_float = clamp(12.5, 0, 10)
 
 print("basic addition -> sum=" + sum)
 print("operator precedence -> mixed=" + mixed)
@@ -75,6 +79,10 @@ print("minimum of two expressions -> min_expression=" + min_expression)
 print("maximum of two integers -> max_count=" + max_count)
 print("maximum of mixed numeric values -> max_ratio=" + max_ratio)
 print("maximum of two expressions -> max_expression=" + max_expression)
+print("clamp below lower bound -> clamp_low=" + clamp_low)
+print("clamp inside range -> clamp_mid=" + clamp_mid)
+print("clamp above upper bound -> clamp_high=" + clamp_high)
+print("clamp float above upper bound -> clamp_float=" + clamp_float)
 print("raw expression with normal precedence -> " + (3 + 4 * 2))
 print("raw expression with grouped precedence -> " + ((3 + 4) * 2))
 print("raw modulo expression -> " + (10 % 4))

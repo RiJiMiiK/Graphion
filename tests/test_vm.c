@@ -616,6 +616,73 @@ int test_vm_max_opcode(void) {
   return 0;
 }
 
+int test_vm_clamp_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[6];
+  graphion_vm_value globals[4];
+  const graphion_insn program[] = {
+      {GVM_OP_MOV_IMM, 0, 0, -2},
+      {GVM_OP_MOV_IMM, 1, 0, 0},
+      {GVM_OP_MOV_IMM, 2, 0, 10},
+      {GVM_OP_CLAMP, 0, 1, 2},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_MOV_IMM, 3, 0, 5},
+      {GVM_OP_MOV_IMM, 4, 0, 0},
+      {GVM_OP_MOV_IMM, 5, 0, 10},
+      {GVM_OP_CLAMP, 3, 4, 5},
+      {GVM_OP_STORE_GLOBAL, 3, 0, 1},
+      {GVM_OP_LOAD_CONST, 6, 0, 0},
+      {GVM_OP_LOAD_CONST, 7, 0, 1},
+      {GVM_OP_LOAD_CONST, 8, 0, 2},
+      {GVM_OP_CLAMP, 6, 7, 8},
+      {GVM_OP_STORE_GLOBAL, 6, 0, 2},
+      {GVM_OP_LOAD_CONST, 9, 0, 3},
+      {GVM_OP_LOAD_CONST, 10, 0, 4},
+      {GVM_OP_LOAD_CONST, 11, 0, 5},
+      {GVM_OP_CLAMP, 9, 10, 11},
+      {GVM_OP_STORE_GLOBAL, 9, 0, 3},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+  size_t i;
+
+  test_set_value_float(&const_pool[0], 12.5);
+  test_set_value_float(&const_pool[1], 0.0);
+  test_set_value_float(&const_pool[2], 10.0);
+  test_set_value_float(&const_pool[3], 4.5);
+  test_set_value_float(&const_pool[4], 0.0);
+  test_set_value_float(&const_pool[5], 10.0);
+  for (i = 0U; i < 4U; ++i) {
+    globals[i].kind = GVM_VALUE_NONE;
+    globals[i].as.int_value = 0;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 6U);
+  graphion_vm_bind_globals(&vm, globals, 4U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 0) {
+    return 3;
+  }
+  if (globals[1].kind != GVM_VALUE_INT || globals[1].as.int_value != 5) {
+    return 4;
+  }
+  if (globals[2].kind != GVM_VALUE_FLOAT || globals[2].as.float_value != 10.0) {
+    return 5;
+  }
+  if (globals[3].kind != GVM_VALUE_FLOAT || globals[3].as.float_value != 4.5) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_vm_eq_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[12];

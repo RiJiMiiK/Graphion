@@ -165,3 +165,51 @@ Current message:
 ```text
 incompatible operand types
 ```
+
+## `clamp(x, lo, hi)`
+
+`clamp(x, lo, hi)` constrains a numeric expression to a numeric range.
+
+- if `x < lo`, the result is `lo`
+- if `x > hi`, the result is `hi`
+- otherwise the result is `x`
+
+Examples:
+
+```gion
+print(clamp(-2, 0, 10))
+print(clamp(5, 0, 10))
+print(clamp(17, 0, 10))
+print(clamp(12.5, 0, 10))
+```
+
+Expected output:
+
+```text
+0
+5
+10
+10
+```
+
+### Valid Inputs
+
+`clamp(x, lo, hi)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+### Invalid Inputs
+
+This is a runtime error:
+
+```gion
+value = clamp("graphion", 0, 1)
+```
+
+Current message:
+
+```text
+incompatible operand types
+```

@@ -158,7 +158,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] add `bits` compound assignment tests
 - [x] builtin `min(a, b)`
 - [x] builtin `max(a, b)`
-- [ ] builtin `clamp(x, lo, hi)`
+- [x] builtin `clamp(x, lo, hi)`
   - returns `lo` when `x < lo`
   - returns `hi` when `x > hi`
   - otherwise returns `x`

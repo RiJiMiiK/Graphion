@@ -70,6 +70,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ABS`
 - `GVM_OP_MIN`
 - `GVM_OP_MAX`
+- `GVM_OP_CLAMP`
 
 These back the current `.gion` scalar language features:
 
@@ -83,6 +84,7 @@ These back the current `.gion` scalar language features:
 - `abs(...)`
 - `min(a, b)`
 - `max(a, b)`
+- `clamp(x, lo, hi)`
 
 ## Other VM opcode families present in the repo
 

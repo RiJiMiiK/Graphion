@@ -672,3 +672,45 @@ int op_max(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_clamp(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  int64_t lo_i;
+  int64_t hi_i;
+  double value_f;
+  double lo_f;
+  double hi_f;
+  int value_is_float;
+  int lo_is_float;
+  int hi_is_float;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &value_is_float) ||
+      !vm_value_get_numeric(&vm->regs[in->b], &lo_i, &lo_f, &lo_is_float) ||
+      !vm_value_get_numeric(&vm->regs[(uint8_t)in->imm], &hi_i, &hi_f, &hi_is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  if (!value_is_float && !lo_is_float && !hi_is_float) {
+    if (value_i < lo_i) {
+      vm_value_set_int(&vm->regs[in->a], lo_i);
+    } else if (value_i > hi_i) {
+      vm_value_set_int(&vm->regs[in->a], hi_i);
+    } else {
+      vm_value_set_int(&vm->regs[in->a], value_i);
+    }
+    return GVM_OK;
+  }
+
+  if (value_f < lo_f) {
+    vm_value_set_float(&vm->regs[in->a], lo_f);
+  } else if (value_f > hi_f) {
+    vm_value_set_float(&vm->regs[in->a], hi_f);
+  } else {
+    vm_value_set_float(&vm->regs[in->a], value_f);
+  }
+  return GVM_OK;
+}
+

@@ -60,6 +60,7 @@ These names are currently reserved and cannot be assigned:
 - `abs`
 - `min`
 - `max`
+- `clamp`
 - `if`
 - `elif`
 - `else`
@@ -922,7 +923,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`
 3. `**`
 4. `*`, `/`, `//`, `%`
 5. `+`, `-`
@@ -1195,6 +1196,7 @@ Current builtin functions:
 - `abs(...)`
 - `min(a, b)`
 - `max(a, b)`
+- `clamp(x, lo, hi)`
 
 See [Builtins](builtins.md).
 
