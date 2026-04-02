@@ -141,7 +141,7 @@ add_library(graphion_vm
   src/runtime/interpreter.c
   src/runtime/interpreter/base.c
   src/runtime/interpreter/program.c
-  src/runtime/interpreter/atoms.c
+  src/runtime/interpreter/operands.c
   src/runtime/interpreter/expr.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
@@ -428,3 +428,4 @@ if(GRAPHION_ENABLE_FUZZING)
   target_link_libraries(fuzz_parser PRIVATE graphion_vm)
   graphion_enable_pgo(fuzz_parser)
 endif()
+
