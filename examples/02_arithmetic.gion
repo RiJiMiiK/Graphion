@@ -53,6 +53,7 @@ sqrt_count = sqrt(9)
 sqrt_ratio = sqrt(2.25)
 sqrt_expression = sqrt(1 + 8)
 pi_value = pi
+e_value = e
 len_text = len("graphion")
 len_concat = len("graph" + "ion")
 
@@ -100,6 +101,7 @@ print("square root of an integer -> sqrt_count=" + sqrt_count)
 print("square root of a float -> sqrt_ratio=" + sqrt_ratio)
 print("square root of an expression -> sqrt_expression=" + sqrt_expression)
 print("pi constant -> pi_value=" + pi_value)
+print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)
 print("length of a string expression -> len_concat=" + len_concat)
 print("raw expression with normal precedence -> " + (3 + 4 * 2))

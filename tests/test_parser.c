@@ -574,6 +574,7 @@ int test_gion_reserved_name_errors(void) {
       {"sqrt = 1\n", "reserved name cannot be assigned", "gion_reserved_sqrt.gion"},
       {"len = 1\n", "reserved name cannot be assigned", "gion_reserved_len.gion"},
       {"pi = 1\n", "reserved name cannot be assigned", "gion_reserved_pi.gion"},
+      {"e = 1\n", "reserved name cannot be assigned", "gion_reserved_e.gion"},
       {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
       {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
       {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
@@ -697,6 +698,7 @@ int test_gion_arithmetic_expressions(void) {
       "sqrt_float = sqrt(2.25)\n"
       "sqrt_expr = sqrt(1 + 8)\n"
       "pi_value = pi\n"
+      "e_value = e\n"
       "factorial_zero = 0!\n"
       "factorial_int = 5!\n"
       "factorial_group = (1 + 2)!\n"
@@ -745,6 +747,7 @@ int test_gion_arithmetic_expressions(void) {
       "print(sqrt_float)\n"
       "print(sqrt_expr)\n"
       "print(pi_value)\n"
+      "print(e_value)\n"
       "print(factorial_zero)\n"
       "print(factorial_int)\n"
       "print(factorial_group)\n"
@@ -799,6 +802,7 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *sqrt_float;
   const graphion_runtime_value *sqrt_expr;
   const graphion_runtime_value *pi_value;
+  const graphion_runtime_value *e_value;
   const graphion_runtime_value *factorial_zero;
   const graphion_runtime_value *factorial_int;
   const graphion_runtime_value *factorial_group;
@@ -868,6 +872,7 @@ int test_gion_arithmetic_expressions(void) {
   sqrt_float = graphion_runtime_scope_find(&scope, "sqrt_float");
   sqrt_expr = graphion_runtime_scope_find(&scope, "sqrt_expr");
   pi_value = graphion_runtime_scope_find(&scope, "pi_value");
+  e_value = graphion_runtime_scope_find(&scope, "e_value");
   factorial_zero = graphion_runtime_scope_find(&scope, "factorial_zero");
   factorial_int = graphion_runtime_scope_find(&scope, "factorial_int");
   factorial_group = graphion_runtime_scope_find(&scope, "factorial_group");
@@ -1030,6 +1035,10 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 2431;
   }
+  if (e_value == NULL || e_value->kind != GVM_VALUE_FLOAT || e_value->as.float_value != 2.71828182845904523536) {
+    remove(path);
+    return 2432;
+  }
   if (factorial_zero == NULL || factorial_zero->kind != GVM_VALUE_INT || factorial_zero->as.int_value != 1) {
     remove(path);
     return 244;
@@ -1076,7 +1085,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3.141592653589793\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1362,7 +1371,7 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
       "b = 20 / 5 / 2\n"
       "c = 2 * 3 + 4 * 5\n"
       "d = 2 + 3 * 4 - 5\n"
-      "e = 10 - 2 * 3\n"
+      "expr_e = 10 - 2 * 3\n"
       "f = 2 * 3 / 4\n"
       "g = -7 + 2\n"
       "h = 2 + -3 * 4\n"
@@ -1374,7 +1383,7 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
       "print(b)\n"
       "print(c)\n"
       "print(d)\n"
-      "print(e)\n"
+      "print(expr_e)\n"
       "print(f)\n"
       "print(g)\n"
       "print(h)\n"

@@ -40,6 +40,7 @@ Current scalar value kinds:
 Current built-in scalar constants:
 
 - `pi`
+- `e`
 
 ## Identifiers
 
@@ -62,6 +63,7 @@ These names are currently reserved and cannot be assigned:
 - `true`
 - `false`
 - `pi`
+- `e`
 - `abs`
 - `min`
 - `max`
@@ -91,9 +93,11 @@ negative = -7
 ratio = 3.5
 negative_ratio = -2.25
 circle = pi
+growth = e
 ```
 
 `pi` currently evaluates to the floating-point constant `3.141592653589793`.
+`e` currently evaluates to the floating-point constant `2.718281828459045`.
 
 ### Booleans
 
@@ -1245,12 +1249,14 @@ See [Builtins](builtins.md).
 Current built-in scalar constants:
 
 - `pi`
+- `e`
 
 Example:
 
 ```gion
 radius = 2
 circumference = 2 * pi * radius
+growth = e ** 2
 ```
 
 ## Errors
