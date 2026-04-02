@@ -37,6 +37,10 @@ Current scalar value kinds:
 - `string`
 - `bits`
 
+Current built-in scalar constants:
+
+- `pi`
+
 ## Identifiers
 
 Identifiers:
@@ -57,6 +61,7 @@ These names are currently reserved and cannot be assigned:
 - `print`
 - `true`
 - `false`
+- `pi`
 - `abs`
 - `min`
 - `max`
@@ -85,7 +90,10 @@ negative = -7
 ```gion
 ratio = 3.5
 negative_ratio = -2.25
+circle = pi
 ```
+
+`pi` currently evaluates to the floating-point constant `3.141592653589793`.
 
 ### Booleans
 
@@ -1231,6 +1239,19 @@ Current builtin functions:
 - `len(x)`
 
 See [Builtins](builtins.md).
+
+## Constants
+
+Current built-in scalar constants:
+
+- `pi`
+
+Example:
+
+```gion
+radius = 2
+circumference = 2 * pi * radius
+```
 
 ## Errors
 

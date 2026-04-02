@@ -29,6 +29,7 @@ Graphion currently supports scalar assignments.
 ```gion
 count = 42
 ratio = 3.5
+circle = pi
 name = "graphion"
 ready = true
 ```
@@ -744,6 +745,7 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_int = sqrt(9)
 sqrt_float = sqrt(2.25)
 sqrt_expr = sqrt(1 + 8)
+pi_value = pi
 factorial_zero = 0!
 factorial_int = 5!
 factorial_group = (1 + 2)!
@@ -766,6 +768,7 @@ print(clamp_float)
 print(sqrt_int)
 print(sqrt_float)
 print(sqrt_expr)
+print(pi_value)
 print(factorial_zero)
 print(factorial_int)
 print(factorial_group)
@@ -792,9 +795,18 @@ Expected output:
 3
 1.5
 3
+3.141592653589793
 1
 120
 6
 8
 8
+```
+
+Graphion also exposes `pi` as a built-in numeric constant, so you can write expressions like:
+
+```gion
+radius = 2
+circumference = 2 * pi * radius
+print(circumference)
 ```

@@ -94,6 +94,12 @@ int parse_scalar_literal(graphion_runtime_program *program,
     *cursor += 5;
     return GINT_OK;
   }
+  if (strncmp(start, "pi", 2U) == 0 && !is_ident_char(start[2])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 3.14159265358979323846;
+    *cursor += 2;
+    return GINT_OK;
+  }
   if (start[0] == '0' && (start[1] == 'b' || start[1] == 'B')) {
     const char *scan = start + 2;
     uint64_t bits_value = 0U;
@@ -181,7 +187,7 @@ int parse_operand(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
-    if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0) {
+    if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0 || strcmp(name, "pi") == 0) {
       *cursor = saved;
     } else {
       int index;
