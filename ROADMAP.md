@@ -155,4 +155,4 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] reject invalid mixed-type compound assignments on `bits`
 - [x] document `bits` compound assignments
 - [x] add `bits` compound assignment examples
-- [ ] add `bits` compound assignment tests
+- [x] add `bits` compound assignment tests
