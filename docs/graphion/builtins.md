@@ -439,7 +439,7 @@ Current messages:
 
 ```text
 incompatible operand types
-log10 requires strictly positive input
+log requires x > 0 and base > 0 with base != 1
 ```
 
 ## `len(x)`

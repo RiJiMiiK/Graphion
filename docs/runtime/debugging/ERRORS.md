@@ -90,7 +90,6 @@ Typical messages include:
 - `sqrt requires non-negative input`
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
-- `log10 requires strictly positive input`
 - `factorial requires non-negative integer input`
 
 ## Current `.gion` behavior examples

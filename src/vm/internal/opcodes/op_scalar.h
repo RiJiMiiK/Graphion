@@ -43,7 +43,6 @@ int op_sqrt(graphion_vm *vm, const graphion_insn *in);
 int op_exp(graphion_vm *vm, const graphion_insn *in);
 int op_ln(graphion_vm *vm, const graphion_insn *in);
 int op_log(graphion_vm *vm, const graphion_insn *in);
-int op_log10(graphion_vm *vm, const graphion_insn *in);
 int op_len(graphion_vm *vm, const graphion_insn *in);
 int op_factorial(graphion_vm *vm, const graphion_insn *in);
 

@@ -369,6 +369,7 @@ static int parse_factor(const char **cursor,
     lhs.global_index = 0U;
   } else if (strncmp(*cursor, "log10", 5U) == 0 && !is_ident_char((*cursor)[5])) {
     const uint8_t target_reg = base_reg;
+    const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
     const char *after_name = *cursor + 5;
     skip_spaces(&after_name);
     if (*after_name != '(') {
@@ -388,7 +389,11 @@ static int parse_factor(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = program_emit(program, GVM_OP_LOG10, target_reg, 0U, 0, line, diagnostic);
+    rc = program_emit_load_int(program, scratch_reg, 10, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_LOG, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
