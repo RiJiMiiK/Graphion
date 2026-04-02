@@ -713,18 +713,48 @@ For example, this is still invalid:
 value = "count=" + 7
 ```
 
-## Absolute Value
+## Numeric Builtins
 
-Graphion currently provides `abs(...)` as a builtin for numeric values.
+Graphion currently provides `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, and `sqrt(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
 abs_float = abs(-3.5)
 abs_expr = abs(-5 + 2)
+min_int = min(7, 3)
+min_float = min(3.5, 2)
+min_expr = min(10 - 2, 3 * 3)
+max_int = max(7, 3)
+max_float = max(3.5, 2)
+max_expr = max(10 - 2, 3 * 3)
+clamp_low = clamp(-2, 0, 10)
+clamp_mid = clamp(5, 0, 10)
+clamp_high = clamp(17, 0, 10)
+clamp_float = clamp(12.5, 0, 10)
+sqrt_int = sqrt(9)
+sqrt_float = sqrt(2.25)
+sqrt_expr = sqrt(1 + 8)
+len_text = len("graphion")
+len_concat = len("graph" + "ion")
 
 print(abs_int)
 print(abs_float)
 print(abs_expr)
+print(min_int)
+print(min_float)
+print(min_expr)
+print(max_int)
+print(max_float)
+print(max_expr)
+print(clamp_low)
+print(clamp_mid)
+print(clamp_high)
+print(clamp_float)
+print(sqrt_int)
+print(sqrt_float)
+print(sqrt_expr)
+print(len_text)
+print(len_concat)
 ```
 
 Expected output:
@@ -733,4 +763,19 @@ Expected output:
 42
 3.5
 3
+3
+2
+8
+7
+3.5
+9
+0
+5
+10
+10
+3
+1.5
+3
+8
+8
 ```

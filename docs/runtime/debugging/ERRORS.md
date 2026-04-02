@@ -87,6 +87,7 @@ Typical messages include:
 
 - `division by zero`
 - `incompatible operand types`
+- `sqrt requires non-negative input`
 
 ## Current `.gion` behavior examples
 

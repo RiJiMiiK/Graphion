@@ -1,6 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
-# negative operands, and the abs() builtin.
+# negative operands, numeric builtins such as abs(), min(), max(), clamp(), and sqrt(),
+# and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -35,6 +36,21 @@ float_remainder = 7.5 % 2
 abs_count = abs(-42)
 abs_ratio = abs(-3.5)
 abs_expression = abs(-5 + 2)
+min_count = min(7, 3)
+min_ratio = min(3.5, 2)
+min_expression = min(10 - 2, 3 * 3)
+max_count = max(7, 3)
+max_ratio = max(3.5, 2)
+max_expression = max(10 - 2, 3 * 3)
+clamp_low = clamp(-2, 0, 10)
+clamp_mid = clamp(5, 0, 10)
+clamp_high = clamp(17, 0, 10)
+clamp_float = clamp(12.5, 0, 10)
+sqrt_count = sqrt(9)
+sqrt_ratio = sqrt(2.25)
+sqrt_expression = sqrt(1 + 8)
+len_text = len("graphion")
+len_concat = len("graph" + "ion")
 
 print("basic addition -> sum=" + sum)
 print("operator precedence -> mixed=" + mixed)
@@ -63,6 +79,21 @@ print("float modulo -> float_remainder=" + float_remainder)
 print("absolute value of an integer -> abs_count=" + abs_count)
 print("absolute value of a float -> abs_ratio=" + abs_ratio)
 print("absolute value of an expression -> abs_expression=" + abs_expression)
+print("minimum of two integers -> min_count=" + min_count)
+print("minimum of mixed numeric values -> min_ratio=" + min_ratio)
+print("minimum of two expressions -> min_expression=" + min_expression)
+print("maximum of two integers -> max_count=" + max_count)
+print("maximum of mixed numeric values -> max_ratio=" + max_ratio)
+print("maximum of two expressions -> max_expression=" + max_expression)
+print("clamp below lower bound -> clamp_low=" + clamp_low)
+print("clamp inside range -> clamp_mid=" + clamp_mid)
+print("clamp above upper bound -> clamp_high=" + clamp_high)
+print("clamp float above upper bound -> clamp_float=" + clamp_float)
+print("square root of an integer -> sqrt_count=" + sqrt_count)
+print("square root of a float -> sqrt_ratio=" + sqrt_ratio)
+print("square root of an expression -> sqrt_expression=" + sqrt_expression)
+print("length of a string literal -> len_text=" + len_text)
+print("length of a string expression -> len_concat=" + len_concat)
 print("raw expression with normal precedence -> " + (3 + 4 * 2))
 print("raw expression with grouped precedence -> " + ((3 + 4) * 2))
 print("raw modulo expression -> " + (10 % 4))
