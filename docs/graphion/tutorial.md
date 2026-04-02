@@ -181,6 +181,8 @@ not_then_mask_bits = ~0b0011 & 0b1111
 shift_count_expression_bits = 0b0011 << (1 + 1)
 compound_mask_bits = 0b1100
 compound_mask_bits &= 0b1010
+compound_merge_bits = 0b1100
+compound_merge_bits |= 0b0011
 
 print(short_bits)
 print(wide_bits)
@@ -200,6 +202,7 @@ print(grouped_mask_then_shift_bits)
 print(not_then_mask_bits)
 print(shift_count_expression_bits)
 print(compound_mask_bits)
+print(compound_merge_bits)
 ```
 
 Expected output:
@@ -223,6 +226,7 @@ true
 0b1100
 0b1100
 0b1000
+0b1111
 ```
 
 Current behavior:
@@ -234,6 +238,7 @@ Current behavior:
 - `&` works between `bits` values with the same stored width
 - `0b1100 & 0b1010` therefore produces `0b1000`
 - `&=` follows the same rule, so `mask = 0b1100` then `mask &= 0b1010` produces `0b1000`
+- `|=` follows the same rule, so `merge = 0b1100` then `merge |= 0b0011` produces `0b1111`
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`

@@ -153,7 +153,7 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
   } else if (rhs_cursor[0] == '/' && rhs_cursor[1] == '/' && rhs_cursor[2] == '=') {
     rhs_cursor += 3;
   } else if ((rhs_cursor[0] == '+' || rhs_cursor[0] == '-' || rhs_cursor[0] == '*' || rhs_cursor[0] == '/' ||
-              rhs_cursor[0] == '%' || rhs_cursor[0] == '&') &&
+              rhs_cursor[0] == '%' || rhs_cursor[0] == '&' || rhs_cursor[0] == '|') &&
              rhs_cursor[1] == '=') {
     rhs_cursor += 2;
   } else if (*rhs_cursor == '=') {

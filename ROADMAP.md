@@ -146,7 +146,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] add `bits` literal examples
 - [x] add `bits` parser and runtime tests
 - [x] `bits &= bits`
-- [ ] `bits |= bits`
+- [x] `bits |= bits`
 - [ ] `bits ^= bits`
 - [ ] `bits <<= int`
   - should keep the same `bits << int` rules

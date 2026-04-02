@@ -21,6 +21,8 @@ not_then_mask_bits = ~0b0011 & 0b1111
 shift_count_expression_bits = 0b0011 << (1 + 1)
 compound_mask_bits = 0b1100
 compound_mask_bits &= 0b1010
+compound_merge_bits = 0b1100
+compound_merge_bits |= 0b0011
 
 print("bits literal with width 2 -> short_bits=" + short_bits)
 print("bits literal with width 4 -> wide_bits=" + wide_bits)
@@ -40,3 +42,4 @@ print("grouped bits and then right shift -> grouped_mask_then_shift_bits=" + gro
 print("bits not binds before bits and -> not_then_mask_bits=" + not_then_mask_bits)
 print("bits shift count can be an int expression -> shift_count_expression_bits=" + shift_count_expression_bits)
 print("bits compound and assignment keeps width -> compound_mask_bits=" + compound_mask_bits)
+print("bits compound or assignment keeps width -> compound_merge_bits=" + compound_merge_bits)

@@ -70,7 +70,7 @@ int line_keyword_is_assignment_like(const runtime_source_line *line, const char 
     return 1;
   }
   if ((cursor[0] == '+' || cursor[0] == '-' || cursor[0] == '*' || cursor[0] == '/' || cursor[0] == '%' ||
-       cursor[0] == '&') &&
+       cursor[0] == '&' || cursor[0] == '|') &&
       cursor[1] == '=') {
     return 1;
   }
