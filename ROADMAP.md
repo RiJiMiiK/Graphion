@@ -117,7 +117,8 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] `~bits`
 - [x] `bits << int`
 - [x] `bits >> int`
-- [ ] require matching widths for binary bitwise operators
+- [x] require matching widths for binary bitwise operators
+  - `&`, `|`, and `^` reject width mismatches
   - `0b10 & 0b0010` should be rejected
 - [x] preserve width across `~`, `<<`, and `>>`
 - [ ] truncate overflow back to stored `bits` width
