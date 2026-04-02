@@ -302,6 +302,52 @@ Current message:
 incompatible operand types
 ```
 
+## `ln(x)`
+
+`ln(x)` returns the natural logarithm of a numeric expression.
+
+Examples:
+
+```gion
+print(ln(1))
+print(ln(e))
+print(ln(e ** 2))
+```
+
+Expected output:
+
+```text
+0
+1
+2
+```
+
+### Valid Inputs
+
+`ln(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = ln("graphion")
+value = ln(0)
+value = ln(-1)
+```
+
+Current messages:
+
+```text
+incompatible operand types
+ln requires strictly positive input
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

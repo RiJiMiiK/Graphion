@@ -122,6 +122,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;
+      case GVM_OP_LN:
+        rc = op_ln(vm, &in);
+        break;
       case GVM_OP_LEN:
         rc = op_len(vm, &in);
         break;
@@ -274,6 +277,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_CLAMP] = op_clamp,
       [GVM_OP_SQRT] = op_sqrt,
       [GVM_OP_EXP] = op_exp,
+      [GVM_OP_LN] = op_ln,
       [GVM_OP_LEN] = op_len,
       [GVM_OP_FACTORIAL] = op_factorial,
       [GVM_OP_MOV] = op_mov,
@@ -369,6 +373,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_CLAMP] = &&L_clamp,
       [GVM_OP_SQRT] = &&L_sqrt,
       [GVM_OP_EXP] = &&L_exp,
+      [GVM_OP_LN] = &&L_ln,
       [GVM_OP_LEN] = &&L_len,
       [GVM_OP_FACTORIAL] = &&L_factorial,
       [GVM_OP_MOV] = &&L_mov,
@@ -624,6 +629,12 @@ L_clamp:
     continue;
   L_exp:
     rc = op_exp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_ln:
+    rc = op_ln(vm, &in);
     if (rc != 0) {
       return rc;
     }

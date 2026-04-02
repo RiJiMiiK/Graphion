@@ -573,6 +573,7 @@ int test_gion_reserved_name_errors(void) {
       {"clamp = 1\n", "reserved name cannot be assigned", "gion_reserved_clamp.gion"},
       {"sqrt = 1\n", "reserved name cannot be assigned", "gion_reserved_sqrt.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
+      {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
       {"len = 1\n", "reserved name cannot be assigned", "gion_reserved_len.gion"},
       {"pi = 1\n", "reserved name cannot be assigned", "gion_reserved_pi.gion"},
       {"e = 1\n", "reserved name cannot be assigned", "gion_reserved_e.gion"},
@@ -701,6 +702,9 @@ int test_gion_arithmetic_expressions(void) {
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
+      "ln_int = ln(1)\n"
+      "ln_float = ln(e)\n"
+      "ln_expr = ln(e ** 2)\n"
       "pi_value = pi\n"
       "e_value = e\n"
       "factorial_zero = 0!\n"
@@ -753,6 +757,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
+      "print(ln_int)\n"
+      "print(ln_float)\n"
+      "print(ln_expr)\n"
       "print(pi_value)\n"
       "print(e_value)\n"
       "print(factorial_zero)\n"
@@ -811,6 +818,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
+  const graphion_runtime_value *ln_int;
+  const graphion_runtime_value *ln_float;
+  const graphion_runtime_value *ln_expr;
   const graphion_runtime_value *pi_value;
   const graphion_runtime_value *e_value;
   const graphion_runtime_value *factorial_zero;
@@ -884,6 +894,9 @@ int test_gion_arithmetic_expressions(void) {
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
+  ln_int = graphion_runtime_scope_find(&scope, "ln_int");
+  ln_float = graphion_runtime_scope_find(&scope, "ln_float");
+  ln_expr = graphion_runtime_scope_find(&scope, "ln_expr");
   pi_value = graphion_runtime_scope_find(&scope, "pi_value");
   e_value = graphion_runtime_scope_find(&scope, "e_value");
   factorial_zero = graphion_runtime_scope_find(&scope, "factorial_zero");
@@ -1058,6 +1071,20 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 2435;
   }
+  if (ln_int == NULL || ln_int->kind != GVM_VALUE_FLOAT || ln_int->as.float_value != 0.0) {
+    remove(path);
+    return 2436;
+  }
+  if (ln_float == NULL || ln_float->kind != GVM_VALUE_FLOAT || ln_float->as.float_value < 0.999999999 ||
+      ln_float->as.float_value > 1.000000001) {
+    remove(path);
+    return 2437;
+  }
+  if (ln_expr == NULL || ln_expr->kind != GVM_VALUE_FLOAT || ln_expr->as.float_value < 1.999999999 ||
+      ln_expr->as.float_value > 2.000000001) {
+    remove(path);
+    return 2438;
+  }
   if (pi_value == NULL || pi_value->kind != GVM_VALUE_FLOAT || pi_value->as.float_value != 3.14159265358979323846) {
     remove(path);
     return 2431;
@@ -1112,7 +1139,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n2.71828\n1\n7.38906\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n2.71828\n1\n7.38906\n0\n1\n2\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1472,7 +1499,10 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = clamp(1, 0, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(-1)\n", GINT_ERR_RUN, "sqrt requires non-negative input"},
+      {"value = ln(0)\n", GINT_ERR_RUN, "ln requires strictly positive input"},
+      {"value = ln(-1)\n", GINT_ERR_RUN, "ln requires strictly positive input"},
       {"value = (-1)!\n", GINT_ERR_RUN, "factorial requires non-negative integer input"},
       {"value = 1.5!\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = len(1)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1535,6 +1565,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = sqrt(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sqrt argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = exp(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp argument"},
+      {"value = ln()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = ln(1 + 2\n", GINT_ERR_PARSE, "expected ')' after ln argument"},
       {"value = !\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len(\"x\"\n", GINT_ERR_PARSE, "expected ')' after len argument"},

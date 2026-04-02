@@ -952,7 +952,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `ln(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
@@ -1241,6 +1241,7 @@ Current builtin functions:
 - `clamp(x, lo, hi)`
 - `sqrt(x)`
 - `exp(x)`
+- `ln(x)`
 - `len(x)`
 
 See [Builtins](builtins.md).
