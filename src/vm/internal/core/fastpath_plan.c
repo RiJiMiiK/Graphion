@@ -472,6 +472,8 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
       case GVM_OP_BIT_OR:
       case GVM_OP_BIT_XOR:
       case GVM_OP_BIT_NOT:
+      case GVM_OP_BIT_SHL:
+      case GVM_OP_BIT_SHR:
         if (in.op == GVM_OP_NOT) {
           if (reg_kinds[in.a] != GVM_VALUE_INT && reg_kinds[in.a] != GVM_VALUE_FLOAT &&
               reg_kinds[in.a] != GVM_VALUE_BOOL) {
@@ -497,6 +499,18 @@ static int validate_value_move_program_int_add_safety(const graphion_vm *vm) {
           break;
         } else if (in.op == GVM_OP_BIT_XOR) {
           if (reg_kinds[in.a] != GVM_VALUE_BITS || reg_kinds[in.b] != GVM_VALUE_BITS) {
+            return 0;
+          }
+          reg_kinds[in.a] = GVM_VALUE_BITS;
+          break;
+        } else if (in.op == GVM_OP_BIT_SHL) {
+          if (reg_kinds[in.a] != GVM_VALUE_BITS || reg_kinds[in.b] != GVM_VALUE_INT) {
+            return 0;
+          }
+          reg_kinds[in.a] = GVM_VALUE_BITS;
+          break;
+        } else if (in.op == GVM_OP_BIT_SHR) {
+          if (reg_kinds[in.a] != GVM_VALUE_BITS || reg_kinds[in.b] != GVM_VALUE_INT) {
             return 0;
           }
           reg_kinds[in.a] = GVM_VALUE_BITS;

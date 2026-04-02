@@ -172,6 +172,10 @@ merged_bits = 0b1100 | 0b1010
 xor_bits = 0b1100 ^ 0b1010
 not_wide_bits = ~0b0010
 not_short_bits = ~0b10
+shifted_bits = 0b0011 << 1
+truncated_shift_bits = 0b1111 << 1
+right_shifted_bits = 0b1010 >> 1
+cleared_right_shift_bits = 0b1010 >> 4
 
 print(short_bits)
 print(wide_bits)
@@ -183,6 +187,10 @@ print(merged_bits)
 print(xor_bits)
 print(not_wide_bits)
 print(not_short_bits)
+print(shifted_bits)
+print(truncated_shift_bits)
+print(right_shifted_bits)
+print(cleared_right_shift_bits)
 ```
 
 Expected output:
@@ -198,6 +206,10 @@ true
 0b0110
 0b1101
 0b01
+0b0110
+0b1110
+0b0101
+0b0000
 ```
 
 Current behavior:
@@ -211,8 +223,16 @@ Current behavior:
 - `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
 - `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
 - `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`
-- mixing `bits` with `int`, `float`, `bool`, or `string` is rejected
-- this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, and `~`
+- `<<` keeps the stored width and truncates overflow back to that width
+- `0b0011 << 1` therefore produces `0b0110`
+- `0b1111 << 1` therefore produces `0b1110`
+- `>>` keeps the stored width and shifts in zeroes from the left
+- `0b1010 >> 1` therefore produces `0b0101`
+- `0b1010 >> 4` therefore produces `0b0000`
+- `&`, `|`, and `^` reject non-`bits` operands
+- `<<` and `>>` accept a non-negative `int` shift count on the right
+- other `bits` / `int` mixes are still rejected
+- this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, `~`, `<<`, and `>>`
 
 ## Equality
 

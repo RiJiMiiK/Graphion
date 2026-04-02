@@ -74,6 +74,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_BIT_NOT:
         rc = op_bit_not_cmp(vm, &in);
         break;
+      case GVM_OP_BIT_SHL:
+        rc = op_bit_shl_cmp(vm, &in);
+        break;
+      case GVM_OP_BIT_SHR:
+        rc = op_bit_shr_cmp(vm, &in);
+        break;
       case GVM_OP_AND:
         rc = op_and_cmp(vm, &in);
         break;
@@ -231,6 +237,8 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_BIT_OR] = op_bit_or_cmp,
       [GVM_OP_BIT_XOR] = op_bit_xor_cmp,
       [GVM_OP_BIT_NOT] = op_bit_not_cmp,
+      [GVM_OP_BIT_SHL] = op_bit_shl_cmp,
+      [GVM_OP_BIT_SHR] = op_bit_shr_cmp,
       [GVM_OP_AND] = op_and_cmp,
       [GVM_OP_OR] = op_or_cmp,
       [GVM_OP_NOT] = op_not_cmp,
@@ -317,6 +325,8 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_BIT_OR] = &&L_bit_or,
       [GVM_OP_BIT_XOR] = &&L_bit_xor,
       [GVM_OP_BIT_NOT] = &&L_bit_not,
+      [GVM_OP_BIT_SHL] = &&L_bit_shl,
+      [GVM_OP_BIT_SHR] = &&L_bit_shr,
       [GVM_OP_AND] = &&L_and,
       [GVM_OP_OR] = &&L_or,
       [GVM_OP_NOT] = &&L_not,
@@ -483,6 +493,18 @@ L_bit_xor:
     continue;
 L_bit_not:
     rc = op_bit_not_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_bit_shl:
+    rc = op_bit_shl_cmp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_bit_shr:
+    rc = op_bit_shr_cmp(vm, &in);
     if (rc != 0) {
       return rc;
     }

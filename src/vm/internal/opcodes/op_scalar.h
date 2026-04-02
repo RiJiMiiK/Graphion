@@ -32,6 +32,8 @@ int op_bit_and_cmp(graphion_vm *vm, const graphion_insn *in);
 int op_bit_or_cmp(graphion_vm *vm, const graphion_insn *in);
 int op_bit_xor_cmp(graphion_vm *vm, const graphion_insn *in);
 int op_bit_not_cmp(graphion_vm *vm, const graphion_insn *in);
+int op_bit_shl_cmp(graphion_vm *vm, const graphion_insn *in);
+int op_bit_shr_cmp(graphion_vm *vm, const graphion_insn *in);
 
 int op_abs(graphion_vm *vm, const graphion_insn *in);
 

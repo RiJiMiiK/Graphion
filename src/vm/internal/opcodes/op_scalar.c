@@ -499,6 +499,74 @@ static int op_bit_not(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int op_bit_shl(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  uint8_t lhs_width;
+  uint64_t payload;
+  int64_t shift_i;
+  uint64_t mask;
+  uint64_t result;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+  if (lhs->kind != GVM_VALUE_BITS || rhs->kind != GVM_VALUE_INT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  lhs_width = vm_value_get_bits_width(lhs);
+  if (lhs_width == 0U) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  shift_i = rhs->as.int_value;
+  if (shift_i < 0) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  payload = vm_value_get_bits_payload(lhs);
+  mask = lhs_width >= 64U ? UINT64_MAX : ((1ULL << lhs_width) - 1ULL);
+  result = (uint64_t)shift_i >= lhs_width ? 0ULL : ((payload << (unsigned int)shift_i) & mask);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bits(&vm->regs[in->a], result, lhs_width);
+  return GVM_OK;
+}
+
+static int op_bit_shr(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_vm_value *lhs;
+  const graphion_vm_value *rhs;
+  uint8_t lhs_width;
+  uint64_t payload;
+  int64_t shift_i;
+  uint64_t result;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+
+  lhs = &vm->regs[in->a];
+  rhs = &vm->regs[in->b];
+  if (lhs->kind != GVM_VALUE_BITS || rhs->kind != GVM_VALUE_INT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  lhs_width = vm_value_get_bits_width(lhs);
+  if (lhs_width == 0U) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  shift_i = rhs->as.int_value;
+  if (shift_i < 0) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  payload = vm_value_get_bits_payload(lhs);
+  result = (uint64_t)shift_i >= lhs_width ? 0ULL : (payload >> (unsigned int)shift_i);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bits(&vm->regs[in->a], result, lhs_width);
+  return GVM_OK;
+}
+
 int op_add(graphion_vm *vm, const graphion_insn *in) { return op_numeric_binary(vm, in, GVM_OP_ADD); }
 int op_sub(graphion_vm *vm, const graphion_insn *in) { return op_numeric_binary(vm, in, GVM_OP_SUB); }
 int op_mul(graphion_vm *vm, const graphion_insn *in) { return op_numeric_binary(vm, in, GVM_OP_MUL); }
@@ -526,6 +594,8 @@ int op_bit_and_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_and
 int op_bit_or_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_or(vm, in); }
 int op_bit_xor_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_xor(vm, in); }
 int op_bit_not_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_not(vm, in); }
+int op_bit_shl_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_shl(vm, in); }
+int op_bit_shr_cmp(graphion_vm *vm, const graphion_insn *in) { return op_bit_shr(vm, in); }
 
 int op_abs(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;

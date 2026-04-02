@@ -37,6 +37,13 @@ static int parse_bitand_expression(const char **cursor,
                                    unsigned int line,
                                    graphion_runtime_diagnostic *diagnostic);
 
+static int parse_shift_expression(const char **cursor,
+                                  graphion_runtime_program *program,
+                                  parsed_expr_result *result_out,
+                                  uint8_t base_reg,
+                                  unsigned int line,
+                                  graphion_runtime_diagnostic *diagnostic);
+
 static int parse_additive_expression(const char **cursor,
                                      graphion_runtime_program *program,
                                      parsed_expr_result *result_out,
@@ -410,7 +417,7 @@ static int parse_bitand_expression(const char **cursor,
   parsed_expr_result lhs;
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
-  int rc = parse_additive_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+  int rc = parse_shift_expression(cursor, program, &lhs, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -421,7 +428,7 @@ static int parse_bitand_expression(const char **cursor,
       break;
     }
     (*cursor)++;
-    rc = parse_additive_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    rc = parse_shift_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -434,6 +441,56 @@ static int parse_bitand_expression(const char **cursor,
       return rc;
     }
     rc = program_emit(program, GVM_OP_BIT_AND, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+  *result_out = lhs;
+  return GINT_OK;
+}
+
+static int parse_shift_expression(const char **cursor,
+                                  graphion_runtime_program *program,
+                                  parsed_expr_result *result_out,
+                                  uint8_t base_reg,
+                                  unsigned int line,
+                                  graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc = parse_additive_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (;;) {
+    parsed_expr_result rhs;
+    skip_spaces(cursor);
+    graphion_opcode shift_op;
+    if ((*cursor)[0] == '<' && (*cursor)[1] == '<') {
+      shift_op = GVM_OP_BIT_SHL;
+    } else if ((*cursor)[0] == '>' && (*cursor)[1] == '>') {
+      shift_op = GVM_OP_BIT_SHR;
+    } else {
+      break;
+    }
+    *cursor += 2;
+    rc = parse_additive_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &rhs, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, shift_op, target_reg, scratch_reg, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

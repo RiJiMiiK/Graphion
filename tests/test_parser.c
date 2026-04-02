@@ -1765,6 +1765,174 @@ int test_gion_bits_not_runtime_errors(void) {
   return 0;
 }
 
+int test_gion_bits_shl(void) {
+  const char *source =
+      "shifted_value = 0b0011 << 1\n"
+      "truncated_value = 0b1111 << 1\n"
+      "print(shifted_value)\n"
+      "print(truncated_value)\n";
+  const char *path = "gion_bits_shl.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *shifted_value;
+  const graphion_runtime_value *truncated_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
+  truncated_value = graphion_runtime_scope_find(&scope, "truncated_value");
+  if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
+      (uint64_t)shifted_value->as.int_value != 6U) {
+    remove(path);
+    return 3;
+  }
+  if (truncated_value == NULL || truncated_value->kind != GVM_VALUE_BITS || truncated_value->reserved[0] != 4U ||
+      (uint64_t)truncated_value->as.int_value != 14U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b0110\n0b1110\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_shl_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 << 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 << 1.0\n", "incompatible operand types"},
+      {"value = 0b10 << -1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_shr(void) {
+  const char *source =
+      "shifted_value = 0b1010 >> 1\n"
+      "cleared_value = 0b1010 >> 4\n"
+      "print(shifted_value)\n"
+      "print(cleared_value)\n";
+  const char *path = "gion_bits_shr.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *shifted_value;
+  const graphion_runtime_value *cleared_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
+  cleared_value = graphion_runtime_scope_find(&scope, "cleared_value");
+  if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
+      (uint64_t)shifted_value->as.int_value != 5U) {
+    remove(path);
+    return 3;
+  }
+  if (cleared_value == NULL || cleared_value->kind != GVM_VALUE_BITS || cleared_value->reserved[0] != 4U ||
+      (uint64_t)cleared_value->as.int_value != 0U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b0101\n0b0000\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_shr_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 >> 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 >> 1.0\n", "incompatible operand types"},
+      {"value = 0b10 >> -1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
 int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;

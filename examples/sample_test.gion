@@ -20,6 +20,10 @@ merged_bits = 0b1100 | 0b1010
 xor_bits = 0b1100 ^ 0b1010
 not_wide_bits = ~0b0010
 not_short_bits = ~0b10
+shifted_bits = 0b0011 << 1
+truncated_shift_bits = 0b1111 << 1
+right_shifted_bits = 0b1010 >> 1
+cleared_right_shift_bits = 0b1010 >> 4
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -155,6 +159,10 @@ print("overview bits or -> merged_bits=" + merged_bits)
 print("overview bits xor -> xor_bits=" + xor_bits)
 print("overview bits not width 4 -> not_wide_bits=" + not_wide_bits)
 print("overview bits not width 2 -> not_short_bits=" + not_short_bits)
+print("overview bits left shift -> shifted_bits=" + shifted_bits)
+print("overview bits left shift truncation -> truncated_shift_bits=" + truncated_shift_bits)
+print("overview bits right shift -> right_shifted_bits=" + right_shifted_bits)
+print("overview bits right shift zero-fill -> cleared_right_shift_bits=" + cleared_right_shift_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

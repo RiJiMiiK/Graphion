@@ -110,15 +110,16 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `0b10 == 0b0010` should be `true`
 - [x] `bits != bits`
 - [x] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
+  - shift counts for `<<` / `>>` are the explicit exception: they use a non-negative `int` on the right
 - [x] `bits & bits`
 - [x] `bits | bits`
 - [x] `bits ^ bits`
 - [x] `~bits`
-- [ ] `bits << bits`
-- [ ] `bits >> bits`
+- [x] `bits << int`
+- [x] `bits >> int`
 - [ ] require matching widths for binary bitwise operators
   - `0b10 & 0b0010` should be rejected
-- [ ] preserve width across `~`, `<<`, and `>>`
+- [x] preserve width across `~`, `<<`, and `>>`
 - [ ] truncate overflow back to stored `bits` width
 - [ ] reject non-bitwise arithmetic on `bits`
   - `+`
