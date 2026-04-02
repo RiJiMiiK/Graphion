@@ -34,8 +34,11 @@ static int execute_condition_program(const graphion_runtime_program *program,
     if (rc == GVM_ERR_DOMAIN) {
       return fail(diagnostic, line, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
     }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
+    if (rc == GVM_ERR_LN_DOMAIN) {
       return fail(diagnostic, line, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_LOG_DOMAIN) {
+      return fail(diagnostic, line, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
       return fail(diagnostic, line, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
@@ -709,8 +712,11 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     if (rc == GVM_ERR_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
     }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
+    if (rc == GVM_ERR_LN_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_LOG_DOMAIN) {
+      return fail(diagnostic, 1U, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);

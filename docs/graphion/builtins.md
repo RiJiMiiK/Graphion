@@ -348,6 +348,54 @@ incompatible operand types
 ln requires strictly positive input
 ```
 
+## `log(x, base)`
+
+`log(x, base)` returns the logarithm of a numeric expression in an explicit base.
+
+Examples:
+
+```gion
+print(log(8, 2))
+print(log(100, 10))
+print(log(2 ** 5, 2))
+```
+
+Expected output:
+
+```text
+3
+2
+5
+```
+
+### Valid Inputs
+
+`log(x, base)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = log("graphion", 2)
+value = log(8, "base")
+value = log(0, 10)
+value = log(8, 1)
+```
+
+Current messages:
+
+```text
+incompatible operand types
+log requires x > 0 and base > 0 with base != 1
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

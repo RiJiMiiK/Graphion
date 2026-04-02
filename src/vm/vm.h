@@ -74,8 +74,9 @@ typedef enum {
   GVM_OP_SQRT = 66,
   GVM_OP_EXP = 67,
   GVM_OP_LN = 68,
-  GVM_OP_LEN = 69,
-  GVM_OP_FACTORIAL = 70,
+  GVM_OP_LOG = 69,
+  GVM_OP_LEN = 70,
+  GVM_OP_FACTORIAL = 71,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -111,7 +112,8 @@ typedef enum {
   GVM_ERR_DIVIDE_BY_ZERO = -22,
   GVM_ERR_DOMAIN = -23,
   GVM_ERR_FACTORIAL_DOMAIN = -24,
-  GVM_ERR_LOG_DOMAIN = -25
+  GVM_ERR_LN_DOMAIN = -25,
+  GVM_ERR_LOG_DOMAIN = -26
 } graphion_vm_result;
 
 typedef enum {
