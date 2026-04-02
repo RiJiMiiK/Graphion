@@ -734,3 +734,18 @@ int op_sqrt(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_len(graphion_vm *vm, const graphion_insn *in) {
+  const char *text;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_STRING) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  text = vm->regs[in->a].as.string_value != NULL ? vm->regs[in->a].as.string_value : "";
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)strlen(text));
+  return GVM_OK;
+}

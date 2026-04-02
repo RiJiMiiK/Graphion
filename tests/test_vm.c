@@ -724,6 +724,39 @@ int test_vm_sqrt_opcode(void) {
   return 0;
 }
 
+int test_vm_len_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[1];
+  graphion_vm_value globals[1];
+  const graphion_insn program[] = {
+      {GVM_OP_LOAD_CONST, 0, 0, 0},
+      {GVM_OP_LEN, 0, 0, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  int rc;
+
+  test_set_value_string(&const_pool[0], "graphion");
+  globals[0].kind = GVM_VALUE_NONE;
+  globals[0].as.int_value = 0;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 1U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    return 1;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
+    return 2;
+  }
+  if (globals[0].kind != GVM_VALUE_INT || globals[0].as.int_value != 8) {
+    return 3;
+  }
+  return 0;
+}
+
 int test_vm_eq_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[12];

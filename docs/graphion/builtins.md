@@ -258,3 +258,43 @@ Current messages:
 incompatible operand types
 sqrt requires non-negative input
 ```
+
+## `len(x)`
+
+`len(x)` returns the length of a string expression.
+
+Examples:
+
+```gion
+print(len("graphion"))
+print(len("graph" + "ion"))
+```
+
+Expected output:
+
+```text
+8
+8
+```
+
+### Valid Inputs
+
+`len(x)` currently accepts:
+
+- string expressions
+
+The result is currently returned as an `int`.
+
+### Invalid Inputs
+
+This is a runtime error:
+
+```gion
+value = len(42)
+```
+
+Current message:
+
+```text
+incompatible operand types
+```

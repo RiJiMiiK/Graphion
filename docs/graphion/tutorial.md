@@ -715,7 +715,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, and `sqrt(x)` for numeric values.
+Graphion currently provides `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, and `sqrt(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
@@ -734,6 +734,8 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_int = sqrt(9)
 sqrt_float = sqrt(2.25)
 sqrt_expr = sqrt(1 + 8)
+len_text = len("graphion")
+len_concat = len("graph" + "ion")
 
 print(abs_int)
 print(abs_float)
@@ -751,6 +753,8 @@ print(clamp_float)
 print(sqrt_int)
 print(sqrt_float)
 print(sqrt_expr)
+print(len_text)
+print(len_concat)
 ```
 
 Expected output:
@@ -772,4 +776,6 @@ Expected output:
 3
 1.5
 3
+8
+8
 ```

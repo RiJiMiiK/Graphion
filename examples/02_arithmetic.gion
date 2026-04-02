@@ -1,6 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
-# negative operands, and numeric builtins such as abs(), min(), max(), clamp(), and sqrt().
+# negative operands, numeric builtins such as abs(), min(), max(), clamp(), and sqrt(),
+# and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -48,6 +49,8 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_count = sqrt(9)
 sqrt_ratio = sqrt(2.25)
 sqrt_expression = sqrt(1 + 8)
+len_text = len("graphion")
+len_concat = len("graph" + "ion")
 
 print("basic addition -> sum=" + sum)
 print("operator precedence -> mixed=" + mixed)
@@ -89,6 +92,8 @@ print("clamp float above upper bound -> clamp_float=" + clamp_float)
 print("square root of an integer -> sqrt_count=" + sqrt_count)
 print("square root of a float -> sqrt_ratio=" + sqrt_ratio)
 print("square root of an expression -> sqrt_expression=" + sqrt_expression)
+print("length of a string literal -> len_text=" + len_text)
+print("length of a string expression -> len_concat=" + len_concat)
 print("raw expression with normal precedence -> " + (3 + 4 * 2))
 print("raw expression with grouped precedence -> " + ((3 + 4) * 2))
 print("raw modulo expression -> " + (10 % 4))
