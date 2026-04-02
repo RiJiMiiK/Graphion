@@ -396,6 +396,52 @@ incompatible operand types
 log requires x > 0 and base > 0 with base != 1
 ```
 
+## `log10(x)`
+
+`log10(x)` returns the base-10 logarithm of a numeric expression.
+
+Examples:
+
+```gion
+print(log10(1000))
+print(log10(10.0))
+print(log10(10 ** 4))
+```
+
+Expected output:
+
+```text
+3
+1
+4
+```
+
+### Valid Inputs
+
+`log10(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = log10("graphion")
+value = log10(0)
+value = log10(-1)
+```
+
+Current messages:
+
+```text
+incompatible operand types
+log10 requires strictly positive input
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

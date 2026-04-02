@@ -40,7 +40,7 @@ The currently supported user-facing subset is centered on scalar values and expr
 - postfix factorial `!`
 - grouped expressions with parentheses
 - compound assignments
-- builtins `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, and `len(x)`
+- builtins `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, and `len(x)`
 
 ### Scalar values
 

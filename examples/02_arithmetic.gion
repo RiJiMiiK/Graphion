@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), and the string builtin len().
+# clamp(), sqrt(), exp(), ln(), log(), log10(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -61,6 +61,9 @@ ln_expression = ln(e ** 2)
 log_count = log(8, 2)
 log_decimal = log(100, 10)
 log_expression = log(2 ** 5, 2)
+log10_count = log10(1000)
+log10_decimal = log10(10.0)
+log10_expression = log10(10 ** 4)
 pi_value = pi
 e_value = e
 len_text = len("graphion")
@@ -118,6 +121,9 @@ print("ln of an expression -> ln_expression=" + ln_expression)
 print("log base two of eight -> log_count=" + log_count)
 print("log base ten of one hundred -> log_decimal=" + log_decimal)
 print("log of an expression -> log_expression=" + log_expression)
+print("log10 of one thousand -> log10_count=" + log10_count)
+print("log10 of ten -> log10_decimal=" + log10_decimal)
+print("log10 of an expression -> log10_expression=" + log10_expression)
 print("pi constant -> pi_value=" + pi_value)
 print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)

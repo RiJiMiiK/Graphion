@@ -75,6 +75,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
+- `GVM_OP_LOG10`
 - `GVM_OP_LEN`
 - `GVM_OP_FACTORIAL`
 
@@ -96,6 +97,7 @@ These back the current `.gion` scalar language features:
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
+- `log10(x)`
 - `len(x)`
 
 ## Other VM opcode families present in the repo
