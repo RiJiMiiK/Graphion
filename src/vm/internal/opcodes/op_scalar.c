@@ -736,6 +736,7 @@ int op_sqrt(graphion_vm *vm, const graphion_insn *in) {
 
 int op_len(graphion_vm *vm, const graphion_insn *in) {
   const char *text;
+  size_t len;
 
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
@@ -745,7 +746,8 @@ int op_len(graphion_vm *vm, const graphion_insn *in) {
   }
 
   text = vm->regs[in->a].as.string_value != NULL ? vm->regs[in->a].as.string_value : "";
+  len = strlen(text);
   vm_free_owned_reg_string(vm, in->a);
-  vm_value_set_int(&vm->regs[in->a], (int64_t)strlen(text));
+  vm_value_set_int(&vm->regs[in->a], (int64_t)len);
   return GVM_OK;
 }
