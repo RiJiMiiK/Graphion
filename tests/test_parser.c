@@ -1450,6 +1450,12 @@ int test_gion_bits_mixed_type_errors(void) {
       {"value = 0b10 != 1.0\n", "incompatible operand types"},
       {"value = 0b10 == true\n", "incompatible operand types"},
       {"value = 0b10 + 1\n", "incompatible operand types"},
+      {"value = 0b10 - 1\n", "incompatible operand types"},
+      {"value = 0b10 * 1\n", "incompatible operand types"},
+      {"value = 0b10 / 1\n", "incompatible operand types"},
+      {"value = 0b10 // 1\n", "incompatible operand types"},
+      {"value = 0b10 % 1\n", "incompatible operand types"},
+      {"value = 0b10 ** 1\n", "incompatible operand types"},
       {"value = \"x\" + 0b10\n", "incompatible operand types"},
   };
   size_t i;

@@ -122,7 +122,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - `0b10 & 0b0010` should be rejected
 - [x] preserve width across `~`, `<<`, and `>>`
 - [x] truncate overflow back to stored `bits` width
-- [ ] reject non-bitwise arithmetic on `bits`
+- [x] reject non-bitwise arithmetic on `bits`
   - `+`
   - `-`
   - `*`
