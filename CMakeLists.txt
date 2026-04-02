@@ -125,9 +125,27 @@ endif()
 
 add_library(graphion_vm
   src/vm/vm.c
+  src/vm/internal/core/value.c
+  src/vm/internal/opcodes/op_scalar.c
+  src/vm/internal/opcodes/op_state.c
+  src/vm/internal/opcodes/op_io.c
+  src/vm/internal/opcodes/op_frontier.c
+  src/vm/internal/opcodes/op_graph.c
+  src/vm/internal/opcodes/op_hypergraph.c
+  src/vm/internal/core/sum.c
+  src/vm/internal/core/fastpath_plan.c
+  src/vm/internal/core/fastpath_exec.c
+  src/vm/internal/core/dispatch.c
   src/runtime/arena.c
   src/runtime/entry.c
   src/runtime/interpreter.c
+  src/runtime/interpreter/base.c
+  src/runtime/interpreter/program.c
+  src/runtime/interpreter/operands.c
+  src/runtime/interpreter/expr.c
+  src/runtime/interpreter/stmt.c
+  src/runtime/interpreter/source.c
+  src/runtime/interpreter/exec.c
   src/parser/bytecode.c
   src/parser/frontend.c
   src/compiler/ir.c
@@ -410,3 +428,4 @@ if(GRAPHION_ENABLE_FUZZING)
   target_link_libraries(fuzz_parser PRIVATE graphion_vm)
   graphion_enable_pgo(fuzz_parser)
 endif()
+

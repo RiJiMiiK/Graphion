@@ -35,6 +35,7 @@ Current scalar value kinds:
 - `float`
 - `bool`
 - `string`
+- `bits`
 
 ## Identifiers
 
@@ -63,6 +64,8 @@ These names are currently reserved and cannot be assigned:
 - `and`
 - `or`
 - `not`
+- `match`
+- `default`
 
 ## Literals
 
@@ -94,6 +97,24 @@ name = "graphion"
 ```
 
 Current string literals are double-quoted.
+
+### Bits
+
+```gion
+short_bits = 0b10
+wide_bits = 0b0010
+```
+
+Current `bits` literals:
+
+- start with `0b`
+- require one or more binary digits after the prefix
+- preserve the written width
+
+That means:
+
+- `0b10` has width `2`
+- `0b0010` has width `4`
 
 ## Assignment
 
@@ -558,6 +579,14 @@ Supported arithmetic operators:
 `**`
 : power, right-associative
 
+Unary minus is also supported on variables and grouped expressions, for example:
+
+```gion
+count = 5
+neg_count = -count
+neg_group = -(1 + 2)
+```
+
 ## Comparison Operators
 
 Currently supported comparison operators:
@@ -935,6 +964,125 @@ grouped = (1 + 2) * 3
 This is the current implemented behavior.
 
 Tuple syntax is not part of the current documented language subset.
+
+## Bits
+
+Current `bits` support includes:
+
+- literals written as `0b...`
+- preserved width from literal spelling
+- `==`
+- `!=`
+- `&`
+- `|`
+- `^`
+- `~`
+- `<<` with an integer shift count
+- `>>` with an integer shift count
+
+Examples:
+
+```gion
+short_bits = 0b10
+wide_bits = 0b0010
+same_bits = 0b10 == 0b0010
+shifted_bits = 0b0011 << 1
+right_shifted_bits = 0b1010 >> 1
+```
+
+Current behavior:
+
+- `0b10` and `0b0010` print differently because width is preserved
+- `==` and `!=` compare normalized values, so leading zeroes do not affect equality
+- `&`, `|`, and `^` require both operands to be `bits`
+- `&`, `|`, and `^` currently require matching widths
+- `~` keeps the stored width
+- `<<` takes a `bits` value on the left and a non-negative `int` shift count on the right
+- `<<` keeps the stored width and truncates overflow back to that width
+- `>>` takes a `bits` value on the left and a non-negative `int` shift count on the right
+- `>>` keeps the stored width and shifts in zeroes from the left
+
+Current restrictions:
+
+- non-bitwise arithmetic on `bits` is rejected:
+  - `+`
+  - `-`
+  - `*`
+  - `/`
+  - `//`
+  - `%`
+  - `**`
+- ordered comparisons on `bits` are rejected:
+  - `<`
+  - `<=`
+  - `>`
+  - `>=`
+- boolean logic on `bits` is rejected:
+  - `and`
+  - `nand`
+  - `or`
+  - `nor`
+  - `not`
+- direct use of `bits` as an `if` condition is rejected
+- direct use of `bits` as a ternary condition is rejected
+
+Examples:
+
+```gion
+0b1100 & 0b1010
+```
+
+produces:
+
+```gion
+0b1000
+```
+
+```gion
+0b0011 << 1
+```
+
+produces:
+
+```gion
+0b0110
+```
+
+```gion
+0b1111 << 1
+```
+
+produces:
+
+```gion
+0b1110
+```
+
+```gion
+0b1010 >> 1
+```
+
+produces:
+
+```gion
+0b0101
+```
+
+These are currently runtime errors:
+
+- `0b10 & 0b0010`
+- `0b10 | 0b0010`
+- `0b10 ^ 0b0010`
+- `0b10 << 0b0010`
+- `0b10 << 1.0`
+- `0b10 << -1`
+- `0b10 >> 0b0010`
+- `0b10 >> 1.0`
+- `0b10 >> -1`
+- `0b10 + 1`
+- `0b10 < 0b0010`
+- `0b10 and true`
+- `if 0b10:`
 
 ## Strings
 

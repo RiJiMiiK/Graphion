@@ -653,6 +653,10 @@ int test_gion_arithmetic_expressions(void) {
       "power = 2 ** 3\n"
       "negative_power = (-2) ** 3\n"
       "negative_exponent = 2 ** -1\n"
+      "count = 5\n"
+      "neg_count = -count\n"
+      "neg_group = -(1 + 2)\n"
+      "neg_abs = -abs(-3)\n"
       "right_assoc = 2 ** 3 ** 2\n"
       "powered_group = (1 + 2) ** 2\n"
       "abs_int = abs(-42)\n"
@@ -678,6 +682,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(power)\n"
       "print(negative_power)\n"
       "print(negative_exponent)\n"
+      "print(neg_count)\n"
+      "print(neg_group)\n"
+      "print(neg_abs)\n"
       "print(right_assoc)\n"
       "print(powered_group)\n"
       "print(abs_int)\n"
@@ -709,6 +716,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *power;
   const graphion_runtime_value *negative_power;
   const graphion_runtime_value *negative_exponent;
+  const graphion_runtime_value *neg_count;
+  const graphion_runtime_value *neg_group;
+  const graphion_runtime_value *neg_abs;
   const graphion_runtime_value *right_assoc;
   const graphion_runtime_value *powered_group;
   const graphion_runtime_value *abs_int;
@@ -755,6 +765,9 @@ int test_gion_arithmetic_expressions(void) {
   power = graphion_runtime_scope_find(&scope, "power");
   negative_power = graphion_runtime_scope_find(&scope, "negative_power");
   negative_exponent = graphion_runtime_scope_find(&scope, "negative_exponent");
+  neg_count = graphion_runtime_scope_find(&scope, "neg_count");
+  neg_group = graphion_runtime_scope_find(&scope, "neg_group");
+  neg_abs = graphion_runtime_scope_find(&scope, "neg_abs");
   right_assoc = graphion_runtime_scope_find(&scope, "right_assoc");
   powered_group = graphion_runtime_scope_find(&scope, "powered_group");
   abs_int = graphion_runtime_scope_find(&scope, "abs_int");
@@ -828,6 +841,18 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 18;
   }
+  if (neg_count == NULL || neg_count->kind != GVM_VALUE_INT || neg_count->as.int_value != -5) {
+    remove(path);
+    return 181;
+  }
+  if (neg_group == NULL || neg_group->kind != GVM_VALUE_INT || neg_group->as.int_value != -3) {
+    remove(path);
+    return 182;
+  }
+  if (neg_abs == NULL || neg_abs->kind != GVM_VALUE_INT || neg_abs->as.int_value != -3) {
+    remove(path);
+    return 183;
+  }
   if (right_assoc == NULL || right_assoc->kind != GVM_VALUE_FLOAT || right_assoc->as.float_value != 512.0) {
     remove(path);
     return 19;
@@ -869,7 +894,7 @@ int test_gion_arithmetic_expressions(void) {
     return 28;
   }
   remove(path);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n512\n9\n42\n3.5\n3\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1186,6 +1211,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = abs()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = abs(1 + 2\n", GINT_ERR_PARSE, "expected ')' after abs argument"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
+      {"value = -\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = -(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = 1 + (2 * 3\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = ()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print(1 + )\n", GINT_ERR_PARSE, "expected scalar literal"},
@@ -1204,6 +1231,705 @@ int test_gion_arithmetic_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_literals(void) {
+  const char *source =
+      "bits_two = 0b10\n"
+      "bits_four = 0b0010\n"
+      "bits_copy = bits_four\n"
+      "print(bits_two)\n"
+      "print(bits_four)\n"
+      "print(bits_copy)\n";
+  const char *path = "gion_bits_literals.txt";
+  char output[64];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *bits_two;
+  const graphion_runtime_value *bits_four;
+  const graphion_runtime_value *bits_copy;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  bits_two = graphion_runtime_scope_find(&scope, "bits_two");
+  bits_four = graphion_runtime_scope_find(&scope, "bits_four");
+  bits_copy = graphion_runtime_scope_find(&scope, "bits_copy");
+
+  if (bits_two == NULL || bits_two->kind != GVM_VALUE_BITS || bits_two->reserved[0] != 2U || (uint64_t)bits_two->as.int_value != 2U) {
+    remove(path);
+    return 3;
+  }
+  if (bits_four == NULL || bits_four->kind != GVM_VALUE_BITS || bits_four->reserved[0] != 4U ||
+      (uint64_t)bits_four->as.int_value != 2U) {
+    remove(path);
+    return 4;
+  }
+  if (bits_copy == NULL || bits_copy->kind != GVM_VALUE_BITS || bits_copy->reserved[0] != 4U ||
+      (uint64_t)bits_copy->as.int_value != 2U) {
+    remove(path);
+    return 5;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 6;
+  }
+  remove(path);
+  if (strcmp(output, "0b10\n0b0010\n0b0010\n") != 0) {
+    return 7;
+  }
+  return 0;
+}
+
+int test_gion_bits_literal_syntax_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b\n", "expected binary digits after 0b"},
+      {"value = 0b2\n", "expected binary digits after 0b"},
+      {"value = 0b102\n", "invalid bits literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_equality(void) {
+  const char *source =
+      "same_value = 0b10 == 0b0010\n"
+      "same_copy = 0b0010 == 0b0010\n"
+      "print(same_value)\n"
+      "print(same_copy)\n";
+  const char *path = "gion_bits_equality.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *same_value;
+  const graphion_runtime_value *same_copy;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  same_value = graphion_runtime_scope_find(&scope, "same_value");
+  same_copy = graphion_runtime_scope_find(&scope, "same_copy");
+  if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 1) {
+    remove(path);
+    return 3;
+  }
+  if (same_copy == NULL || same_copy->kind != GVM_VALUE_BOOL || same_copy->as.bool_value != 1) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "true\ntrue\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_inequality(void) {
+  const char *source =
+      "different_value = 0b10 != 0b0011\n"
+      "same_value = 0b10 != 0b0010\n"
+      "print(different_value)\n"
+      "print(same_value)\n";
+  const char *path = "gion_bits_inequality.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *different_value;
+  const graphion_runtime_value *same_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  different_value = graphion_runtime_scope_find(&scope, "different_value");
+  same_value = graphion_runtime_scope_find(&scope, "same_value");
+  if (different_value == NULL || different_value->kind != GVM_VALUE_BOOL || different_value->as.bool_value != 1) {
+    remove(path);
+    return 3;
+  }
+  if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 0) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "true\nfalse\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_mixed_type_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 == 1\n", "incompatible operand types"},
+      {"value = 0b10 != 1.0\n", "incompatible operand types"},
+      {"value = 0b10 == true\n", "incompatible operand types"},
+      {"value = 0b10 + 1\n", "incompatible operand types"},
+      {"value = 0b10 - 1\n", "incompatible operand types"},
+      {"value = 0b10 * 1\n", "incompatible operand types"},
+      {"value = 0b10 / 1\n", "incompatible operand types"},
+      {"value = 0b10 // 1\n", "incompatible operand types"},
+      {"value = 0b10 % 1\n", "incompatible operand types"},
+      {"value = 0b10 ** 1\n", "incompatible operand types"},
+      {"value = \"x\" + 0b10\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_and(void) {
+  const char *source =
+      "masked_value = 0b1100 & 0b1010\n"
+      "print(masked_value)\n";
+  const char *path = "gion_bits_and.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *masked_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  masked_value = graphion_runtime_scope_find(&scope, "masked_value");
+  if (masked_value == NULL || masked_value->kind != GVM_VALUE_BITS || masked_value->reserved[0] != 4U ||
+      (uint64_t)masked_value->as.int_value != 8U) {
+    remove(path);
+    return 3;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 4;
+  }
+  remove(path);
+  if (strcmp(output, "0b1000\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_gion_bits_and_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 & 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 & 1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_or(void) {
+  const char *source =
+      "merged_value = 0b1100 | 0b1010\n"
+      "print(merged_value)\n";
+  const char *path = "gion_bits_or.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *merged_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  merged_value = graphion_runtime_scope_find(&scope, "merged_value");
+  if (merged_value == NULL || merged_value->kind != GVM_VALUE_BITS || merged_value->reserved[0] != 4U ||
+      (uint64_t)merged_value->as.int_value != 14U) {
+    remove(path);
+    return 3;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 4;
+  }
+  remove(path);
+  if (strcmp(output, "0b1110\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_gion_bits_or_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 | 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 | 1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_xor(void) {
+  const char *source =
+      "xor_value = 0b1100 ^ 0b1010\n"
+      "print(xor_value)\n";
+  const char *path = "gion_bits_xor.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *xor_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  xor_value = graphion_runtime_scope_find(&scope, "xor_value");
+  if (xor_value == NULL || xor_value->kind != GVM_VALUE_BITS || xor_value->reserved[0] != 4U ||
+      (uint64_t)xor_value->as.int_value != 6U) {
+    remove(path);
+    return 3;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 4;
+  }
+  remove(path);
+  if (strcmp(output, "0b0110\n") != 0) {
+    return 5;
+  }
+  return 0;
+}
+
+int test_gion_bits_xor_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 ^ 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 ^ 1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_not(void) {
+  const char *source =
+      "not_wide = ~0b0010\n"
+      "not_short = ~0b10\n"
+      "print(not_wide)\n"
+      "print(not_short)\n";
+  const char *path = "gion_bits_not.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *not_wide;
+  const graphion_runtime_value *not_short;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  not_wide = graphion_runtime_scope_find(&scope, "not_wide");
+  not_short = graphion_runtime_scope_find(&scope, "not_short");
+  if (not_wide == NULL || not_wide->kind != GVM_VALUE_BITS || not_wide->reserved[0] != 4U ||
+      (uint64_t)not_wide->as.int_value != 13U) {
+    remove(path);
+    return 3;
+  }
+  if (not_short == NULL || not_short->kind != GVM_VALUE_BITS || not_short->reserved[0] != 2U ||
+      (uint64_t)not_short->as.int_value != 1U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b1101\n0b01\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_not_runtime_errors(void) {
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  rc = graphion_interpret_source("value = ~1\n", &scope, &diagnostic);
+  if (rc != GINT_ERR_RUN) {
+    return 1;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "incompatible operand types") != 0) {
+    return 2;
+  }
+  return 0;
+}
+
+int test_gion_bits_shl(void) {
+  const char *source =
+      "shifted_value = 0b0011 << 1\n"
+      "truncated_value = 0b1111 << 1\n"
+      "print(shifted_value)\n"
+      "print(truncated_value)\n";
+  const char *path = "gion_bits_shl.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *shifted_value;
+  const graphion_runtime_value *truncated_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
+  truncated_value = graphion_runtime_scope_find(&scope, "truncated_value");
+  if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
+      (uint64_t)shifted_value->as.int_value != 6U) {
+    remove(path);
+    return 3;
+  }
+  if (truncated_value == NULL || truncated_value->kind != GVM_VALUE_BITS || truncated_value->reserved[0] != 4U ||
+      (uint64_t)truncated_value->as.int_value != 14U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b0110\n0b1110\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_shl_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 << 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 << 1.0\n", "incompatible operand types"},
+      {"value = 0b10 << -1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(1 + i * 10U);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(2 + i * 10U);
+    }
+  }
+  return 0;
+}
+
+int test_gion_bits_shr(void) {
+  const char *source =
+      "shifted_value = 0b1010 >> 1\n"
+      "cleared_value = 0b1010 >> 4\n"
+      "print(shifted_value)\n"
+      "print(cleared_value)\n";
+  const char *path = "gion_bits_shr.txt";
+  char output[32];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *shifted_value;
+  const graphion_runtime_value *cleared_value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "wb");
+#endif
+  if (fp == NULL) {
+    return 1;
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return 2;
+  }
+
+  shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
+  cleared_value = graphion_runtime_scope_find(&scope, "cleared_value");
+  if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
+      (uint64_t)shifted_value->as.int_value != 5U) {
+    remove(path);
+    return 3;
+  }
+  if (cleared_value == NULL || cleared_value->kind != GVM_VALUE_BITS || cleared_value->reserved[0] != 4U ||
+      (uint64_t)cleared_value->as.int_value != 0U) {
+    remove(path);
+    return 4;
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return 5;
+  }
+  remove(path);
+  if (strcmp(output, "0b0101\n0b0000\n") != 0) {
+    return 6;
+  }
+  return 0;
+}
+
+int test_gion_bits_shr_runtime_errors(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 0b10 >> 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 >> 1.0\n", "incompatible operand types"},
+      {"value = 0b10 >> -1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
       return (int)(1 + i * 10U);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
@@ -1880,6 +2606,7 @@ int test_gion_if_elif_else_errors(void) {
       {"if 0.0:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if 1.5:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if \"x\":\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
+      {"if 0b10:\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if abs(2):\n    print(1)\n", GINT_ERR_RUN, 1U, "if condition must be boolean or 0/1"},
       {"if true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "multiline condition requires grouping parentheses"},
       {"if (\n    true and\n    false:\n    print(1)\n", GINT_ERR_PARSE, 1U, "expected ':' after if condition"},
@@ -2675,6 +3402,7 @@ int test_gion_less_than_runtime_errors(void) {
       {"if true < 1:\n    print(1)\n", 1U},
       {"value = \"x\" < \"y\"\n", 1U},
       {"value = \"x\" < 1.5\n", 1U},
+      {"value = 0b10 < 0b0010\n", 1U},
   };
   size_t i;
 
@@ -2799,6 +3527,7 @@ int test_gion_less_equal_runtime_errors(void) {
       {"if true <= 1:\n    print(1)\n", 1U},
       {"value = \"x\" <= \"y\"\n", 1U},
       {"value = \"x\" <= 1.5\n", 1U},
+      {"value = 0b10 <= 0b0010\n", 1U},
   };
   size_t i;
 
@@ -2923,6 +3652,7 @@ int test_gion_greater_than_runtime_errors(void) {
       {"if true > 1:\n    print(1)\n", 1U},
       {"value = \"x\" > \"y\"\n", 1U},
       {"value = \"x\" > 1.5\n", 1U},
+      {"value = 0b10 > 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3047,6 +3777,7 @@ int test_gion_greater_equal_runtime_errors(void) {
       {"if true >= 1:\n    print(1)\n", 1U},
       {"value = \"x\" >= \"y\"\n", 1U},
       {"value = \"x\" >= 1.5\n", 1U},
+      {"value = 0b10 >= 0b0010\n", 1U},
   };
   size_t i;
 
@@ -3176,6 +3907,8 @@ int test_gion_and_runtime_errors(void) {
       {"value = 1 and 2\n", 1U},
       {"value = 1.0 and true\n", 1U},
       {"value = \"x\" and true\n", 1U},
+      {"value = 0b10 and true\n", 1U},
+      {"value = true and 0b10\n", 1U},
   };
   size_t i;
 
@@ -3307,6 +4040,8 @@ int test_gion_or_runtime_errors(void) {
       {"value = 0 or 2\n", 1U},
       {"value = 1.0 or true\n", 1U},
       {"value = \"x\" or true\n", 1U},
+      {"value = 0b10 or true\n", 1U},
+      {"value = false or 0b10\n", 1U},
   };
   size_t i;
 
@@ -3437,6 +4172,7 @@ int test_gion_not_runtime_errors(void) {
       {"value = not 1.0\n", 1U},
       {"value = not \"x\"\n", 1U},
       {"value = true and not 2\n", 1U},
+      {"value = not 0b10\n", 1U},
   };
   size_t i;
 
@@ -3559,6 +4295,8 @@ int test_gion_nand_runtime_errors(void) {
       {"value = 1 nand 2\n", 1U},
       {"value = 1.0 nand true\n", 1U},
       {"value = \"x\" nand true\n", 1U},
+      {"value = 0b10 nand true\n", 1U},
+      {"value = true nand 0b10\n", 1U},
   };
   size_t i;
 
@@ -3682,6 +4420,8 @@ int test_gion_nor_runtime_errors(void) {
       {"value = 0 nor 2\n", 1U},
       {"value = 1.0 nor false\n", 1U},
       {"value = \"x\" nor false\n", 1U},
+      {"value = 0b10 nor false\n", 1U},
+      {"value = false nor 0b10\n", 1U},
   };
   size_t i;
 
@@ -3807,6 +4547,7 @@ int test_gion_ternary_runtime_errors(void) {
       {"value = \"ready\" if 2 else \"bad\"\n", 1U},
       {"value = \"ready\" if 1.0 else \"bad\"\n", 1U},
       {"value = \"ready\" if \"x\" else \"bad\"\n", 1U},
+      {"value = \"ready\" if 0b10 else \"bad\"\n", 1U},
       {"value = \"ready\" if 2 and true else \"bad\"\n", 1U},
   };
   size_t i;
@@ -4196,4 +4937,3 @@ int test_gion_capacity_errors(void) {
 
   return 0;
 }
-

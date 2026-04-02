@@ -100,12 +100,17 @@ Negative values work across arithmetic expressions.
 negative_add = -5 + 2
 negative_div = -7 / 2
 negative_floor = -7 // 2
+count = 5
+neg_count = -count
+neg_group = -(1 + 2)
 negative_power = (-2) ** 3
 negative_remainder = -10 % 4
 
 print(negative_add)
 print(negative_div)
 print(negative_floor)
+print(neg_count)
+print(neg_group)
 print(negative_power)
 print(negative_remainder)
 ```
@@ -116,6 +121,8 @@ Expected output:
 -3
 -3.5
 -4
+-5
+-3
 -8
 -2
 ```
@@ -149,6 +156,86 @@ Expected output:
 ```text
 6
 ```
+
+## Bits Literals
+
+Graphion also supports `bits` literals with a `0b...` prefix.
+
+```gion
+short_bits = 0b10
+wide_bits = 0b0010
+copied_bits = wide_bits
+same_bits = 0b10 == 0b0010
+different_bits = 0b10 != 0b0011
+masked_bits = 0b1100 & 0b1010
+merged_bits = 0b1100 | 0b1010
+xor_bits = 0b1100 ^ 0b1010
+not_wide_bits = ~0b0010
+not_short_bits = ~0b10
+shifted_bits = 0b0011 << 1
+truncated_shift_bits = 0b1111 << 1
+right_shifted_bits = 0b1010 >> 1
+cleared_right_shift_bits = 0b1010 >> 4
+
+print(short_bits)
+print(wide_bits)
+print(copied_bits)
+print(same_bits)
+print(different_bits)
+print(masked_bits)
+print(merged_bits)
+print(xor_bits)
+print(not_wide_bits)
+print(not_short_bits)
+print(shifted_bits)
+print(truncated_shift_bits)
+print(right_shifted_bits)
+print(cleared_right_shift_bits)
+```
+
+Expected output:
+
+```text
+0b10
+0b0010
+0b0010
+true
+true
+0b1000
+0b1110
+0b0110
+0b1101
+0b01
+0b0110
+0b1110
+0b0101
+0b0000
+```
+
+Current behavior:
+
+- width is preserved from the literal spelling
+- `0b10` and `0b0010` therefore print differently
+- `==` compares normalized bit values, so `0b10 == 0b0010` is `true`
+- `!=` follows the same normalized-value rule
+- `&` works between `bits` values with the same stored width
+- `0b1100 & 0b1010` therefore produces `0b1000`
+- `|` works under the same width rule, so `0b1100 | 0b1010` produces `0b1110`
+- `^` works under the same width rule, so `0b1100 ^ 0b1010` produces `0b0110`
+- `~` inverts bits within the stored width, so `~0b0010` becomes `0b1101`
+- `<<` keeps the stored width and truncates overflow back to that width
+- `0b0011 << 1` therefore produces `0b0110`
+- `0b1111 << 1` therefore produces `0b1110`
+- `>>` keeps the stored width and shifts in zeroes from the left
+- `0b1010 >> 1` therefore produces `0b0101`
+- `0b1010 >> 4` therefore produces `0b0000`
+- `&`, `|`, and `^` reject non-`bits` operands
+- `<<` and `>>` accept a non-negative `int` shift count on the right
+- other `bits` / `int` mixes are still rejected
+- ordered comparisons on `bits` are rejected
+- boolean logic on `bits` is rejected
+- `bits` cannot be used directly as an `if` condition or ternary condition
+- this first step covers literal creation, copying, printing, `==`, `!=`, `&`, `|`, `^`, `~`, `<<`, and `>>`
 
 ## Equality
 

@@ -5,11 +5,25 @@
 # - 03_compound_assignments.gion
 # - 04_conditionals.gion
 # - 05_comments.gion
+# - 06_bits_literals.gion
 
 count = 42
 ratio = 7 / 2
 message = "graph" + "ion"
 ready = true
+short_bits = 0b10
+wide_bits = 0b0010
+same_bits = 0b10 == 0b0010
+different_bits = 0b10 != 0b0011
+masked_bits = 0b1100 & 0b1010
+merged_bits = 0b1100 | 0b1010
+xor_bits = 0b1100 ^ 0b1010
+not_wide_bits = ~0b0010
+not_short_bits = ~0b10
+shifted_bits = 0b0011 << 1
+truncated_shift_bits = 0b1111 << 1
+right_shifted_bits = 0b1010 >> 1
+cleared_right_shift_bits = 0b1010 >> 4
 same_number = 42 == 42
 same_text = "graphion" == "graphion"
 int_bool_true = 1 == true
@@ -136,6 +150,19 @@ match 2:
 print("overview assignment -> count=" + count)
 print("overview arithmetic -> ratio=" + ratio)
 print("overview string concat -> message=" + message)
+print("overview bits literal -> short_bits=" + short_bits)
+print("overview bits width preservation -> wide_bits=" + wide_bits)
+print("overview bits equality -> same_bits=" + same_bits)
+print("overview bits inequality -> different_bits=" + different_bits)
+print("overview bits and -> masked_bits=" + masked_bits)
+print("overview bits or -> merged_bits=" + merged_bits)
+print("overview bits xor -> xor_bits=" + xor_bits)
+print("overview bits not width 4 -> not_wide_bits=" + not_wide_bits)
+print("overview bits not width 2 -> not_short_bits=" + not_short_bits)
+print("overview bits left shift -> shifted_bits=" + shifted_bits)
+print("overview bits left shift truncation -> truncated_shift_bits=" + truncated_shift_bits)
+print("overview bits right shift -> right_shifted_bits=" + right_shifted_bits)
+print("overview bits right shift zero-fill -> cleared_right_shift_bits=" + cleared_right_shift_bits)
 print("overview equality on numbers -> same_number=" + same_number)
 print("overview equality on strings -> same_text=" + same_text)
 print("overview equality on int/bool true -> int_bool_true=" + int_bool_true)

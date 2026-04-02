@@ -91,3 +91,57 @@ The current active lane is conditional logic in the `.gion` scalar language.
   - branch labels are scalar literals only in V1
   - `default` is optional, unique, and final
   - grouped case labels share the next non-empty indented block
+
+## Next arithmetic lane
+
+The next planned lane is arithmetic and bit-level scalar work after the conditional lane.
+
+### Arithmetic follow-up
+
+- [x] unary `-` on variables and grouped expressions
+- [x] `bits` literals with `0b...` syntax
+- [x] dedicated scalar type `bits`
+- [x] preserve `bits` width from literal spelling
+  - `0b10` has width `2`
+  - `0b0010` has width `4`
+- [x] `print(bits)`
+- [x] `bits == bits`
+  - equality should compare normalized values
+  - `0b10 == 0b0010` should be `true`
+- [x] `bits != bits`
+- [x] reject implicit mixing between `bits` and `int` / `float` / `bool` / `string`
+  - shift counts for `<<` / `>>` are the explicit exception: they use a non-negative `int` on the right
+- [x] `bits & bits`
+- [x] `bits | bits`
+- [x] `bits ^ bits`
+- [x] `~bits`
+- [x] `bits << int`
+- [x] `bits >> int`
+- [x] require matching widths for binary bitwise operators
+  - `&`, `|`, and `^` reject width mismatches
+  - `0b10 & 0b0010` should be rejected
+- [x] preserve width across `~`, `<<`, and `>>`
+- [x] truncate overflow back to stored `bits` width
+- [x] reject non-bitwise arithmetic on `bits`
+  - `+`
+  - `-`
+  - `*`
+  - `/`
+  - `//`
+  - `%`
+  - `**`
+- [x] reject ordered comparisons on `bits`
+  - `<`
+  - `<=`
+  - `>`
+  - `>=`
+- [x] reject boolean logic on `bits`
+  - `and`
+  - `nand`
+  - `or`
+  - `nor`
+  - `not`
+- [x] reject direct use of `bits` as a condition
+- [x] document `bits` operators and restrictions
+- [x] add `bits` literal examples
+- [x] add `bits` parser and runtime tests

@@ -1,0 +1,190 @@
+/* SPDX-License-Identifier: MIT */
+
+#include "vm/internal/opcodes/op_state.h"
+
+#include <stdlib.h>
+
+#include "vm/internal/opcodes/op_scalar.h"
+#include "vm/internal/core/value.h"
+
+int op_nop(graphion_vm *vm, const graphion_insn *in) {
+  (void)vm;
+  (void)in;
+  return 0;
+}
+
+int op_halt(graphion_vm *vm, const graphion_insn *in) {
+  (void)in;
+  vm->halted = true;
+  return 0;
+}
+
+int op_mov_imm(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_MOV_IMM_REG;
+  }
+  vm_free_owned_reg_string(vm, in->a);
+  vm_reg_set_int(vm, in->a, (int64_t)in->imm);
+  return 0;
+}
+
+int op_jump(graphion_vm *vm, const graphion_insn *in) {
+  (void)in;
+  if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm->pc = (size_t)in->imm;
+  return GVM_OK;
+}
+
+int op_jump_if_true(graphion_vm *vm, const graphion_insn *in) {
+  int bool_value;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_boolean(&vm->regs[in->a], &bool_value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (bool_value != 0) {
+    if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm->pc = (size_t)in->imm;
+  }
+  return GVM_OK;
+}
+
+int op_jump_if_false(graphion_vm *vm, const graphion_insn *in) {
+  int bool_value;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_boolean(&vm->regs[in->a], &bool_value)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (bool_value == 0) {
+    if (in->imm < 0 || (size_t)in->imm >= vm->program_len) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm->pc = (size_t)in->imm;
+  }
+  return GVM_OK;
+}
+
+int op_mov(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->b].kind == GVM_VALUE_STRING && vm->regs[in->b].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->regs[in->b].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_copy(&vm->regs[in->a], &vm->regs[in->b]);
+  return 0;
+}
+
+int op_load_const(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->const_pool == NULL) {
+    return GVM_ERR_CONST_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->const_count) {
+    return GVM_ERR_INVALID_CONST_INDEX;
+  }
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->const_pool[(size_t)in->imm].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_copy(&vm->regs[in->a], &vm->const_pool[(size_t)in->imm]);
+  return 0;
+}
+
+int op_load_global(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->globals[(size_t)in->imm].as.string_value != NULL) {
+    return vm_reg_set_string_copy(vm, in->a, vm->globals[(size_t)in->imm].as.string_value);
+  }
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_copy(&vm->regs[in->a], &vm->globals[(size_t)in->imm]);
+  return 0;
+}
+
+int op_store_global(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->regs[in->a].kind == GVM_VALUE_STRING && vm->regs[in->a].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->imm, vm->regs[in->a].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[(size_t)in->imm] != NULL) {
+    free(vm->global_string_owners[(size_t)in->imm]);
+    vm->global_string_owners[(size_t)in->imm] = NULL;
+  }
+  vm_value_copy(&vm->globals[(size_t)in->imm], &vm->regs[in->a]);
+  return 0;
+}
+
+int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->const_pool == NULL) {
+    return GVM_ERR_CONST_UNBOUND;
+  }
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->const_count) {
+    return GVM_ERR_INVALID_CONST_INDEX;
+  }
+  if ((size_t)in->b >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->b, vm->const_pool[(size_t)in->imm].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
+    free(vm->global_string_owners[in->b]);
+    vm->global_string_owners[in->b] = NULL;
+  }
+  vm_value_copy(&vm->globals[in->b], &vm->const_pool[(size_t)in->imm]);
+  return 0;
+}
+
+int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
+  if (vm->globals == NULL) {
+    return GVM_ERR_GLOBALS_UNBOUND;
+  }
+  if (in->imm < 0 || (size_t)in->imm >= vm->global_count || (size_t)in->b >= vm->global_count) {
+    return GVM_ERR_INVALID_GLOBAL_INDEX;
+  }
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_STRING &&
+      vm->globals[(size_t)in->imm].as.string_value != NULL) {
+    return vm_global_set_string_copy(vm, (size_t)in->b, vm->globals[(size_t)in->imm].as.string_value);
+  }
+  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
+    free(vm->global_string_owners[in->b]);
+    vm->global_string_owners[in->b] = NULL;
+  }
+  vm_value_copy(&vm->globals[in->b], &vm->globals[(size_t)in->imm]);
+  return 0;
+}
+
