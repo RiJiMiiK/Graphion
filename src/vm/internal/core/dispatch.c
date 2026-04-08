@@ -131,6 +131,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ASINH:
         rc = op_asinh_builtin(vm, &in);
         break;
+      case GVM_OP_ACOSH:
+        rc = op_acosh_builtin(vm, &in);
+        break;
       case GVM_OP_COSH:
         rc = op_cosh_builtin(vm, &in);
         break;
@@ -337,6 +340,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_SIN] = op_sin_builtin,
       [GVM_OP_SINH] = op_sinh_builtin,
       [GVM_OP_ASINH] = op_asinh_builtin,
+      [GVM_OP_ACOSH] = op_acosh_builtin,
       [GVM_OP_COSH] = op_cosh_builtin,
       [GVM_OP_TANH] = op_tanh_builtin,
       [GVM_OP_COS] = op_cos_builtin,
@@ -452,6 +456,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_SIN] = &&L_sin_builtin,
       [GVM_OP_SINH] = &&L_sinh_builtin,
       [GVM_OP_ASINH] = &&L_asinh_builtin,
+      [GVM_OP_ACOSH] = &&L_acosh_builtin,
       [GVM_OP_COSH] = &&L_cosh_builtin,
       [GVM_OP_TANH] = &&L_tanh_builtin,
       [GVM_OP_COS] = &&L_cos_builtin,
@@ -742,6 +747,12 @@ L_clamp:
     continue;
   L_asinh_builtin:
     rc = op_asinh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_acosh_builtin:
+    rc = op_acosh_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

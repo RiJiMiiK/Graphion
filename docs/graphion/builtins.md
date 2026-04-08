@@ -32,6 +32,7 @@ Unless a builtin says otherwise:
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
 | `sinh(x)` | hyperbolic sine | `float` | |
 | `asinh(x)` | inverse hyperbolic sine | `float` | |
+| `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
 | `cosh(x)` | hyperbolic cosine | `float` | |
 | `tanh(x)` | hyperbolic tangent | `float` | |
 | `exp(x)` | `e ** x` | `float` | |
@@ -375,11 +376,12 @@ Expected output:
 
 ## Hyperbolic Functions
 
-### `sinh(x)`, `asinh(x)`, `cosh(x)`, `tanh(x)`
+### `sinh(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `tanh(x)`
 
 ```gion
 print(sinh(1))
 print(asinh(1))
+print(acosh(2))
 print(cosh(1))
 print(tanh(1))
 ```
@@ -389,11 +391,22 @@ Expected output:
 ```text
 1.1752
 0.881374
+1.31696
 1.54308
 0.761594
 ```
 
 These accept numeric input and return a `float`.
+
+`acosh(x)` has one domain restriction:
+
+- `x >= 1`
+
+Current domain error:
+
+```text
+acosh requires input >= 1
+```
 
 ## Rounding And Shape
 

@@ -225,6 +225,7 @@ int test_gion_reserved_name_errors(void) {
       {"sin = 1\n", "reserved name cannot be assigned", "gion_reserved_sin.gion"},
       {"sinh = 1\n", "reserved name cannot be assigned", "gion_reserved_sinh.gion"},
       {"asinh = 1\n", "reserved name cannot be assigned", "gion_reserved_asinh.gion"},
+      {"acosh = 1\n", "reserved name cannot be assigned", "gion_reserved_acosh.gion"},
       {"cosh = 1\n", "reserved name cannot be assigned", "gion_reserved_cosh.gion"},
       {"tanh = 1\n", "reserved name cannot be assigned", "gion_reserved_tanh.gion"},
       {"cos = 1\n", "reserved name cannot be assigned", "gion_reserved_cos.gion"},
@@ -381,6 +382,9 @@ int test_gion_arithmetic_expressions(void) {
       "asinh_zero = asinh(0)\n"
       "asinh_one = asinh(1)\n"
       "asinh_negative = asinh(-1)\n"
+      "acosh_one = acosh(1)\n"
+      "acosh_two = acosh(2)\n"
+      "acosh_four = acosh(4)\n"
       "cosh_zero = cosh(0)\n"
       "cosh_one = cosh(1)\n"
       "cosh_negative = cosh(-1)\n"
@@ -502,6 +506,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(asinh_zero)\n"
       "print(asinh_one)\n"
       "print(asinh_negative)\n"
+      "print(acosh_one)\n"
+      "print(acosh_two)\n"
+      "print(acosh_four)\n"
       "print(cosh_zero)\n"
       "print(cosh_one)\n"
       "print(cosh_negative)\n"
@@ -577,7 +584,7 @@ int test_gion_arithmetic_expressions(void) {
       "print((3 + 4) * 2)\n"
       "print(10 % 4)\n";
   const char *path = "gion_arithmetic_expressions.txt";
-  char output[1536];
+  char output[2048];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *sum;
@@ -629,6 +636,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *asinh_zero;
   const graphion_runtime_value *asinh_one;
   const graphion_runtime_value *asinh_negative;
+  const graphion_runtime_value *acosh_one;
+  const graphion_runtime_value *acosh_two;
+  const graphion_runtime_value *acosh_four;
   const graphion_runtime_value *cosh_zero;
   const graphion_runtime_value *cosh_one;
   const graphion_runtime_value *cosh_negative;
@@ -768,6 +778,9 @@ int test_gion_arithmetic_expressions(void) {
   asinh_zero = graphion_runtime_scope_find(&scope, "asinh_zero");
   asinh_one = graphion_runtime_scope_find(&scope, "asinh_one");
   asinh_negative = graphion_runtime_scope_find(&scope, "asinh_negative");
+  acosh_one = graphion_runtime_scope_find(&scope, "acosh_one");
+  acosh_two = graphion_runtime_scope_find(&scope, "acosh_two");
+  acosh_four = graphion_runtime_scope_find(&scope, "acosh_four");
   cosh_zero = graphion_runtime_scope_find(&scope, "cosh_zero");
   cosh_one = graphion_runtime_scope_find(&scope, "cosh_one");
   cosh_negative = graphion_runtime_scope_find(&scope, "cosh_negative");
@@ -1039,6 +1052,21 @@ int test_gion_arithmetic_expressions(void) {
       asinh_negative->as.float_value < -0.881373588 || asinh_negative->as.float_value > -0.881373586) {
     remove(path);
     return 2432833;
+  }
+  if (acosh_one == NULL || acosh_one->kind != GVM_VALUE_FLOAT ||
+      acosh_one->as.float_value < -0.000000001 || acosh_one->as.float_value > 0.000000001) {
+    remove(path);
+    return 2432834;
+  }
+  if (acosh_two == NULL || acosh_two->kind != GVM_VALUE_FLOAT ||
+      acosh_two->as.float_value < 1.316957895 || acosh_two->as.float_value > 1.316957897) {
+    remove(path);
+    return 2432835;
+  }
+  if (acosh_four == NULL || acosh_four->kind != GVM_VALUE_FLOAT ||
+      acosh_four->as.float_value < 2.063437067 || acosh_four->as.float_value > 2.063437069) {
+    remove(path);
+    return 2432836;
   }
   if (cosh_zero == NULL || cosh_zero->kind != GVM_VALUE_FLOAT || cosh_zero->as.float_value != 1.0) {
     remove(path);
@@ -1360,7 +1388,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1723,6 +1751,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = sin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = asinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = acosh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cosh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = tanh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cos(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1760,6 +1789,8 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = asin(-2)\n", GINT_ERR_RUN, "asin requires input in [-1, 1]"},
         {"value = acos(2)\n", GINT_ERR_RUN, "acos requires input in [-1, 1]"},
         {"value = acos(-2)\n", GINT_ERR_RUN, "acos requires input in [-1, 1]"},
+      {"value = acosh(0)\n", GINT_ERR_RUN, "acosh requires input >= 1"},
+      {"value = acosh(0.5)\n", GINT_ERR_RUN, "acosh requires input >= 1"},
       {"value = (-1)!\n", GINT_ERR_RUN, "factorial requires non-negative integer input"},
       {"value = 1.5!\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = len(1)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1828,6 +1859,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = sinh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sinh argument"},
       {"value = asinh()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = asinh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after asinh argument"},
+      {"value = acosh()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = acosh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after acosh argument"},
       {"value = cosh()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = cosh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cosh argument"},
       {"value = tanh()\n", GINT_ERR_PARSE, "expected scalar literal"},

@@ -77,6 +77,7 @@ These names are currently reserved and cannot be assigned:
 - `sin`
 - `sinh`
 - `asinh`
+- `acosh`
 - `cosh`
 - `cos`
 - `tan`
@@ -585,6 +586,7 @@ Current builtin functions:
 - `sin(x)`
 - `sinh(x)`
 - `asinh(x)`
+- `acosh(x)`
 - `cosh(x)`
 - `cos(x)`
 - `tan(x)`
