@@ -670,6 +670,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `sign(x)`
+
+`sign(x)` returns `-1` for negative numeric values, `0` for zero, and `1` for positive numeric values.
+
+Examples:
+
+```gion
+print(sign(7))
+print(sign(-3.9))
+print(sign(0))
+```
+
+Expected output:
+
+```text
+1
+-1
+0
+```
+
+### Valid Inputs
+
+`sign(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as an `int`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = sign("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

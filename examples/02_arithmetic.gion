@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), and the string builtin len().
+# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -82,6 +82,9 @@ trunc_count = trunc(7)
 trunc_ratio = trunc(7.9)
 trunc_negative = trunc(-3.9)
 trunc_small_negative = trunc(-0.4)
+sign_positive = sign(7)
+sign_negative = sign(-3.9)
+sign_zero = sign(0)
 pi_value = pi
 e_value = e
 len_text = len("graphion")
@@ -160,6 +163,9 @@ print("trunc of an integer -> trunc_count=" + trunc_count)
 print("trunc of a float -> trunc_ratio=" + trunc_ratio)
 print("trunc of a negative float -> trunc_negative=" + trunc_negative)
 print("trunc of a small negative float -> trunc_small_negative=" + trunc_small_negative)
+print("sign of a positive number -> sign_positive=" + sign_positive)
+print("sign of a negative number -> sign_negative=" + sign_negative)
+print("sign of zero -> sign_zero=" + sign_zero)
 print("pi constant -> pi_value=" + pi_value)
 print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)

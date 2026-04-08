@@ -776,6 +776,9 @@ trunc_int = trunc(7)
 trunc_float = trunc(7.9)
 trunc_negative = trunc(-3.9)
 trunc_small_negative = trunc(-0.4)
+sign_positive = sign(7)
+sign_negative = sign(-3.9)
+sign_zero = sign(0)
 pi_value = pi
 e_value = e
 factorial_zero = 0!
@@ -809,6 +812,30 @@ print(ln_expr)
 print(log_int)
 print(log_float)
 print(log_expr)
+print(log10_int)
+print(log10_float)
+print(log10_expr)
+print(log2_int)
+print(log2_float)
+print(log2_expr)
+print(floor_int)
+print(floor_float)
+print(floor_negative)
+print(ceil_int)
+print(ceil_float)
+print(ceil_negative)
+print(round_int)
+print(round_float)
+print(round_half)
+print(round_negative)
+print(round_negative_half)
+print(trunc_int)
+print(trunc_float)
+print(trunc_negative)
+print(trunc_small_negative)
+print(sign_positive)
+print(sign_negative)
+print(sign_zero)
 print(pi_value)
 print(e_value)
 print(factorial_zero)
@@ -866,6 +893,9 @@ Expected output:
 7
 7
 -3
+0
+1
+-1
 0
 3.14159
 2.71828
