@@ -5,12 +5,14 @@ This section documents the user-facing `.gion` language.
 Use it in this order:
 
 1. [Tutorial](tutorial.md)
-2. [Language Reference](language-reference.md)
-3. [Builtins](builtins.md)
+2. [Types](types.md)
+3. [Language Reference](language-reference.md)
+4. [Builtins](builtins.md)
 
 That split is intentional:
 
 - the tutorial teaches by building small scripts step by step
+- the types page centralizes scalar values, literals, and built-in constants
 - the language reference states the exact rules of the currently implemented language
 - the builtins page is a focused catalog of callable builtins
 
@@ -53,6 +55,7 @@ This user guide documents only behavior that is implemented now.
 :maxdepth: 2
 
 tutorial
+types
 language-reference
 builtins
 ```
@@ -75,6 +78,13 @@ Use the builtins page when you need:
 - its current result type
 - domain restrictions
 - the current runtime error wording
+
+Use the types page when you need:
+
+- the current scalar value kinds
+- literal syntax
+- `bits` width basics
+- built-in constants such as `pi` and `e`
 
 ## Current Limits
 

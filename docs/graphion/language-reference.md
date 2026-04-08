@@ -6,7 +6,7 @@ Use this page when you need exact rules rather than a guided introduction.
 
 Quick orientation:
 
-- source structure: statements, names, literals, assignment
+- source structure: statements, names, assignment
 - control flow: `if`, ternary expressions, `match`
 - expressions and operators: arithmetic, comparisons, boolean logic, precedence, `bits`, strings, `print(...)`
 - runtime library: builtins and constants
@@ -42,18 +42,9 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Current scalar value kinds:
+Graphion currently exposes scalar values only.
 
-- `int`
-- `float`
-- `bool`
-- `string`
-- `bits`
-
-Current built-in scalar constants:
-
-- `pi`
-- `e`
+For the current scalar types, literal forms, and built-in numeric constants, see [Types](types.md).
 
 ### Identifiers
 
@@ -118,57 +109,15 @@ These names are currently reserved and cannot be assigned:
 
 ### Literals
 
-#### Integers
+Graphion currently supports literals for:
 
-```gion
-count = 42
-negative = -7
-```
+- `int`
+- `float`
+- `bool`
+- `string`
+- `bits`
 
-#### Floats
-
-```gion
-ratio = 3.5
-negative_ratio = -2.25
-circle = pi
-growth = e
-```
-
-`pi` currently evaluates to the floating-point constant `3.141592653589793`.
-`e` currently evaluates to the floating-point constant `2.718281828459045`.
-
-#### Booleans
-
-```gion
-ready = true
-failed = false
-```
-
-#### Strings
-
-```gion
-name = "graphion"
-```
-
-Current string literals are double-quoted.
-
-#### Bits
-
-```gion
-short_bits = 0b10
-wide_bits = 0b0010
-```
-
-Current `bits` literals:
-
-- start with `0b`
-- require one or more binary digits after the prefix
-- preserve the written width
-
-That means:
-
-- `0b10` has width `2`
-- `0b0010` has width `4`
+For the exact literal forms and examples, see [Types](types.md).
 
 ### Assignment
 
@@ -1317,13 +1266,7 @@ Current built-in scalar constants:
 - `pi`
 - `e`
 
-Example:
-
-```gion
-radius = 2
-circumference = 2 * pi * radius
-growth = e ** 2
-```
+See [Types](types.md) for their current values and basic usage.
 
 ## Errors
 
