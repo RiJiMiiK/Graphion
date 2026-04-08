@@ -76,6 +76,7 @@ These names are currently reserved and cannot be assigned:
 - `asin`
 - `acos`
 - `atan`
+- `atan2`
 - `exp`
 - `ln`
 - `log`
@@ -970,7 +971,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `cos(...)`, `tan(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `cos(...)`, `tan(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
@@ -1265,6 +1266,7 @@ Current builtin functions:
 - `asin(x)`
 - `acos(x)`
 - `atan(x)`
+- `atan2(y, x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

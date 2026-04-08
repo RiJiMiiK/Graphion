@@ -727,7 +727,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `cbrt(x)`, `sin(x)`, `cos(x)`, `tan(x)`, `asin(x)`, `acos(x)`, `atan(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, `floor(x)`, `ceil(x)`, `round(x)`, `trunc(x)`, and `sign(x)` for numeric values, plus `len(x)` for strings.
+Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `cbrt(x)`, `sin(x)`, `cos(x)`, `tan(x)`, `asin(x)`, `acos(x)`, `atan(x)`, `atan2(y, x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, `floor(x)`, `ceil(x)`, `round(x)`, `trunc(x)`, and `sign(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
@@ -767,6 +767,9 @@ acos_half = acos(0.5)
 atan_zero = atan(0)
 atan_one = atan(1)
 atan_negative_one = atan(-1)
+atan2_diag = atan2(1, 1)
+atan2_quadrant_two = atan2(1, -1)
+atan2_quadrant_three = atan2(-1, -1)
 exp_int = exp(1)
 exp_float = exp(0.0)
 exp_expr = exp(1 + 1)
@@ -845,6 +848,9 @@ print(acos_half)
 print(atan_zero)
 print(atan_one)
 print(atan_negative_one)
+print(atan2_diag)
+print(atan2_quadrant_two)
+print(atan2_quadrant_three)
 print(exp_int)
 print(exp_float)
 print(exp_expr)
@@ -927,6 +933,9 @@ Expected output:
 0
 0.785398
 -0.785398
+0.785398
+2.35619
+-2.35619
 2.71828
 1
 7.38906

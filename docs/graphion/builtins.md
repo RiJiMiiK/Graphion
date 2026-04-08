@@ -556,6 +556,51 @@ Current messages:
 incompatible operand types
 ```
 
+## `atan2(y, x)`
+
+`atan2(y, x)` returns the angle of the vector `(x, y)` in radians.
+
+Examples:
+
+```gion
+print(atan2(1, 1))
+print(atan2(1, -1))
+print(atan2(-1, -1))
+```
+
+Expected output:
+
+```text
+0.785398
+2.35619
+-2.35619
+```
+
+### Valid Inputs
+
+`atan2(y, x)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = atan2("graphion", 1)
+value = atan2(1, "graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

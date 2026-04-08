@@ -785,6 +785,51 @@ int test_vm_atan_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_atan2_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = 1.0;
+    insn.op = GVM_OP_ATAN2;
+    insn.a = 0;
+    insn.b = 1;
+    insn.imm = 0;
+    rc = op_atan2_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 0.785398163 ||
+        vm.regs[0].as.float_value > 0.785398164) {
+        return 18126;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = -1.0;
+    rc = op_atan2_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 2.356194489 ||
+        vm.regs[0].as.float_value > 2.356194491) {
+        return 18127;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = -1.0;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = -1.0;
+    rc = op_atan2_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -2.356194491 ||
+        vm.regs[0].as.float_value > -2.356194489) {
+        return 18128;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

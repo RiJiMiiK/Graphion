@@ -859,6 +859,27 @@ int op_atan_builtin(graphion_vm *vm, const graphion_insn *in) {
     return GVM_OK;
 }
 
+int op_atan2_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t y_i;
+  int64_t x_i;
+  double y_f;
+  double x_f;
+  int y_is_float;
+  int x_is_float;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &y_i, &y_f, &y_is_float) ||
+      !vm_value_get_numeric(&vm->regs[in->b], &x_i, &x_f, &x_is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], atan2(y_f, x_f));
+  return GVM_OK;
+}
+
 int op_exp(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;
   double value_f;
