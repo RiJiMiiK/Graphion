@@ -71,6 +71,7 @@ These names are currently reserved and cannot be assigned:
 - `sqrt`
 - `cbrt`
 - `sin`
+- `sinh`
 - `cos`
 - `tan`
 - `asin`
@@ -972,7 +973,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `cos(...)`, `tan(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `sinh(...)`, `cos(...)`, `tan(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
@@ -1262,6 +1263,7 @@ Current builtin functions:
 - `sqrt(x)`
 - `cbrt(x)`
 - `sin(x)`
+- `sinh(x)`
 - `cos(x)`
 - `tan(x)`
 - `asin(x)`

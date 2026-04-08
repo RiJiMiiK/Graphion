@@ -345,6 +345,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `sinh(x)`
+
+`sinh(x)` returns the hyperbolic sine of a numeric expression.
+
+Examples:
+
+```gion
+print(sinh(0))
+print(sinh(1))
+print(sinh(-1))
+```
+
+Expected output:
+
+```text
+0
+1.1752
+-1.1752
+```
+
+### Valid Inputs
+
+`sinh(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = sinh("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `cos(x)`
 
 `cos(x)` returns the cosine of a numeric expression interpreted in radians.

@@ -18,7 +18,7 @@ int test_gion_scalar_assignments_and_prints(void) {
       "print(ready)\n"
       "print(copy)\n";
   const char *path = "gion_scalar_assignments_and_prints.txt";
-  char output[1024];
+  char output[2048];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *count;
@@ -223,6 +223,7 @@ int test_gion_reserved_name_errors(void) {
       {"sqrt = 1\n", "reserved name cannot be assigned", "gion_reserved_sqrt.gion"},
       {"cbrt = 1\n", "reserved name cannot be assigned", "gion_reserved_cbrt.gion"},
       {"sin = 1\n", "reserved name cannot be assigned", "gion_reserved_sin.gion"},
+      {"sinh = 1\n", "reserved name cannot be assigned", "gion_reserved_sinh.gion"},
       {"cos = 1\n", "reserved name cannot be assigned", "gion_reserved_cos.gion"},
       {"tan = 1\n", "reserved name cannot be assigned", "gion_reserved_tan.gion"},
       {"asin = 1\n", "reserved name cannot be assigned", "gion_reserved_asin.gion"},
@@ -371,6 +372,9 @@ int test_gion_arithmetic_expressions(void) {
       "sin_zero = sin(0)\n"
       "sin_half_turn = sin(pi / 2)\n"
       "sin_expr = sin(1.5707963267948966)\n"
+      "sinh_zero = sinh(0)\n"
+      "sinh_one = sinh(1)\n"
+      "sinh_negative = sinh(-1)\n"
       "cos_zero = cos(0)\n"
       "cos_pi = cos(pi)\n"
       "cos_expr = cos(3.14159265358979323846)\n"
@@ -480,6 +484,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(sin_zero)\n"
       "print(sin_half_turn)\n"
       "print(sin_expr)\n"
+      "print(sinh_zero)\n"
+      "print(sinh_one)\n"
+      "print(sinh_negative)\n"
       "print(cos_zero)\n"
       "print(cos_pi)\n"
       "print(cos_expr)\n"
@@ -595,6 +602,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *sin_zero;
   const graphion_runtime_value *sin_half_turn;
   const graphion_runtime_value *sin_expr;
+  const graphion_runtime_value *sinh_zero;
+  const graphion_runtime_value *sinh_one;
+  const graphion_runtime_value *sinh_negative;
   const graphion_runtime_value *cos_zero;
   const graphion_runtime_value *cos_pi;
   const graphion_runtime_value *cos_expr;
@@ -722,6 +732,9 @@ int test_gion_arithmetic_expressions(void) {
   sin_zero = graphion_runtime_scope_find(&scope, "sin_zero");
   sin_half_turn = graphion_runtime_scope_find(&scope, "sin_half_turn");
   sin_expr = graphion_runtime_scope_find(&scope, "sin_expr");
+  sinh_zero = graphion_runtime_scope_find(&scope, "sinh_zero");
+  sinh_one = graphion_runtime_scope_find(&scope, "sinh_one");
+  sinh_negative = graphion_runtime_scope_find(&scope, "sinh_negative");
   cos_zero = graphion_runtime_scope_find(&scope, "cos_zero");
   cos_pi = graphion_runtime_scope_find(&scope, "cos_pi");
   cos_expr = graphion_runtime_scope_find(&scope, "cos_expr");
@@ -958,6 +971,20 @@ int test_gion_arithmetic_expressions(void) {
       sin_expr->as.float_value > 1.000000001) {
     remove(path);
     return 24328;
+  }
+  if (sinh_zero == NULL || sinh_zero->kind != GVM_VALUE_FLOAT || sinh_zero->as.float_value != 0.0) {
+    remove(path);
+    return 243281;
+  }
+  if (sinh_one == NULL || sinh_one->kind != GVM_VALUE_FLOAT || sinh_one->as.float_value < 1.175201193 ||
+      sinh_one->as.float_value > 1.175201195) {
+    remove(path);
+    return 243282;
+  }
+  if (sinh_negative == NULL || sinh_negative->kind != GVM_VALUE_FLOAT ||
+      sinh_negative->as.float_value < -1.175201195 || sinh_negative->as.float_value > -1.175201193) {
+    remove(path);
+    return 243283;
   }
   if (cos_zero == NULL || cos_zero->kind != GVM_VALUE_FLOAT || cos_zero->as.float_value < 0.999999999 ||
       cos_zero->as.float_value > 1.000000001) {
@@ -1250,7 +1277,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1611,6 +1638,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = sqrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cbrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = sinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cos(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = tan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = asin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1710,6 +1738,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = cbrt(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cbrt argument"},
       {"value = sin()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = sin(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sin argument"},
+      {"value = sinh()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = sinh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sinh argument"},
       {"value = cos()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = cos(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cos argument"},
       {"value = tan()\n", GINT_ERR_PARSE, "expected scalar literal"},

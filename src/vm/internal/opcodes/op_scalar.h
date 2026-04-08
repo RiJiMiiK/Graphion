@@ -42,6 +42,7 @@ int op_clamp(graphion_vm *vm, const graphion_insn *in);
 int op_sqrt(graphion_vm *vm, const graphion_insn *in);
 int op_cbrt_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_sin_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_sinh_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_cos_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_tan_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_asin_builtin(graphion_vm *vm, const graphion_insn *in);

@@ -125,6 +125,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_SIN:
         rc = op_sin_builtin(vm, &in);
         break;
+      case GVM_OP_SINH:
+        rc = op_sinh_builtin(vm, &in);
+        break;
       case GVM_OP_COS:
         rc = op_cos_builtin(vm, &in);
         break;
@@ -323,14 +326,15 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_SQRT] = op_sqrt,
       [GVM_OP_CBRT] = op_cbrt_builtin,
       [GVM_OP_SIN] = op_sin_builtin,
-        [GVM_OP_COS] = op_cos_builtin,
-        [GVM_OP_TAN] = op_tan_builtin,
-        [GVM_OP_ASIN] = op_asin_builtin,
-        [GVM_OP_ACOS] = op_acos_builtin,
-        [GVM_OP_ATAN] = op_atan_builtin,
-        [GVM_OP_ATAN2] = op_atan2_builtin,
-        [GVM_OP_HYPOT] = op_hypot_builtin,
-        [GVM_OP_EXP] = op_exp,
+      [GVM_OP_SINH] = op_sinh_builtin,
+      [GVM_OP_COS] = op_cos_builtin,
+      [GVM_OP_TAN] = op_tan_builtin,
+      [GVM_OP_ASIN] = op_asin_builtin,
+      [GVM_OP_ACOS] = op_acos_builtin,
+      [GVM_OP_ATAN] = op_atan_builtin,
+      [GVM_OP_ATAN2] = op_atan2_builtin,
+      [GVM_OP_HYPOT] = op_hypot_builtin,
+      [GVM_OP_EXP] = op_exp,
       [GVM_OP_LN] = op_ln,
       [GVM_OP_LOG] = op_log,
       [GVM_OP_FLOOR] = op_floor_builtin,
@@ -434,14 +438,15 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_SQRT] = &&L_sqrt,
       [GVM_OP_CBRT] = &&L_cbrt_builtin,
       [GVM_OP_SIN] = &&L_sin_builtin,
-        [GVM_OP_COS] = &&L_cos_builtin,
-        [GVM_OP_TAN] = &&L_tan_builtin,
-        [GVM_OP_ASIN] = &&L_asin_builtin,
-        [GVM_OP_ACOS] = &&L_acos_builtin,
-        [GVM_OP_ATAN] = &&L_atan_builtin,
-        [GVM_OP_ATAN2] = &&L_atan2_builtin,
-        [GVM_OP_HYPOT] = &&L_hypot_builtin,
-        [GVM_OP_EXP] = &&L_exp,
+      [GVM_OP_SINH] = &&L_sinh_builtin,
+      [GVM_OP_COS] = &&L_cos_builtin,
+      [GVM_OP_TAN] = &&L_tan_builtin,
+      [GVM_OP_ASIN] = &&L_asin_builtin,
+      [GVM_OP_ACOS] = &&L_acos_builtin,
+      [GVM_OP_ATAN] = &&L_atan_builtin,
+      [GVM_OP_ATAN2] = &&L_atan2_builtin,
+      [GVM_OP_HYPOT] = &&L_hypot_builtin,
+      [GVM_OP_EXP] = &&L_exp,
       [GVM_OP_LN] = &&L_ln,
       [GVM_OP_LOG] = &&L_log,
       [GVM_OP_FLOOR] = &&L_floor_builtin,
@@ -710,6 +715,12 @@ L_clamp:
     continue;
   L_sin_builtin:
     rc = op_sin_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sinh_builtin:
+    rc = op_sinh_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

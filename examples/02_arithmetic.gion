@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), cos(), tan(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), cos(), tan(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -58,6 +58,9 @@ cbrt_expression = cbrt(1 + 26)
 sin_zero = sin(0)
 sin_half_turn = sin(pi / 2)
 sin_expression = sin(1.5707963267948966)
+sinh_zero = sinh(0)
+sinh_one = sinh(1)
+sinh_negative = sinh(-1)
 cos_zero = cos(0)
 cos_pi = cos(pi)
 cos_expression = cos(3.14159265358979323846)
@@ -166,6 +169,9 @@ print("cube root of an expression -> cbrt_expression=" + cbrt_expression)
 print("sin at zero radians -> sin_zero=" + sin_zero)
 print("sin at pi/2 radians -> sin_half_turn=" + sin_half_turn)
 print("sin of a radians literal -> sin_expression=" + sin_expression)
+print("sinh at zero radians -> sinh_zero=" + sinh_zero)
+print("sinh at one radian -> sinh_one=" + sinh_one)
+print("sinh at minus one radian -> sinh_negative=" + sinh_negative)
 print("cos at zero radians -> cos_zero=" + cos_zero)
 print("cos at pi radians -> cos_pi=" + cos_pi)
 print("cos of a radians literal -> cos_expression=" + cos_expression)
