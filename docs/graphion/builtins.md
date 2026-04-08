@@ -345,6 +345,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `cos(x)`
+
+`cos(x)` returns the cosine of a numeric expression interpreted in radians.
+
+Examples:
+
+```gion
+print(cos(0))
+print(cos(pi))
+print(cos(3.14159265358979323846))
+```
+
+Expected output:
+
+```text
+1
+-1
+-1
+```
+
+### Valid Inputs
+
+`cos(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = cos("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

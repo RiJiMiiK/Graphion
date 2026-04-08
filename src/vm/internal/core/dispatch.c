@@ -125,6 +125,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_SIN:
         rc = op_sin_builtin(vm, &in);
         break;
+      case GVM_OP_COS:
+        rc = op_cos_builtin(vm, &in);
+        break;
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;
@@ -302,6 +305,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_SQRT] = op_sqrt,
       [GVM_OP_CBRT] = op_cbrt_builtin,
       [GVM_OP_SIN] = op_sin_builtin,
+      [GVM_OP_COS] = op_cos_builtin,
       [GVM_OP_EXP] = op_exp,
       [GVM_OP_LN] = op_ln,
       [GVM_OP_LOG] = op_log,
@@ -406,6 +410,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_SQRT] = &&L_sqrt,
       [GVM_OP_CBRT] = &&L_cbrt_builtin,
       [GVM_OP_SIN] = &&L_sin_builtin,
+      [GVM_OP_COS] = &&L_cos_builtin,
       [GVM_OP_EXP] = &&L_exp,
       [GVM_OP_LN] = &&L_ln,
       [GVM_OP_LOG] = &&L_log,
@@ -675,6 +680,12 @@ L_clamp:
     continue;
   L_sin_builtin:
     rc = op_sin_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_cos_builtin:
+    rc = op_cos_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

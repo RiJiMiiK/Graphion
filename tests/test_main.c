@@ -29,6 +29,7 @@ int test_vm_clamp_opcode(void);
 int test_vm_sqrt_opcode(void);
 int test_vm_cbrt_builtin_opcode(void);
 int test_vm_sin_builtin_opcode(void);
+int test_vm_cos_builtin_opcode(void);
 int test_vm_exp_opcode(void);
 int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);
@@ -258,6 +259,7 @@ int main(int argc, char **argv) {
       {"vm_sqrt_opcode", test_vm_sqrt_opcode},
       {"vm_cbrt_builtin_opcode", test_vm_cbrt_builtin_opcode},
       {"vm_sin_builtin_opcode", test_vm_sin_builtin_opcode},
+      {"vm_cos_builtin_opcode", test_vm_cos_builtin_opcode},
       {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_ln_opcode", test_vm_ln_opcode},
       {"vm_log_opcode", test_vm_log_opcode},

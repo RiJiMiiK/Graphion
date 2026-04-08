@@ -74,6 +74,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_SQRT`
 - `GVM_OP_CBRT`
 - `GVM_OP_SIN`
+- `GVM_OP_COS`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -98,6 +99,7 @@ These back the current `.gion` scalar language features:
 - `sqrt(x)`
 - `cbrt(x)`
 - `sin(x)`
+- `cos(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
