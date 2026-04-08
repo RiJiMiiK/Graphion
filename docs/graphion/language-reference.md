@@ -68,6 +68,7 @@ These names are currently reserved and cannot be assigned:
 - `false`
 - `pi`
 - `e`
+- `nan`
 - `abs`
 - `min`
 - `max`
@@ -618,6 +619,7 @@ Current built-in scalar constants:
 
 - `pi`
 - `e`
+- `nan`
 
 See [Types](types.md) for their current values and basic usage.
 

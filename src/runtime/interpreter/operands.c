@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "runtime/interpreter/operands.h"
+
+#include <math.h>
 int parse_identifier_token(const char **cursor,
                                   char *buffer,
                                   size_t buffer_size,
@@ -106,6 +108,12 @@ int parse_scalar_literal(graphion_runtime_program *program,
     *cursor += 1;
     return GINT_OK;
   }
+  if (strncmp(start, "nan", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = NAN;
+    *cursor += 3;
+    return GINT_OK;
+  }
   if (start[0] == '0' && (start[1] == 'b' || start[1] == 'B')) {
     const char *scan = start + 2;
     uint64_t bits_value = 0U;
@@ -194,7 +202,7 @@ int parse_operand(const char **cursor,
       return rc;
     }
     if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0 || strcmp(name, "pi") == 0 ||
-        strcmp(name, "e") == 0) {
+        strcmp(name, "e") == 0 || strcmp(name, "nan") == 0) {
       *cursor = saved;
     } else {
       int index;
