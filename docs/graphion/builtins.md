@@ -2,9 +2,52 @@
 
 This page documents the builtins currently available in Graphion.
 
+## Shared Rules
+
+Unless a builtin says otherwise:
+
+- arguments are evaluated before the builtin runs
+- invalid argument types raise `incompatible operand types`
+- numeric builtins accept `int`, `float`, or the documented mix of both
+- builtins return a value that can be stored, printed, or reused in a larger expression
+
+## Quick Reference
+
+| Builtin | Purpose | Returns | Notes |
+| --- | --- | --- | --- |
+| `print(x)` | write one value and a newline | no value | special print-only string coercion |
+| `abs(x)` | absolute value | numeric | numeric only |
+| `min(a, b)` | smaller of two values | numeric | mixed `int`/`float` allowed |
+| `max(a, b)` | larger of two values | numeric | mixed `int`/`float` allowed |
+| `clamp(x, lo, hi)` | constrain to a range | numeric | mixed `int`/`float` allowed |
+| `sqrt(x)` | square root | `float` | requires `x >= 0` |
+| `cbrt(x)` | cube root | `float` | negatives allowed |
+| `sin(x)` | sine in radians | `float` | |
+| `cos(x)` | cosine in radians | `float` | |
+| `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
+| `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
+| `acos(x)` | arccosine in radians | `float` | requires `x in [-1, 1]` |
+| `atan(x)` | arctangent in radians | `float` | |
+| `atan2(y, x)` | angle of vector `(x, y)` | `float` | two numeric inputs |
+| `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
+| `sinh(x)` | hyperbolic sine | `float` | |
+| `cosh(x)` | hyperbolic cosine | `float` | |
+| `tanh(x)` | hyperbolic tangent | `float` | |
+| `exp(x)` | `e ** x` | `float` | |
+| `ln(x)` | natural logarithm | `float` | requires `x > 0` |
+| `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
+| `log10(x)` | base-10 logarithm | `float` | lowered to `log(x, 10)` |
+| `log2(x)` | base-2 logarithm | `float` | lowered to `log(x, 2)` |
+| `floor(x)` | round down | same numeric family | `int -> int`, `float -> float` |
+| `ceil(x)` | round up | same numeric family | `int -> int`, `float -> float` |
+| `round(x)` | nearest integer value | same numeric family | `.5` rounds away from zero |
+| `trunc(x)` | drop fractional part | same numeric family | toward zero |
+| `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
+| `len(x)` | string length | `int` | strings only |
+
 ## `print(...)`
 
-`print(...)` writes a value to the output followed by a newline.
+`print(...)` writes a value followed by a newline.
 
 Examples:
 
@@ -24,7 +67,7 @@ graphion
 
 ### Print-Only String Coercion
 
-Inside `print(...)`, string concatenation currently allows non-string scalar values to be rendered inline:
+Inside `print(...)`, Graphion currently allows string concatenation with non-string scalar values.
 
 ```gion
 count = 7
@@ -41,11 +84,11 @@ value=7
 
 This coercion is specific to `print(...)`.
 
-## `abs(...)`
+## Numeric Helpers
 
-`abs(...)` returns the absolute value of a numeric expression.
+### `abs(x)`
 
-Examples:
+Returns the absolute value of a numeric expression.
 
 ```gion
 print(abs(-42))
@@ -61,126 +104,40 @@ Expected output:
 3
 ```
 
-### Valid Inputs
+### `min(a, b)` and `max(a, b)`
 
-`abs(...)` currently accepts:
-
-- integer expressions
-- float expressions
-
-### Invalid Inputs
-
-This is a runtime error:
-
-```gion
-value = abs("graphion")
-```
-
-Current message:
-
-```text
-incompatible operand types
-```
-
-## `min(a, b)`
-
-`min(a, b)` returns the smaller of two numeric expressions.
-
-Examples:
+Return the smaller or larger of two numeric expressions.
 
 ```gion
 print(min(7, 3))
+print(max(7, 3))
 print(min(3.5, 2))
-print(min(10 - 2, 3 * 3))
+print(max(3.5, 2))
 ```
 
 Expected output:
 
 ```text
 3
-2
-8
-```
-
-### Valid Inputs
-
-`min(a, b)` currently accepts:
-
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-### Invalid Inputs
-
-This is a runtime error:
-
-```gion
-value = min("graphion", 1)
-```
-
-Current message:
-
-```text
-incompatible operand types
-```
-
-## `max(a, b)`
-
-`max(a, b)` returns the larger of two numeric expressions.
-
-Examples:
-
-```gion
-print(max(7, 3))
-print(max(3.5, 2))
-print(max(10 - 2, 3 * 3))
-```
-
-Expected output:
-
-```text
 7
+2
 3.5
-9
 ```
 
-### Valid Inputs
+Mixed `int` / `float` inputs are allowed.
 
-`max(a, b)` currently accepts:
+### `clamp(x, lo, hi)`
 
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-### Invalid Inputs
-
-This is a runtime error:
-
-```gion
-value = max("graphion", 1)
-```
-
-Current message:
-
-```text
-incompatible operand types
-```
-
-## `clamp(x, lo, hi)`
-
-`clamp(x, lo, hi)` constrains a numeric expression to a numeric range.
+Constrains `x` to the inclusive range `[lo, hi]`.
 
 - if `x < lo`, the result is `lo`
 - if `x > hi`, the result is `hi`
 - otherwise the result is `x`
 
-Examples:
-
 ```gion
 print(clamp(-2, 0, 10))
 print(clamp(5, 0, 10))
 print(clamp(17, 0, 10))
-print(clamp(12.5, 0, 10))
 ```
 
 Expected output:
@@ -189,41 +146,17 @@ Expected output:
 0
 5
 10
-10
 ```
 
-### Valid Inputs
+## Roots And Exponentials
 
-`clamp(x, lo, hi)` currently accepts:
+### `sqrt(x)`
 
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-### Invalid Inputs
-
-This is a runtime error:
-
-```gion
-value = clamp("graphion", 0, 1)
-```
-
-Current message:
-
-```text
-incompatible operand types
-```
-
-## `sqrt(x)`
-
-`sqrt(x)` returns the square root of a numeric expression.
-
-Examples:
+Returns the square root of `x`.
 
 ```gion
 print(sqrt(9))
 print(sqrt(2.25))
-print(sqrt(1 + 8))
 ```
 
 Expected output:
@@ -231,44 +164,25 @@ Expected output:
 ```text
 3
 1.5
-3
 ```
 
-### Valid Inputs
+Domain restriction:
 
-`sqrt(x)` currently accepts:
+- `x >= 0`
 
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = sqrt("graphion")
-value = sqrt(-1)
-```
-
-Current messages:
+Current domain error:
 
 ```text
-incompatible operand types
 sqrt requires non-negative input
 ```
 
-## `cbrt(x)`
+### `cbrt(x)`
 
-`cbrt(x)` returns the cube root of a numeric expression.
-
-Examples:
+Returns the cube root of `x`.
 
 ```gion
 print(cbrt(27))
 print(cbrt(-8))
-print(cbrt(1 + 26))
 ```
 
 Expected output:
@@ -276,515 +190,17 @@ Expected output:
 ```text
 3
 -2
-3
 ```
 
-### Valid Inputs
+Negative values are allowed.
 
-`cbrt(x)` currently accepts:
+### `exp(x)`
 
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = cbrt("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `sin(x)`
-
-`sin(x)` returns the sine of a numeric expression interpreted in radians.
-
-Examples:
-
-```gion
-print(sin(0))
-print(sin(pi / 2))
-print(sin(1.5707963267948966))
-```
-
-Expected output:
-
-```text
-0
-1
-1
-```
-
-### Valid Inputs
-
-`sin(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = sin("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `sinh(x)`
-
-`sinh(x)` returns the hyperbolic sine of a numeric expression.
-
-Examples:
-
-```gion
-print(sinh(0))
-print(sinh(1))
-print(sinh(-1))
-```
-
-Expected output:
-
-```text
-0
-1.1752
--1.1752
-```
-
-### Valid Inputs
-
-`sinh(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = sinh("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `cosh(x)`
-
-`cosh(x)` returns the hyperbolic cosine of a numeric expression.
-
-Examples:
-
-```gion
-print(cosh(0))
-print(cosh(1))
-print(cosh(-1))
-```
-
-Expected output:
-
-```text
-1
-1.54308
-1.54308
-```
-
-### Valid Inputs
-
-`cosh(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = cosh("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `tanh(x)`
-
-`tanh(x)` returns the hyperbolic tangent of a numeric expression.
-
-Examples:
-
-```gion
-print(tanh(0))
-print(tanh(1))
-print(tanh(-1))
-```
-
-Expected output:
-
-```text
-0
-0.761594
--0.761594
-```
-
-### Valid Inputs
-
-`tanh(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = tanh("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `cos(x)`
-
-`cos(x)` returns the cosine of a numeric expression interpreted in radians.
-
-Examples:
-
-```gion
-print(cos(0))
-print(cos(pi))
-print(cos(3.14159265358979323846))
-```
-
-Expected output:
-
-```text
-1
--1
--1
-```
-
-### Valid Inputs
-
-`cos(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = cos("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `tan(x)`
-
-`tan(x)` returns the tangent of a numeric expression interpreted in radians.
-
-Examples:
-
-```gion
-print(tan(0))
-print(tan(pi / 4))
-print(tan(0.7853981633974483))
-```
-
-Expected output:
-
-```text
-0
-1
-1
-```
-
-### Valid Inputs
-
-`tan(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = tan("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `asin(x)`
-
-`asin(x)` returns the arcsine of a numeric expression in radians.
-
-Examples:
-
-```gion
-print(asin(0))
-print(asin(1))
-print(asin(0.5))
-```
-
-Expected output:
-
-```text
-0
-1.5708
-0.523599
-```
-
-### Valid Inputs
-
-`asin(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The input must stay in `[-1, 1]`.
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = asin(2)
-value = asin("graphion")
-```
-
-Current messages:
-
-```text
-asin requires input in [-1, 1]
-incompatible operand types
-```
-
-## `acos(x)`
-
-Returns the arccosine of `x` in radians.
-
-Examples:
-
-```gion
-print(acos(1))
-print(acos(0))
-print(acos(0.5))
-```
-
-Expected output:
-
-```text
-0
-1.5708
-1.0472
-```
-
-Valid inputs:
-- `int`
-- `float`
-
-Domain:
-- `x` must be in `[-1, 1]`
-
-Invalid inputs:
-- `acos(2)`
-- `acos("graphion")`
-
-Current runtime messages:
-- `acos requires input in [-1, 1]`
-- `incompatible operand types`
-
-## `atan(x)`
-
-`atan(x)` returns the arctangent of a numeric expression in radians.
-
-Examples:
-
-```gion
-print(atan(0))
-print(atan(1))
-print(atan(-1))
-```
-
-Expected output:
-
-```text
-0
-0.785398
--0.785398
-```
-
-### Valid Inputs
-
-`atan(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = atan("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `atan2(y, x)`
-
-`atan2(y, x)` returns the angle of the vector `(x, y)` in radians.
-
-Examples:
-
-```gion
-print(atan2(1, 1))
-print(atan2(1, -1))
-print(atan2(-1, -1))
-```
-
-Expected output:
-
-```text
-0.785398
-2.35619
--2.35619
-```
-
-### Valid Inputs
-
-`atan2(y, x)` currently accepts:
-
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = atan2("graphion", 1)
-value = atan2(1, "graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `hypot(x, y)`
-
-`hypot(x, y)` returns the Euclidean length of the vector `(x, y)`.
-
-Examples:
-
-```gion
-print(hypot(3, 4))
-print(hypot(5, 12))
-print(hypot(-3, 4))
-```
-
-Expected output:
-
-```text
-5
-13
-5
-```
-
-### Valid Inputs
-
-`hypot(x, y)` currently accepts:
-
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = hypot("graphion", 1)
-value = hypot(1, "graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `exp(x)`
-
-`exp(x)` returns `e` raised to the value of a numeric expression.
-
-Examples:
+Returns `e ** x`.
 
 ```gion
 print(exp(1))
 print(exp(0.0))
-print(exp(1 + 1))
 ```
 
 Expected output:
@@ -792,42 +208,19 @@ Expected output:
 ```text
 2.71828
 1
-7.38906
 ```
 
-### Valid Inputs
+## Logarithms
 
-`exp(x)` currently accepts:
+All logarithm builtins return a `float`.
 
-- integer expressions
-- float expressions
+### `ln(x)`
 
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-This is a runtime error:
-
-```gion
-value = exp("graphion")
-```
-
-Current message:
-
-```text
-incompatible operand types
-```
-
-## `ln(x)`
-
-`ln(x)` returns the natural logarithm of a numeric expression.
-
-Examples:
+Returns the natural logarithm of `x`.
 
 ```gion
 print(ln(1))
 print(ln(e))
-print(ln(e ** 2))
 ```
 
 Expected output:
@@ -835,45 +228,25 @@ Expected output:
 ```text
 0
 1
-2
 ```
 
-### Valid Inputs
+Domain restriction:
 
-`ln(x)` currently accepts:
+- `x > 0`
 
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = ln("graphion")
-value = ln(0)
-value = ln(-1)
-```
-
-Current messages:
+Current domain error:
 
 ```text
-incompatible operand types
 ln requires strictly positive input
 ```
 
-## `log(x, base)`
+### `log(x, base)`
 
-`log(x, base)` returns the logarithm of a numeric expression in an explicit base.
-
-Examples:
+Returns the logarithm of `x` in the explicit base `base`.
 
 ```gion
 print(log(8, 2))
 print(log(100, 10))
-print(log(2 ** 5, 2))
 ```
 
 Expected output:
@@ -881,181 +254,150 @@ Expected output:
 ```text
 3
 2
-5
 ```
 
-### Valid Inputs
+Domain restrictions:
 
-`log(x, base)` currently accepts:
+- `x > 0`
+- `base > 0`
+- `base != 1`
 
-- integer expressions
-- float expressions
-- mixed integer/float numeric expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = log("graphion", 2)
-value = log(8, "base")
-value = log(0, 10)
-value = log(8, 1)
-```
-
-Current messages:
+Current domain error:
 
 ```text
-incompatible operand types
 log requires x > 0 and base > 0 with base != 1
 ```
 
-## `log10(x)`
+### `log10(x)` and `log2(x)`
 
-`log10(x)` returns the base-10 logarithm of a numeric expression.
-
-Examples:
+Convenience forms for base-10 and base-2 logarithms.
 
 ```gion
 print(log10(1000))
-print(log10(10.0))
-print(log10(10 ** 4))
-```
-
-Expected output:
-
-```text
-3
-1
-4
-```
-
-### Valid Inputs
-
-`log10(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-The result is currently returned as a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = log10("graphion")
-value = log10(0)
-value = log10(-1)
-```
-
-Current messages:
-
-```text
-incompatible operand types
-log requires x > 0 and base > 0 with base != 1
-```
-
-## `log2(x)`
-
-`log2(x)` returns the base-2 logarithm of a numeric expression.
-
-Examples:
-
-```gion
 print(log2(8))
-print(log2(2.0))
-print(log2(2 ** 6))
 ```
 
 Expected output:
 
 ```text
 3
-1
-6
+3
 ```
 
-### Valid Inputs
+Implementation note:
 
-`log2(x)` currently accepts:
+- `log10(x)` is lowered to `log(x, 10)`
+- `log2(x)` is lowered to `log(x, 2)`
 
-- integer expressions
-- float expressions
+They therefore follow the same domain rule and error wording as `log(x, base)`.
 
-The result is currently returned as a `float`.
+## Trigonometry
 
-### Invalid Inputs
+All trigonometric builtins use radians and return a `float`.
 
-These are runtime errors:
+### `sin(x)`, `cos(x)`, `tan(x)`
 
 ```gion
-value = log2("graphion")
-value = log2(0)
-value = log2(-1)
-```
-
-Current messages:
-
-```text
-incompatible operand types
-log requires x > 0 and base > 0 with base != 1
-```
-
-## `floor(x)`
-
-`floor(x)` rounds a numeric expression down to the greatest integer less than or equal to it.
-
-Examples:
-
-```gion
-print(floor(7))
-print(floor(7.5))
-print(floor(-3.2))
+print(sin(0))
+print(cos(pi))
+print(tan(pi / 4))
 ```
 
 Expected output:
 
 ```text
-7
-7
--4
+0
+-1
+1
 ```
 
-### Valid Inputs
+For `tan(x)`, values near asymptotes such as `pi / 2 + k*pi` can become very large. Graphion currently follows ordinary floating-point behavior here rather than raising a special error.
 
-`floor(x)` currently accepts:
+### `asin(x)` and `acos(x)`
 
-- integer expressions
-- float expressions
-
-Integer inputs stay as `int`. Float inputs currently return a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
+Inverse sine and inverse cosine, in radians.
 
 ```gion
-value = floor("graphion")
+print(asin(0.5))
+print(acos(0.5))
 ```
 
-Current messages:
+Expected output:
 
 ```text
-incompatible operand types
+0.523599
+1.0472
 ```
 
-## `ceil(x)`
+Domain restriction for both:
 
-`ceil(x)` rounds a numeric expression up to the smallest integer greater than or equal to it.
+- `x` must be in `[-1, 1]`
 
-Examples:
+Current domain errors:
+
+```text
+asin requires input in [-1, 1]
+acos requires input in [-1, 1]
+```
+
+### `atan(x)` and `atan2(y, x)`
+
+`atan(x)` returns the arctangent of one numeric expression.
+
+`atan2(y, x)` returns the angle of the vector `(x, y)` and keeps quadrant information.
 
 ```gion
-print(ceil(7))
-print(ceil(7.5))
+print(atan(1))
+print(atan2(1, -1))
+```
+
+Expected output:
+
+```text
+0.785398
+2.35619
+```
+
+### `hypot(x, y)`
+
+Returns the Euclidean length of the vector `(x, y)`.
+
+```gion
+print(hypot(3, 4))
+```
+
+Expected output:
+
+```text
+5
+```
+
+## Hyperbolic Functions
+
+### `sinh(x)`, `cosh(x)`, `tanh(x)`
+
+```gion
+print(sinh(1))
+print(cosh(1))
+print(tanh(1))
+```
+
+Expected output:
+
+```text
+1.1752
+1.54308
+0.761594
+```
+
+These accept numeric input and return a `float`.
+
+## Rounding And Shape
+
+### `floor(x)` and `ceil(x)`
+
+```gion
+print(floor(7.5))
 print(ceil(-3.2))
 ```
 
@@ -1063,134 +405,57 @@ Expected output:
 
 ```text
 7
-8
 -3
 ```
 
-### Valid Inputs
+Current result rule:
 
-`ceil(x)` currently accepts:
+- `int` input stays `int`
+- `float` input returns a `float`
 
-- integer expressions
-- float expressions
+### `round(x)`
 
-Integer inputs stay as `int`. Float inputs currently return a `float`.
+Rounds to the nearest integer value.
 
-### Invalid Inputs
+Current tie-breaking rule:
 
-These are runtime errors:
-
-```gion
-value = ceil("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `round(x)`
-
-`round(x)` rounds a numeric expression to the nearest integer value.
-
-Halfway values are currently rounded away from zero.
-
-Examples:
+- `.5` rounds away from zero
 
 ```gion
-print(round(7))
-print(round(7.4))
 print(round(7.5))
-print(round(-3.2))
 print(round(-3.5))
 ```
 
 Expected output:
 
 ```text
-7
-7
 8
--3
 -4
 ```
 
-### Valid Inputs
+### `trunc(x)`
 
-`round(x)` currently accepts:
+Removes the fractional part.
 
-- integer expressions
-- float expressions
+Current rule:
 
-Integer inputs stay as `int`. Float inputs currently return a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
+- truncates toward zero
 
 ```gion
-value = round("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `trunc(x)`
-
-`trunc(x)` removes the fractional part of a numeric expression.
-
-It currently truncates toward zero.
-
-Examples:
-
-```gion
-print(trunc(7))
 print(trunc(7.9))
 print(trunc(-3.9))
-print(trunc(-0.4))
 ```
 
 Expected output:
 
 ```text
 7
-7
 -3
-0
 ```
 
-### Valid Inputs
+### `sign(x)`
 
-`trunc(x)` currently accepts:
-
-- integer expressions
-- float expressions
-
-Integer inputs stay as `int`. Float inputs currently return a `float`.
-
-### Invalid Inputs
-
-These are runtime errors:
-
-```gion
-value = trunc("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `sign(x)`
-
-`sign(x)` returns `-1` for negative numeric values, `0` for zero, and `1` for positive numeric values.
-
-Examples:
+Returns the sign of a numeric value.
 
 ```gion
 print(sign(7))
@@ -1206,34 +471,19 @@ Expected output:
 0
 ```
 
-### Valid Inputs
+Current result values:
 
-`sign(x)` currently accepts:
+- `-1`
+- `0`
+- `1`
 
-- integer expressions
-- float expressions
+The result type is currently `int`.
 
-The result is currently returned as an `int`.
+## Strings
 
-### Invalid Inputs
+### `len(x)`
 
-These are runtime errors:
-
-```gion
-value = sign("graphion")
-```
-
-Current messages:
-
-```text
-incompatible operand types
-```
-
-## `len(x)`
-
-`len(x)` returns the length of a string expression.
-
-Examples:
+Returns the length of a string expression.
 
 ```gion
 print(len("graphion"))
@@ -1247,24 +497,25 @@ Expected output:
 8
 ```
 
-### Valid Inputs
+Accepted input:
 
-`len(x)` currently accepts:
+- string expressions only
 
-- string expressions
+Result type:
 
-The result is currently returned as an `int`.
+- `int`
 
-### Invalid Inputs
+## Error Summary
 
-This is a runtime error:
-
-```gion
-value = len(42)
-```
-
-Current message:
+Common current runtime messages used by builtins:
 
 ```text
 incompatible operand types
+sqrt requires non-negative input
+asin requires input in [-1, 1]
+acos requires input in [-1, 1]
+ln requires strictly positive input
+log requires x > 0 and base > 0 with base != 1
 ```
+
+For the full language-level context around these errors, see [Language Reference](language-reference.md).
