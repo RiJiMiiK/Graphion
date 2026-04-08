@@ -103,6 +103,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "exp") == 0 ||
          strcmp(name, "ln") == 0 || strcmp(name, "log") == 0 || strcmp(name, "log10") == 0 ||
          strcmp(name, "log2") == 0 || strcmp(name, "floor") == 0 || strcmp(name, "ceil") == 0 ||
+         strcmp(name, "round") == 0 ||
          strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||

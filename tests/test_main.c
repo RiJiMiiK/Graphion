@@ -32,6 +32,7 @@ int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);
 int test_vm_floor_builtin_opcode(void);
 int test_vm_ceil_builtin_opcode(void);
+int test_vm_round_builtin_opcode(void);
 int test_vm_len_opcode(void);
 int test_vm_factorial_opcode(void);
 int test_vm_eq_opcode(void);
@@ -256,6 +257,7 @@ int main(int argc, char **argv) {
       {"vm_log_opcode", test_vm_log_opcode},
       {"vm_floor_builtin_opcode", test_vm_floor_builtin_opcode},
       {"vm_ceil_builtin_opcode", test_vm_ceil_builtin_opcode},
+      {"vm_round_builtin_opcode", test_vm_round_builtin_opcode},
       {"vm_len_opcode", test_vm_len_opcode},
       {"vm_factorial_opcode", test_vm_factorial_opcode},
       {"vm_eq_opcode", test_vm_eq_opcode},

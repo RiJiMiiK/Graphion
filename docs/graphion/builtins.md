@@ -574,6 +574,55 @@ Current messages:
 incompatible operand types
 ```
 
+## `round(x)`
+
+`round(x)` rounds a numeric expression to the nearest integer value.
+
+Halfway values are currently rounded away from zero.
+
+Examples:
+
+```gion
+print(round(7))
+print(round(7.4))
+print(round(7.5))
+print(round(-3.2))
+print(round(-3.5))
+```
+
+Expected output:
+
+```text
+7
+7
+8
+-3
+-4
+```
+
+### Valid Inputs
+
+`round(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+Integer inputs stay as `int`. Float inputs currently return a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = round("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.

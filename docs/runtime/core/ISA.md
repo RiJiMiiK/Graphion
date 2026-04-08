@@ -100,6 +100,7 @@ These back the current `.gion` scalar language features:
 - `log2(x)`
 - `floor(x)`
 - `ceil(x)`
+- `round(x)`
 - `len(x)`
 
 ## Other VM opcode families present in the repo

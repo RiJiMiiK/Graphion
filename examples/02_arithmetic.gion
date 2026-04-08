@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), and the string builtin len().
+# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -73,6 +73,11 @@ floor_negative = floor(-3.2)
 ceil_count = ceil(7)
 ceil_ratio = ceil(7.5)
 ceil_negative = ceil(-3.2)
+round_count = round(7)
+round_ratio = round(7.4)
+round_half = round(7.5)
+round_negative = round(-3.2)
+round_negative_half = round(-3.5)
 pi_value = pi
 e_value = e
 len_text = len("graphion")
@@ -142,6 +147,11 @@ print("floor of a negative float -> floor_negative=" + floor_negative)
 print("ceil of an integer -> ceil_count=" + ceil_count)
 print("ceil of a float -> ceil_ratio=" + ceil_ratio)
 print("ceil of a negative float -> ceil_negative=" + ceil_negative)
+print("round of an integer -> round_count=" + round_count)
+print("round of a float -> round_ratio=" + round_ratio)
+print("round of a halfway float -> round_half=" + round_half)
+print("round of a negative float -> round_negative=" + round_negative)
+print("round of a negative halfway float -> round_negative_half=" + round_negative_half)
 print("pi constant -> pi_value=" + pi_value)
 print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)
