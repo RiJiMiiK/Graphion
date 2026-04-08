@@ -2,116 +2,255 @@
 
 > Current language-runtime reconstruction is governed by [REBUILD_CHARTER.md](REBUILD_CHARTER.md).
 
-## Scope
+## Purpose
 
-Graphion currently exposes a small but real `.gion` language surface on top of a C runtime and a VM.
+This page explains how the current Graphion runtime is organized.
 
-At this stage, the important architectural truth is:
+It is not a language tutorial and it is not the ISA reference.
 
-- user programs enter as `.gion`
-- supported source is lowered toward VM execution
-- the VM remains the execution backend
+Use it to answer questions like:
 
-The project still contains older graph- and hypergraph-oriented runtime pieces, but they should not be read as proof that the current `.gion` language already exposes that whole surface.
+- where `.gion` source enters the system
+- which layer parses and validates source
+- where execution semantics actually live
+- which parts belong to the current scalar-language path
+- which VM capabilities exist beyond the current `.gion` frontend
 
-## Runtime layers
+## Executive Summary
 
-- `src/runtime/entry.*`
-  - file entrypoint for `.gion`
-  - validates input path and reads source text
-- `src/runtime/interpreter.*`
-  - current source-level runtime/orchestration layer
-  - parses the supported `.gion` subset and prepares execution
-- `src/vm/vm.*`
-  - VM implementation and opcode semantics
-- `src/parser/bytecode.*`
-  - fixed-width bytecode decoding for VM-oriented tests and tooling
-- `src/runtime/arena.*`
-  - temporary allocation support used by the runtime
+The active architecture is deliberately simple:
 
-## Current `.gion` language surface
+- `.gion` source is the normal user entry point
+- the source path is parsed and lowered toward VM execution
+- the VM is the execution backend
+- unsupported forms must fail clearly rather than falling back to a second semantic engine
 
-The currently supported user-facing subset is centered on scalar values and expressions:
+The repository still contains broader graph, hypergraph, frontier, and traversal machinery.
+Those parts are real, but they should not be confused with the currently documented `.gion` language surface.
 
-- assignment
-- variable reuse
+## Current Execution Pipeline
+
+The intended pipeline is:
+
+- `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
+
+In repository terms, that currently means:
+
+1. `src/runtime/entry.*`
+- opens the source file
+- validates the path and input text
+- hands the source to the runtime/frontend path
+
+2. `src/runtime/interpreter.*` and `src/runtime/interpreter/*`
+- own the current `.gion` source-level pipeline
+- handle parsing of the implemented subset
+- lower supported forms toward VM-oriented execution
+- map failures into user-visible source/runtime diagnostics
+
+3. `src/vm/*`
+- execute the lowered program
+- hold the scalar opcode semantics used by the current language subset
+- also contain broader VM families not yet fully exposed by `.gion`
+
+4. `src/parser/bytecode.*`
+- decode fixed-width bytecode for VM-facing tools and tests
+- document and enforce the VM instruction encoding contract
+
+5. `src/runtime/arena.*`
+- provide temporary allocation support for runtime/frontend work
+
+## Runtime Layer Map
+
+### Source entry
+
+Relevant files:
+
+- `src/runtime/entry.c`
+- `src/runtime/entry.h`
+
+Responsibilities:
+
+- file-oriented entry into Graphion source execution
+- source loading
+- path validation and top-level orchestration handoff
+
+This layer should stay thin. It is the boundary between the outside world and the language/runtime pipeline, not the place where language semantics should accumulate.
+
+### Source frontend and orchestration
+
+Relevant files:
+
+- `src/runtime/interpreter.c`
+- `src/runtime/interpreter.h`
+- `src/runtime/interpreter/source.c`
+- `src/runtime/interpreter/program.c`
+- `src/runtime/interpreter/base.c`
+- `src/runtime/interpreter/operands.c`
+- `src/runtime/interpreter/stmt.c`
+- `src/runtime/interpreter/expr.c`
+- `src/runtime/interpreter/exec.c`
+
+Responsibilities:
+
+- define the currently supported `.gion` subset
+- recognize statements, expressions, operands, and reserved names
+- enforce source-level rules
+- prepare execution through the VM path
+- translate VM/runtime failures into language-facing errors when needed
+
+Practical reading guide:
+
+- `stmt.*` is where statement forms are recognized
+- `expr.*` is where expression forms and builtin calls are recognized
+- `operands.*` covers literals and source operands such as constants like `pi` and `e`
+- `exec.*` is the main bridge between source execution and VM-visible result handling
+
+This layer is where the current language surface is defined.
+If a feature is "supported in `.gion`", it should be traceable here.
+
+### VM backend
+
+Relevant files:
+
+- `src/vm/vm.c`
+- `src/vm/vm.h`
+- `src/vm/internal/core/dispatch.c`
+- `src/vm/internal/core/value.*`
+- `src/vm/internal/opcodes/op_state.*`
+- `src/vm/internal/opcodes/op_io.*`
+- `src/vm/internal/opcodes/op_scalar.*`
+- `src/vm/internal/opcodes/op_graph.*`
+- `src/vm/internal/opcodes/op_hypergraph.*`
+- `src/vm/internal/opcodes/op_frontier.*`
+
+Responsibilities:
+
+- define the VM program model and result codes
+- dispatch instructions
+- hold the concrete semantics of opcodes
+- provide scalar execution used by the current `.gion` subset
+- preserve broader VM capabilities that are not yet equivalent to documented `.gion` surface area
+
+Important architectural rule:
+
+- language semantics should converge on the VM backend
+- the VM should not be bypassed just because a source feature is inconvenient to lower cleanly
+
+### Bytecode tooling layer
+
+Relevant files:
+
+- `src/parser/bytecode.c`
+- `src/parser/bytecode.h`
+
+Responsibilities:
+
+- decode the fixed-width instruction stream
+- support VM-facing tests and tooling
+- keep the bytecode contract explicit and testable
+
+This layer is VM tooling infrastructure, not the `.gion` language frontend.
+
+## Current `.gion` Surface In Architectural Terms
+
+The current source-language path is centered on scalar programs.
+
+Implemented today at the user-language level:
+
+- variable assignment and reuse
 - `print(...)`
 - arithmetic expressions
 - postfix factorial `!`
 - grouped expressions with parentheses
 - compound assignments
-- builtins `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `cbrt(x)`, `sin(x)`, `sinh(x)`, `cos(x)`, `cosh(x)`, `tan(x)`, `tanh(x)`, `asin(x)`, `acos(x)`, `atan(x)`, `atan2(y, x)`, `hypot(x, y)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, `floor(x)`, `ceil(x)`, `round(x)`, `trunc(x)`, `sign(x)`, and `len(x)`
+- boolean logic and comparisons
+- `if / elif / else`
+- ternary expressions
+- `match`
+- comments and top-of-file warning directives
+- `bits` literals and bitwise operators
+- scalar builtins and constants
 
-### Scalar values
-
-Supported scalar values are:
+Current scalar value kinds:
 
 - `int`
 - `float`
 - `bool`
 - `string`
+- `bits`
 
-### Arithmetic
+This is the language surface that the docs in `docs/graphion/` should describe.
+Anything beyond that belongs to broader runtime/VM capability, not to the current user-language contract.
 
-Currently supported arithmetic operators:
+## What The VM Contains Beyond `.gion`
 
-- `+`
-- `-`
-- `*`
-- `/`
-- `//`
-- `%`
-- `**`
+The VM currently contains more than the active scalar-language subset.
+That includes families related to:
 
-Currently supported compound assignments:
+- graph operations
+- hypergraph operations
+- frontier primitives
+- traversal-oriented helpers
+- weighted graph support
 
-- `+=`
-- `-=`
-- `*=`
-- `/=`
-- `//=`
-- `%=`
-- `**=`
+Architecturally, that means:
 
-### String behavior
+- the VM is broader than the current language frontend
+- the presence of an opcode or runtime helper does not automatically mean `.gion` exposes it
+- user documentation must not infer source-language support from VM capability alone
 
-- `string + string` performs concatenation
-- mixed string coercion such as `"Test " + 7` is currently supported only inside `print(...)`
-- outside `print(...)`, mixed arithmetic/string operands remain runtime errors
+This separation is intentional and important.
+It lets the backend evolve while the source language stays explicitly documented.
 
-## Execution model
+## Design Invariants
 
-The active design target is a single execution pipeline:
+These are the architectural rules that matter most right now.
 
-- `source Graphion -> tokens/parsing -> representation interne du code -> bytecode -> VM`
+### 1. One execution model
 
-The implementation is still being rebuilt toward that target, but the project should be evaluated against that direction rather than against historical intermediate structures.
+There should be one real language pipeline, not a "normal path" plus a hidden fallback path.
 
-Two rules matter here:
+### 2. `.gion` stays the normal frontend
 
-- no alternate semantic engine should silently take over when a form is unsupported
-- unsupported language forms should fail with a clear error
+Features should not bypass `.gion` just to make one example or one test pass.
 
-## VM model
+### 3. Unsupported forms fail clearly
 
-The VM remains the execution backend and the main performance anchor.
+If a language form is outside the supported subset, it should produce a clear parse/runtime error rather than silently switching engines or semantics.
 
-Current VM characteristics:
+### 4. Docs must match implementation
 
-- fixed instruction encoding documented in [ISA.md](ISA.md)
-- explicit VM result codes exposed in `src/vm/vm.h`
-- deterministic mode available through `graphion_vm_set_deterministic(vm, true)`
+- `docs/graphion/*` describe the currently implemented source-language subset
+- `docs/runtime/*` describe backend structure and VM behavior
+- architecture docs must be careful not to imply language features that only exist deeper in the VM
 
-The VM also contains older graph/hypergraph opcodes and runtime bindings. Those remain part of the broader project, but they should be treated separately from the currently documented `.gion` scalar-language surface.
+## Error Ownership
 
-## Error model
+At a high level, error ownership is split like this:
 
-Runtime-visible error behavior is documented in:
+- source/frontend layer
+  - parse errors
+  - source-shape errors
+  - unknown variable / unknown operand diagnostics
+- VM layer
+  - execution result codes
+  - type/runtime/domain failures during opcode execution
+
+User-visible behavior is documented in:
 
 - [ERRORS.md](../debugging/ERRORS.md)
 
-At a high level, the current user-visible split is:
+VM-visible instruction and code behavior is documented in:
 
-- parse errors for unsupported/invalid source forms
-- unknown variable / unknown operand diagnostics
-- runtime errors for invalid arithmetic at execution time
+- [ISA.md](ISA.md)
+
+## Reading Order
+
+If you are working on runtime behavior, the best order is:
+
+1. [REBUILD_CHARTER.md](REBUILD_CHARTER.md)
+2. this page
+3. [ISA.md](ISA.md)
+4. [ERRORS.md](../debugging/ERRORS.md)
+
+That order keeps design rules, structure, opcode surface, and failure behavior aligned.
