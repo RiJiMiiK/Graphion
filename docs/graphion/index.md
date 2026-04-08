@@ -6,13 +6,15 @@ Use it in this order:
 
 1. [Tutorial](tutorial.md)
 2. [Types](types.md)
-3. [Language Reference](language-reference.md)
-4. [Builtins](builtins.md)
+3. [Operators](operators.md)
+4. [Language Reference](language-reference.md)
+5. [Builtins](builtins.md)
 
 That split is intentional:
 
 - the tutorial teaches by building small scripts step by step
 - the types page centralizes scalar values, literals, and built-in constants
+- the operators page centralizes precedence, arithmetic, comparisons, boolean logic, strings, and `bits`
 - the language reference states the exact rules of the currently implemented language
 - the builtins page is a focused catalog of callable builtins
 
@@ -56,6 +58,7 @@ This user guide documents only behavior that is implemented now.
 
 tutorial
 types
+operators
 language-reference
 builtins
 ```
@@ -66,11 +69,17 @@ Start with the tutorial if you want to learn the language.
 
 Jump straight to the language reference if you want exact rules for:
 
-- precedence
 - condition rules
-- `bits` semantics
 - reserved names
 - current error behavior
+
+Use the operators page when you need:
+
+- precedence
+- arithmetic and comparison rules
+- boolean logic details
+- `bits` operator semantics
+- string concatenation behavior
 
 Use the builtins page when you need:
 
