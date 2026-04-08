@@ -158,9 +158,6 @@ Typical result:
 
 - runtime failure
 - message `factorial requires non-negative integer input`
-- message `asin requires input in [-1, 1]`
-- message `ln requires strictly positive input`
-- message `log requires x > 0 and base > 0 with base != 1`
 
 ## Bytecode decode errors
 

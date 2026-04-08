@@ -4,8 +4,10 @@ This tutorial is a guided introduction to Graphion.
 
 The goal is simple: write a small script, understand what each line does, and learn the core habits of the language without having to read the whole reference first.
 
-If you want the full rules, edge cases, or the complete list of builtins, use:
+If you want the full rules, edge cases, or the complete catalog pages, use:
 
+- [Types](types.md)
+- [Operators](operators.md)
 - [Language Reference](language-reference.md)
 - [Builtins](builtins.md)
 

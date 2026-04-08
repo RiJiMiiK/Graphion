@@ -152,4 +152,4 @@ Expected output:
 true
 ```
 
-For the exact operator rules on `bits`, see [Language Reference](language-reference.md).
+For the exact operator rules on `bits`, see [Operators](operators.md).
