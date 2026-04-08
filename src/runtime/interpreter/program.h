@@ -8,6 +8,14 @@
 int scope_find_global_index(const graphion_runtime_scope *scope, const char *name);
 int program_find_global_index(const graphion_runtime_program *program, const char *name);
 int scope_find_index(const graphion_runtime_scope *scope, const char *name);
+int graphion_runtime_scope_reserve_globals(graphion_runtime_scope *scope,
+                                           size_t min_capacity,
+                                           unsigned int line,
+                                           graphion_runtime_diagnostic *diagnostic);
+int graphion_runtime_program_reserve_globals(graphion_runtime_program *program,
+                                             size_t min_capacity,
+                                             unsigned int line,
+                                             graphion_runtime_diagnostic *diagnostic);
 int program_find_or_add_global(graphion_runtime_program *program,
                                const char *name,
                                unsigned int line,

@@ -2,7 +2,10 @@
 
 #include "runtime/interpreter/exec.h"
 
-static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_runtime_program *program);
+static int scope_sync_to_program(graphion_runtime_scope *scope,
+                                 const graphion_runtime_program *program,
+                                 unsigned int line,
+                                 graphion_runtime_diagnostic *diagnostic);
 
 static int execute_condition_program(const graphion_runtime_program *program,
                                      graphion_runtime_scope *scope,
@@ -15,7 +18,10 @@ static int execute_condition_program(const graphion_runtime_program *program,
   if (program == NULL || scope == NULL || value_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
-  scope_sync_to_program(scope, program);
+  rc = scope_sync_to_program(scope, program, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
   graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);
@@ -81,7 +87,11 @@ static int evaluate_expression_text_to_value(const char *expression_text,
   }
   memcpy(expression_buffer, expression_text, expression_len);
   expression_buffer[expression_len] = '\0';
-  seed_program_from_scope(&program, scope);
+  rc = seed_program_from_scope(&program, scope, line, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
   rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     graphion_runtime_program_dispose(&program);
@@ -302,7 +312,11 @@ static int execute_statement_source_line(const runtime_source_line *lines,
     }
     statement_source = statement_text;
   }
-  seed_program_from_scope(&program, scope);
+  rc = seed_program_from_scope(&program, scope, lines[*index].line, diagnostic);
+  if (rc != GINT_OK) {
+    graphion_runtime_program_dispose(&program);
+    return rc;
+  }
   rc = parse_statement_line(statement_source, scope, &program, lines[*index].line, diagnostic);
   if (rc != GINT_OK) {
     graphion_runtime_program_dispose(&program);
@@ -380,6 +394,10 @@ static int execute_if_chain(const runtime_source_line *lines,
       }
       body_indent = lines[body_start].indent;
       body_end = scan_block_end(lines, count, body_start, body_indent);
+      if (body_end < count && !line_is_blank(&lines[body_end]) && lines[body_end].indent > current_indent &&
+          lines[body_end].indent < body_indent) {
+        return fail(diagnostic, lines[body_end].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      }
       seen_else = 1;
       if (!branch_taken) {
         size_t exec_index = body_start;
@@ -416,6 +434,10 @@ static int execute_if_chain(const runtime_source_line *lines,
       }
       body_indent = lines[body_start].indent;
       body_end = scan_block_end(lines, count, body_start, body_indent);
+      if (body_end < count && !line_is_blank(&lines[body_end]) && lines[body_end].indent > current_indent &&
+          lines[body_end].indent < body_indent) {
+        return fail(diagnostic, lines[body_end].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      }
       if (!branch_taken) {
         int condition_true = 0;
         rc = evaluate_condition_text(condition_text,
@@ -676,13 +698,25 @@ int execute_block(const runtime_source_line *lines,
   return GINT_OK;
 }
 
-static void scope_sync_to_program(graphion_runtime_scope *scope, const graphion_runtime_program *program) {
+static int scope_sync_to_program(graphion_runtime_scope *scope,
+                                 const graphion_runtime_program *program,
+                                 unsigned int line,
+                                 graphion_runtime_diagnostic *diagnostic) {
   size_t i;
+  int rc;
+  if (scope == NULL || program == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  rc = graphion_runtime_scope_reserve_globals(scope, program->global_count, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
   for (i = scope->global_count; i < program->global_count; ++i) {
     copy_name(scope->global_names[i], program->global_names[i]);
     vm_value_set_none(&scope->globals[i]);
   }
   scope->global_count = program->global_count;
+  return GINT_OK;
 }
 
 int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *program,
@@ -696,7 +730,10 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     return GINT_ERR_INVALID_ARG;
   }
   clear_diagnostic(diagnostic);
-  scope_sync_to_program(scope, program);
+  rc = scope_sync_to_program(scope, program, 1U, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
   graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);

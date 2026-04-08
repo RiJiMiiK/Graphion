@@ -2011,7 +2011,7 @@ int test_gion_capacity_errors(void) {
   }
 
   {
-    char source[2048];
+    char source[4096];
     size_t offset = 0U;
     unsigned int i;
     graphion_runtime_scope scope;
@@ -2019,7 +2019,7 @@ int test_gion_capacity_errors(void) {
     int rc;
 
     source[0] = '\0';
-    for (i = 0U; i <= GRAPHION_RUNTIME_BINDING_MAX; ++i) {
+    for (i = 0U; i < 160U; ++i) {
       int written = snprintf(source + offset, sizeof(source) - offset, "v%u = %u\n", i, i);
       if (written <= 0) {
         return 20;
@@ -2032,15 +2032,14 @@ int test_gion_capacity_errors(void) {
 
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(source, &scope, &diagnostic);
-    if (rc != GINT_ERR_CAPACITY) {
+    if (rc != GINT_OK) {
       return 22;
     }
-    if (diagnostic.line != (unsigned int)(GRAPHION_RUNTIME_BINDING_MAX + 1U)) {
+    if (scope.global_count != 160U) {
+      graphion_runtime_scope_dispose(&scope);
       return 23;
     }
-    if (diagnostic.message == NULL || strcmp(diagnostic.message, "too many globals") != 0) {
-      return 24;
-    }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   return 0;

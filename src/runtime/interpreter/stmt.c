@@ -343,16 +343,23 @@ int parse_print(const char *line_text,
   return program_emit(program, GVM_OP_PRINT_REG, expr.reg_index, 0U, 0, line, diagnostic);
 }
 
-void seed_program_from_scope(graphion_runtime_program *program, const graphion_runtime_scope *scope) {
+int seed_program_from_scope(graphion_runtime_program *program,
+                            const graphion_runtime_scope *scope,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
   size_t i;
   if (program == NULL || scope == NULL) {
-    return;
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   graphion_runtime_program_init(program);
+  if (graphion_runtime_program_reserve_globals(program, scope->global_count, line, diagnostic) != GINT_OK) {
+    return GINT_ERR_CAPACITY;
+  }
   program->global_count = scope->global_count;
   for (i = 0U; i < scope->global_count; ++i) {
     copy_name(program->global_names[i], scope->global_names[i]);
   }
+  return GINT_OK;
 }
 
 int parse_statement_line(const char *line_text,
