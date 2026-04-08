@@ -734,6 +734,23 @@ int op_sqrt(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_cbrt_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  double value_f;
+  int is_float;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], cbrt(value_f));
+  return GVM_OK;
+}
+
 int op_exp(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;
   double value_f;

@@ -72,6 +72,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_MAX`
 - `GVM_OP_CLAMP`
 - `GVM_OP_SQRT`
+- `GVM_OP_CBRT`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -94,6 +95,7 @@ These back the current `.gion` scalar language features:
 - `max(a, b)`
 - `clamp(x, lo, hi)`
 - `sqrt(x)`
+- `cbrt(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

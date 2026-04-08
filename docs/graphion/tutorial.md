@@ -727,7 +727,7 @@ value = "count=" + 7
 
 ## Numeric Builtins
 
-Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, `floor(x)`, `ceil(x)`, `round(x)`, and `trunc(x)` for numeric values, plus `len(x)` for strings.
+Graphion currently provides postfix factorial `!`, `abs(...)`, `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)`, `sqrt(x)`, `cbrt(x)`, `exp(x)`, `ln(x)`, `log(x, base)`, `log10(x)`, `log2(x)`, `floor(x)`, `ceil(x)`, `round(x)`, `trunc(x)`, and `sign(x)` for numeric values, plus `len(x)` for strings.
 
 ```gion
 abs_int = abs(-42)
@@ -746,6 +746,9 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_int = sqrt(9)
 sqrt_float = sqrt(2.25)
 sqrt_expr = sqrt(1 + 8)
+cbrt_int = cbrt(27)
+cbrt_negative = cbrt(-8)
+cbrt_expr = cbrt(1 + 26)
 exp_int = exp(1)
 exp_float = exp(0.0)
 exp_expr = exp(1 + 1)
@@ -803,6 +806,9 @@ print(clamp_float)
 print(sqrt_int)
 print(sqrt_float)
 print(sqrt_expr)
+print(cbrt_int)
+print(cbrt_negative)
+print(cbrt_expr)
 print(exp_int)
 print(exp_float)
 print(exp_expr)
@@ -863,6 +869,9 @@ Expected output:
 10
 3
 1.5
+3
+3
+-2
 3
 2.71828
 1

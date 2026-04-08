@@ -40,6 +40,7 @@ int op_min(graphion_vm *vm, const graphion_insn *in);
 int op_max(graphion_vm *vm, const graphion_insn *in);
 int op_clamp(graphion_vm *vm, const graphion_insn *in);
 int op_sqrt(graphion_vm *vm, const graphion_insn *in);
+int op_cbrt_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_exp(graphion_vm *vm, const graphion_insn *in);
 int op_ln(graphion_vm *vm, const graphion_insn *in);
 int op_log(graphion_vm *vm, const graphion_insn *in);

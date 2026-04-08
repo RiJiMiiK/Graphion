@@ -1240,6 +1240,7 @@ Current builtin functions:
 - `max(a, b)`
 - `clamp(x, lo, hi)`
 - `sqrt(x)`
+- `cbrt(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

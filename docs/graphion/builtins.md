@@ -259,6 +259,49 @@ incompatible operand types
 sqrt requires non-negative input
 ```
 
+## `cbrt(x)`
+
+`cbrt(x)` returns the cube root of a numeric expression.
+
+Examples:
+
+```gion
+print(cbrt(27))
+print(cbrt(-8))
+print(cbrt(1 + 26))
+```
+
+Expected output:
+
+```text
+3
+-2
+3
+```
+
+### Valid Inputs
+
+`cbrt(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = cbrt("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

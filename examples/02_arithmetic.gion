@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -52,6 +52,9 @@ clamp_float = clamp(12.5, 0, 10)
 sqrt_count = sqrt(9)
 sqrt_ratio = sqrt(2.25)
 sqrt_expression = sqrt(1 + 8)
+cbrt_count = cbrt(27)
+cbrt_negative = cbrt(-8)
+cbrt_expression = cbrt(1 + 26)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
@@ -133,6 +136,9 @@ print("clamp float above upper bound -> clamp_float=" + clamp_float)
 print("square root of an integer -> sqrt_count=" + sqrt_count)
 print("square root of a float -> sqrt_ratio=" + sqrt_ratio)
 print("square root of an expression -> sqrt_expression=" + sqrt_expression)
+print("cube root of an integer -> cbrt_count=" + cbrt_count)
+print("cube root of a negative number -> cbrt_negative=" + cbrt_negative)
+print("cube root of an expression -> cbrt_expression=" + cbrt_expression)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)
