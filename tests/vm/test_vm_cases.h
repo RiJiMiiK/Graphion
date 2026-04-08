@@ -23,6 +23,7 @@ int test_vm_sqrt_opcode(void);
 int test_vm_cbrt_builtin_opcode(void);
 int test_vm_sin_builtin_opcode(void);
 int test_vm_sinh_builtin_opcode(void);
+int test_vm_cosh_builtin_opcode(void);
 int test_vm_cos_builtin_opcode(void);
 int test_vm_tan_builtin_opcode(void);
 int test_vm_asin_builtin_opcode(void);

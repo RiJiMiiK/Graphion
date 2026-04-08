@@ -388,6 +388,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `cosh(x)`
+
+`cosh(x)` returns the hyperbolic cosine of a numeric expression.
+
+Examples:
+
+```gion
+print(cosh(0))
+print(cosh(1))
+print(cosh(-1))
+```
+
+Expected output:
+
+```text
+1
+1.54308
+1.54308
+```
+
+### Valid Inputs
+
+`cosh(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = cosh("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `cos(x)`
 
 `cos(x)` returns the cosine of a numeric expression interpreted in radians.
