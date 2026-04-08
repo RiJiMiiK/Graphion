@@ -743,6 +743,45 @@ int test_vm_acos_builtin_opcode(void) {
         return 18122;
     }
 
+      return 0;
+  }
+
+int test_vm_atan_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.0;
+    insn.op = GVM_OP_ATAN;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_atan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.000000001 ||
+        vm.regs[0].as.float_value > 0.000000001) {
+        return 18123;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    rc = op_atan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 0.785398163 ||
+        vm.regs[0].as.float_value > 0.785398164) {
+        return 18124;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = -1.0;
+    rc = op_atan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.785398164 ||
+        vm.regs[0].as.float_value > -0.785398163) {
+        return 18125;
+    }
+
     return 0;
 }
 
@@ -2008,4 +2047,3 @@ int test_vm_ge_incompatible_types_fail(void) {
   graphion_vm_dispose(&vm);
   return 0;
 }
-

@@ -106,6 +106,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "round") == 0 || strcmp(name, "trunc") == 0 || strcmp(name, "sign") == 0 ||
          strcmp(name, "cbrt") == 0 || strcmp(name, "sin") == 0 || strcmp(name, "cos") == 0 ||
          strcmp(name, "tan") == 0 || strcmp(name, "asin") == 0 || strcmp(name, "acos") == 0 ||
+         strcmp(name, "atan") == 0 ||
          strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||

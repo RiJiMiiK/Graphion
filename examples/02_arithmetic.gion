@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), cos(), tan(), asin(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), cos(), tan(), asin(), acos(), atan(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -70,6 +70,9 @@ asin_half = asin(0.5)
 acos_one = acos(1)
 acos_zero = acos(0)
 acos_half = acos(0.5)
+atan_zero = atan(0)
+atan_one = atan(1)
+atan_negative_one = atan(-1)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
@@ -169,6 +172,9 @@ print("asin at one-half -> asin_half=" + asin_half)
 print("acos at one -> acos_one=" + acos_one)
 print("acos at zero -> acos_zero=" + acos_zero)
 print("acos at one-half -> acos_half=" + acos_half)
+print("atan at zero -> atan_zero=" + atan_zero)
+print("atan at one -> atan_one=" + atan_one)
+print("atan at negative one -> atan_negative_one=" + atan_negative_one)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)

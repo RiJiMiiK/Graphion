@@ -26,6 +26,7 @@ int test_vm_cos_builtin_opcode(void);
 int test_vm_tan_builtin_opcode(void);
 int test_vm_asin_builtin_opcode(void);
 int test_vm_acos_builtin_opcode(void);
+int test_vm_atan_builtin_opcode(void);
 int test_vm_exp_opcode(void);
 int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);

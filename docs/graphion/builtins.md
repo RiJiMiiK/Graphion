@@ -513,6 +513,49 @@ Current runtime messages:
 - `acos requires input in [-1, 1]`
 - `incompatible operand types`
 
+## `atan(x)`
+
+`atan(x)` returns the arctangent of a numeric expression in radians.
+
+Examples:
+
+```gion
+print(atan(0))
+print(atan(1))
+print(atan(-1))
+```
+
+Expected output:
+
+```text
+0
+0.785398
+-0.785398
+```
+
+### Valid Inputs
+
+`atan(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = atan("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.
