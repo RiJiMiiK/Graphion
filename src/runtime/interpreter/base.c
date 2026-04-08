@@ -107,7 +107,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "cbrt") == 0 || strcmp(name, "sin") == 0 || strcmp(name, "sinh") == 0 ||
          strcmp(name, "asinh") == 0 || strcmp(name, "acosh") == 0 ||
          strcmp(name, "cos") == 0 || strcmp(name, "cosh") == 0 || strcmp(name, "tan") == 0 ||
-         strcmp(name, "tanh") == 0 ||
+         strcmp(name, "tanh") == 0 || strcmp(name, "atanh") == 0 ||
          strcmp(name, "asin") == 0 || strcmp(name, "acos") == 0 ||
          strcmp(name, "atan") == 0 || strcmp(name, "atan2") == 0 || strcmp(name, "hypot") == 0 ||
          strcmp(name, "len") == 0 ||

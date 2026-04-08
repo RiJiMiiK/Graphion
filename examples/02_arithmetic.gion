@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -73,6 +73,9 @@ cosh_negative = cosh(-1)
 tanh_zero = tanh(0)
 tanh_one = tanh(1)
 tanh_negative = tanh(-1)
+atanh_zero = atanh(0)
+atanh_half = atanh(0.5)
+atanh_negative_half = atanh(-0.5)
 cos_zero = cos(0)
 cos_pi = cos(pi)
 cos_expression = cos(3.14159265358979323846)
@@ -196,6 +199,9 @@ print("cosh at minus one radian -> cosh_negative=" + cosh_negative)
 print("tanh at zero radians -> tanh_zero=" + tanh_zero)
 print("tanh at one radian -> tanh_one=" + tanh_one)
 print("tanh at minus one radian -> tanh_negative=" + tanh_negative)
+print("atanh at zero -> atanh_zero=" + atanh_zero)
+print("atanh at one-half -> atanh_half=" + atanh_half)
+print("atanh at minus one-half -> atanh_negative_half=" + atanh_negative_half)
 print("cos at zero radians -> cos_zero=" + cos_zero)
 print("cos at pi radians -> cos_pi=" + cos_pi)
 print("cos of a radians literal -> cos_expression=" + cos_expression)

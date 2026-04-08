@@ -82,6 +82,7 @@ These names are currently reserved and cannot be assigned:
 - `cos`
 - `tan`
 - `tanh`
+- `atanh`
 - `asin`
 - `acos`
 - `atan`
@@ -591,6 +592,7 @@ Current builtin functions:
 - `cos(x)`
 - `tan(x)`
 - `tanh(x)`
+- `atanh(x)`
 - `asin(x)`
 - `acos(x)`
 - `atan(x)`

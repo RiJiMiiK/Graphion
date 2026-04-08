@@ -91,6 +91,7 @@ Typical messages include:
 - `asin requires input in [-1, 1]`
 - `acos requires input in [-1, 1]`
 - `acosh requires input >= 1`
+- `atanh requires input in (-1, 1)`
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
 - `factorial requires non-negative integer input`

@@ -35,6 +35,7 @@ Unless a builtin says otherwise:
 | `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
 | `cosh(x)` | hyperbolic cosine | `float` | |
 | `tanh(x)` | hyperbolic tangent | `float` | |
+| `atanh(x)` | inverse hyperbolic tangent | `float` | requires `x in (-1, 1)` |
 | `exp(x)` | `e ** x` | `float` | |
 | `ln(x)` | natural logarithm | `float` | requires `x > 0` |
 | `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
@@ -376,7 +377,7 @@ Expected output:
 
 ## Hyperbolic Functions
 
-### `sinh(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `tanh(x)`
+### `sinh(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `tanh(x)`, `atanh(x)`
 
 ```gion
 print(sinh(1))
@@ -384,6 +385,7 @@ print(asinh(1))
 print(acosh(2))
 print(cosh(1))
 print(tanh(1))
+print(atanh(0.5))
 ```
 
 Expected output:
@@ -394,6 +396,7 @@ Expected output:
 1.31696
 1.54308
 0.761594
+0.549306
 ```
 
 These accept numeric input and return a `float`.
@@ -406,6 +409,16 @@ Current domain error:
 
 ```text
 acosh requires input >= 1
+```
+
+`atanh(x)` has one domain restriction:
+
+- `x` must be strictly inside `(-1, 1)`
+
+Current domain error:
+
+```text
+atanh requires input in (-1, 1)
 ```
 
 ## Rounding And Shape

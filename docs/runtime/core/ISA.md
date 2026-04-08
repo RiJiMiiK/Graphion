@@ -117,6 +117,7 @@ These back the current `.gion` scalar language features:
 - `acosh(x)`
 - `cosh(x)`
 - `tanh(x)`
+- `atanh(x)`
 - `cos(x)`
 - `tan(x)`
 - `asin(x)`
@@ -175,6 +176,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_ASIN_DOMAIN`
 - `GVM_ERR_ACOS_DOMAIN`
 - `GVM_ERR_ACOSH_DOMAIN`
+- `GVM_ERR_ATANH_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

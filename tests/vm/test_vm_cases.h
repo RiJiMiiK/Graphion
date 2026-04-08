@@ -27,6 +27,7 @@ int test_vm_asinh_builtin_opcode(void);
 int test_vm_acosh_builtin_opcode(void);
 int test_vm_cosh_builtin_opcode(void);
 int test_vm_tanh_builtin_opcode(void);
+int test_vm_atanh_builtin_opcode(void);
 int test_vm_cos_builtin_opcode(void);
 int test_vm_tan_builtin_opcode(void);
 int test_vm_asin_builtin_opcode(void);
