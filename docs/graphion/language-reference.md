@@ -2,13 +2,26 @@
 
 This reference describes the currently implemented `.gion` language subset.
 
-## Statements
+Use this page when you need exact rules rather than a guided introduction.
+
+Quick orientation:
+
+- source structure: statements, names, literals, assignment
+- control flow: `if`, ternary expressions, `match`
+- expressions and operators: arithmetic, comparisons, boolean logic, precedence, `bits`, strings, `print(...)`
+- runtime library: builtins and constants
+- errors: current high-level user-visible error classes
+
+## Source Structure
+
+### Statements
 
 Current supported top-level statements:
 
 - assignment
 - compound assignment
 - `if` / `elif` / `else`
+- `match`
 - `print(...)`
 
 Examples:
@@ -27,7 +40,7 @@ print(count)
 
 Unsupported statements are parse errors in the current `.gion` frontend path.
 
-## Values
+### Values
 
 Current scalar value kinds:
 
@@ -42,7 +55,7 @@ Current built-in scalar constants:
 - `pi`
 - `e`
 
-## Identifiers
+### Identifiers
 
 Identifiers:
 
@@ -55,7 +68,7 @@ Examples:
 - `_tmp`
 - `alpha_1`
 
-## Reserved Names
+### Reserved Names
 
 These names are currently reserved and cannot be assigned:
 
@@ -96,21 +109,23 @@ These names are currently reserved and cannot be assigned:
 - `elif`
 - `else`
 - `and`
+- `nand`
 - `or`
+- `nor`
 - `not`
 - `match`
 - `default`
 
-## Literals
+### Literals
 
-### Integers
+#### Integers
 
 ```gion
 count = 42
 negative = -7
 ```
 
-### Floats
+#### Floats
 
 ```gion
 ratio = 3.5
@@ -122,14 +137,14 @@ growth = e
 `pi` currently evaluates to the floating-point constant `3.141592653589793`.
 `e` currently evaluates to the floating-point constant `2.718281828459045`.
 
-### Booleans
+#### Booleans
 
 ```gion
 ready = true
 failed = false
 ```
 
-### Strings
+#### Strings
 
 ```gion
 name = "graphion"
@@ -137,7 +152,7 @@ name = "graphion"
 
 Current string literals are double-quoted.
 
-### Bits
+#### Bits
 
 ```gion
 short_bits = 0b10
@@ -155,7 +170,7 @@ That means:
 - `0b10` has width `2`
 - `0b0010` has width `4`
 
-## Assignment
+### Assignment
 
 Simple assignment:
 
@@ -179,7 +194,9 @@ count **= 2
 
 Compound assignment requires the target variable to already exist.
 
-## Conditional Statements
+## Control Flow
+
+### Conditional Statements
 
 Graphion currently supports Python-style conditional blocks:
 
@@ -208,7 +225,7 @@ else:
     message = "other"
 ```
 
-### Condition Rules
+#### Condition Rules
 
 Current conditions must evaluate to:
 
@@ -264,7 +281,7 @@ These currently fail with:
 `if condition must be boolean or 0/1`
 : runtime error for conditions outside the current accepted boolean subset
 
-### Block Rules
+#### Block Rules
 
 Conditional blocks currently use indentation-significant syntax.
 
@@ -296,7 +313,7 @@ else:
     print("bad")
 ```
 
-### Nested Conditionals
+#### Nested Conditionals
 
 You can place an `if` block inside another `if` block.
 
@@ -320,7 +337,7 @@ In this example:
 
 That binding is determined by indentation, not by the nearest visible `if` keyword alone.
 
-### Multiline Conditions
+#### Multiline Conditions
 
 Long conditions can span multiple physical lines, but only when the full condition is wrapped in grouping parentheses.
 
@@ -349,7 +366,7 @@ if ready and
     print("bad")
 ```
 
-### Ternary Expressions
+#### Ternary Expressions
 
 Graphion also supports inline conditional expressions in the form:
 
@@ -393,7 +410,7 @@ if ready
 else "not ready"
 ```
 
-### Reading Tips
+#### Reading Tips
 
 To keep conditions and ternary expressions readable:
 
@@ -419,7 +436,7 @@ label = "outer" if ready else "inner" if fallback else "none"
 
 The last form is valid, but a block is usually easier to read once nested ternary logic grows.
 
-### Conditional Precedence
+#### Conditional Precedence
 
 When several conditional operators appear in the same expression, Graphion reads them in this order:
 
@@ -464,7 +481,7 @@ is read as:
 "ready" if (true or (false and false)) else "fallback"
 ```
 
-### Match Blocks
+#### Match Blocks
 
 Graphion also supports value-based branching with `match`:
 
@@ -519,7 +536,7 @@ match value:
         print("y")
 ```
 
-## Comments
+## Comments And Directives
 
 Graphion currently supports two comment forms:
 
@@ -592,7 +609,9 @@ The current diagnostic is:
 `unterminated block comment`
 : parse error when `/*` does not have a matching closing `*/`
 
-## Arithmetic Operators
+## Expressions And Operators
+
+### Arithmetic Operators
 
 Supported arithmetic operators:
 
@@ -605,7 +624,7 @@ Supported arithmetic operators:
 - `**`
 - postfix `!`
 
-### Operator Notes
+#### Operator Notes
 
 `/`
 : division, produces a float result
@@ -642,7 +661,7 @@ These are currently runtime errors:
 - `(-1)!`
 - `1.5!`
 
-## Comparison Operators
+### Comparison Operators
 
 Currently supported comparison operators:
 
@@ -703,7 +722,7 @@ These are currently runtime errors:
 
 Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime error.
 
-## Boolean Logic
+### Boolean Logic
 
 Currently supported boolean logic operators:
 
@@ -715,7 +734,7 @@ Currently supported boolean logic operators:
 
 `and`, `nand`, `or`, `nor`, and `not` return a `bool`.
 
-## Truth Rules
+#### Truth Rules
 
 Graphion currently uses a strict boolean subset for boolean logic and conditions:
 
@@ -749,7 +768,7 @@ print(not 1)
 print(false nor 0)
 ```
 
-### Truth Tables
+##### Truth Tables
 
 `and`
 
@@ -970,7 +989,7 @@ Current evaluation note:
 - `or` short-circuits when the left side is `true` or `1`
 - `nor` short-circuits when the left side is `true` or `1`
 
-## Precedence
+### Precedence
 
 Current precedence order:
 
@@ -1021,7 +1040,7 @@ is interpreted as:
 value = 2 ** (3!)
 ```
 
-## Parentheses
+### Parentheses
 
 Parentheses currently group arithmetic expressions:
 
@@ -1033,7 +1052,7 @@ This is the current implemented behavior.
 
 Tuple syntax is not part of the current documented language subset.
 
-## Bits
+### Bits
 
 Current `bits` support includes:
 
@@ -1218,7 +1237,7 @@ Error wording:
 - invalid `bits` operators currently report `incompatible operand types`
 - invalid direct `if` conditions currently report `if condition must be boolean or 0/1`
 
-## Strings
+### Strings
 
 String concatenation currently supports:
 
@@ -1235,7 +1254,7 @@ This is invalid:
 value = "count=" + 7
 ```
 
-## `print(...)`
+### `print(...)`
 
 `print(...)` outputs a scalar value followed by a newline.
 
@@ -1254,7 +1273,9 @@ count = 7
 print("count=" + count)
 ```
 
-## Builtins
+## Runtime Library
+
+### Builtins
 
 Current builtin functions:
 
@@ -1289,7 +1310,7 @@ Current builtin functions:
 
 See [Builtins](builtins.md).
 
-## Constants
+### Constants
 
 Current built-in scalar constants:
 
