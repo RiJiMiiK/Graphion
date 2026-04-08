@@ -28,12 +28,6 @@ PowerShell equivalents exist in the same directories.
 - keep the current rebuild charter in mind
 - document user-visible changes when the language surface changes
 
-## For performance-sensitive changes
-
-- include a benchmark note
-- distinguish VM impact from `.gion` source-level impact
-- avoid benchmark-only shortcuts
-
 ## For runtime / VM changes
 
 - keep VM-visible behavior aligned with the docs

@@ -7,6 +7,5 @@ Checklist:
 - [ ] Dependabot/security alerts triaged
 - [ ] Release process validated against the current release workflows and changelog conventions
 - [ ] Fuzz nightly results reviewed
-- [ ] Benchmark trend reviewed
 - [ ] Stale policy still appropriate
 - [ ] Action pinning audit reviewed (`actions-pinning-audit`)

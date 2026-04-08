@@ -11,7 +11,7 @@ Describe what this PR changes and why.
 ## Validation
 
 - Test evidence:
-- Benchmark evidence (if perf-sensitive):
+- Additional validation notes (if relevant):
 - Fuzz/sanitizer impact:
 - Repro artifacts attached when relevant (`fixture.txt`, `expected.txt`, `actual.txt`, `vm_snapshot.txt`, `environment.json`):
 
@@ -20,6 +20,6 @@ Describe what this PR changes and why.
 - [ ] Build passes locally.
 - [ ] No new warnings introduced.
 - [ ] Security/memory safety impact reviewed.
-- [ ] Tests/benchmarks updated when relevant.
+- [ ] Tests updated when relevant.
 - [ ] VM/ISA compatibility checklist reviewed when opcodes or semantics changed.
 - [ ] PR title follows conventional format (`type(scope): summary`).

@@ -17,47 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
-      - name: Install benchmark tools
-        run: sudo apt-get update && sudo apt-get install -y ninja-build clang llvm
-      - name: Validate release workflow and changelog conventions
-        run: |
-          grep -Eq '^\s*-\s*"v\*\.\*\.\*"' .github/workflows/release.yml
-          grep -Eq '^## \[Unreleased\]' CHANGELOG.md
-      - name: Generate release-candidate PGO smoke report
-        run: |
-          python3 scripts/bench/pgo/generate_optimization_report.py \
-            --build-root build-release-pgo \
-            --output-json benchmarks/results/release/release_candidate_pgo.json \
-            --output-md docs/performance/reports/OPTIMIZATION_REPORTS.md \
-            --platform-label "release-dry-run ubuntu clang" \
-            --compiler-kind clang \
-            --corpus-profile ci \
-            --iterations 2000 \
-            --runs 1 \
-            --variant-iterations 2000 \
-            --variant-runs 1 \
-            --iterations-scale 0.01 \
-            -- -G Ninja -DCMAKE_C_COMPILER=clang
-      - name: Resolve PGO alert mode
-        id: pgo-alert-mode
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "mode=release-candidate" >> "$GITHUB_OUTPUT"
-            echo "reason=manual candidate validation" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=advisory" >> "$GITHUB_OUTPUT"
-            echo "reason=release-related pull request smoke" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Evaluate PGO release-candidate alert policy
-        run: |
-          echo "PGO alert mode: ${{ steps.pgo-alert-mode.outputs.mode }} (${{ steps.pgo-alert-mode.outputs.reason }})"
-          python3 scripts/bench/pgo/check_pgo_alerts.py \
-            --report-json benchmarks/results/release/release_candidate_pgo.json \
-            --mode "${{ steps.pgo-alert-mode.outputs.mode }}"
       - name: Simulate source archive generation
         run: |
           git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD
@@ -69,6 +28,4 @@ jobs:
           path: |
             graphion-dry-run.tar.gz
             graphion-dry-run.zip
-            benchmarks/results/release/release_candidate_pgo.json
-            docs/performance/reports/OPTIMIZATION_REPORTS.md
           retention-days: 14

@@ -39,9 +39,6 @@ security:
   - changed-files:
       - any-glob-to-any-file: ["SECURITY.md", "scripts/quality/check_asm_safety.py", ".github/workflows/secrets.yml", ".github/workflows/sbom.yml"]
 
-performance:
-  - changed-files:
-      - any-glob-to-any-file: ["benchmarks/**", "scripts/bench/**"]
 
 dependencies:
   - changed-files:

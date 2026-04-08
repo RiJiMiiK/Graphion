@@ -5,6 +5,5 @@
 /src/runtime/ @RiJiMiiK
 /tests/ @RiJiMiiK
 /fuzz/ @RiJiMiiK
-/benchmarks/ @RiJiMiiK
 /docs/ @RiJiMiiK
 /.github/workflows/ @RiJiMiiK

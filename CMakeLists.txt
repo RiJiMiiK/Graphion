@@ -15,83 +15,7 @@ set_property(CACHE GRAPHION_VM_DISPATCH PROPERTY STRINGS switch jumptable comput
 option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" ON)
 option(GRAPHION_ENABLE_IPO "Enable IPO/LTO in release-like builds when supported" ON)
 option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
-option(GRAPHION_ENABLE_BENCHMARKS "Build benchmark binaries" ON)
 option(GRAPHION_ENABLE_FUZZING "Build fuzzing target (Clang only)" OFF)
-set(GRAPHION_PGO_MODE "OFF" CACHE STRING "Profile-guided optimization mode: OFF, GENERATE, USE")
-set_property(CACHE GRAPHION_PGO_MODE PROPERTY STRINGS OFF GENERATE USE)
-set(GRAPHION_PGO_PROFILE_DIR "${CMAKE_BINARY_DIR}/pgo-data" CACHE PATH "Directory used to store PGO profile data")
-set(GRAPHION_PGO_CLANG_PROFDATA "${GRAPHION_PGO_PROFILE_DIR}/graphion.profdata" CACHE FILEPATH
-    "Merged Clang profile data file used when GRAPHION_PGO_MODE=USE")
-
-if(NOT GRAPHION_PGO_MODE STREQUAL "OFF" AND
-   NOT GRAPHION_PGO_MODE STREQUAL "GENERATE" AND
-   NOT GRAPHION_PGO_MODE STREQUAL "USE")
-  message(FATAL_ERROR "Invalid GRAPHION_PGO_MODE='${GRAPHION_PGO_MODE}'. Use OFF, GENERATE, or USE.")
-endif()
-
-function(graphion_enable_pgo target_name)
-  if(GRAPHION_PGO_MODE STREQUAL "OFF")
-    return()
-  endif()
-
-  file(TO_CMAKE_PATH "${GRAPHION_PGO_PROFILE_DIR}" graphion_pgo_profile_dir_cmake)
-  file(TO_CMAKE_PATH "${GRAPHION_PGO_CLANG_PROFDATA}" graphion_pgo_profdata_cmake)
-
-  if(MSVC)
-    target_compile_options(${target_name} PRIVATE "$<$<CONFIG:Release>:/GL>")
-    if(GRAPHION_PGO_MODE STREQUAL "GENERATE")
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:/LTCG>"
-        "$<$<CONFIG:Release>:/GENPROFILE>"
-        "$<$<CONFIG:Release>:/PGD:${graphion_pgo_profile_dir_cmake}/${target_name}.pgd>"
-      )
-    elseif(GRAPHION_PGO_MODE STREQUAL "USE")
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:/LTCG>"
-        "$<$<CONFIG:Release>:/USEPROFILE>"
-        "$<$<CONFIG:Release>:/PGD:${graphion_pgo_profile_dir_cmake}/${target_name}.pgd>"
-      )
-    endif()
-  elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    if(GRAPHION_PGO_MODE STREQUAL "GENERATE")
-      target_compile_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-generate=${graphion_pgo_profile_dir_cmake}>"
-        "$<$<CONFIG:Release>:-fprofile-update=prefer-atomic>"
-      )
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-generate=${graphion_pgo_profile_dir_cmake}>"
-      )
-    elseif(GRAPHION_PGO_MODE STREQUAL "USE")
-      target_compile_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-use=${graphion_pgo_profile_dir_cmake}>"
-        "$<$<CONFIG:Release>:-fprofile-correction>"
-      )
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-use=${graphion_pgo_profile_dir_cmake}>"
-      )
-    endif()
-  elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    if(GRAPHION_PGO_MODE STREQUAL "GENERATE")
-      target_compile_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-instr-generate>"
-      )
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-instr-generate>"
-      )
-    elseif(GRAPHION_PGO_MODE STREQUAL "USE")
-      target_compile_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-instr-use=${graphion_pgo_profdata_cmake}>"
-        "$<$<CONFIG:Release>:-Wno-error=profile-instr-out-of-date>"
-      )
-      target_link_options(${target_name} PRIVATE
-        "$<$<CONFIG:Release>:-fprofile-instr-use=${graphion_pgo_profdata_cmake}>"
-      )
-    endif()
-  else()
-    message(FATAL_ERROR "GRAPHION_PGO_MODE requires MSVC, GCC, or Clang.")
-  endif()
-endfunction()
-
 if(MSVC)
   add_compile_options(/W4)
   if(GRAPHION_ENABLE_WERROR)
@@ -157,7 +81,6 @@ if(NOT MSVC)
   target_link_libraries(graphion_vm PUBLIC m)
 endif()
 
-graphion_enable_pgo(graphion_vm)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   if(MSVC)
@@ -228,7 +151,6 @@ add_executable(graphion
 )
 
 target_link_libraries(graphion PRIVATE graphion_vm)
-graphion_enable_pgo(graphion)
 
 if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
   set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
@@ -262,159 +184,12 @@ if(GRAPHION_ENABLE_TESTS)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/vm
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_tests)
   if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
     set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
   add_test(NAME graphion_tests COMMAND graphion_tests)
-endif()
-
-if(GRAPHION_ENABLE_BENCHMARKS)
-  add_executable(graphion_bench
-    benchmarks/bench_vm.c
-  )
-  target_link_libraries(graphion_bench PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_frontier
-    benchmarks/bench_frontier.c
-  )
-  target_link_libraries(graphion_bench_frontier PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_frontier)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_frontier PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_bfs
-    benchmarks/bench_bfs.c
-  )
-  target_link_libraries(graphion_bench_bfs PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_bfs)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_bfs PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_neighbors
-    benchmarks/bench_neighbors.c
-  )
-  target_link_libraries(graphion_bench_neighbors PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_neighbors)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_neighbors PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_weighted_graph
-    benchmarks/bench_weighted_graph.c
-  )
-  target_link_libraries(graphion_bench_weighted_graph PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_weighted_graph)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_weighted_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_frontier_thresholds
-    benchmarks/bench_frontier_thresholds.c
-  )
-  target_link_libraries(graphion_bench_frontier_thresholds PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_frontier_thresholds)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_frontier_thresholds PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_frontier_thresholds PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_frontier_thresholds PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_hypergraph
-    benchmarks/bench_hypergraph.c
-  )
-  target_link_libraries(graphion_bench_hypergraph PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_hypergraph)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_hypergraph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_hypergraph_traversal
-    benchmarks/bench_hypergraph_traversal.c
-  )
-  target_link_libraries(graphion_bench_hypergraph_traversal PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_hypergraph_traversal)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_hypergraph_traversal PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_hypergraph_incident_sum
-    benchmarks/bench_hypergraph_incident_sum.c
-  )
-  target_link_libraries(graphion_bench_hypergraph_incident_sum PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_hypergraph_incident_sum)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_hypergraph_incident_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_hypergraph_hyperedge_node_sum
-    benchmarks/bench_hypergraph_hyperedge_node_sum.c
-  )
-  target_link_libraries(graphion_bench_hypergraph_hyperedge_node_sum PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_hypergraph_hyperedge_node_sum)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_hypergraph_hyperedge_node_sum PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_vm_graph
-    benchmarks/bench_vm_graph.c
-  )
-  target_link_libraries(graphion_bench_vm_graph PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_vm_graph)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_vm_graph PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_vm_scalars
-    benchmarks/bench_vm_scalars.c
-  )
-  target_link_libraries(graphion_bench_vm_scalars PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_vm_scalars)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_vm_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_vm_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_vm_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
-  add_executable(graphion_bench_gion_scalars
-    benchmarks/bench_gion_scalars.c
-  )
-  target_link_libraries(graphion_bench_gion_scalars PRIVATE graphion_vm)
-  graphion_enable_pgo(graphion_bench_gion_scalars)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_bench_gion_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_bench_gion_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_bench_gion_scalars PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
-
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)
@@ -431,7 +206,6 @@ if(GRAPHION_ENABLE_FUZZING)
   target_compile_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
   target_link_options(fuzz_vm PRIVATE -fsanitize=fuzzer,address,undefined)
   target_link_libraries(fuzz_vm PRIVATE graphion_vm)
-  graphion_enable_pgo(fuzz_vm)
 
   add_executable(fuzz_parser
     fuzz/fuzz_parser.c
@@ -439,6 +213,5 @@ if(GRAPHION_ENABLE_FUZZING)
   target_compile_options(fuzz_parser PRIVATE -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
   target_link_options(fuzz_parser PRIVATE -fsanitize=fuzzer,address,undefined)
   target_link_libraries(fuzz_parser PRIVATE graphion_vm)
-  graphion_enable_pgo(fuzz_parser)
 endif()
 

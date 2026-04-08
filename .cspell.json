@@ -21,11 +21,6 @@
     "hotpaths",
     "fastpaths",
     "jumptable",
-    "profraw",
-    "profdata",
-    "fprofile",
-    "GENPROFILE",
-    "USEPROFILE",
     "cppcheck",
     "CodeQL",
     "lcov",
@@ -38,14 +33,10 @@
     "Ninja",
     "fuzzer",
     "fuzzing",
-    "SPDX"
-    ,
-    "microbenchmark",
-    "microbenchmarks",
+    "SPDX",
     "codegen",
     "Werror",
-    "cutovers"
-    ,
+    "cutovers",
     "toctree",
     "elif",
     "nand",
@@ -54,8 +45,6 @@
   "ignorePaths": [
     "build/**",
     "build-*/**",
-    "graphion_rust/**",
-    "benchmarks/results/**",
     "coverage-html/**"
   ]
 }
