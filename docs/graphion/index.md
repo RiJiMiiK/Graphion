@@ -33,7 +33,7 @@ Graphion is currently an early-stage language with a small but already usable su
 - line comments with `#`
 - block comments with `/* ... */`
 - equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`
-- the `abs()`, `min()`, `max()`, `clamp()`, `sqrt()`, `exp()`, `ln()`, `log()`, `log10()`, `log2()`, `floor()`, and `len()` builtins, plus postfix factorial `!` and numeric constants like `pi` and `e`
+- the `abs()`, `min()`, `max()`, `clamp()`, `sqrt()`, `exp()`, `ln()`, `log()`, `log10()`, `log2()`, `floor()`, `ceil()`, and `len()` builtins, plus postfix factorial `!` and numeric constants like `pi` and `e`
 
 This guide only documents behavior that is implemented today.
 

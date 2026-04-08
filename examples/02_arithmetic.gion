@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), and the string builtin len().
+# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -70,6 +70,9 @@ log2_expression = log2(2 ** 6)
 floor_count = floor(7)
 floor_ratio = floor(7.5)
 floor_negative = floor(-3.2)
+ceil_count = ceil(7)
+ceil_ratio = ceil(7.5)
+ceil_negative = ceil(-3.2)
 pi_value = pi
 e_value = e
 len_text = len("graphion")
@@ -136,6 +139,9 @@ print("log2 of an expression -> log2_expression=" + log2_expression)
 print("floor of an integer -> floor_count=" + floor_count)
 print("floor of a float -> floor_ratio=" + floor_ratio)
 print("floor of a negative float -> floor_negative=" + floor_negative)
+print("ceil of an integer -> ceil_count=" + ceil_count)
+print("ceil of a float -> ceil_ratio=" + ceil_ratio)
+print("ceil of a negative float -> ceil_negative=" + ceil_negative)
 print("pi constant -> pi_value=" + pi_value)
 print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)

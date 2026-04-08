@@ -531,6 +531,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `ceil(x)`
+
+`ceil(x)` rounds a numeric expression up to the smallest integer greater than or equal to it.
+
+Examples:
+
+```gion
+print(ceil(7))
+print(ceil(7.5))
+print(ceil(-3.2))
+```
+
+Expected output:
+
+```text
+7
+8
+-3
+```
+
+### Valid Inputs
+
+`ceil(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+Integer inputs stay as `int`. Float inputs currently return a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = ceil("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.
