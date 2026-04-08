@@ -80,6 +80,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ACOS`
 - `GVM_OP_ATAN`
 - `GVM_OP_ATAN2`
+- `GVM_OP_HYPOT`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -114,6 +115,7 @@ These back the current `.gion` scalar language features:
 - `acos(x)`
 - `atan(x)`
 - `atan2(y, x)`
+- `hypot(x, y)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

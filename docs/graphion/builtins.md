@@ -601,6 +601,51 @@ Current messages:
 incompatible operand types
 ```
 
+## `hypot(x, y)`
+
+`hypot(x, y)` returns the Euclidean length of the vector `(x, y)`.
+
+Examples:
+
+```gion
+print(hypot(3, 4))
+print(hypot(5, 12))
+print(hypot(-3, 4))
+```
+
+Expected output:
+
+```text
+5
+13
+5
+```
+
+### Valid Inputs
+
+`hypot(x, y)` currently accepts:
+
+- integer expressions
+- float expressions
+- mixed integer/float numeric expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = hypot("graphion", 1)
+value = hypot(1, "graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

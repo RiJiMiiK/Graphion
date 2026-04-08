@@ -229,6 +229,7 @@ int test_gion_reserved_name_errors(void) {
       {"acos = 1\n", "reserved name cannot be assigned", "gion_reserved_acos.gion"},
       {"atan = 1\n", "reserved name cannot be assigned", "gion_reserved_atan.gion"},
       {"atan2 = 1\n", "reserved name cannot be assigned", "gion_reserved_atan2.gion"},
+      {"hypot = 1\n", "reserved name cannot be assigned", "gion_reserved_hypot.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
       {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
       {"log = 1\n", "reserved name cannot be assigned", "gion_reserved_log.gion"},
@@ -388,6 +389,9 @@ int test_gion_arithmetic_expressions(void) {
       "atan2_diag = atan2(1, 1)\n"
       "atan2_quadrant_two = atan2(1, -1)\n"
       "atan2_quadrant_three = atan2(-1, -1)\n"
+      "hypot_diag = hypot(3, 4)\n"
+      "hypot_large = hypot(5, 12)\n"
+      "hypot_negative = hypot(-3, 4)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -494,6 +498,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(atan2_diag)\n"
       "print(atan2_quadrant_two)\n"
       "print(atan2_quadrant_three)\n"
+      "print(hypot_diag)\n"
+      "print(hypot_large)\n"
+      "print(hypot_negative)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -603,6 +610,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *atan2_diag;
   const graphion_runtime_value *atan2_quadrant_two;
   const graphion_runtime_value *atan2_quadrant_three;
+  const graphion_runtime_value *hypot_diag;
+  const graphion_runtime_value *hypot_large;
+  const graphion_runtime_value *hypot_negative;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -727,6 +737,9 @@ int test_gion_arithmetic_expressions(void) {
   atan2_diag = graphion_runtime_scope_find(&scope, "atan2_diag");
   atan2_quadrant_two = graphion_runtime_scope_find(&scope, "atan2_quadrant_two");
   atan2_quadrant_three = graphion_runtime_scope_find(&scope, "atan2_quadrant_three");
+  hypot_diag = graphion_runtime_scope_find(&scope, "hypot_diag");
+  hypot_large = graphion_runtime_scope_find(&scope, "hypot_large");
+  hypot_negative = graphion_runtime_scope_find(&scope, "hypot_negative");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1021,6 +1034,21 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24346;
   }
+  if (hypot_diag == NULL || hypot_diag->kind != GVM_VALUE_FLOAT || hypot_diag->as.float_value < 4.999999999 ||
+      hypot_diag->as.float_value > 5.000000001) {
+    remove(path);
+    return 24347;
+  }
+  if (hypot_large == NULL || hypot_large->kind != GVM_VALUE_FLOAT || hypot_large->as.float_value < 12.999999999 ||
+      hypot_large->as.float_value > 13.000000001) {
+    remove(path);
+    return 24348;
+  }
+  if (hypot_negative == NULL || hypot_negative->kind != GVM_VALUE_FLOAT ||
+      hypot_negative->as.float_value < 4.999999999 || hypot_negative->as.float_value > 5.000000001) {
+    remove(path);
+    return 24349;
+  }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
     remove(path);
@@ -1222,7 +1250,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1589,6 +1617,8 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = atan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = atan2(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = atan2(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = hypot(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = hypot(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log(\"x\", 2)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1693,6 +1723,11 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = atan2(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = atan2(1, 1\n", GINT_ERR_PARSE, "expected ')' after atan2 arguments"},
       {"value = atan2(1 1)\n", GINT_ERR_PARSE, "expected ',' between atan2 arguments"},
+      {"value = hypot()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = hypot(1)\n", GINT_ERR_PARSE, "expected ',' between hypot arguments"},
+      {"value = hypot(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = hypot(1, 1\n", GINT_ERR_PARSE, "expected ')' after hypot arguments"},
+      {"value = hypot(1 1)\n", GINT_ERR_PARSE, "expected ',' between hypot arguments"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = exp(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp argument"},
       {"value = ln()\n", GINT_ERR_PARSE, "expected scalar literal"},

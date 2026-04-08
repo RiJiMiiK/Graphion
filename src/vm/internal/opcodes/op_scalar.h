@@ -48,6 +48,7 @@ int op_asin_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_acos_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_atan_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_atan2_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_hypot_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_exp(graphion_vm *vm, const graphion_insn *in);
 int op_ln(graphion_vm *vm, const graphion_insn *in);
 int op_log(graphion_vm *vm, const graphion_insn *in);

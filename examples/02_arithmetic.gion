@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), cos(), tan(), asin(), acos(), atan(), atan2(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), cos(), tan(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -76,6 +76,9 @@ atan_negative_one = atan(-1)
 atan2_diag = atan2(1, 1)
 atan2_quadrant_two = atan2(1, -1)
 atan2_quadrant_three = atan2(-1, -1)
+hypot_diag = hypot(3, 4)
+hypot_large = hypot(5, 12)
+hypot_negative = hypot(-3, 4)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
@@ -181,6 +184,9 @@ print("atan at negative one -> atan_negative_one=" + atan_negative_one)
 print("atan2 on the unit diagonal -> atan2_diag=" + atan2_diag)
 print("atan2 in quadrant two -> atan2_quadrant_two=" + atan2_quadrant_two)
 print("atan2 in quadrant three -> atan2_quadrant_three=" + atan2_quadrant_three)
+print("hypot on a 3-4-5 triangle -> hypot_diag=" + hypot_diag)
+print("hypot on a 5-12-13 triangle -> hypot_large=" + hypot_large)
+print("hypot ignores sign on coordinates -> hypot_negative=" + hypot_negative)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)

@@ -74,6 +74,7 @@ int main(int argc, char **argv) {
         {"vm_acos_builtin_opcode", test_vm_acos_builtin_opcode},
         {"vm_atan_builtin_opcode", test_vm_atan_builtin_opcode},
         {"vm_atan2_builtin_opcode", test_vm_atan2_builtin_opcode},
+        {"vm_hypot_builtin_opcode", test_vm_hypot_builtin_opcode},
         {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_ln_opcode", test_vm_ln_opcode},
       {"vm_log_opcode", test_vm_log_opcode},

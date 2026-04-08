@@ -28,6 +28,7 @@ int test_vm_asin_builtin_opcode(void);
 int test_vm_acos_builtin_opcode(void);
 int test_vm_atan_builtin_opcode(void);
 int test_vm_atan2_builtin_opcode(void);
+int test_vm_hypot_builtin_opcode(void);
 int test_vm_exp_opcode(void);
 int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);
