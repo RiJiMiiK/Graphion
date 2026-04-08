@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "vm/vm.h"
+#include "vm/internal/opcodes/op_scalar.h"
 #include "graph/csr_graph.h"
 #include "graph/hypergraph.h"
 #include <limits.h>
@@ -955,7 +956,46 @@ int test_vm_asin_builtin_opcode(void) {
       globals[2].as.float_value > 0.523598777) {
     return 5;
   }
-  return 0;
+    return 0;
+}
+
+int test_vm_acos_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    insn.op = GVM_OP_ACOS;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_acos_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.000000001 ||
+        vm.regs[0].as.float_value > 0.000000001) {
+        return 18120;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.0;
+    rc = op_acos_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 1.570796326 ||
+        vm.regs[0].as.float_value > 1.570796328) {
+        return 18121;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.5;
+    rc = op_acos_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 1.047197550 ||
+        vm.regs[0].as.float_value > 1.047197552) {
+        return 18122;
+    }
+
+    return 0;
 }
 
 int test_vm_exp_opcode(void) {

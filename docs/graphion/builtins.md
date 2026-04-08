@@ -478,6 +478,41 @@ asin requires input in [-1, 1]
 incompatible operand types
 ```
 
+## `acos(x)`
+
+Returns the arccosine of `x` in radians.
+
+Examples:
+
+```gion
+print(acos(1))
+print(acos(0))
+print(acos(0.5))
+```
+
+Expected output:
+
+```text
+0
+1.5708
+1.0472
+```
+
+Valid inputs:
+- `int`
+- `float`
+
+Domain:
+- `x` must be in `[-1, 1]`
+
+Invalid inputs:
+- `acos(2)`
+- `acos("graphion")`
+
+Current runtime messages:
+- `acos requires input in [-1, 1]`
+- `incompatible operand types`
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

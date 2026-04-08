@@ -1245,6 +1245,7 @@ Current builtin functions:
 - `cos(x)`
 - `tan(x)`
 - `asin(x)`
+- `acos(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

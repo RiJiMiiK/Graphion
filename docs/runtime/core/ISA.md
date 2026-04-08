@@ -104,6 +104,7 @@ These back the current `.gion` scalar language features:
 - `cos(x)`
 - `tan(x)`
 - `asin(x)`
+- `acos(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
@@ -153,6 +154,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_DIVIDE_BY_ZERO`
 - `GVM_ERR_DOMAIN`
 - `GVM_ERR_ASIN_DOMAIN`
+- `GVM_ERR_ACOS_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

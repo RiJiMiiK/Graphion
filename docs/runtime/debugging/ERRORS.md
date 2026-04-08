@@ -89,6 +89,7 @@ Typical messages include:
 - `incompatible operand types`
 - `sqrt requires non-negative input`
 - `asin requires input in [-1, 1]`
+- `acos requires input in [-1, 1]`
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
 - `factorial requires non-negative integer input`
