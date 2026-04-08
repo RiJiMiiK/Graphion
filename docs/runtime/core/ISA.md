@@ -76,6 +76,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_SIN`
 - `GVM_OP_COS`
 - `GVM_OP_TAN`
+- `GVM_OP_ASIN`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -102,6 +103,7 @@ These back the current `.gion` scalar language features:
 - `sin(x)`
 - `cos(x)`
 - `tan(x)`
+- `asin(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
@@ -150,6 +152,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_OUTPUT_UNBOUND`
 - `GVM_ERR_DIVIDE_BY_ZERO`
 - `GVM_ERR_DOMAIN`
+- `GVM_ERR_ASIN_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

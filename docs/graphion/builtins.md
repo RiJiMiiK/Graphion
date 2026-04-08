@@ -431,6 +431,53 @@ Current messages:
 incompatible operand types
 ```
 
+## `asin(x)`
+
+`asin(x)` returns the arcsine of a numeric expression in radians.
+
+Examples:
+
+```gion
+print(asin(0))
+print(asin(1))
+print(asin(0.5))
+```
+
+Expected output:
+
+```text
+0
+1.5708
+0.523599
+```
+
+### Valid Inputs
+
+`asin(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The input must stay in `[-1, 1]`.
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = asin(2)
+value = asin("graphion")
+```
+
+Current messages:
+
+```text
+asin requires input in [-1, 1]
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.

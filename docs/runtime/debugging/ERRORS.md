@@ -88,6 +88,7 @@ Typical messages include:
 - `division by zero`
 - `incompatible operand types`
 - `sqrt requires non-negative input`
+- `asin requires input in [-1, 1]`
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
 - `factorial requires non-negative integer input`
@@ -156,6 +157,7 @@ Typical result:
 
 - runtime failure
 - message `factorial requires non-negative integer input`
+- message `asin requires input in [-1, 1]`
 - message `ln requires strictly positive input`
 - message `log requires x > 0 and base > 0 with base != 1`
 

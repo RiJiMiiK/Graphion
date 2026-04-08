@@ -181,7 +181,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `sin(x)`
 - [x] builtin `cos(x)`
 - [x] builtin `tan(x)`
-- [ ] builtin `asin(x)`
+- [x] builtin `asin(x)`
 - [ ] builtin `acos(x)`
 - [ ] builtin `atan(x)`
 - [ ] builtin `atan2(y, x)`
