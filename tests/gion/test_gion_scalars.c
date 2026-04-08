@@ -225,6 +225,7 @@ int test_gion_reserved_name_errors(void) {
       {"sin = 1\n", "reserved name cannot be assigned", "gion_reserved_sin.gion"},
       {"sinh = 1\n", "reserved name cannot be assigned", "gion_reserved_sinh.gion"},
       {"cosh = 1\n", "reserved name cannot be assigned", "gion_reserved_cosh.gion"},
+      {"tanh = 1\n", "reserved name cannot be assigned", "gion_reserved_tanh.gion"},
       {"cos = 1\n", "reserved name cannot be assigned", "gion_reserved_cos.gion"},
       {"tan = 1\n", "reserved name cannot be assigned", "gion_reserved_tan.gion"},
       {"asin = 1\n", "reserved name cannot be assigned", "gion_reserved_asin.gion"},
@@ -379,6 +380,9 @@ int test_gion_arithmetic_expressions(void) {
       "cosh_zero = cosh(0)\n"
       "cosh_one = cosh(1)\n"
       "cosh_negative = cosh(-1)\n"
+      "tanh_zero = tanh(0)\n"
+      "tanh_one = tanh(1)\n"
+      "tanh_negative = tanh(-1)\n"
       "cos_zero = cos(0)\n"
       "cos_pi = cos(pi)\n"
       "cos_expr = cos(3.14159265358979323846)\n"
@@ -494,6 +498,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(cosh_zero)\n"
       "print(cosh_one)\n"
       "print(cosh_negative)\n"
+      "print(tanh_zero)\n"
+      "print(tanh_one)\n"
+      "print(tanh_negative)\n"
       "print(cos_zero)\n"
       "print(cos_pi)\n"
       "print(cos_expr)\n"
@@ -615,6 +622,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *cosh_zero;
   const graphion_runtime_value *cosh_one;
   const graphion_runtime_value *cosh_negative;
+  const graphion_runtime_value *tanh_zero;
+  const graphion_runtime_value *tanh_one;
+  const graphion_runtime_value *tanh_negative;
   const graphion_runtime_value *cos_zero;
   const graphion_runtime_value *cos_pi;
   const graphion_runtime_value *cos_expr;
@@ -748,6 +758,9 @@ int test_gion_arithmetic_expressions(void) {
   cosh_zero = graphion_runtime_scope_find(&scope, "cosh_zero");
   cosh_one = graphion_runtime_scope_find(&scope, "cosh_one");
   cosh_negative = graphion_runtime_scope_find(&scope, "cosh_negative");
+  tanh_zero = graphion_runtime_scope_find(&scope, "tanh_zero");
+  tanh_one = graphion_runtime_scope_find(&scope, "tanh_one");
+  tanh_negative = graphion_runtime_scope_find(&scope, "tanh_negative");
   cos_zero = graphion_runtime_scope_find(&scope, "cos_zero");
   cos_pi = graphion_runtime_scope_find(&scope, "cos_pi");
   cos_expr = graphion_runtime_scope_find(&scope, "cos_expr");
@@ -1012,6 +1025,21 @@ int test_gion_arithmetic_expressions(void) {
       cosh_negative->as.float_value < 1.543080634 || cosh_negative->as.float_value > 1.543080636) {
     remove(path);
     return 243286;
+  }
+  if (tanh_zero == NULL || tanh_zero->kind != GVM_VALUE_FLOAT || tanh_zero->as.float_value < -0.000000001 ||
+      tanh_zero->as.float_value > 0.000000001) {
+    remove(path);
+    return 243287;
+  }
+  if (tanh_one == NULL || tanh_one->kind != GVM_VALUE_FLOAT || tanh_one->as.float_value < 0.761594155 ||
+      tanh_one->as.float_value > 0.761594157) {
+    remove(path);
+    return 243288;
+  }
+  if (tanh_negative == NULL || tanh_negative->kind != GVM_VALUE_FLOAT ||
+      tanh_negative->as.float_value < -0.761594157 || tanh_negative->as.float_value > -0.761594155) {
+    remove(path);
+    return 243289;
   }
   if (cos_zero == NULL || cos_zero->kind != GVM_VALUE_FLOAT || cos_zero->as.float_value < 0.999999999 ||
       cos_zero->as.float_value > 1.000000001) {
@@ -1304,7 +1332,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n1\n1.54308\n1.54308\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1667,6 +1695,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = sin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cosh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = tanh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cos(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = tan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = asin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1770,6 +1799,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = sinh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sinh argument"},
       {"value = cosh()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = cosh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cosh argument"},
+      {"value = tanh()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = tanh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after tanh argument"},
       {"value = cos()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = cos(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cos argument"},
       {"value = tan()\n", GINT_ERR_PARSE, "expected scalar literal"},

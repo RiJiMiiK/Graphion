@@ -431,6 +431,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `tanh(x)`
+
+`tanh(x)` returns the hyperbolic tangent of a numeric expression.
+
+Examples:
+
+```gion
+print(tanh(0))
+print(tanh(1))
+print(tanh(-1))
+```
+
+Expected output:
+
+```text
+0
+0.761594
+-0.761594
+```
+
+### Valid Inputs
+
+`tanh(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = tanh("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `cos(x)`
 
 `cos(x)` returns the cosine of a numeric expression interpreted in radians.

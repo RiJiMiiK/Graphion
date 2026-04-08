@@ -70,6 +70,7 @@ int main(int argc, char **argv) {
       {"vm_sin_builtin_opcode", test_vm_sin_builtin_opcode},
       {"vm_sinh_builtin_opcode", test_vm_sinh_builtin_opcode},
       {"vm_cosh_builtin_opcode", test_vm_cosh_builtin_opcode},
+      {"vm_tanh_builtin_opcode", test_vm_tanh_builtin_opcode},
       {"vm_cos_builtin_opcode", test_vm_cos_builtin_opcode},
         {"vm_tan_builtin_opcode", test_vm_tan_builtin_opcode},
         {"vm_asin_builtin_opcode", test_vm_asin_builtin_opcode},

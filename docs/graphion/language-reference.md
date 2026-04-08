@@ -75,6 +75,7 @@ These names are currently reserved and cannot be assigned:
 - `cosh`
 - `cos`
 - `tan`
+- `tanh`
 - `asin`
 - `acos`
 - `atan`
@@ -974,7 +975,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `sinh(...)`, `cos(...)`, `cosh(...)`, `tan(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `sinh(...)`, `cos(...)`, `cosh(...)`, `tan(...)`, `tanh(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
@@ -1268,6 +1269,7 @@ Current builtin functions:
 - `cosh(x)`
 - `cos(x)`
 - `tan(x)`
+- `tanh(x)`
 - `asin(x)`
 - `acos(x)`
 - `atan(x)`

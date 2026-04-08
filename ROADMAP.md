@@ -188,7 +188,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `hypot(x, y)`
 - [x] builtin `sinh(x)`
 - [x] builtin `cosh(x)`
-- [ ] builtin `tanh(x)`
+- [x] builtin `tanh(x)`
 - [ ] builtin `asinh(x)`
 - [ ] builtin `acosh(x)`
 - [ ] builtin `atanh(x)`
