@@ -388,6 +388,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `tan(x)`
+
+`tan(x)` returns the tangent of a numeric expression interpreted in radians.
+
+Examples:
+
+```gion
+print(tan(0))
+print(tan(pi / 4))
+print(tan(0.7853981633974483))
+```
+
+Expected output:
+
+```text
+0
+1
+1
+```
+
+### Valid Inputs
+
+`tan(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = tan("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.
