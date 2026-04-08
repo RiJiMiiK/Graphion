@@ -240,13 +240,26 @@ if(GRAPHION_ENABLE_TESTS)
   enable_testing()
 
   add_executable(graphion_tests
-    tests/test_main.c
-    tests/test_vm.c
-    tests/test_arena.c
-    tests/test_parser.c
-    tests/test_isa.c
-    tests/test_graph.c
-    tests/test_hypergraph.c
+    tests/runner/test_main.c
+    tests/vm/test_vm_core.c
+    tests/vm/test_vm_scalars.c
+    tests/vm/test_vm_logic_bits.c
+    tests/vm/test_vm_graph_ops.c
+    tests/core/test_arena.c
+    tests/gion/test_parser_frontend.c
+    tests/gion/test_gion_scalars.c
+    tests/gion/test_gion_bits.c
+    tests/gion/test_gion_errors_misc.c
+    tests/gion/test_gion_control_flow.c
+    tests/gion/test_gion_operators.c
+    tests/core/test_isa.c
+    tests/graph/test_graph.c
+    tests/graph/test_hypergraph.c
+  )
+  target_include_directories(graphion_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/gion
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/vm
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
   graphion_enable_pgo(graphion_tests)
