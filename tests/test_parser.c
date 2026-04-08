@@ -580,6 +580,7 @@ int test_gion_reserved_name_errors(void) {
       {"floor = 1\n", "reserved name cannot be assigned", "gion_reserved_floor.gion"},
       {"ceil = 1\n", "reserved name cannot be assigned", "gion_reserved_ceil.gion"},
       {"round = 1\n", "reserved name cannot be assigned", "gion_reserved_round.gion"},
+      {"trunc = 1\n", "reserved name cannot be assigned", "gion_reserved_trunc.gion"},
       {"len = 1\n", "reserved name cannot be assigned", "gion_reserved_len.gion"},
       {"pi = 1\n", "reserved name cannot be assigned", "gion_reserved_pi.gion"},
       {"e = 1\n", "reserved name cannot be assigned", "gion_reserved_e.gion"},
@@ -731,6 +732,10 @@ int test_gion_arithmetic_expressions(void) {
       "round_half = round(7.5)\n"
       "round_negative = round(-3.2)\n"
       "round_negative_half = round(-3.5)\n"
+      "trunc_int = trunc(7)\n"
+      "trunc_float = trunc(7.9)\n"
+      "trunc_negative = trunc(-3.9)\n"
+      "trunc_small_negative = trunc(-0.4)\n"
       "pi_value = pi\n"
       "e_value = e\n"
       "factorial_zero = 0!\n"
@@ -806,6 +811,10 @@ int test_gion_arithmetic_expressions(void) {
       "print(round_half)\n"
       "print(round_negative)\n"
       "print(round_negative_half)\n"
+      "print(trunc_int)\n"
+      "print(trunc_float)\n"
+      "print(trunc_negative)\n"
+      "print(trunc_small_negative)\n"
       "print(pi_value)\n"
       "print(e_value)\n"
       "print(factorial_zero)\n"
@@ -887,6 +896,10 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *round_half;
   const graphion_runtime_value *round_negative;
   const graphion_runtime_value *round_negative_half;
+  const graphion_runtime_value *trunc_int;
+  const graphion_runtime_value *trunc_float;
+  const graphion_runtime_value *trunc_negative;
+  const graphion_runtime_value *trunc_small_negative;
   const graphion_runtime_value *pi_value;
   const graphion_runtime_value *e_value;
   const graphion_runtime_value *factorial_zero;
@@ -983,6 +996,10 @@ int test_gion_arithmetic_expressions(void) {
   round_half = graphion_runtime_scope_find(&scope, "round_half");
   round_negative = graphion_runtime_scope_find(&scope, "round_negative");
   round_negative_half = graphion_runtime_scope_find(&scope, "round_negative_half");
+  trunc_int = graphion_runtime_scope_find(&scope, "trunc_int");
+  trunc_float = graphion_runtime_scope_find(&scope, "trunc_float");
+  trunc_negative = graphion_runtime_scope_find(&scope, "trunc_negative");
+  trunc_small_negative = graphion_runtime_scope_find(&scope, "trunc_small_negative");
   pi_value = graphion_runtime_scope_find(&scope, "pi_value");
   e_value = graphion_runtime_scope_find(&scope, "e_value");
   factorial_zero = graphion_runtime_scope_find(&scope, "factorial_zero");
@@ -1261,6 +1278,23 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24427;
   }
+  if (trunc_int == NULL || trunc_int->kind != GVM_VALUE_INT || trunc_int->as.int_value != 7) {
+    remove(path);
+    return 24428;
+  }
+  if (trunc_float == NULL || trunc_float->kind != GVM_VALUE_FLOAT || trunc_float->as.float_value != 7.0) {
+    remove(path);
+    return 24429;
+  }
+  if (trunc_negative == NULL || trunc_negative->kind != GVM_VALUE_FLOAT || trunc_negative->as.float_value != -3.0) {
+    remove(path);
+    return 24430;
+  }
+  if (trunc_small_negative == NULL || trunc_small_negative->kind != GVM_VALUE_FLOAT ||
+      trunc_small_negative->as.float_value != 0.0) {
+    remove(path);
+    return 24431;
+  }
   if (pi_value == NULL || pi_value->kind != GVM_VALUE_FLOAT || pi_value->as.float_value != 3.14159265358979323846) {
     remove(path);
     return 2431;
@@ -1315,7 +1349,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1683,6 +1717,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = floor(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ceil(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = round(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = trunc(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(-1)\n", GINT_ERR_RUN, "sqrt requires non-negative input"},
       {"value = ln(0)\n", GINT_ERR_RUN, "ln requires strictly positive input"},
       {"value = ln(-1)\n", GINT_ERR_RUN, "ln requires strictly positive input"},
@@ -1774,6 +1809,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = ceil(1 + 2\n", GINT_ERR_PARSE, "expected ')' after ceil argument"},
       {"value = round()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = round(1 + 2\n", GINT_ERR_PARSE, "expected ')' after round argument"},
+      {"value = trunc()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = trunc(1 + 2\n", GINT_ERR_PARSE, "expected ')' after trunc argument"},
       {"value = !\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = len(\"x\"\n", GINT_ERR_PARSE, "expected ')' after len argument"},

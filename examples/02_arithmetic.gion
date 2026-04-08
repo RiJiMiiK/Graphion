@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), and the string builtin len().
+# clamp(), sqrt(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -78,6 +78,10 @@ round_ratio = round(7.4)
 round_half = round(7.5)
 round_negative = round(-3.2)
 round_negative_half = round(-3.5)
+trunc_count = trunc(7)
+trunc_ratio = trunc(7.9)
+trunc_negative = trunc(-3.9)
+trunc_small_negative = trunc(-0.4)
 pi_value = pi
 e_value = e
 len_text = len("graphion")
@@ -152,6 +156,10 @@ print("round of a float -> round_ratio=" + round_ratio)
 print("round of a halfway float -> round_half=" + round_half)
 print("round of a negative float -> round_negative=" + round_negative)
 print("round of a negative halfway float -> round_negative_half=" + round_negative_half)
+print("trunc of an integer -> trunc_count=" + trunc_count)
+print("trunc of a float -> trunc_ratio=" + trunc_ratio)
+print("trunc of a negative float -> trunc_negative=" + trunc_negative)
+print("trunc of a small negative float -> trunc_small_negative=" + trunc_small_negative)
 print("pi constant -> pi_value=" + pi_value)
 print("e constant -> e_value=" + e_value)
 print("length of a string literal -> len_text=" + len_text)

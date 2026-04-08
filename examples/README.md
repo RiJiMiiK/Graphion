@@ -9,7 +9,7 @@ Files:
 - `01_scalars_and_print.gion`
   - scalar assignments, variable copies, and `print(...)`
 - `02_arithmetic.gion`
-  - arithmetic operators, precedence, negative operands, unary minus, postfix factorial `!`, the `pi` and `e` constants, numeric builtins like `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, and the string builtin `len(...)`
+  - arithmetic operators, precedence, negative operands, unary minus, postfix factorial `!`, the `pi` and `e` constants, numeric builtins like `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `exp(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, and the string builtin `len(...)`
 - `03_compound_assignments.gion`
   - `+=`, `-=`, `*=`, `/=`, `//=`, `%=`, `**=`
 - `04_conditionals.gion`

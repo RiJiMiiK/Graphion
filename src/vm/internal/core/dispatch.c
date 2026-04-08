@@ -137,6 +137,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ROUND:
         rc = op_round_builtin(vm, &in);
         break;
+      case GVM_OP_TRUNC:
+        rc = op_trunc_builtin(vm, &in);
+        break;
       case GVM_OP_LEN:
         rc = op_len(vm, &in);
         break;
@@ -294,6 +297,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_FLOOR] = op_floor_builtin,
       [GVM_OP_CEIL] = op_ceil_builtin,
       [GVM_OP_ROUND] = op_round_builtin,
+      [GVM_OP_TRUNC] = op_trunc_builtin,
       [GVM_OP_LEN] = op_len,
       [GVM_OP_FACTORIAL] = op_factorial,
       [GVM_OP_MOV] = op_mov,
@@ -394,6 +398,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_FLOOR] = &&L_floor_builtin,
       [GVM_OP_CEIL] = &&L_ceil_builtin,
       [GVM_OP_ROUND] = &&L_round_builtin,
+      [GVM_OP_TRUNC] = &&L_trunc_builtin,
       [GVM_OP_LEN] = &&L_len,
       [GVM_OP_FACTORIAL] = &&L_factorial,
       [GVM_OP_MOV] = &&L_mov,
@@ -679,6 +684,12 @@ L_clamp:
     continue;
   L_round_builtin:
     rc = op_round_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_trunc_builtin:
+    rc = op_trunc_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

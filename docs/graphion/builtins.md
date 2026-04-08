@@ -623,6 +623,53 @@ Current messages:
 incompatible operand types
 ```
 
+## `trunc(x)`
+
+`trunc(x)` removes the fractional part of a numeric expression.
+
+It currently truncates toward zero.
+
+Examples:
+
+```gion
+print(trunc(7))
+print(trunc(7.9))
+print(trunc(-3.9))
+print(trunc(-0.4))
+```
+
+Expected output:
+
+```text
+7
+7
+-3
+0
+```
+
+### Valid Inputs
+
+`trunc(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+Integer inputs stay as `int`. Float inputs currently return a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = trunc("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `len(x)`
 
 `len(x)` returns the length of a string expression.
