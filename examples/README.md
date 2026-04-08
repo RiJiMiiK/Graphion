@@ -4,8 +4,6 @@ This directory contains focused `.gion` examples for the currently implemented l
 
 Files:
 
-- `sample_test.gion`
-  - quick overview script
 - `01_scalars_and_print.gion`
   - scalar assignments, variable copies, and `print(...)`
 - `02_arithmetic.gion`
