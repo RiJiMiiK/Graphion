@@ -710,6 +710,9 @@ int test_gion_arithmetic_expressions(void) {
       "cbrt_int = cbrt(27)\n"
       "cbrt_negative = cbrt(-8)\n"
       "cbrt_expr = cbrt(1 + 26)\n"
+      "sin_zero = sin(0)\n"
+      "sin_half_turn = sin(pi / 2)\n"
+      "sin_expr = sin(1.5707963267948966)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -795,6 +798,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(cbrt_int)\n"
       "print(cbrt_negative)\n"
       "print(cbrt_expr)\n"
+      "print(sin_zero)\n"
+      "print(sin_half_turn)\n"
+      "print(sin_expr)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -886,6 +892,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *cbrt_int;
   const graphion_runtime_value *cbrt_negative;
   const graphion_runtime_value *cbrt_expr;
+  const graphion_runtime_value *sin_zero;
+  const graphion_runtime_value *sin_half_turn;
+  const graphion_runtime_value *sin_expr;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -992,6 +1001,9 @@ int test_gion_arithmetic_expressions(void) {
   cbrt_int = graphion_runtime_scope_find(&scope, "cbrt_int");
   cbrt_negative = graphion_runtime_scope_find(&scope, "cbrt_negative");
   cbrt_expr = graphion_runtime_scope_find(&scope, "cbrt_expr");
+  sin_zero = graphion_runtime_scope_find(&scope, "sin_zero");
+  sin_half_turn = graphion_runtime_scope_find(&scope, "sin_half_turn");
+  sin_expr = graphion_runtime_scope_find(&scope, "sin_expr");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1197,6 +1209,20 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24325;
   }
+  if (sin_zero == NULL || sin_zero->kind != GVM_VALUE_FLOAT || sin_zero->as.float_value != 0.0) {
+    remove(path);
+    return 24326;
+  }
+  if (sin_half_turn == NULL || sin_half_turn->kind != GVM_VALUE_FLOAT || sin_half_turn->as.float_value < 0.999999999 ||
+      sin_half_turn->as.float_value > 1.000000001) {
+    remove(path);
+    return 24327;
+  }
+  if (sin_expr == NULL || sin_expr->kind != GVM_VALUE_FLOAT || sin_expr->as.float_value < 0.999999999 ||
+      sin_expr->as.float_value > 1.000000001) {
+    remove(path);
+    return 24328;
+  }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
     remove(path);
@@ -1398,7 +1424,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1758,6 +1784,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = clamp(1, 0, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sqrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = cbrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = sin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log(\"x\", 2)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1843,6 +1870,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = sqrt(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sqrt argument"},
       {"value = cbrt()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = cbrt(1 + 2\n", GINT_ERR_PARSE, "expected ')' after cbrt argument"},
+      {"value = sin()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = sin(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sin argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = exp(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp argument"},
       {"value = ln()\n", GINT_ERR_PARSE, "expected scalar literal"},

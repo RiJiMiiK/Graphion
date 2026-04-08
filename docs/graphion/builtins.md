@@ -302,6 +302,49 @@ Current messages:
 incompatible operand types
 ```
 
+## `sin(x)`
+
+`sin(x)` returns the sine of a numeric expression interpreted in radians.
+
+Examples:
+
+```gion
+print(sin(0))
+print(sin(pi / 2))
+print(sin(1.5707963267948966))
+```
+
+Expected output:
+
+```text
+0
+1
+1
+```
+
+### Valid Inputs
+
+`sin(x)` currently accepts:
+
+- integer expressions
+- float expressions
+
+The result is currently returned as a `float`.
+
+### Invalid Inputs
+
+These are runtime errors:
+
+```gion
+value = sin("graphion")
+```
+
+Current messages:
+
+```text
+incompatible operand types
+```
+
 ## `exp(x)`
 
 `exp(x)` returns `e` raised to the value of a numeric expression.
