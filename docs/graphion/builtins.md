@@ -31,6 +31,7 @@ Unless a builtin says otherwise:
 | `atan2(y, x)` | angle of vector `(x, y)` | `float` | two numeric inputs |
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
 | `sinh(x)` | hyperbolic sine | `float` | |
+| `asinh(x)` | inverse hyperbolic sine | `float` | |
 | `cosh(x)` | hyperbolic cosine | `float` | |
 | `tanh(x)` | hyperbolic tangent | `float` | |
 | `exp(x)` | `e ** x` | `float` | |
@@ -374,10 +375,11 @@ Expected output:
 
 ## Hyperbolic Functions
 
-### `sinh(x)`, `cosh(x)`, `tanh(x)`
+### `sinh(x)`, `asinh(x)`, `cosh(x)`, `tanh(x)`
 
 ```gion
 print(sinh(1))
+print(asinh(1))
 print(cosh(1))
 print(tanh(1))
 ```
@@ -386,6 +388,7 @@ Expected output:
 
 ```text
 1.1752
+0.881374
 1.54308
 0.761594
 ```

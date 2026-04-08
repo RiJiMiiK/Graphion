@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), cos(), cosh(), tan(), tanh(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), cos(), cosh(), tan(), tanh(), asin(), acos(), atan(), atan2(), hypot(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -61,6 +61,9 @@ sin_expression = sin(1.5707963267948966)
 sinh_zero = sinh(0)
 sinh_one = sinh(1)
 sinh_negative = sinh(-1)
+asinh_zero = asinh(0)
+asinh_one = asinh(1)
+asinh_negative = asinh(-1)
 cosh_zero = cosh(0)
 cosh_one = cosh(1)
 cosh_negative = cosh(-1)
@@ -178,6 +181,9 @@ print("sin of a radians literal -> sin_expression=" + sin_expression)
 print("sinh at zero radians -> sinh_zero=" + sinh_zero)
 print("sinh at one radian -> sinh_one=" + sinh_one)
 print("sinh at minus one radian -> sinh_negative=" + sinh_negative)
+print("asinh at zero -> asinh_zero=" + asinh_zero)
+print("asinh at one -> asinh_one=" + asinh_one)
+print("asinh at minus one -> asinh_negative=" + asinh_negative)
 print("cosh at zero radians -> cosh_zero=" + cosh_zero)
 print("cosh at one radian -> cosh_one=" + cosh_one)
 print("cosh at minus one radian -> cosh_negative=" + cosh_negative)

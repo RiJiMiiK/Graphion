@@ -76,6 +76,7 @@ These names are currently reserved and cannot be assigned:
 - `cbrt`
 - `sin`
 - `sinh`
+- `asinh`
 - `cosh`
 - `cos`
 - `tan`
@@ -583,6 +584,7 @@ Current builtin functions:
 - `cbrt(x)`
 - `sin(x)`
 - `sinh(x)`
+- `asinh(x)`
 - `cosh(x)`
 - `cos(x)`
 - `tan(x)`

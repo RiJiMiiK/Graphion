@@ -113,6 +113,7 @@ These back the current `.gion` scalar language features:
 - `cbrt(x)`
 - `sin(x)`
 - `sinh(x)`
+- `asinh(x)`
 - `cosh(x)`
 - `tanh(x)`
 - `cos(x)`
