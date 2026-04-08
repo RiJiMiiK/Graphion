@@ -27,8 +27,5 @@ graphion/index
 :maxdepth: 2
 :caption: Engineering Docs
 
-runtime/core/ARCHITECTURE
-runtime/core/ISA
-runtime/core/REBUILD_CHARTER
-runtime/debugging/ERRORS
+runtime/index
 ```
