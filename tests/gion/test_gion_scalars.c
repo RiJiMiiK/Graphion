@@ -244,6 +244,7 @@ int test_gion_reserved_name_errors(void) {
       {"isinf = 1\n", "reserved name cannot be assigned", "gion_reserved_isinf.gion"},
       {"isfinite = 1\n", "reserved name cannot be assigned", "gion_reserved_isfinite.gion"},
       {"expm1 = 1\n", "reserved name cannot be assigned", "gion_reserved_expm1.gion"},
+      {"log1p = 1\n", "reserved name cannot be assigned", "gion_reserved_log1p.gion"},
       {"fract = 1\n", "reserved name cannot be assigned", "gion_reserved_fract.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
       {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
@@ -446,6 +447,9 @@ int test_gion_arithmetic_expressions(void) {
       "expm1_int = expm1(1)\n"
       "expm1_float = expm1(0.0)\n"
       "expm1_expr = expm1(1 + 1)\n"
+      "log1p_int = log1p(1)\n"
+      "log1p_float = log1p(0.0)\n"
+      "log1p_expr = log1p(2 - 1.5)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -597,6 +601,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(expm1_int)\n"
       "print(expm1_float)\n"
       "print(expm1_expr)\n"
+      "print(log1p_int)\n"
+      "print(log1p_float)\n"
+      "print(log1p_expr)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -749,6 +756,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *expm1_int;
   const graphion_runtime_value *expm1_float;
   const graphion_runtime_value *expm1_expr;
+  const graphion_runtime_value *log1p_int;
+  const graphion_runtime_value *log1p_float;
+  const graphion_runtime_value *log1p_expr;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -918,6 +928,9 @@ int test_gion_arithmetic_expressions(void) {
   expm1_int = graphion_runtime_scope_find(&scope, "expm1_int");
   expm1_float = graphion_runtime_scope_find(&scope, "expm1_float");
   expm1_expr = graphion_runtime_scope_find(&scope, "expm1_expr");
+  log1p_int = graphion_runtime_scope_find(&scope, "log1p_int");
+  log1p_float = graphion_runtime_scope_find(&scope, "log1p_float");
+  log1p_expr = graphion_runtime_scope_find(&scope, "log1p_expr");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1406,6 +1419,20 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24368;
   }
+  if (log1p_int == NULL || log1p_int->kind != GVM_VALUE_FLOAT || log1p_int->as.float_value < 0.693147180 ||
+      log1p_int->as.float_value > 0.693147181) {
+    remove(path);
+    return 24369;
+  }
+  if (log1p_float == NULL || log1p_float->kind != GVM_VALUE_FLOAT || log1p_float->as.float_value != 0.0) {
+    remove(path);
+    return 24370;
+  }
+  if (log1p_expr == NULL || log1p_expr->kind != GVM_VALUE_FLOAT || log1p_expr->as.float_value < 0.405465108 ||
+      log1p_expr->as.float_value > 0.405465109) {
+    remove(path);
+    return 24371;
+  }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
     remove(path);
@@ -1630,7 +1657,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -2011,6 +2038,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = isinf(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = isfinite(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = expm1(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = log1p(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = fract(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2044,6 +2072,8 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = atanh(1)\n", GINT_ERR_RUN, "atanh requires input in (-1, 1)"},
       {"value = atanh(-1)\n", GINT_ERR_RUN, "atanh requires input in (-1, 1)"},
       {"value = atanh(2)\n", GINT_ERR_RUN, "atanh requires input in (-1, 1)"},
+      {"value = log1p(-1)\n", GINT_ERR_RUN, "log1p requires input > -1"},
+      {"value = log1p(-2)\n", GINT_ERR_RUN, "log1p requires input > -1"},
       {"value = (-1)!\n", GINT_ERR_RUN, "factorial requires non-negative integer input"},
       {"value = 1.5!\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = len(1)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2150,6 +2180,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = isfinite(1 + 2\n", GINT_ERR_PARSE, "expected ')' after isfinite argument"},
       {"value = expm1()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = expm1(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expm1 argument"},
+      {"value = log1p()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = log1p(1 + 2\n", GINT_ERR_PARSE, "expected ')' after log1p argument"},
       {"value = fract()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = fract(1 + 2\n", GINT_ERR_PARSE, "expected ')' after fract argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},

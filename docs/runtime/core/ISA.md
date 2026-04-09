@@ -90,6 +90,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ISINF`
 - `GVM_OP_ISFINITE`
 - `GVM_OP_EXPM1`
+- `GVM_OP_LOG1P`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -138,6 +139,7 @@ These back the current `.gion` scalar language features:
 - `isinf(x)`
 - `isfinite(x)`
 - `expm1(x)`
+- `log1p(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
@@ -191,6 +193,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_ACOS_DOMAIN`
 - `GVM_ERR_ACOSH_DOMAIN`
 - `GVM_ERR_ATANH_DOMAIN`
+- `GVM_ERR_LOG1P_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

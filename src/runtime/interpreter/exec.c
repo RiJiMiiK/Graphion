@@ -58,6 +58,9 @@ static int execute_condition_program(const graphion_runtime_program *program,
     if (rc == GVM_ERR_ATANH_DOMAIN) {
       return fail(diagnostic, line, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
     }
+    if (rc == GVM_ERR_LOG1P_DOMAIN) {
+      return fail(diagnostic, line, 1U, "log1p requires input > -1", GINT_ERR_RUN);
+    }
     if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
       return fail(diagnostic, line, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
     }
@@ -778,6 +781,9 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     }
     if (rc == GVM_ERR_ATANH_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_LOG1P_DOMAIN) {
+      return fail(diagnostic, 1U, 1U, "log1p requires input > -1", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);

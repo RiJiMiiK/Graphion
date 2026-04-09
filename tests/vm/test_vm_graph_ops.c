@@ -259,7 +259,7 @@ int test_vm_deterministic_mode_unknown_opcode(void) {
   graphion_vm vm;
   const graphion_insn program[] = {
       {GVM_OP_MOV_IMM, 0, 0, 7},
-      {99, 0, 0, 0},
+      {255, 0, 0, 0},
   };
   int rc;
 
@@ -950,4 +950,3 @@ int test_vm_dispatch_variant_edge_semantics(void) {
 
   return 0;
 }
-

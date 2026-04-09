@@ -201,7 +201,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `isfinite(x)`
 - [x] builtin `fract(x)`
 - [x] builtin `expm1(x)`
-- [ ] builtin `log1p(x)`
+- [x] builtin `log1p(x)`
 - [ ] builtin `erf(x)`
 - [ ] builtin `erfc(x)`
 - [ ] builtin `copysign(x, y)`

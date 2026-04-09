@@ -43,6 +43,7 @@ Unless a builtin says otherwise:
 | `atanh(x)` | inverse hyperbolic tangent | `float` | requires `x in (-1, 1)` |
 | `exp(x)` | `e ** x` | `float` | |
 | `expm1(x)` | `e ** x - 1` | `float` | useful for small values near zero |
+| `log1p(x)` | `ln(1 + x)` | `float` | useful for small values near zero, requires `x > -1` |
 | `ln(x)` | natural logarithm | `float` | requires `x > 0` |
 | `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
 | `log10(x)` | base-10 logarithm | `float` | lowered to `log(x, 10)` |
@@ -234,6 +235,28 @@ Expected output:
 ```text
 1.71828
 0
+```
+
+### `log1p(x)`
+
+Returns `ln(1 + x)`.
+
+```gion
+print(log1p(1))
+print(log1p(0.0))
+```
+
+Expected output:
+
+```text
+0.693147
+0
+```
+
+`log1p(x)` has one domain restriction:
+
+```text
+log1p requires input > -1
 ```
 
 ## Logarithms

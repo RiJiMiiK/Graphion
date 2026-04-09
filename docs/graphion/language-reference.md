@@ -96,6 +96,7 @@ These names are currently reserved and cannot be assigned:
 - `isinf`
 - `isfinite`
 - `expm1`
+- `log1p`
 - `fract`
 - `exp`
 - `ln`
@@ -613,6 +614,7 @@ Current builtin functions:
 - `isinf(x)`
 - `isfinite(x)`
 - `expm1(x)`
+- `log1p(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

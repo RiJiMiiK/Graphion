@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -119,6 +119,9 @@ exp_expression = exp(1 + 1)
 expm1_count = expm1(1)
 expm1_zero = expm1(0.0)
 expm1_expression = expm1(1 + 1)
+log1p_count = log1p(1)
+log1p_zero = log1p(0.0)
+log1p_expression = log1p(2 - 1.5)
 ln_one = ln(1)
 ln_e = ln(e)
 ln_expression = ln(e ** 2)
@@ -269,6 +272,9 @@ print("exp of an expression -> exp_expression=" + exp_expression)
 print("expm1 of an integer -> expm1_count=" + expm1_count)
 print("expm1 of zero -> expm1_zero=" + expm1_zero)
 print("expm1 of an expression -> expm1_expression=" + expm1_expression)
+print("log1p of an integer -> log1p_count=" + log1p_count)
+print("log1p of zero -> log1p_zero=" + log1p_zero)
+print("log1p of an expression -> log1p_expression=" + log1p_expression)
 print("ln of one -> ln_one=" + ln_one)
 print("ln of e -> ln_e=" + ln_e)
 print("ln of an expression -> ln_expression=" + ln_expression)
