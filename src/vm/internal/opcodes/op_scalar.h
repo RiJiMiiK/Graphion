@@ -73,5 +73,6 @@ int op_isinf_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_isfinite_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_expm1_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_log1p_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_erf_builtin(graphion_vm *vm, const graphion_insn *in);
 
 #endif

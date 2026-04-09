@@ -44,6 +44,7 @@ Unless a builtin says otherwise:
 | `exp(x)` | `e ** x` | `float` | |
 | `expm1(x)` | `e ** x - 1` | `float` | useful for small values near zero |
 | `log1p(x)` | `ln(1 + x)` | `float` | useful for small values near zero, requires `x > -1` |
+| `erf(x)` | error function | `float` | often used with Gaussian-style formulas |
 | `ln(x)` | natural logarithm | `float` | requires `x > 0` |
 | `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
 | `log10(x)` | base-10 logarithm | `float` | lowered to `log(x, 10)` |
@@ -257,6 +258,22 @@ Expected output:
 
 ```text
 log1p requires input > -1
+```
+
+### `erf(x)`
+
+Returns the error function of `x`.
+
+```gion
+print(erf(0))
+print(erf(1))
+```
+
+Expected output:
+
+```text
+0
+0.842701
 ```
 
 ## Logarithms

@@ -245,6 +245,7 @@ int test_gion_reserved_name_errors(void) {
       {"isfinite = 1\n", "reserved name cannot be assigned", "gion_reserved_isfinite.gion"},
       {"expm1 = 1\n", "reserved name cannot be assigned", "gion_reserved_expm1.gion"},
       {"log1p = 1\n", "reserved name cannot be assigned", "gion_reserved_log1p.gion"},
+      {"erf = 1\n", "reserved name cannot be assigned", "gion_reserved_erf.gion"},
       {"fract = 1\n", "reserved name cannot be assigned", "gion_reserved_fract.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
       {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
@@ -450,6 +451,9 @@ int test_gion_arithmetic_expressions(void) {
       "log1p_int = log1p(1)\n"
       "log1p_float = log1p(0.0)\n"
       "log1p_expr = log1p(2 - 1.5)\n"
+      "erf_zero = erf(0)\n"
+      "erf_one = erf(1)\n"
+      "erf_negative_one = erf(-1)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -604,6 +608,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(log1p_int)\n"
       "print(log1p_float)\n"
       "print(log1p_expr)\n"
+      "print(erf_zero)\n"
+      "print(erf_one)\n"
+      "print(erf_negative_one)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -759,6 +766,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *log1p_int;
   const graphion_runtime_value *log1p_float;
   const graphion_runtime_value *log1p_expr;
+  const graphion_runtime_value *erf_zero;
+  const graphion_runtime_value *erf_one;
+  const graphion_runtime_value *erf_negative_one;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -931,6 +941,9 @@ int test_gion_arithmetic_expressions(void) {
   log1p_int = graphion_runtime_scope_find(&scope, "log1p_int");
   log1p_float = graphion_runtime_scope_find(&scope, "log1p_float");
   log1p_expr = graphion_runtime_scope_find(&scope, "log1p_expr");
+  erf_zero = graphion_runtime_scope_find(&scope, "erf_zero");
+  erf_one = graphion_runtime_scope_find(&scope, "erf_one");
+  erf_negative_one = graphion_runtime_scope_find(&scope, "erf_negative_one");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1433,6 +1446,20 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24371;
   }
+  if (erf_zero == NULL || erf_zero->kind != GVM_VALUE_FLOAT || erf_zero->as.float_value != 0.0) {
+    remove(path);
+    return 24372;
+  }
+  if (erf_one == NULL || erf_one->kind != GVM_VALUE_FLOAT || erf_one->as.float_value < 0.842700792 ||
+      erf_one->as.float_value > 0.842700793) {
+    remove(path);
+    return 24373;
+  }
+  if (erf_negative_one == NULL || erf_negative_one->kind != GVM_VALUE_FLOAT ||
+      erf_negative_one->as.float_value < -0.842700793 || erf_negative_one->as.float_value > -0.842700792) {
+    remove(path);
+    return 24374;
+  }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
     remove(path);
@@ -1657,7 +1684,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -2039,6 +2066,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = isfinite(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = expm1(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log1p(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = erf(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = fract(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2182,6 +2210,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = expm1(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expm1 argument"},
       {"value = log1p()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = log1p(1 + 2\n", GINT_ERR_PARSE, "expected ')' after log1p argument"},
+      {"value = erf()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = erf(1 + 2\n", GINT_ERR_PARSE, "expected ')' after erf argument"},
       {"value = fract()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = fract(1 + 2\n", GINT_ERR_PARSE, "expected ')' after fract argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
