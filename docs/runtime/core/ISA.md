@@ -89,6 +89,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ISNAN`
 - `GVM_OP_ISINF`
 - `GVM_OP_ISFINITE`
+- `GVM_OP_EXPM1`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -136,6 +137,7 @@ These back the current `.gion` scalar language features:
 - `isnan(x)`
 - `isinf(x)`
 - `isfinite(x)`
+- `expm1(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

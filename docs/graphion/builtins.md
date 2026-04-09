@@ -42,6 +42,7 @@ Unless a builtin says otherwise:
 | `tanh(x)` | hyperbolic tangent | `float` | |
 | `atanh(x)` | inverse hyperbolic tangent | `float` | requires `x in (-1, 1)` |
 | `exp(x)` | `e ** x` | `float` | |
+| `expm1(x)` | `e ** x - 1` | `float` | useful for small values near zero |
 | `ln(x)` | natural logarithm | `float` | requires `x > 0` |
 | `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
 | `log10(x)` | base-10 logarithm | `float` | lowered to `log(x, 10)` |
@@ -217,6 +218,22 @@ Expected output:
 ```text
 2.71828
 1
+```
+
+### `expm1(x)`
+
+Returns `e ** x - 1`.
+
+```gion
+print(expm1(1))
+print(expm1(0.0))
+```
+
+Expected output:
+
+```text
+1.71828
+0
 ```
 
 ## Logarithms

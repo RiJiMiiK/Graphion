@@ -1419,6 +1419,44 @@ int test_vm_fract_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_expm1_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 1;
+    insn.op = GVM_OP_EXPM1;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_expm1_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 1.718281828 ||
+        vm.regs[0].as.float_value > 1.718281829) {
+        return 18151;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.0;
+    rc = op_expm1_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 0.0) {
+        return 18152;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 2;
+    rc = op_expm1_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 6.389056098 ||
+        vm.regs[0].as.float_value > 6.389056100) {
+        return 18153;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

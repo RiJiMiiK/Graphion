@@ -179,6 +179,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ISFINITE:
         rc = op_isfinite_builtin(vm, &in);
         break;
+      case GVM_OP_EXPM1:
+        rc = op_expm1_builtin(vm, &in);
+        break;
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;
@@ -372,6 +375,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_ATAN] = op_atan_builtin,
       [GVM_OP_ATAN2] = op_atan2_builtin,
       [GVM_OP_HYPOT] = op_hypot_builtin,
+      [GVM_OP_EXPM1] = op_expm1_builtin,
       [GVM_OP_EXP] = op_exp,
       [GVM_OP_LN] = op_ln,
       [GVM_OP_LOG] = op_log,
@@ -490,6 +494,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_ATAN] = &&L_atan_builtin,
       [GVM_OP_ATAN2] = &&L_atan2_builtin,
       [GVM_OP_HYPOT] = &&L_hypot_builtin,
+      [GVM_OP_EXPM1] = &&L_expm1_builtin,
       [GVM_OP_EXP] = &&L_exp,
       [GVM_OP_LN] = &&L_ln,
       [GVM_OP_LOG] = &&L_log,
@@ -844,6 +849,12 @@ L_clamp:
     continue;
   L_exp:
     rc = op_exp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_expm1_builtin:
+    rc = op_expm1_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }
