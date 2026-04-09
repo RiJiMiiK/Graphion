@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <math.h>
+
 #include "test_vm_helpers.h"
 
 int test_vm_numeric_arithmetic_opcodes(void) {
@@ -1258,6 +1260,42 @@ int test_vm_radians_builtin_opcode(void) {
     if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.7853981643974483 ||
         vm.regs[0].as.float_value > -0.7853981623974483) {
         return 18137;
+    }
+
+    return 0;
+}
+
+int test_vm_isnan_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = NAN;
+    insn.op = GVM_OP_ISNAN;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_isnan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 1) {
+        return 18138;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    rc = op_isnan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 0) {
+        return 18139;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 7;
+    rc = op_isnan_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 0) {
+        return 18140;
     }
 
     return 0;

@@ -240,6 +240,7 @@ int test_gion_reserved_name_errors(void) {
       {"hypot = 1\n", "reserved name cannot be assigned", "gion_reserved_hypot.gion"},
       {"degrees = 1\n", "reserved name cannot be assigned", "gion_reserved_degrees.gion"},
       {"radians = 1\n", "reserved name cannot be assigned", "gion_reserved_radians.gion"},
+      {"isnan = 1\n", "reserved name cannot be assigned", "gion_reserved_isnan.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
       {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
       {"log = 1\n", "reserved name cannot be assigned", "gion_reserved_log.gion"},
@@ -428,6 +429,9 @@ int test_gion_arithmetic_expressions(void) {
       "radians_zero = radians(0)\n"
       "radians_straight = radians(180)\n"
       "radians_negative_quarter = radians(-45)\n"
+      "isnan_nan = isnan(nan)\n"
+      "isnan_one = isnan(1.0)\n"
+      "isnan_count = isnan(7)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -563,6 +567,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(radians_zero)\n"
       "print(radians_straight)\n"
       "print(radians_negative_quarter)\n"
+      "print(isnan_nan)\n"
+      "print(isnan_one)\n"
+      "print(isnan_count)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -699,6 +706,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *radians_zero;
   const graphion_runtime_value *radians_straight;
   const graphion_runtime_value *radians_negative_quarter;
+  const graphion_runtime_value *isnan_nan;
+  const graphion_runtime_value *isnan_one;
+  const graphion_runtime_value *isnan_count;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -852,6 +862,9 @@ int test_gion_arithmetic_expressions(void) {
   radians_zero = graphion_runtime_scope_find(&scope, "radians_zero");
   radians_straight = graphion_runtime_scope_find(&scope, "radians_straight");
   radians_negative_quarter = graphion_runtime_scope_find(&scope, "radians_negative_quarter");
+  isnan_nan = graphion_runtime_scope_find(&scope, "isnan_nan");
+  isnan_one = graphion_runtime_scope_find(&scope, "isnan_one");
+  isnan_count = graphion_runtime_scope_find(&scope, "isnan_count");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1283,6 +1296,18 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24355;
   }
+  if (isnan_nan == NULL || isnan_nan->kind != GVM_VALUE_BOOL || isnan_nan->as.bool_value != 1) {
+    remove(path);
+    return 24356;
+  }
+  if (isnan_one == NULL || isnan_one->kind != GVM_VALUE_BOOL || isnan_one->as.bool_value != 0) {
+    remove(path);
+    return 24357;
+  }
+  if (isnan_count == NULL || isnan_count->kind != GVM_VALUE_BOOL || isnan_count->as.bool_value != 0) {
+    remove(path);
+    return 24358;
+  }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
     remove(path);
@@ -1493,7 +1518,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -1870,6 +1895,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = hypot(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = degrees(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = radians(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = isnan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log(\"x\", 2)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2000,6 +2026,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = degrees(1 + 2\n", GINT_ERR_PARSE, "expected ')' after degrees argument"},
       {"value = radians()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = radians(1 + 2\n", GINT_ERR_PARSE, "expected ')' after radians argument"},
+      {"value = isnan()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = isnan(1 + 2\n", GINT_ERR_PARSE, "expected ')' after isnan argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = exp(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp argument"},
       {"value = ln()\n", GINT_ERR_PARSE, "expected scalar literal"},

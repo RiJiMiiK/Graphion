@@ -92,6 +92,7 @@ These names are currently reserved and cannot be assigned:
 - `hypot`
 - `degrees`
 - `radians`
+- `isnan`
 - `exp`
 - `ln`
 - `log`
@@ -604,6 +605,7 @@ Current builtin functions:
 - `hypot(x, y)`
 - `degrees(x)`
 - `radians(x)`
+- `isnan(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

@@ -196,7 +196,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] constant `inf`
 - [x] builtin `degrees(x)`
 - [x] builtin `radians(x)`
-- [ ] builtin `isnan(x)`
+- [x] builtin `isnan(x)`
 - [ ] builtin `isinf(x)`
 - [ ] builtin `isfinite(x)`
 - [ ] builtin `fract(x)`

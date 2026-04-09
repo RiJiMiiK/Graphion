@@ -32,6 +32,7 @@ Unless a builtin says otherwise:
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
+| `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
 | `sinh(x)` | hyperbolic sine | `float` | |
 | `asinh(x)` | inverse hyperbolic sine | `float` | |
 | `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
@@ -411,6 +412,24 @@ Expected output:
 0
 3.14159
 -0.785398
+```
+
+### `isnan(x)`
+
+Tests whether a numeric value is `nan`.
+
+```gion
+print(isnan(nan))
+print(isnan(1.0))
+print(isnan(7))
+```
+
+Expected output:
+
+```text
+true
+false
+false
 ```
 
 ## Hyperbolic Functions
