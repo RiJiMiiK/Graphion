@@ -98,6 +98,7 @@ These names are currently reserved and cannot be assigned:
 - `expm1`
 - `log1p`
 - `erf`
+- `erfc`
 - `fract`
 - `exp`
 - `ln`
@@ -617,6 +618,7 @@ Current builtin functions:
 - `expm1(x)`
 - `log1p(x)`
 - `erf(x)`
+- `erfc(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

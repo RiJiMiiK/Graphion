@@ -92,6 +92,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_EXPM1`
 - `GVM_OP_LOG1P`
 - `GVM_OP_ERF`
+- `GVM_OP_ERFC`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -142,6 +143,7 @@ These back the current `.gion` scalar language features:
 - `expm1(x)`
 - `log1p(x)`
 - `erf(x)`
+- `erfc(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

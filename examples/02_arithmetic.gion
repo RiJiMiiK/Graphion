@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -125,6 +125,9 @@ log1p_expression = log1p(2 - 1.5)
 erf_zero = erf(0)
 erf_one = erf(1)
 erf_negative_one = erf(-1)
+erfc_zero = erfc(0)
+erfc_one = erfc(1)
+erfc_negative_one = erfc(-1)
 ln_one = ln(1)
 ln_e = ln(e)
 ln_expression = ln(e ** 2)
@@ -281,6 +284,9 @@ print("log1p of an expression -> log1p_expression=" + log1p_expression)
 print("erf at zero -> erf_zero=" + erf_zero)
 print("erf at one -> erf_one=" + erf_one)
 print("erf at minus one -> erf_negative_one=" + erf_negative_one)
+print("erfc at zero -> erfc_zero=" + erfc_zero)
+print("erfc at one -> erfc_one=" + erfc_one)
+print("erfc at minus one -> erfc_negative_one=" + erfc_negative_one)
 print("ln of one -> ln_one=" + ln_one)
 print("ln of e -> ln_e=" + ln_e)
 print("ln of an expression -> ln_expression=" + ln_expression)

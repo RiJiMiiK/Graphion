@@ -1532,6 +1532,44 @@ int test_vm_erf_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_erfc_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 0;
+    insn.op = GVM_OP_ERFC;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_erfc_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 1.0) {
+        return 18160;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 1;
+    rc = op_erfc_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 0.157299207 ||
+        vm.regs[0].as.float_value > 0.157299208) {
+        return 18161;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = -1;
+    rc = op_erfc_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 1.842700792 ||
+        vm.regs[0].as.float_value > 1.842700793) {
+        return 18162;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

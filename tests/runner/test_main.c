@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
         {"vm_expm1_builtin_opcode", test_vm_expm1_builtin_opcode},
         {"vm_log1p_builtin_opcode", test_vm_log1p_builtin_opcode},
         {"vm_erf_builtin_opcode", test_vm_erf_builtin_opcode},
+        {"vm_erfc_builtin_opcode", test_vm_erfc_builtin_opcode},
         {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_ln_opcode", test_vm_ln_opcode},
       {"vm_log_opcode", test_vm_log_opcode},
