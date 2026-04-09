@@ -164,6 +164,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_HYPOT:
         rc = op_hypot_builtin(vm, &in);
         break;
+      case GVM_OP_DEGREES:
+        rc = op_degrees_builtin(vm, &in);
+        break;
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;

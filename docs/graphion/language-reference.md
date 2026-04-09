@@ -90,6 +90,7 @@ These names are currently reserved and cannot be assigned:
 - `atan`
 - `atan2`
 - `hypot`
+- `degrees`
 - `exp`
 - `ln`
 - `log`
@@ -600,6 +601,7 @@ Current builtin functions:
 - `atan(x)`
 - `atan2(y, x)`
 - `hypot(x, y)`
+- `degrees(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

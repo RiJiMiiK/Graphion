@@ -238,6 +238,7 @@ int test_gion_reserved_name_errors(void) {
       {"atan = 1\n", "reserved name cannot be assigned", "gion_reserved_atan.gion"},
       {"atan2 = 1\n", "reserved name cannot be assigned", "gion_reserved_atan2.gion"},
       {"hypot = 1\n", "reserved name cannot be assigned", "gion_reserved_hypot.gion"},
+      {"degrees = 1\n", "reserved name cannot be assigned", "gion_reserved_degrees.gion"},
       {"exp = 1\n", "reserved name cannot be assigned", "gion_reserved_exp.gion"},
       {"ln = 1\n", "reserved name cannot be assigned", "gion_reserved_ln.gion"},
       {"log = 1\n", "reserved name cannot be assigned", "gion_reserved_log.gion"},
@@ -420,6 +421,9 @@ int test_gion_arithmetic_expressions(void) {
       "hypot_diag = hypot(3, 4)\n"
       "hypot_large = hypot(5, 12)\n"
       "hypot_negative = hypot(-3, 4)\n"
+      "degrees_zero = degrees(0)\n"
+      "degrees_right_angle = degrees(pi / 2)\n"
+      "degrees_negative_quarter = degrees(-0.7853981633974483)\n"
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -549,6 +553,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(hypot_diag)\n"
       "print(hypot_large)\n"
       "print(hypot_negative)\n"
+      "print(degrees_zero)\n"
+      "print(degrees_right_angle)\n"
+      "print(degrees_negative_quarter)\n"
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -679,6 +686,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *hypot_diag;
   const graphion_runtime_value *hypot_large;
   const graphion_runtime_value *hypot_negative;
+  const graphion_runtime_value *degrees_zero;
+  const graphion_runtime_value *degrees_right_angle;
+  const graphion_runtime_value *degrees_negative_quarter;
   const graphion_runtime_value *exp_int;
   const graphion_runtime_value *exp_float;
   const graphion_runtime_value *exp_expr;
@@ -826,6 +836,9 @@ int test_gion_arithmetic_expressions(void) {
   hypot_diag = graphion_runtime_scope_find(&scope, "hypot_diag");
   hypot_large = graphion_runtime_scope_find(&scope, "hypot_large");
   hypot_negative = graphion_runtime_scope_find(&scope, "hypot_negative");
+  degrees_zero = graphion_runtime_scope_find(&scope, "degrees_zero");
+  degrees_right_angle = graphion_runtime_scope_find(&scope, "degrees_right_angle");
+  degrees_negative_quarter = graphion_runtime_scope_find(&scope, "degrees_negative_quarter");
   exp_int = graphion_runtime_scope_find(&scope, "exp_int");
   exp_float = graphion_runtime_scope_find(&scope, "exp_float");
   exp_expr = graphion_runtime_scope_find(&scope, "exp_expr");
@@ -1224,6 +1237,22 @@ int test_gion_arithmetic_expressions(void) {
       hypot_negative->as.float_value < 4.999999999 || hypot_negative->as.float_value > 5.000000001) {
     remove(path);
     return 24349;
+  }
+  if (degrees_zero == NULL || degrees_zero->kind != GVM_VALUE_FLOAT || degrees_zero->as.float_value < -0.000000001 ||
+      degrees_zero->as.float_value > 0.000000001) {
+    remove(path);
+    return 24350;
+  }
+  if (degrees_right_angle == NULL || degrees_right_angle->kind != GVM_VALUE_FLOAT ||
+      degrees_right_angle->as.float_value < 89.999999999 || degrees_right_angle->as.float_value > 90.000000001) {
+    remove(path);
+    return 24351;
+  }
+  if (degrees_negative_quarter == NULL || degrees_negative_quarter->kind != GVM_VALUE_FLOAT ||
+      degrees_negative_quarter->as.float_value < -45.000000001 ||
+      degrees_negative_quarter->as.float_value > -44.999999999) {
+    remove(path);
+    return 24352;
   }
   if (exp_int == NULL || exp_int->kind != GVM_VALUE_FLOAT || exp_int->as.float_value < 2.718281828 ||
       exp_int->as.float_value > 2.718281829) {
@@ -1810,6 +1839,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = atan2(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = hypot(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = hypot(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = degrees(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = exp(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = ln(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log(\"x\", 2)\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -1936,6 +1966,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = hypot(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = hypot(1, 1\n", GINT_ERR_PARSE, "expected ')' after hypot arguments"},
       {"value = hypot(1 1)\n", GINT_ERR_PARSE, "expected ',' between hypot arguments"},
+      {"value = degrees()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = degrees(1 + 2\n", GINT_ERR_PARSE, "expected ')' after degrees argument"},
       {"value = exp()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = exp(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp argument"},
       {"value = ln()\n", GINT_ERR_PARSE, "expected scalar literal"},

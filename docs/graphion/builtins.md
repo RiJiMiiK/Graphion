@@ -30,6 +30,7 @@ Unless a builtin says otherwise:
 | `atan(x)` | arctangent in radians | `float` | |
 | `atan2(y, x)` | angle of vector `(x, y)` | `float` | two numeric inputs |
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
+| `degrees(x)` | convert radians to degrees | `float` | |
 | `sinh(x)` | hyperbolic sine | `float` | |
 | `asinh(x)` | inverse hyperbolic sine | `float` | |
 | `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
@@ -373,6 +374,24 @@ Expected output:
 
 ```text
 5
+```
+
+### `degrees(x)`
+
+Converts an angle from radians to degrees.
+
+```gion
+print(degrees(0))
+print(degrees(pi / 2))
+print(degrees(-0.7853981633974483))
+```
+
+Expected output:
+
+```text
+0
+90
+-45
 ```
 
 ## Hyperbolic Functions
