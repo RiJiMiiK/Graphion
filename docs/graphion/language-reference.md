@@ -95,6 +95,7 @@ These names are currently reserved and cannot be assigned:
 - `isnan`
 - `isinf`
 - `isfinite`
+- `fract`
 - `exp`
 - `ln`
 - `log`
@@ -619,6 +620,7 @@ Current builtin functions:
 - `ceil(x)`
 - `round(x)`
 - `trunc(x)`
+- `fract(x)`
 - `sign(x)`
 - `len(x)`
 

@@ -50,6 +50,7 @@ Unless a builtin says otherwise:
 | `ceil(x)` | round up | same numeric family | `int -> int`, `float -> float` |
 | `round(x)` | nearest integer value | same numeric family | `.5` rounds away from zero |
 | `trunc(x)` | drop fractional part | same numeric family | toward zero |
+| `fract(x)` | fractional part | `float` | defined as `x - floor(x)` |
 | `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
 | `len(x)` | string length | `int` | strings only |
 
@@ -577,6 +578,28 @@ Expected output:
 ```text
 7
 -3
+```
+
+### `fract(x)`
+
+Returns the fractional part of a numeric value.
+
+Rule:
+
+- `fract(x) = x - floor(x)`
+
+```gion
+print(fract(7))
+print(fract(7.25))
+print(fract(-3.75))
+```
+
+Expected output:
+
+```text
+0
+0.25
+0.25
 ```
 
 ### `sign(x)`

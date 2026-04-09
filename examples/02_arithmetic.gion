@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -143,6 +143,9 @@ trunc_count = trunc(7)
 trunc_ratio = trunc(7.9)
 trunc_negative = trunc(-3.9)
 trunc_small_negative = trunc(-0.4)
+fract_count = fract(7)
+fract_ratio = fract(7.25)
+fract_negative = fract(-3.75)
 sign_positive = sign(7)
 sign_negative = sign(-3.9)
 sign_zero = sign(0)
@@ -287,6 +290,9 @@ print("trunc of an integer -> trunc_count=" + trunc_count)
 print("trunc of a float -> trunc_ratio=" + trunc_ratio)
 print("trunc of a negative float -> trunc_negative=" + trunc_negative)
 print("trunc of a small negative float -> trunc_small_negative=" + trunc_small_negative)
+print("fract of an integer -> fract_count=" + fract_count)
+print("fract of a float -> fract_ratio=" + fract_ratio)
+print("fract of a negative float -> fract_negative=" + fract_negative)
 print("sign of a positive number -> sign_positive=" + sign_positive)
 print("sign of a negative number -> sign_negative=" + sign_negative)
 print("sign of zero -> sign_zero=" + sign_zero)

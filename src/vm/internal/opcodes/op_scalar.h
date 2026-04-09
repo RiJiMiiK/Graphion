@@ -62,6 +62,7 @@ int op_floor_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_ceil_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_round_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_trunc_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_fract_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_sign_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_len(graphion_vm *vm, const graphion_insn *in);
 int op_factorial(graphion_vm *vm, const graphion_insn *in);

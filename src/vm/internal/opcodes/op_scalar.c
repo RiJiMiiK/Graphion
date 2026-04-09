@@ -1242,6 +1242,28 @@ int op_trunc_builtin(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_fract_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  double value_f;
+  double fraction;
+  int is_float;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  fraction = value_f - floor(value_f);
+  if (fraction == 0.0) {
+    fraction = 0.0;
+  }
+  vm_value_set_float(&vm->regs[in->a], fraction);
+  return GVM_OK;
+}
+
 int op_sign_builtin(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;
   double value_f;
