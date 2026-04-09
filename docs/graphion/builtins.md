@@ -33,6 +33,7 @@ Unless a builtin says otherwise:
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
+| `isinf(x)` | test whether a numeric value is infinite | `bool` | non-float numerics return `false` |
 | `sinh(x)` | hyperbolic sine | `float` | |
 | `asinh(x)` | inverse hyperbolic sine | `float` | |
 | `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
@@ -422,6 +423,24 @@ Tests whether a numeric value is `nan`.
 print(isnan(nan))
 print(isnan(1.0))
 print(isnan(7))
+```
+
+Expected output:
+
+```text
+true
+false
+false
+```
+
+### `isinf(x)`
+
+Tests whether a numeric value is `inf`.
+
+```gion
+print(isinf(inf))
+print(isinf(1.0))
+print(isinf(7))
 ```
 
 Expected output:

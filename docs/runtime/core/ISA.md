@@ -87,6 +87,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_DEGREES`
 - `GVM_OP_RADIANS`
 - `GVM_OP_ISNAN`
+- `GVM_OP_ISINF`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -131,6 +132,7 @@ These back the current `.gion` scalar language features:
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`
+- `isinf(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

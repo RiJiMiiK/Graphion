@@ -173,6 +173,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ISNAN:
         rc = op_isnan_builtin(vm, &in);
         break;
+      case GVM_OP_ISINF:
+        rc = op_isinf_builtin(vm, &in);
+        break;
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;

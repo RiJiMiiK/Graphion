@@ -93,6 +93,7 @@ These names are currently reserved and cannot be assigned:
 - `degrees`
 - `radians`
 - `isnan`
+- `isinf`
 - `exp`
 - `ln`
 - `log`
@@ -606,6 +607,7 @@ Current builtin functions:
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`
+- `isinf(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
