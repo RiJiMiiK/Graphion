@@ -252,6 +252,7 @@ int test_gion_reserved_name_errors(void) {
       {"pi = 1\n", "reserved name cannot be assigned", "gion_reserved_pi.gion"},
       {"e = 1\n", "reserved name cannot be assigned", "gion_reserved_e.gion"},
       {"nan = 1\n", "reserved name cannot be assigned", "gion_reserved_nan.gion"},
+      {"inf = 1\n", "reserved name cannot be assigned", "gion_reserved_inf.gion"},
       {"if = true\n", "reserved name cannot be assigned", "gion_reserved_if.gion"},
       {"elif = false\n", "reserved name cannot be assigned", "gion_reserved_elif.gion"},
       {"else = true\n", "reserved name cannot be assigned", "gion_reserved_else.gion"},
@@ -455,6 +456,7 @@ int test_gion_arithmetic_expressions(void) {
       "pi_value = pi\n"
       "e_value = e\n"
       "nan_value = nan\n"
+      "inf_value = inf\n"
       "factorial_zero = 0!\n"
       "factorial_int = 5!\n"
       "factorial_group = (1 + 2)!\n"
@@ -713,6 +715,7 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *pi_value;
   const graphion_runtime_value *e_value;
   const graphion_runtime_value *nan_value;
+  const graphion_runtime_value *inf_value;
   const graphion_runtime_value *factorial_zero;
   const graphion_runtime_value *factorial_int;
   const graphion_runtime_value *factorial_group;
@@ -859,6 +862,7 @@ int test_gion_arithmetic_expressions(void) {
   pi_value = graphion_runtime_scope_find(&scope, "pi_value");
   e_value = graphion_runtime_scope_find(&scope, "e_value");
   nan_value = graphion_runtime_scope_find(&scope, "nan_value");
+  inf_value = graphion_runtime_scope_find(&scope, "inf_value");
   factorial_zero = graphion_runtime_scope_find(&scope, "factorial_zero");
   factorial_int = graphion_runtime_scope_find(&scope, "factorial_int");
   factorial_group = graphion_runtime_scope_find(&scope, "factorial_group");
@@ -1379,6 +1383,11 @@ int test_gion_arithmetic_expressions(void) {
   if (nan_value == NULL || nan_value->kind != GVM_VALUE_FLOAT || !isnan(nan_value->as.float_value)) {
     remove(path);
     return 2433;
+  }
+  if (inf_value == NULL || inf_value->kind != GVM_VALUE_FLOAT || !isinf(inf_value->as.float_value) ||
+      inf_value->as.float_value <= 0.0) {
+    remove(path);
+    return 2434;
   }
   if (factorial_zero == NULL || factorial_zero->kind != GVM_VALUE_INT || factorial_zero->as.int_value != 1) {
     remove(path);

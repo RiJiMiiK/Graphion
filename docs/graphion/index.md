@@ -36,6 +36,7 @@ Implemented today:
   - `pi`
   - `e`
   - `nan`
+  - `inf`
 - arithmetic expressions
 - postfix factorial `!`
 - grouped expressions with parentheses
@@ -94,7 +95,7 @@ Use the types page when you need:
 - the current scalar value kinds
 - literal syntax
 - `bits` width basics
-- built-in constants such as `pi`, `e`, and `nan`
+- built-in constants such as `pi`, `e`, `nan`, and `inf`
 
 ## Current Limits
 

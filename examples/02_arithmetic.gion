@@ -133,6 +133,7 @@ sign_zero = sign(0)
 pi_value = pi
 e_value = e
 nan_value = nan
+inf_value = inf
 len_text = len("graphion")
 len_concat = len("graph" + "ion")
 

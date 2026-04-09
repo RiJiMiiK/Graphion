@@ -193,7 +193,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `acosh(x)`
 - [x] builtin `atanh(x)`
 - [x] constant `nan`
-- [ ] constant `inf`
+- [x] constant `inf`
 - [ ] builtin `degrees(x)`
 - [ ] builtin `radians(x)`
 - [ ] builtin `isnan(x)`
