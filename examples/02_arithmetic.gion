@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -100,6 +100,9 @@ hypot_negative = hypot(-3, 4)
 degrees_zero = degrees(0)
 degrees_right_angle = degrees(pi / 2)
 degrees_negative_quarter = degrees(-0.7853981633974483)
+radians_zero = radians(0)
+radians_straight = radians(180)
+radians_negative_quarter = radians(-45)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
@@ -231,6 +234,9 @@ print("hypot ignores sign on coordinates -> hypot_negative=" + hypot_negative)
 print("degrees at zero radians -> degrees_zero=" + degrees_zero)
 print("degrees at pi/2 radians -> degrees_right_angle=" + degrees_right_angle)
 print("degrees at negative pi/4 radians -> degrees_negative_quarter=" + degrees_negative_quarter)
+print("radians at zero degrees -> radians_zero=" + radians_zero)
+print("radians at 180 degrees -> radians_straight=" + radians_straight)
+print("radians at negative 45 degrees -> radians_negative_quarter=" + radians_negative_quarter)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)

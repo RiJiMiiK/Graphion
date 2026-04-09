@@ -1224,6 +1224,45 @@ int test_vm_degrees_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_radians_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.0;
+    insn.op = GVM_OP_RADIANS;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_radians_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.000000001 ||
+        vm.regs[0].as.float_value > 0.000000001) {
+        return 18135;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 180.0;
+    rc = op_radians_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 3.141592652589793 ||
+        vm.regs[0].as.float_value > 3.141592654589793) {
+        return 18136;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = -45.0;
+    rc = op_radians_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < -0.7853981643974483 ||
+        vm.regs[0].as.float_value > -0.7853981623974483) {
+        return 18137;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

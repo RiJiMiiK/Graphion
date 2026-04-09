@@ -82,6 +82,7 @@ int main(int argc, char **argv) {
         {"vm_atan2_builtin_opcode", test_vm_atan2_builtin_opcode},
         {"vm_hypot_builtin_opcode", test_vm_hypot_builtin_opcode},
         {"vm_degrees_builtin_opcode", test_vm_degrees_builtin_opcode},
+        {"vm_radians_builtin_opcode", test_vm_radians_builtin_opcode},
         {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_ln_opcode", test_vm_ln_opcode},
       {"vm_log_opcode", test_vm_log_opcode},

@@ -66,5 +66,6 @@ int op_sign_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_len(graphion_vm *vm, const graphion_insn *in);
 int op_factorial(graphion_vm *vm, const graphion_insn *in);
 int op_degrees_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_radians_builtin(graphion_vm *vm, const graphion_insn *in);
 
 #endif
