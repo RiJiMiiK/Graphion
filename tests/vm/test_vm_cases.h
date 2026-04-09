@@ -39,6 +39,7 @@ int test_vm_degrees_builtin_opcode(void);
 int test_vm_radians_builtin_opcode(void);
 int test_vm_isnan_builtin_opcode(void);
 int test_vm_isinf_builtin_opcode(void);
+int test_vm_isfinite_builtin_opcode(void);
 int test_vm_exp_opcode(void);
 int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);

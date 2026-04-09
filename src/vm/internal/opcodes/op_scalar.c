@@ -1077,6 +1077,21 @@ int op_isinf_builtin(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_isfinite_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  double value_f;
+  int is_float;
+  int is_finite;
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  is_finite = is_float == 0 || (!isnan(value_f) && !isinf(value_f));
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], is_finite);
+  return GVM_OK;
+}
+
 int op_exp(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;
   double value_f;

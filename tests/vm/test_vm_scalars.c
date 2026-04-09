@@ -1337,6 +1337,50 @@ int test_vm_isinf_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_isfinite_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = INFINITY;
+    insn.op = GVM_OP_ISFINITE;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_isfinite_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 0) {
+        return 18144;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = NAN;
+    rc = op_isfinite_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 0) {
+        return 18145;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 1.0;
+    rc = op_isfinite_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 1) {
+        return 18146;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 7;
+    rc = op_isfinite_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 1) {
+        return 18147;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

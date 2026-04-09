@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -109,6 +109,10 @@ isnan_count = isnan(7)
 isinf_inf = isinf(inf)
 isinf_one = isinf(1.0)
 isinf_count = isinf(7)
+isfinite_inf = isfinite(inf)
+isfinite_nan = isfinite(nan)
+isfinite_one = isfinite(1.0)
+isfinite_count = isfinite(7)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
@@ -249,6 +253,10 @@ print("isnan on an int -> isnan_count=" + isnan_count)
 print("isinf on inf -> isinf_inf=" + isinf_inf)
 print("isinf on a float -> isinf_one=" + isinf_one)
 print("isinf on an int -> isinf_count=" + isinf_count)
+print("isfinite on inf -> isfinite_inf=" + isfinite_inf)
+print("isfinite on nan -> isfinite_nan=" + isfinite_nan)
+print("isfinite on a float -> isfinite_one=" + isfinite_one)
+print("isfinite on an int -> isfinite_count=" + isfinite_count)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)

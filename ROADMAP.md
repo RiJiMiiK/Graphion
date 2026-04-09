@@ -198,7 +198,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `radians(x)`
 - [x] builtin `isnan(x)`
 - [x] builtin `isinf(x)`
-- [ ] builtin `isfinite(x)`
+- [x] builtin `isfinite(x)`
 - [ ] builtin `fract(x)`
 - [ ] builtin `expm1(x)`
 - [ ] builtin `log1p(x)`

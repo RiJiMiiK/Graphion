@@ -34,6 +34,7 @@ Unless a builtin says otherwise:
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
 | `isinf(x)` | test whether a numeric value is infinite | `bool` | non-float numerics return `false` |
+| `isfinite(x)` | test whether a numeric value is finite | `bool` | ints and finite floats return `true` |
 | `sinh(x)` | hyperbolic sine | `float` | |
 | `asinh(x)` | inverse hyperbolic sine | `float` | |
 | `acosh(x)` | inverse hyperbolic cosine | `float` | requires `x >= 1` |
@@ -449,6 +450,26 @@ Expected output:
 true
 false
 false
+```
+
+### `isfinite(x)`
+
+Tests whether a numeric value is finite.
+
+```gion
+print(isfinite(inf))
+print(isfinite(nan))
+print(isfinite(1.0))
+print(isfinite(7))
+```
+
+Expected output:
+
+```text
+false
+false
+true
+true
 ```
 
 ## Hyperbolic Functions

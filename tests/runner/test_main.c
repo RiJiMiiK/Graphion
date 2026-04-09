@@ -85,6 +85,7 @@ int main(int argc, char **argv) {
         {"vm_radians_builtin_opcode", test_vm_radians_builtin_opcode},
         {"vm_isnan_builtin_opcode", test_vm_isnan_builtin_opcode},
         {"vm_isinf_builtin_opcode", test_vm_isinf_builtin_opcode},
+        {"vm_isfinite_builtin_opcode", test_vm_isfinite_builtin_opcode},
         {"vm_exp_opcode", test_vm_exp_opcode},
       {"vm_ln_opcode", test_vm_ln_opcode},
       {"vm_log_opcode", test_vm_log_opcode},

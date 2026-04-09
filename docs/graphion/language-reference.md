@@ -94,6 +94,7 @@ These names are currently reserved and cannot be assigned:
 - `radians`
 - `isnan`
 - `isinf`
+- `isfinite`
 - `exp`
 - `ln`
 - `log`
@@ -608,6 +609,7 @@ Current builtin functions:
 - `radians(x)`
 - `isnan(x)`
 - `isinf(x)`
+- `isfinite(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`

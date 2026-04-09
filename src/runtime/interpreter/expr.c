@@ -1234,6 +1234,35 @@ static int parse_factor(const char **cursor,
     lhs.reg_index = target_reg;
     lhs.const_index = 0U;
     lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "isfinite", 8U) == 0 && !is_ident_char((*cursor)[8])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 8;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after isfinite", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after isfinite argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_ISFINITE, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
   } else if (**cursor == '(') {
     (*cursor)++;
     rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
