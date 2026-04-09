@@ -238,6 +238,7 @@ int test_gion_reserved_name_errors(void) {
       {"atan = 1\n", "reserved name cannot be assigned", "gion_reserved_atan.gion"},
       {"atan2 = 1\n", "reserved name cannot be assigned", "gion_reserved_atan2.gion"},
       {"hypot = 1\n", "reserved name cannot be assigned", "gion_reserved_hypot.gion"},
+      {"copysign = 1\n", "reserved name cannot be assigned", "gion_reserved_copysign.gion"},
       {"degrees = 1\n", "reserved name cannot be assigned", "gion_reserved_degrees.gion"},
       {"radians = 1\n", "reserved name cannot be assigned", "gion_reserved_radians.gion"},
       {"isnan = 1\n", "reserved name cannot be assigned", "gion_reserved_isnan.gion"},
@@ -430,6 +431,9 @@ int test_gion_arithmetic_expressions(void) {
       "hypot_diag = hypot(3, 4)\n"
       "hypot_large = hypot(5, 12)\n"
       "hypot_negative = hypot(-3, 4)\n"
+      "copysign_negative = copysign(3, -2)\n"
+      "copysign_positive = copysign(-3.5, 2)\n"
+      "copysign_same_negative = copysign(-3, -2)\n"
       "degrees_zero = degrees(0)\n"
       "degrees_right_angle = degrees(pi / 2)\n"
       "degrees_negative_quarter = degrees(-0.7853981633974483)\n"
@@ -590,6 +594,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(hypot_diag)\n"
       "print(hypot_large)\n"
       "print(hypot_negative)\n"
+      "print(copysign_negative)\n"
+      "print(copysign_positive)\n"
+      "print(copysign_same_negative)\n"
       "print(degrees_zero)\n"
       "print(degrees_right_angle)\n"
       "print(degrees_negative_quarter)\n"
@@ -751,6 +758,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *hypot_diag;
   const graphion_runtime_value *hypot_large;
   const graphion_runtime_value *hypot_negative;
+  const graphion_runtime_value *copysign_negative;
+  const graphion_runtime_value *copysign_positive;
+  const graphion_runtime_value *copysign_same_negative;
   const graphion_runtime_value *degrees_zero;
   const graphion_runtime_value *degrees_right_angle;
   const graphion_runtime_value *degrees_negative_quarter;
@@ -929,6 +939,9 @@ int test_gion_arithmetic_expressions(void) {
   hypot_diag = graphion_runtime_scope_find(&scope, "hypot_diag");
   hypot_large = graphion_runtime_scope_find(&scope, "hypot_large");
   hypot_negative = graphion_runtime_scope_find(&scope, "hypot_negative");
+  copysign_negative = graphion_runtime_scope_find(&scope, "copysign_negative");
+  copysign_positive = graphion_runtime_scope_find(&scope, "copysign_positive");
+  copysign_same_negative = graphion_runtime_scope_find(&scope, "copysign_same_negative");
   degrees_zero = graphion_runtime_scope_find(&scope, "degrees_zero");
   degrees_right_angle = graphion_runtime_scope_find(&scope, "degrees_right_angle");
   degrees_negative_quarter = graphion_runtime_scope_find(&scope, "degrees_negative_quarter");
@@ -1359,6 +1372,21 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24349;
   }
+  if (copysign_negative == NULL || copysign_negative->kind != GVM_VALUE_FLOAT ||
+      copysign_negative->as.float_value != -3.0) {
+    remove(path);
+    return 24378;
+  }
+  if (copysign_positive == NULL || copysign_positive->kind != GVM_VALUE_FLOAT ||
+      copysign_positive->as.float_value != 3.5) {
+    remove(path);
+    return 24379;
+  }
+  if (copysign_same_negative == NULL || copysign_same_negative->kind != GVM_VALUE_FLOAT ||
+      copysign_same_negative->as.float_value != -3.0) {
+    remove(path);
+    return 24380;
+  }
   if (degrees_zero == NULL || degrees_zero->kind != GVM_VALUE_FLOAT || degrees_zero->as.float_value < -0.000000001 ||
       degrees_zero->as.float_value > 0.000000001) {
     remove(path);
@@ -1711,7 +1739,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -2086,6 +2114,8 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = atan2(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = hypot(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = hypot(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = copysign(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = copysign(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = degrees(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = radians(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = isnan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2224,6 +2254,11 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = hypot(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = hypot(1, 1\n", GINT_ERR_PARSE, "expected ')' after hypot arguments"},
       {"value = hypot(1 1)\n", GINT_ERR_PARSE, "expected ',' between hypot arguments"},
+      {"value = copysign()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = copysign(1)\n", GINT_ERR_PARSE, "expected ',' between copysign arguments"},
+      {"value = copysign(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = copysign(1, 1\n", GINT_ERR_PARSE, "expected ')' after copysign arguments"},
+      {"value = copysign(1 1)\n", GINT_ERR_PARSE, "expected ',' between copysign arguments"},
       {"value = degrees()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = degrees(1 + 2\n", GINT_ERR_PARSE, "expected ')' after degrees argument"},
       {"value = radians()\n", GINT_ERR_PARSE, "expected scalar literal"},

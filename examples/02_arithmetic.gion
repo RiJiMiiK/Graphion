@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -97,6 +97,9 @@ atan2_quadrant_three = atan2(-1, -1)
 hypot_diag = hypot(3, 4)
 hypot_large = hypot(5, 12)
 hypot_negative = hypot(-3, 4)
+copysign_negative = copysign(3, -2)
+copysign_positive = copysign(-3.5, 2)
+copysign_same_negative = copysign(-3, -2)
 degrees_zero = degrees(0)
 degrees_right_angle = degrees(pi / 2)
 degrees_negative_quarter = degrees(-0.7853981633974483)
@@ -256,6 +259,9 @@ print("atan2 in quadrant three -> atan2_quadrant_three=" + atan2_quadrant_three)
 print("hypot on a 3-4-5 triangle -> hypot_diag=" + hypot_diag)
 print("hypot on a 5-12-13 triangle -> hypot_large=" + hypot_large)
 print("hypot ignores sign on coordinates -> hypot_negative=" + hypot_negative)
+print("copysign copies a negative sign -> copysign_negative=" + copysign_negative)
+print("copysign copies a positive sign -> copysign_positive=" + copysign_positive)
+print("copysign keeps a negative sign -> copysign_same_negative=" + copysign_same_negative)
 print("degrees at zero radians -> degrees_zero=" + degrees_zero)
 print("degrees at pi/2 radians -> degrees_right_angle=" + degrees_right_angle)
 print("degrees at negative pi/4 radians -> degrees_negative_quarter=" + degrees_negative_quarter)

@@ -90,6 +90,7 @@ These names are currently reserved and cannot be assigned:
 - `atan`
 - `atan2`
 - `hypot`
+- `copysign`
 - `degrees`
 - `radians`
 - `isnan`
@@ -610,6 +611,7 @@ Current builtin functions:
 - `atan(x)`
 - `atan2(y, x)`
 - `hypot(x, y)`
+- `copysign(x, y)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`

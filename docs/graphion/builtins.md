@@ -30,6 +30,7 @@ Unless a builtin says otherwise:
 | `atan(x)` | arctangent in radians | `float` | |
 | `atan2(y, x)` | angle of vector `(x, y)` | `float` | two numeric inputs |
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
+| `copysign(x, y)` | magnitude of `x` with sign of `y` | `float` | two numeric inputs |
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
@@ -451,6 +452,20 @@ Expected output:
 
 ```text
 5
+```
+
+### `copysign(x, y)`
+
+Returns the magnitude of `x` with the sign of `y`.
+
+```gion
+print(copysign(3, -2))
+print(copysign(-3.5, 2))
+```
+
+```text
+-3
+3.5
 ```
 
 ### `degrees(x)`

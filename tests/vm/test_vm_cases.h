@@ -35,6 +35,7 @@ int test_vm_acos_builtin_opcode(void);
 int test_vm_atan_builtin_opcode(void);
 int test_vm_atan2_builtin_opcode(void);
 int test_vm_hypot_builtin_opcode(void);
+int test_vm_copysign_builtin_opcode(void);
 int test_vm_degrees_builtin_opcode(void);
 int test_vm_radians_builtin_opcode(void);
 int test_vm_isnan_builtin_opcode(void);
