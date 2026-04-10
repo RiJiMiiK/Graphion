@@ -266,7 +266,7 @@ jobs:
             - Optional Rust lane when `graphion_rust` is present in the checkout
       - name: Enable auto-merge on refreshed report PR
         if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_pr)) && steps.create-pr.outputs.pull-request-number != '' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
