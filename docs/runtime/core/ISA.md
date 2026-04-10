@@ -75,8 +75,11 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_CBRT`
 - `GVM_OP_SIN`
 - `GVM_OP_SINH`
+- `GVM_OP_ASINH`
+- `GVM_OP_ACOSH`
 - `GVM_OP_COSH`
 - `GVM_OP_TANH`
+- `GVM_OP_ATANH`
 - `GVM_OP_COS`
 - `GVM_OP_TAN`
 - `GVM_OP_ASIN`
@@ -86,6 +89,8 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_HYPOT`
 - `GVM_OP_COPYSIGN`
 - `GVM_OP_FMA`
+- `GVM_OP_FDIM`
+- `GVM_OP_REMAINDER`
 - `GVM_OP_DEGREES`
 - `GVM_OP_RADIANS`
 - `GVM_OP_ISNAN`
@@ -95,6 +100,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_LOG1P`
 - `GVM_OP_ERF`
 - `GVM_OP_ERFC`
+- `GVM_OP_GAMMA`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -152,6 +158,7 @@ These back the current `.gion` scalar language features:
 - `log1p(x)`
 - `erf(x)`
 - `erfc(x)`
+- `gamma(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
@@ -208,6 +215,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_ATANH_DOMAIN`
 - `GVM_ERR_LOG1P_DOMAIN`
 - `GVM_ERR_REMAINDER_DOMAIN`
+- `GVM_ERR_GAMMA_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

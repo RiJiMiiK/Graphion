@@ -194,6 +194,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ERFC:
         rc = op_erfc_builtin(vm, &in);
         break;
+      case GVM_OP_GAMMA:
+        rc = op_gamma_builtin(vm, &in);
+        break;
       case GVM_OP_FMA:
         rc = op_fma_builtin(vm, &in);
         break;
@@ -404,6 +407,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_LOG1P] = op_log1p_builtin,
       [GVM_OP_ERF] = op_erf_builtin,
       [GVM_OP_ERFC] = op_erfc_builtin,
+      [GVM_OP_GAMMA] = op_gamma_builtin,
       [GVM_OP_FMA] = op_fma_builtin,
       [GVM_OP_FDIM] = op_fdim_builtin,
       [GVM_OP_REMAINDER] = op_remainder_builtin,
@@ -531,6 +535,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_LOG1P] = &&L_log1p_builtin,
       [GVM_OP_ERF] = &&L_erf_builtin,
       [GVM_OP_ERFC] = &&L_erfc_builtin,
+      [GVM_OP_GAMMA] = &&L_gamma_builtin,
       [GVM_OP_FMA] = &&L_fma_builtin,
       [GVM_OP_FDIM] = &&L_fdim_builtin,
       [GVM_OP_REMAINDER] = &&L_remainder_builtin,
@@ -919,6 +924,12 @@ L_clamp:
       continue;
   L_erfc_builtin:
       rc = op_erfc_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_gamma_builtin:
+      rc = op_gamma_builtin(vm, &in);
       if (rc != 0) {
         return rc;
       }

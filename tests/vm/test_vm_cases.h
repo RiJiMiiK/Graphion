@@ -50,6 +50,7 @@ int test_vm_expm1_builtin_opcode(void);
 int test_vm_log1p_builtin_opcode(void);
 int test_vm_erf_builtin_opcode(void);
 int test_vm_erfc_builtin_opcode(void);
+int test_vm_gamma_builtin_opcode(void);
 int test_vm_exp_opcode(void);
 int test_vm_ln_opcode(void);
 int test_vm_log_opcode(void);

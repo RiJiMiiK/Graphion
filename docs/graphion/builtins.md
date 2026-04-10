@@ -51,6 +51,7 @@ Unless a builtin says otherwise:
 | `log1p(x)` | `ln(1 + x)` | `float` | useful for small values near zero, requires `x > -1` |
 | `erf(x)` | error function | `float` | often used with Gaussian-style formulas |
 | `erfc(x)` | complementary error function | `float` | equal to `1 - erf(x)` |
+| `gamma(x)` | gamma function | `float` | undefined at `0, -1, -2, ...` |
 | `ln(x)` | natural logarithm | `float` | requires `x > 0` |
 | `log(x, base)` | logarithm in explicit base | `float` | requires `x > 0`, `base > 0`, `base != 1` |
 | `log10(x)` | base-10 logarithm | `float` | lowered to `log(x, 10)` |
@@ -294,6 +295,36 @@ print(erfc(1))
 ```text
 1
 0.157299
+```
+
+### `gamma(x)`
+
+Returns the gamma function.
+
+For positive integers, `gamma(n)` matches `(n - 1)!`.
+
+```gion
+print(gamma(1))
+print(gamma(5))
+print(gamma(0.5))
+```
+
+Expected output:
+
+```text
+1
+24
+1.77245
+```
+
+Current domain restriction:
+
+- undefined at `0` and negative integers
+
+Current domain error:
+
+```text
+gamma is undefined at 0 and negative integers
 ```
 
 ## Logarithms

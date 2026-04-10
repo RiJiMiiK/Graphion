@@ -1754,6 +1754,51 @@ int test_vm_erfc_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_gamma_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 1;
+    insn.op = GVM_OP_GAMMA;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_gamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 1.0) {
+        return 18163;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 5;
+    rc = op_gamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 24.0) {
+        return 18164;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.5;
+    rc = op_gamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 1.772453849 ||
+        vm.regs[0].as.float_value > 1.772453851) {
+        return 18165;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 0;
+    rc = op_gamma_builtin(&vm, &insn);
+    if (rc != GVM_ERR_GAMMA_DOMAIN) {
+        return 18166;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

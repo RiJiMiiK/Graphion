@@ -1201,6 +1201,26 @@ int op_erfc_builtin(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_gamma_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t value_i;
+  double value_f;
+  int is_float;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (value_f <= 0.0 && value_f == trunc(value_f)) {
+    return GVM_ERR_GAMMA_DOMAIN;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], tgamma(value_f));
+  return GVM_OK;
+}
+
 int op_fma_builtin(graphion_vm *vm, const graphion_insn *in) {
   int64_t a_i;
   int64_t b_i;

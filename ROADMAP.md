@@ -209,7 +209,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `fdim(x, y)`
 - [x] builtin `remainder(x, y)`
 - [x] builtin `rint(x)`
-- [ ] builtin `gamma(x)`
+- [x] builtin `gamma(x)`
 - [ ] builtin `lgamma(x)`
 - [ ] constant `tau`
 - [ ] constant `phi`
