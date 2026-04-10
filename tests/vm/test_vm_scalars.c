@@ -1882,7 +1882,43 @@ int test_vm_log_opcode(void) {
       globals[1].as.float_value > 2.000000001) {
     return 4;
   }
-  return 0;
+    return 0;
+}
+
+int test_vm_rint_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 7;
+    insn.op = GVM_OP_RINT;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_rint_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 7.0) {
+        return 18186;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 7.4;
+    rc = op_rint_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 7.0) {
+        return 18187;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = -3.2;
+    rc = op_rint_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != -3.0) {
+        return 18188;
+    }
+
+    return 0;
 }
 
 int test_vm_floor_builtin_opcode(void) {

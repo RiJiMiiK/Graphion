@@ -39,6 +39,7 @@ int test_vm_copysign_builtin_opcode(void);
 int test_vm_fma_builtin_opcode(void);
 int test_vm_fdim_builtin_opcode(void);
 int test_vm_remainder_builtin_opcode(void);
+int test_vm_rint_builtin_opcode(void);
 int test_vm_degrees_builtin_opcode(void);
 int test_vm_radians_builtin_opcode(void);
 int test_vm_isnan_builtin_opcode(void);

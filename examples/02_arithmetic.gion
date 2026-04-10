@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -109,6 +109,9 @@ fdim_equal = fdim(5, 5)
 remainder_nearest = remainder(7, 4)
 remainder_fractional = remainder(5.5, 2)
 remainder_negative = remainder(-7, 4)
+rint_int = rint(7)
+rint_float = rint(7.4)
+rint_negative = rint(-3.2)
 degrees_zero = degrees(0)
 degrees_right_angle = degrees(pi / 2)
 degrees_negative_quarter = degrees(-0.7853981633974483)
@@ -280,6 +283,9 @@ print("fdim on equal values -> fdim_equal=" + fdim_equal)
 print("remainder rounds quotient to the nearest integer -> remainder_nearest=" + remainder_nearest)
 print("remainder works on fractional inputs -> remainder_fractional=" + remainder_fractional)
 print("remainder reflects the sign implied by the nearest quotient -> remainder_negative=" + remainder_negative)
+print("rint on an integer -> rint_int=" + rint_int)
+print("rint on a float -> rint_float=" + rint_float)
+print("rint on a negative float -> rint_negative=" + rint_negative)
 print("degrees at zero radians -> degrees_zero=" + degrees_zero)
 print("degrees at pi/2 radians -> degrees_right_angle=" + degrees_right_angle)
 print("degrees at negative pi/4 radians -> degrees_negative_quarter=" + degrees_negative_quarter)

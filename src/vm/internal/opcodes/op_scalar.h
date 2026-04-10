@@ -79,5 +79,6 @@ int op_erfc_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_fma_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_fdim_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_remainder_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_rint_builtin(graphion_vm *vm, const graphion_insn *in);
 
 #endif

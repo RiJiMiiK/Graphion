@@ -94,6 +94,7 @@ These names are currently reserved and cannot be assigned:
 - `fma`
 - `fdim`
 - `remainder`
+- `rint`
 - `degrees`
 - `radians`
 - `isnan`
@@ -618,6 +619,7 @@ Current builtin functions:
 - `fma(a, b, c)`
 - `fdim(x, y)`
 - `remainder(x, y)`
+- `rint(x)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`

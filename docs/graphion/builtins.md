@@ -34,6 +34,7 @@ Unless a builtin says otherwise:
 | `fma(a, b, c)` | fused multiply-add | `float` | three numeric inputs |
 | `fdim(x, y)` | positive difference | `float` | equal to `max(x - y, 0)` |
 | `remainder(x, y)` | IEEE-style remainder | `float` | divisor must be non-zero |
+| `rint(x)` | platform rounding-mode integer value | `float` | lower-level than `round(x)` |
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
@@ -513,6 +514,21 @@ print(remainder(5.5, 2))
 -0.5
 ```
 
+### `rint(x)`
+
+Returns the nearest integer-valued `float` using the platform's active floating-point rounding mode.
+
+This is a lower-level builtin than `round(x)`:
+
+- `round(x)` is the predictable language-level choice
+- `rint(x)` follows the C math runtime and can depend on platform rounding mode
+
+```gion
+print(rint(7))
+print(rint(7.4))
+print(rint(-3.2))
+```
+
 ### `degrees(x)`
 
 Converts an angle from radians to degrees.
@@ -679,6 +695,7 @@ Rounds to the nearest integer value.
 Current tie-breaking rule:
 
 - `.5` rounds away from zero
+- use `rint(x)` only if you explicitly want the platform floating-point rounding behavior
 
 ```gion
 print(round(7.5))

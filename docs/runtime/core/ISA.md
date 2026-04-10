@@ -102,6 +102,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_CEIL`
 - `GVM_OP_ROUND`
 - `GVM_OP_TRUNC`
+- `GVM_OP_RINT`
 - `GVM_OP_FRACT`
 - `GVM_OP_SIGN`
 - `GVM_OP_LEN`
@@ -141,6 +142,7 @@ These back the current `.gion` scalar language features:
 - `fma(a, b, c)`
 - `fdim(x, y)`
 - `remainder(x, y)`
+- `rint(x)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`
@@ -159,6 +161,7 @@ These back the current `.gion` scalar language features:
 - `ceil(x)`
 - `round(x)`
 - `trunc(x)`
+- `rint(x)`
 - `fract(x)`
 - `sign(x)`
 - `len(x)`
