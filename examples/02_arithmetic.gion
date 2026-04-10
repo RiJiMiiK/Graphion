@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), gamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -146,6 +146,9 @@ erfc_negative_one = erfc(-1)
 gamma_one = gamma(1)
 gamma_five = gamma(5)
 gamma_half = gamma(0.5)
+lgamma_one = lgamma(1)
+lgamma_five = lgamma(5)
+lgamma_half = lgamma(0.5)
 ln_one = ln(1)
 ln_e = ln(e)
 ln_expression = ln(e ** 2)
@@ -323,6 +326,9 @@ print("erfc at minus one -> erfc_negative_one=" + erfc_negative_one)
 print("gamma at one -> gamma_one=" + gamma_one)
 print("gamma at five -> gamma_five=" + gamma_five)
 print("gamma at one-half -> gamma_half=" + gamma_half)
+print("lgamma at one -> lgamma_one=" + lgamma_one)
+print("lgamma at five -> lgamma_five=" + lgamma_five)
+print("lgamma at one-half -> lgamma_half=" + lgamma_half)
 print("ln of one -> ln_one=" + ln_one)
 print("ln of e -> ln_e=" + ln_e)
 print("ln of an expression -> ln_expression=" + ln_expression)

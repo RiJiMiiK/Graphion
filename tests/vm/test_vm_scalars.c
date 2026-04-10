@@ -1799,6 +1799,52 @@ int test_vm_gamma_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_lgamma_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 1;
+    insn.op = GVM_OP_LGAMMA;
+    insn.a = 0;
+    insn.b = 0;
+    insn.imm = 0;
+    rc = op_lgamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 0.0) {
+        return 18167;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 5;
+    rc = op_lgamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 3.178053829 ||
+        vm.regs[0].as.float_value > 3.178053831) {
+        return 18168;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.5;
+    rc = op_lgamma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value < 0.572364941 ||
+        vm.regs[0].as.float_value > 0.572364943) {
+        return 18169;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 0;
+    rc = op_lgamma_builtin(&vm, &insn);
+    if (rc != GVM_ERR_LGAMMA_DOMAIN) {
+        return 18170;
+    }
+
+    return 0;
+}
+
 int test_vm_exp_opcode(void) {
   graphion_vm vm;
   graphion_vm_value const_pool[2];

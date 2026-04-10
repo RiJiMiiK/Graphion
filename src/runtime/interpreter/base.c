@@ -119,7 +119,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "isnan") == 0 ||
          strcmp(name, "isinf") == 0 || strcmp(name, "isfinite") == 0 || strcmp(name, "expm1") == 0 ||
          strcmp(name, "log1p") == 0 || strcmp(name, "erf") == 0 || strcmp(name, "erfc") == 0 ||
-         strcmp(name, "gamma") == 0 ||
+         strcmp(name, "gamma") == 0 || strcmp(name, "lgamma") == 0 ||
          strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||

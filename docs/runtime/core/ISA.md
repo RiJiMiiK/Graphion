@@ -101,6 +101,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ERF`
 - `GVM_OP_ERFC`
 - `GVM_OP_GAMMA`
+- `GVM_OP_LGAMMA`
 - `GVM_OP_EXP`
 - `GVM_OP_LN`
 - `GVM_OP_LOG`
@@ -159,6 +160,7 @@ These back the current `.gion` scalar language features:
 - `erf(x)`
 - `erfc(x)`
 - `gamma(x)`
+- `lgamma(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
@@ -216,6 +218,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_LOG1P_DOMAIN`
 - `GVM_ERR_REMAINDER_DOMAIN`
 - `GVM_ERR_GAMMA_DOMAIN`
+- `GVM_ERR_LGAMMA_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

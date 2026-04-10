@@ -119,3 +119,4 @@ int test_vm_snapshot_format(void);
 int test_vm_fastpath_shape_cache_load_flags(void);
 int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
 int test_vm_dispatch_variant_edge_semantics(void);
+int test_vm_lgamma_builtin_opcode(void);

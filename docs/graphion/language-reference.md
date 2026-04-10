@@ -105,6 +105,7 @@ These names are currently reserved and cannot be assigned:
 - `erf`
 - `erfc`
 - `gamma`
+- `lgamma`
 - `fract`
 - `exp`
 - `ln`
@@ -631,6 +632,7 @@ Current builtin functions:
 - `erf(x)`
 - `erfc(x)`
 - `gamma(x)`
+- `lgamma(x)`
 - `exp(x)`
 - `ln(x)`
 - `log(x, base)`
