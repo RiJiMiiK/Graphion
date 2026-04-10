@@ -33,6 +33,7 @@ Unless a builtin says otherwise:
 | `copysign(x, y)` | magnitude of `x` with sign of `y` | `float` | two numeric inputs |
 | `fma(a, b, c)` | fused multiply-add | `float` | three numeric inputs |
 | `fdim(x, y)` | positive difference | `float` | equal to `max(x - y, 0)` |
+| `remainder(x, y)` | IEEE-style remainder | `float` | divisor must be non-zero |
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
@@ -496,6 +497,20 @@ print(fdim(3, 7))
 ```text
 4
 0
+```
+
+### `remainder(x, y)`
+
+Returns the IEEE-style remainder of `x` divided by `y`. This is not the same operation as `%`: it uses the nearest integer quotient instead of truncation.
+
+```gion
+print(remainder(7, 4))
+print(remainder(5.5, 2))
+```
+
+```text
+-1
+-0.5
 ```
 
 ### `degrees(x)`

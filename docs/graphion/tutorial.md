@@ -103,7 +103,7 @@ grouped = (1 + 2) * 3
 half = 7 / 2
 floor_half = 7 // 2
 power = 2 ** 3
-remainder = 10 % 4
+modulo_value = 10 % 4
 
 print(sum)
 print(mixed)
@@ -111,7 +111,7 @@ print(grouped)
 print(half)
 print(floor_half)
 print(power)
-print(remainder)
+print(modulo_value)
 ```
 
 Expected output:

@@ -93,6 +93,7 @@ These names are currently reserved and cannot be assigned:
 - `copysign`
 - `fma`
 - `fdim`
+- `remainder`
 - `degrees`
 - `radians`
 - `isnan`
@@ -616,6 +617,7 @@ Current builtin functions:
 - `copysign(x, y)`
 - `fma(a, b, c)`
 - `fdim(x, y)`
+- `remainder(x, y)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`

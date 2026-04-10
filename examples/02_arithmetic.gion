@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -32,9 +32,9 @@ factorial_zero = 0!
 factorial_count = 5!
 factorial_group = (1 + 2)!
 
-remainder = 10 % 4
-negative_remainder = -10 % 4
-float_remainder = 7.5 % 2
+modulo_value = 10 % 4
+modulo_negative = -10 % 4
+modulo_float = 7.5 % 2
 
 abs_count = abs(-42)
 abs_ratio = abs(-3.5)
@@ -106,6 +106,9 @@ fma_negative = fma(-2, 4, 1.5)
 fdim_positive = fdim(7, 3)
 fdim_zero = fdim(3, 7)
 fdim_equal = fdim(5, 5)
+remainder_nearest = remainder(7, 4)
+remainder_fractional = remainder(5.5, 2)
+remainder_negative = remainder(-7, 4)
 degrees_zero = degrees(0)
 degrees_right_angle = degrees(pi / 2)
 degrees_negative_quarter = degrees(-0.7853981633974483)
@@ -201,9 +204,9 @@ print("power with parentheses -> powered_group=" + powered_group)
 print("factorial of zero -> factorial_zero=" + factorial_zero)
 print("factorial of an integer -> factorial_count=" + factorial_count)
 print("factorial of a grouped expression -> factorial_group=" + factorial_group)
-print("integer modulo -> remainder=" + remainder)
-print("modulo with negative numbers -> negative_remainder=" + negative_remainder)
-print("float modulo -> float_remainder=" + float_remainder)
+print("integer modulo -> modulo_value=" + modulo_value)
+print("modulo with negative numbers -> modulo_negative=" + modulo_negative)
+print("float modulo -> modulo_float=" + modulo_float)
 print("absolute value of an integer -> abs_count=" + abs_count)
 print("absolute value of a float -> abs_ratio=" + abs_ratio)
 print("absolute value of an expression -> abs_expression=" + abs_expression)
@@ -274,6 +277,9 @@ print("fma multiply-add with a negative product -> fma_negative=" + fma_negative
 print("fdim positive difference -> fdim_positive=" + fdim_positive)
 print("fdim clamps negative differences -> fdim_zero=" + fdim_zero)
 print("fdim on equal values -> fdim_equal=" + fdim_equal)
+print("remainder rounds quotient to the nearest integer -> remainder_nearest=" + remainder_nearest)
+print("remainder works on fractional inputs -> remainder_fractional=" + remainder_fractional)
+print("remainder reflects the sign implied by the nearest quotient -> remainder_negative=" + remainder_negative)
 print("degrees at zero radians -> degrees_zero=" + degrees_zero)
 print("degrees at pi/2 radians -> degrees_right_angle=" + degrees_right_angle)
 print("degrees at negative pi/4 radians -> degrees_negative_quarter=" + degrees_negative_quarter)

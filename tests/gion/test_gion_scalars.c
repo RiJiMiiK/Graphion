@@ -240,6 +240,7 @@ int test_gion_reserved_name_errors(void) {
       {"hypot = 1\n", "reserved name cannot be assigned", "gion_reserved_hypot.gion"},
       {"copysign = 1\n", "reserved name cannot be assigned", "gion_reserved_copysign.gion"},
       {"fdim = 1\n", "reserved name cannot be assigned", "gion_reserved_fdim.gion"},
+      {"remainder = 1\n", "reserved name cannot be assigned", "gion_reserved_remainder.gion"},
       {"degrees = 1\n", "reserved name cannot be assigned", "gion_reserved_degrees.gion"},
       {"radians = 1\n", "reserved name cannot be assigned", "gion_reserved_radians.gion"},
       {"isnan = 1\n", "reserved name cannot be assigned", "gion_reserved_isnan.gion"},
@@ -441,6 +442,9 @@ int test_gion_arithmetic_expressions(void) {
       "fdim_positive = fdim(7, 3)\n"
       "fdim_zero = fdim(3, 7)\n"
       "fdim_equal = fdim(5, 5)\n"
+      "remainder_nearest = remainder(7, 4)\n"
+      "remainder_fractional = remainder(5.5, 2)\n"
+      "remainder_negative = remainder(-7, 4)\n"
       "degrees_zero = degrees(0)\n"
       "degrees_right_angle = degrees(pi / 2)\n"
       "degrees_negative_quarter = degrees(-0.7853981633974483)\n"
@@ -516,9 +520,9 @@ int test_gion_arithmetic_expressions(void) {
       "len_text = len(\"graphion\")\n"
       "len_concat = len(\"graph\" + \"ion\")\n"
       "total = base + ratio * 2\n"
-      "remainder = 10 % 4\n"
-      "negative_remainder = -10 % 4\n"
-      "float_remainder = 7.5 % 2\n"
+      "modulo_value = 10 % 4\n"
+      "modulo_negative = -10 % 4\n"
+      "modulo_float = 7.5 % 2\n"
       "print(sum)\n"
       "print(mixed)\n"
       "print(grouped)\n"
@@ -610,6 +614,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(fdim_positive)\n"
       "print(fdim_zero)\n"
       "print(fdim_equal)\n"
+      "print(remainder_nearest)\n"
+      "print(remainder_fractional)\n"
+      "print(remainder_negative)\n"
       "print(degrees_zero)\n"
       "print(degrees_right_angle)\n"
       "print(degrees_negative_quarter)\n"
@@ -682,9 +689,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(len_empty)\n"
       "print(len_text)\n"
       "print(len_concat)\n"
-      "print(remainder)\n"
-      "print(negative_remainder)\n"
-      "print(float_remainder)\n"
+      "print(modulo_value)\n"
+      "print(modulo_negative)\n"
+      "print(modulo_float)\n"
       "print(3 + 4 * 2)\n"
       "print((3 + 4) * 2)\n"
       "print(10 % 4)\n";
@@ -780,6 +787,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *fdim_positive;
   const graphion_runtime_value *fdim_zero;
   const graphion_runtime_value *fdim_equal;
+  const graphion_runtime_value *remainder_nearest;
+  const graphion_runtime_value *remainder_fractional;
+  const graphion_runtime_value *remainder_negative;
   const graphion_runtime_value *degrees_zero;
   const graphion_runtime_value *degrees_right_angle;
   const graphion_runtime_value *degrees_negative_quarter;
@@ -855,9 +865,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *len_text;
   const graphion_runtime_value *len_concat;
   const graphion_runtime_value *total;
-  const graphion_runtime_value *remainder;
-  const graphion_runtime_value *negative_remainder;
-  const graphion_runtime_value *float_remainder;
+  const graphion_runtime_value *modulo_value;
+  const graphion_runtime_value *modulo_negative;
+  const graphion_runtime_value *modulo_float;
   FILE *fp = NULL;
   int rc;
 
@@ -967,6 +977,9 @@ int test_gion_arithmetic_expressions(void) {
   fdim_positive = graphion_runtime_scope_find(&scope, "fdim_positive");
   fdim_zero = graphion_runtime_scope_find(&scope, "fdim_zero");
   fdim_equal = graphion_runtime_scope_find(&scope, "fdim_equal");
+  remainder_nearest = graphion_runtime_scope_find(&scope, "remainder_nearest");
+  remainder_fractional = graphion_runtime_scope_find(&scope, "remainder_fractional");
+  remainder_negative = graphion_runtime_scope_find(&scope, "remainder_negative");
   degrees_zero = graphion_runtime_scope_find(&scope, "degrees_zero");
   degrees_right_angle = graphion_runtime_scope_find(&scope, "degrees_right_angle");
   degrees_negative_quarter = graphion_runtime_scope_find(&scope, "degrees_negative_quarter");
@@ -1042,9 +1055,9 @@ int test_gion_arithmetic_expressions(void) {
   len_text = graphion_runtime_scope_find(&scope, "len_text");
   len_concat = graphion_runtime_scope_find(&scope, "len_concat");
   total = graphion_runtime_scope_find(&scope, "total");
-  remainder = graphion_runtime_scope_find(&scope, "remainder");
-  negative_remainder = graphion_runtime_scope_find(&scope, "negative_remainder");
-  float_remainder = graphion_runtime_scope_find(&scope, "float_remainder");
+  modulo_value = graphion_runtime_scope_find(&scope, "modulo_value");
+  modulo_negative = graphion_runtime_scope_find(&scope, "modulo_negative");
+  modulo_float = graphion_runtime_scope_find(&scope, "modulo_float");
   if (sum == NULL || sum->kind != GVM_VALUE_INT || sum->as.int_value != 42) {
     remove(path);
     return 3;
@@ -1436,6 +1449,19 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24386;
   }
+  if (remainder_nearest == NULL || remainder_nearest->kind != GVM_VALUE_FLOAT || remainder_nearest->as.float_value != -1.0) {
+    remove(path);
+    return 24387;
+  }
+  if (remainder_fractional == NULL || remainder_fractional->kind != GVM_VALUE_FLOAT ||
+      remainder_fractional->as.float_value != -0.5) {
+    remove(path);
+    return 24388;
+  }
+  if (remainder_negative == NULL || remainder_negative->kind != GVM_VALUE_FLOAT || remainder_negative->as.float_value != 1.0) {
+    remove(path);
+    return 24389;
+  }
   if (degrees_zero == NULL || degrees_zero->kind != GVM_VALUE_FLOAT || degrees_zero->as.float_value < -0.000000001 ||
       degrees_zero->as.float_value > 0.000000001) {
     remove(path);
@@ -1770,15 +1796,15 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24;
   }
-  if (remainder == NULL || remainder->kind != GVM_VALUE_INT || remainder->as.int_value != 2) {
+  if (modulo_value == NULL || modulo_value->kind != GVM_VALUE_INT || modulo_value->as.int_value != 2) {
     remove(path);
     return 25;
   }
-  if (negative_remainder == NULL || negative_remainder->kind != GVM_VALUE_INT || negative_remainder->as.int_value != -2) {
+  if (modulo_negative == NULL || modulo_negative->kind != GVM_VALUE_INT || modulo_negative->as.int_value != -2) {
     remove(path);
     return 26;
   }
-  if (float_remainder == NULL || float_remainder->kind != GVM_VALUE_FLOAT || float_remainder->as.float_value != 1.5) {
+  if (modulo_float == NULL || modulo_float->kind != GVM_VALUE_FLOAT || modulo_float->as.float_value != 1.5) {
     remove(path);
     return 27;
   }
@@ -1788,7 +1814,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;
@@ -2170,6 +2196,9 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = fma(1, 2, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = fdim(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = fdim(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = remainder(\"x\", 1)\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = remainder(1, \"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = remainder(1, 0)\n", GINT_ERR_RUN, "remainder requires non-zero divisor"},
       {"value = degrees(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = radians(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = isnan(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2325,6 +2354,11 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = fdim(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = fdim(1, 1\n", GINT_ERR_PARSE, "expected ')' after fdim arguments"},
       {"value = fdim(1 1)\n", GINT_ERR_PARSE, "expected ',' between fdim arguments"},
+      {"value = remainder()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = remainder(1)\n", GINT_ERR_PARSE, "expected ',' between remainder arguments"},
+      {"value = remainder(1,)\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = remainder(1, 1\n", GINT_ERR_PARSE, "expected ')' after remainder arguments"},
+      {"value = remainder(1 1)\n", GINT_ERR_PARSE, "expected ',' between remainder arguments"},
       {"value = degrees()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = degrees(1 + 2\n", GINT_ERR_PARSE, "expected ')' after degrees argument"},
       {"value = radians()\n", GINT_ERR_PARSE, "expected scalar literal"},

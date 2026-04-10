@@ -140,6 +140,7 @@ These back the current `.gion` scalar language features:
 - `copysign(x, y)`
 - `fma(a, b, c)`
 - `fdim(x, y)`
+- `remainder(x, y)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`
@@ -203,6 +204,7 @@ Important currently visible VM codes include:
 - `GVM_ERR_ACOSH_DOMAIN`
 - `GVM_ERR_ATANH_DOMAIN`
 - `GVM_ERR_LOG1P_DOMAIN`
+- `GVM_ERR_REMAINDER_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 
