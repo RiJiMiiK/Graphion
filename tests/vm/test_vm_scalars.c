@@ -1277,6 +1277,48 @@ int test_vm_fma_builtin_opcode(void) {
     return 0;
 }
 
+int test_vm_fdim_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 7;
+    vm.regs[1].kind = GVM_VALUE_INT;
+    vm.regs[1].as.int_value = 3;
+    insn.op = GVM_OP_FDIM;
+    insn.a = 0;
+    insn.b = 1;
+    insn.imm = 0;
+    rc = op_fdim_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 4.0) {
+        return 18138;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 3;
+    vm.regs[1].kind = GVM_VALUE_INT;
+    vm.regs[1].as.int_value = 7;
+    rc = op_fdim_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 0.0) {
+        return 18139;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 5.0;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = 5.0;
+    rc = op_fdim_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 0.0) {
+        return 18140;
+    }
+
+    return 0;
+}
+
 int test_vm_degrees_builtin_opcode(void) {
     graphion_vm vm;
     graphion_insn insn;

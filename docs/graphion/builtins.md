@@ -32,6 +32,7 @@ Unless a builtin says otherwise:
 | `hypot(x, y)` | length of vector `(x, y)` | `float` | two numeric inputs |
 | `copysign(x, y)` | magnitude of `x` with sign of `y` | `float` | two numeric inputs |
 | `fma(a, b, c)` | fused multiply-add | `float` | three numeric inputs |
+| `fdim(x, y)` | positive difference | `float` | equal to `max(x - y, 0)` |
 | `degrees(x)` | convert radians to degrees | `float` | |
 | `radians(x)` | convert degrees to radians | `float` | |
 | `isnan(x)` | test whether a numeric value is NaN | `bool` | non-float numerics return `false` |
@@ -481,6 +482,20 @@ print(fma(0.5, 8, -1))
 ```text
 10
 3
+```
+
+### `fdim(x, y)`
+
+Returns the positive difference between `x` and `y`.
+
+```gion
+print(fdim(7, 3))
+print(fdim(3, 7))
+```
+
+```text
+4
+0
 ```
 
 ### `degrees(x)`

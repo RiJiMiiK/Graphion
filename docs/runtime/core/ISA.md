@@ -139,6 +139,7 @@ These back the current `.gion` scalar language features:
 - `hypot(x, y)`
 - `copysign(x, y)`
 - `fma(a, b, c)`
+- `fdim(x, y)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`
