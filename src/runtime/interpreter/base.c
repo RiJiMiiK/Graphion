@@ -112,7 +112,8 @@ int is_reserved_name(const char *name) {
          strcmp(name, "tanh") == 0 || strcmp(name, "atanh") == 0 ||
          strcmp(name, "asin") == 0 || strcmp(name, "acos") == 0 ||
          strcmp(name, "atan") == 0 || strcmp(name, "atan2") == 0 || strcmp(name, "hypot") == 0 ||
-         strcmp(name, "copysign") == 0 || strcmp(name, "degrees") == 0 || strcmp(name, "radians") == 0 ||
+         strcmp(name, "copysign") == 0 || strcmp(name, "fma") == 0 || strcmp(name, "degrees") == 0 ||
+         strcmp(name, "radians") == 0 ||
          strcmp(name, "isnan") == 0 ||
          strcmp(name, "isinf") == 0 || strcmp(name, "isfinite") == 0 || strcmp(name, "expm1") == 0 ||
          strcmp(name, "log1p") == 0 || strcmp(name, "erf") == 0 || strcmp(name, "erfc") == 0 ||

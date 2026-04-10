@@ -205,7 +205,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `erf(x)`
 - [x] builtin `erfc(x)`
 - [x] builtin `copysign(x, y)`
-- [ ] builtin `fma(a, b, c)`
+- [x] builtin `fma(a, b, c)`
 - [ ] builtin `fdim(x, y)`
 - [ ] builtin `remainder(x, y)`
 - [ ] builtin `rint(x)`

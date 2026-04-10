@@ -1201,6 +1201,31 @@ int op_erfc_builtin(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+int op_fma_builtin(graphion_vm *vm, const graphion_insn *in) {
+  int64_t a_i;
+  int64_t b_i;
+  int64_t c_i;
+  double a_f;
+  double b_f;
+  double c_f;
+  int a_is_float;
+  int b_is_float;
+  int c_is_float;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &a_i, &a_f, &a_is_float) ||
+      !vm_value_get_numeric(&vm->regs[in->b], &b_i, &b_f, &b_is_float) ||
+      !vm_value_get_numeric(&vm->regs[(uint8_t)in->imm], &c_i, &c_f, &c_is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], fma(a_f, b_f, c_f));
+  return GVM_OK;
+}
+
 int op_ln(graphion_vm *vm, const graphion_insn *in) {
   int64_t value_i;
   double value_f;

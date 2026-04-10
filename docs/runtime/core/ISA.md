@@ -85,6 +85,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ATAN2`
 - `GVM_OP_HYPOT`
 - `GVM_OP_COPYSIGN`
+- `GVM_OP_FMA`
 - `GVM_OP_DEGREES`
 - `GVM_OP_RADIANS`
 - `GVM_OP_ISNAN`
@@ -137,6 +138,7 @@ These back the current `.gion` scalar language features:
 - `atan2(y, x)`
 - `hypot(x, y)`
 - `copysign(x, y)`
+- `fma(a, b, c)`
 - `degrees(x)`
 - `radians(x)`
 - `isnan(x)`

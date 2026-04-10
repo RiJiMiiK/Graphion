@@ -194,6 +194,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_ERFC:
         rc = op_erfc_builtin(vm, &in);
         break;
+      case GVM_OP_FMA:
+        rc = op_fma_builtin(vm, &in);
+        break;
       case GVM_OP_EXP:
         rc = op_exp(vm, &in);
         break;
@@ -392,6 +395,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_LOG1P] = op_log1p_builtin,
       [GVM_OP_ERF] = op_erf_builtin,
       [GVM_OP_ERFC] = op_erfc_builtin,
+      [GVM_OP_FMA] = op_fma_builtin,
       [GVM_OP_EXP] = op_exp,
       [GVM_OP_LN] = op_ln,
       [GVM_OP_LOG] = op_log,
@@ -515,6 +519,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_LOG1P] = &&L_log1p_builtin,
       [GVM_OP_ERF] = &&L_erf_builtin,
       [GVM_OP_ERFC] = &&L_erfc_builtin,
+      [GVM_OP_FMA] = &&L_fma_builtin,
       [GVM_OP_EXP] = &&L_exp,
       [GVM_OP_LN] = &&L_ln,
       [GVM_OP_LOG] = &&L_log,
@@ -899,6 +904,12 @@ L_clamp:
       continue;
   L_erfc_builtin:
       rc = op_erfc_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_fma_builtin:
+      rc = op_fma_builtin(vm, &in);
       if (rc != 0) {
         return rc;
       }

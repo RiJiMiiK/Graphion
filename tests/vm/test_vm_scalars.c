@@ -1218,12 +1218,60 @@ int test_vm_copysign_builtin_opcode(void) {
 
     memset(&vm, 0, sizeof(vm));
     vm.regs[0].kind = GVM_VALUE_FLOAT;
-    vm.regs[0].as.float_value = -0.0;
-    vm.regs[1].kind = GVM_VALUE_INT;
-    vm.regs[1].as.int_value = -1;
+    vm.regs[0].as.float_value = 3.5;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = -2.0;
     rc = op_copysign_builtin(&vm, &insn);
-    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || !signbit(vm.regs[0].as.float_value)) {
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != -3.5) {
         return 18134;
+    }
+
+    return 0;
+}
+
+int test_vm_fma_builtin_opcode(void) {
+    graphion_vm vm;
+    graphion_insn insn;
+    int rc;
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_INT;
+    vm.regs[0].as.int_value = 2;
+    vm.regs[1].kind = GVM_VALUE_INT;
+    vm.regs[1].as.int_value = 3;
+    vm.regs[2].kind = GVM_VALUE_INT;
+    vm.regs[2].as.int_value = 4;
+    insn.op = GVM_OP_FMA;
+    insn.a = 0;
+    insn.b = 1;
+    insn.imm = 2;
+    rc = op_fma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 10.0) {
+        return 18135;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = 0.5;
+    vm.regs[1].kind = GVM_VALUE_INT;
+    vm.regs[1].as.int_value = 8;
+    vm.regs[2].kind = GVM_VALUE_FLOAT;
+    vm.regs[2].as.float_value = -1.0;
+    rc = op_fma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != 3.0) {
+        return 18136;
+    }
+
+    memset(&vm, 0, sizeof(vm));
+    vm.regs[0].kind = GVM_VALUE_FLOAT;
+    vm.regs[0].as.float_value = -2.0;
+    vm.regs[1].kind = GVM_VALUE_FLOAT;
+    vm.regs[1].as.float_value = 4.0;
+    vm.regs[2].kind = GVM_VALUE_FLOAT;
+    vm.regs[2].as.float_value = 1.5;
+    rc = op_fma_builtin(&vm, &insn);
+    if (rc != GVM_OK || vm.regs[0].kind != GVM_VALUE_FLOAT || vm.regs[0].as.float_value != -6.5) {
+        return 18137;
     }
 
     return 0;
