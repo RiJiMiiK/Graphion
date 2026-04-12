@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <math.h>
+#include <string.h>
 
 #include "test_vm_helpers.h"
 #include "vm/internal/opcodes/op_scalar.h"
