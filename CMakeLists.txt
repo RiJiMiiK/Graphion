@@ -163,6 +163,7 @@ if(GRAPHION_ENABLE_TESTS)
 
   add_executable(graphion_tests
     tests/runner/test_main.c
+    tests/vm/test_vm_helpers.c
     tests/vm/test_vm_core.c
     tests/vm/test_vm_scalars.c
     tests/vm/test_vm_logic_bits.c

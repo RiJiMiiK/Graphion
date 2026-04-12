@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "test_vm_helpers.h"
+#include "vm/internal/opcodes/op_scalar.h"
 
 int test_vm_numeric_arithmetic_opcodes(void) {
   graphion_vm vm;

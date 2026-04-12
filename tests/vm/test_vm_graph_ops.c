@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_vm_helpers.h"
 
 int test_vm_bfs_levels_opcode(void) {
