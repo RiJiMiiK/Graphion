@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_vm_helpers.h"
 
 int test_vm_addition_program(void) {
@@ -425,4 +427,3 @@ int test_vm_print_reg_opcode(void) {
   }
   return 0;
 }
-
