@@ -169,6 +169,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
     tests/core/test_arena.c
+    tests/gion/test_parser_helpers.c
     tests/gion/test_parser_frontend.c
     tests/gion/test_gion_scalars.c
     tests/gion/test_gion_bits.c
@@ -215,4 +216,3 @@ if(GRAPHION_ENABLE_FUZZING)
   target_link_options(fuzz_parser PRIVATE -fsanitize=fuzzer,address,undefined)
   target_link_libraries(fuzz_parser PRIVATE graphion_vm)
 endif()
-
