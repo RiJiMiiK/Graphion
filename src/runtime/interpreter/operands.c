@@ -102,6 +102,12 @@ int parse_scalar_literal(graphion_runtime_program *program,
     *cursor += 2;
     return GINT_OK;
   }
+  if (strncmp(start, "tau", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 6.28318530717958647692;
+    *cursor += 3;
+    return GINT_OK;
+  }
   if (start[0] == 'e' && !is_ident_char(start[1])) {
     value_out->kind = GVM_VALUE_FLOAT;
     value_out->as.float_value = 2.71828182845904523536;
@@ -208,7 +214,8 @@ int parse_operand(const char **cursor,
       return rc;
     }
     if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0 || strcmp(name, "pi") == 0 ||
-        strcmp(name, "e") == 0 || strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0) {
+        strcmp(name, "tau") == 0 || strcmp(name, "e") == 0 || strcmp(name, "nan") == 0 ||
+        strcmp(name, "inf") == 0) {
       *cursor = saved;
     } else {
       int index;
@@ -376,5 +383,4 @@ int scan_ternary_segments(const char *cursor,
   *expr_end_out = scan;
   return 1;
 }
-
 

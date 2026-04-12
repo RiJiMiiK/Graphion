@@ -23,9 +23,10 @@ Graphion currently exposes these scalar value kinds:
 
 ## Built-In Numeric Constants
 
-Graphion currently provides four built-in numeric constants:
+Graphion currently provides five built-in numeric constants:
 
 - `pi`
+- `tau`
 - `e`
 - `nan`
 - `inf`
@@ -33,6 +34,7 @@ Graphion currently provides four built-in numeric constants:
 Current values:
 
 - `pi = 3.141592653589793`
+- `tau = 6.283185307179586`
 - `e = 2.718281828459045`
 - `nan = not-a-number`
 - `inf = positive infinity`
@@ -54,6 +56,7 @@ negative = -7
 ratio = 3.5
 negative_ratio = -2.25
 circle = pi
+turn = tau
 growth = e
 unknown = nan
 limit = inf

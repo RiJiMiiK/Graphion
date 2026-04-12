@@ -67,6 +67,7 @@ These names are currently reserved and cannot be assigned:
 - `true`
 - `false`
 - `pi`
+- `tau`
 - `e`
 - `nan`
 - `inf`
@@ -653,6 +654,7 @@ See [Builtins](builtins.md).
 Current built-in scalar constants:
 
 - `pi`
+- `tau`
 - `e`
 - `nan`
 - `inf`
