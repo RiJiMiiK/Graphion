@@ -68,6 +68,7 @@ These names are currently reserved and cannot be assigned:
 - `false`
 - `pi`
 - `tau`
+- `phi`
 - `e`
 - `nan`
 - `inf`
@@ -655,6 +656,7 @@ Current built-in scalar constants:
 
 - `pi`
 - `tau`
+- `phi`
 - `e`
 - `nan`
 - `inf`

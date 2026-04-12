@@ -267,6 +267,7 @@ int test_gion_reserved_name_errors(void) {
       {"len = 1\n", "reserved name cannot be assigned", "gion_reserved_len.gion"},
       {"pi = 1\n", "reserved name cannot be assigned", "gion_reserved_pi.gion"},
       {"tau = 1\n", "reserved name cannot be assigned", "gion_reserved_tau.gion"},
+      {"phi = 1\n", "reserved name cannot be assigned", "gion_reserved_phi.gion"},
       {"e = 1\n", "reserved name cannot be assigned", "gion_reserved_e.gion"},
       {"nan = 1\n", "reserved name cannot be assigned", "gion_reserved_nan.gion"},
       {"inf = 1\n", "reserved name cannot be assigned", "gion_reserved_inf.gion"},
@@ -524,6 +525,7 @@ int test_gion_arithmetic_expressions(void) {
       "sign_zero = sign(0)\n"
       "pi_value = pi\n"
       "tau_value = tau\n"
+      "phi_value = phi\n"
       "e_value = e\n"
       "nan_value = nan\n"
       "inf_value = inf\n"
@@ -706,6 +708,7 @@ int test_gion_arithmetic_expressions(void) {
       "print(sign_zero)\n"
       "print(pi_value)\n"
       "print(tau_value)\n"
+      "print(phi_value)\n"
       "print(e_value)\n"
       "print(factorial_zero)\n"
       "print(factorial_int)\n"
@@ -889,6 +892,7 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *sign_zero;
   const graphion_runtime_value *pi_value;
   const graphion_runtime_value *tau_value;
+  const graphion_runtime_value *phi_value;
   const graphion_runtime_value *e_value;
   const graphion_runtime_value *nan_value;
   const graphion_runtime_value *inf_value;
@@ -1089,6 +1093,7 @@ int test_gion_arithmetic_expressions(void) {
   sign_zero = graphion_runtime_scope_find(&scope, "sign_zero");
   pi_value = graphion_runtime_scope_find(&scope, "pi_value");
   tau_value = graphion_runtime_scope_find(&scope, "tau_value");
+  phi_value = graphion_runtime_scope_find(&scope, "phi_value");
   e_value = graphion_runtime_scope_find(&scope, "e_value");
   nan_value = graphion_runtime_scope_find(&scope, "nan_value");
   inf_value = graphion_runtime_scope_find(&scope, "inf_value");
@@ -1842,6 +1847,10 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24315;
   }
+  if (phi_value == NULL || phi_value->kind != GVM_VALUE_FLOAT || phi_value->as.float_value != 1.61803398874989484820) {
+    remove(path);
+    return 24316;
+  }
   if (e_value == NULL || e_value->kind != GVM_VALUE_FLOAT || e_value->as.float_value != 2.71828182845904523536) {
     remove(path);
     return 2432;
@@ -1901,7 +1910,7 @@ int test_gion_arithmetic_expressions(void) {
   }
   remove(path);
   normalize_text_newlines(output);
-  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
+  if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
     return 29;
   }
   return 0;

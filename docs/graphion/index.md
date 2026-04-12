@@ -35,6 +35,7 @@ Implemented today:
 - numeric constants:
   - `pi`
   - `tau`
+  - `phi`
   - `e`
   - `nan`
   - `inf`
@@ -96,7 +97,7 @@ Use the types page when you need:
 - the current scalar value kinds
 - literal syntax
 - `bits` width basics
-- built-in constants such as `pi`, `tau`, `e`, `nan`, and `inf`
+- built-in constants such as `pi`, `tau`, `phi`, `e`, `nan`, and `inf`
 
 ## Current Limits
 

@@ -212,7 +212,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `gamma(x)`
 - [x] builtin `lgamma(x)`
 - [x] constant `tau`
-- [ ] constant `phi`
+- [x] constant `phi`
 
 Future additions gated by other features:
 
