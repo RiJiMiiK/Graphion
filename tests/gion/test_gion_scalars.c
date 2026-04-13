@@ -355,7 +355,7 @@ int test_gion_assignment_syntax_errors(void) {
 }
 
 int test_gion_arithmetic_expressions(void) {
-  const char *source =
+  const char *source_parts[] = {
       "base = 8\n"
       "sum = 40 + 2\n"
       "mixed = 1 + 2 * 3\n"
@@ -488,7 +488,7 @@ int test_gion_arithmetic_expressions(void) {
       "gamma_half = gamma(0.5)\n"
       "lgamma_one = lgamma(1)\n"
       "lgamma_five = lgamma(5)\n"
-      "lgamma_half = lgamma(0.5)\n"
+      "lgamma_half = lgamma(0.5)\n",
       "exp_int = exp(1)\n"
       "exp_float = exp(0.0)\n"
       "exp_expr = exp(1 + 1)\n"
@@ -671,7 +671,7 @@ int test_gion_arithmetic_expressions(void) {
       "print(gamma_half)\n"
       "print(lgamma_one)\n"
       "print(lgamma_five)\n"
-      "print(lgamma_half)\n"
+      "print(lgamma_half)\n",
       "print(exp_int)\n"
       "print(exp_float)\n"
       "print(exp_expr)\n"
@@ -723,9 +723,13 @@ int test_gion_arithmetic_expressions(void) {
       "print(modulo_float)\n"
       "print(3 + 4 * 2)\n"
       "print((3 + 4) * 2)\n"
-      "print(10 % 4)\n";
+      "print(10 % 4)\n",
+  };
   const char *path = "gion_arithmetic_expressions.txt";
+  char source[12288];
   char output[3072];
+  size_t source_len = 0U;
+  size_t i;
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *sum;
@@ -910,6 +914,17 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *modulo_float;
   FILE *fp = NULL;
   int rc;
+
+  source[0] = '\0';
+  for (i = 0U; i < (sizeof(source_parts) / sizeof(source_parts[0])); ++i) {
+    size_t part_len = strlen(source_parts[i]);
+    if (source_len + part_len + 1U > sizeof(source)) {
+      return 250;
+    }
+    memcpy(source + source_len, source_parts[i], part_len);
+    source_len += part_len;
+    source[source_len] = '\0';
+  }
 
   graphion_runtime_scope_init(&scope);
 #if defined(_MSC_VER)
