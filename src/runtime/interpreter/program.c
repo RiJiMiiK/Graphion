@@ -325,7 +325,6 @@ void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
   scope->globals = NULL;
   scope->global_count = 0U;
   scope->global_capacity = 0U;
-  (void)graphion_runtime_scope_reserve_globals(scope, GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY, 1U, NULL);
 }
 
 void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
@@ -365,7 +364,6 @@ void graphion_runtime_program_init(graphion_runtime_program *program) {
   program->global_capacity = 0U;
   program->const_count = 0U;
   program->program_len = 0U;
-  (void)graphion_runtime_program_reserve_globals(program, GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY, 1U, NULL);
   for (i = 0U; i < GRAPHION_RUNTIME_CONST_MAX; ++i) {
     program->owned_const_strings[i] = NULL;
     vm_value_set_none(&program->const_pool[i]);
