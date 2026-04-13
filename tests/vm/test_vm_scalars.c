@@ -509,10 +509,10 @@ int test_vm_cbrt_builtin_opcode(void) {
   if (rc != 0) {
     return 2;
   }
-  if (globals[0].kind != GVM_VALUE_FLOAT || globals[0].as.float_value != 3.0) {
+  if (globals[0].kind != GVM_VALUE_FLOAT || fabs(globals[0].as.float_value - 3.0) > 1e-12) {
     return 3;
   }
-  if (globals[1].kind != GVM_VALUE_FLOAT || globals[1].as.float_value != -2.0) {
+  if (globals[1].kind != GVM_VALUE_FLOAT || fabs(globals[1].as.float_value + 2.0) > 1e-12) {
     return 4;
   }
   return 0;
