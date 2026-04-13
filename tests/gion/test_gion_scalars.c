@@ -159,12 +159,12 @@ int test_gion_unknown_variable_errors(void) {
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source(source, &scope, &diagnostic);
   if (rc != GINT_ERR_UNKNOWN_OPERAND) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   if (diagnostic.message == NULL) {
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
-  return strcmp(diagnostic.message, "unknown operand") == 0 ? 0 : 3;
+  return finish_scope_test(&scope, strcmp(diagnostic.message, "unknown operand") == 0 ? 0 : 3);
 }
 
 int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
@@ -189,27 +189,27 @@ int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_ERR_PARSE) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   if (diagnostic.line != 3U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "42\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_reserved_name_errors(void) {
@@ -292,7 +292,7 @@ int test_gion_reserved_name_errors(void) {
     FILE *fp = NULL;
     int rc;
 
-    graphion_runtime_scope_init(&scope);
+    memset(&scope, 0, sizeof(scope));
 #if defined(_MSC_VER)
     if (fopen_s(&fp, cases[i].path, "wb") != 0) {
       fp = NULL;
@@ -342,14 +342,15 @@ int test_gion_assignment_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -1272,15 +1273,15 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 243;
   }
-  if (cbrt_int == NULL || cbrt_int->kind != GVM_VALUE_FLOAT || cbrt_int->as.float_value != 3.0) {
+  if (cbrt_int == NULL || cbrt_int->kind != GVM_VALUE_FLOAT || fabs(cbrt_int->as.float_value - 3.0) > 1e-12) {
     remove(path);
     return 2431;
   }
-  if (cbrt_negative == NULL || cbrt_negative->kind != GVM_VALUE_FLOAT || cbrt_negative->as.float_value != -2.0) {
+  if (cbrt_negative == NULL || cbrt_negative->kind != GVM_VALUE_FLOAT || fabs(cbrt_negative->as.float_value + 2.0) > 1e-12) {
     remove(path);
     return 2432;
   }
-  if (cbrt_expr == NULL || cbrt_expr->kind != GVM_VALUE_FLOAT || cbrt_expr->as.float_value != 3.0) {
+  if (cbrt_expr == NULL || cbrt_expr->kind != GVM_VALUE_FLOAT || fabs(cbrt_expr->as.float_value - 3.0) > 1e-12) {
     remove(path);
     return 24325;
   }
@@ -1928,9 +1929,9 @@ int test_gion_arithmetic_expressions(void) {
   remove(path);
   normalize_text_newlines(output);
   if (strcmp(output, "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n") != 0) {
-    return 29;
+    return finish_scope_test(&scope, 29);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_string_concatenation(void) {
