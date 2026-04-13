@@ -1454,9 +1454,6 @@ int op_trunc_builtin(graphion_vm *vm, const graphion_insn *in) {
     return GVM_OK;
   }
   truncated = trunc(value_f);
-  if (truncated == 0.0) {
-    truncated = 0.0;
-  }
   vm_value_set_float(&vm->regs[in->a], truncated);
   return GVM_OK;
 }
@@ -1476,9 +1473,6 @@ int op_fract_builtin(graphion_vm *vm, const graphion_insn *in) {
 
   vm_free_owned_reg_string(vm, in->a);
   fraction = value_f - floor(value_f);
-  if (fraction == 0.0) {
-    fraction = 0.0;
-  }
   vm_value_set_float(&vm->regs[in->a], fraction);
   return GVM_OK;
 }

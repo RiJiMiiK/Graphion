@@ -53,9 +53,6 @@ void vm_value_set_float(graphion_vm_value *value, double float_value) {
   if (value == NULL) {
     return;
   }
-  if (float_value == 0.0) {
-    float_value = 0.0;
-  }
   value->kind = GVM_VALUE_FLOAT;
   value->as.float_value = float_value;
 }
