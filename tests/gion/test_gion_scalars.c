@@ -2250,23 +2250,23 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   remove(path);
   if (strcmp(output, "12\n2\n26\n9\n4\n1.5\n-5\n-10\n20\n14\n12\n18\n") != 0) {
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_arithmetic_runtime_errors(void) {
@@ -2379,11 +2379,12 @@ int test_gion_arithmetic_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -2553,11 +2554,12 @@ int test_gion_arithmetic_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -2629,11 +2631,12 @@ int test_gion_capacity_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(source, &scope, &diagnostic);
     if (rc != GINT_ERR_CAPACITY) {
-      return 1;
+      return finish_scope_test(&scope, 1);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, "identifier too long") != 0) {
-      return 2;
+      return finish_scope_test(&scope, 2);
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -2659,11 +2662,12 @@ int test_gion_capacity_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(source, &scope, &diagnostic);
     if (rc != GINT_ERR_CAPACITY) {
-      return 10;
+      return finish_scope_test(&scope, 10);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, "source line too long") != 0) {
-      return 11;
+      return finish_scope_test(&scope, 11);
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -2689,7 +2693,7 @@ int test_gion_capacity_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(source, &scope, &diagnostic);
     if (rc != GINT_OK) {
-      return 22;
+      return finish_scope_test(&scope, 22);
     }
     if (scope.global_count != 160U) {
       graphion_runtime_scope_dispose(&scope);

@@ -7,6 +7,22 @@ static int scope_sync_to_program(graphion_runtime_scope *scope,
                                  unsigned int line,
                                  graphion_runtime_diagnostic *diagnostic);
 
+static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
+  static graphion_vm_value empty_globals[1];
+  static char *empty_global_owners[1];
+
+  if (vm == NULL || scope == NULL) {
+    return;
+  }
+
+  graphion_vm_bind_globals(vm,
+                           scope->global_count > 0U ? scope->globals : empty_globals,
+                           scope->global_count);
+  graphion_vm_bind_global_string_owners(vm,
+                                        scope->global_count > 0U ? scope->owned_string_values : empty_global_owners,
+                                        scope->global_count);
+}
+
 static int execute_condition_program(const graphion_runtime_program *program,
                                      graphion_runtime_scope *scope,
                                      uint8_t reg_index,
@@ -24,8 +40,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
   }
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
-  graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);
-  graphion_vm_bind_global_string_owners(&vm, scope->owned_string_values, scope->global_count);
+  bind_scope_to_vm(&vm, scope);
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
@@ -754,8 +769,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   }
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
-  graphion_vm_bind_globals(&vm, scope->globals, scope->global_count);
-  graphion_vm_bind_global_string_owners(&vm, scope->owned_string_values, scope->global_count);
+  bind_scope_to_vm(&vm, scope);
   if (output != NULL) {
     graphion_vm_bind_output_sink(&vm, output);
   }

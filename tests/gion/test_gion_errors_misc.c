@@ -27,14 +27,15 @@ int test_gion_print_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != cases[i].expected_rc) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -45,14 +46,15 @@ int test_gion_print_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source("count = 42\nprint(count\n", &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return 100;
+      return finish_scope_test(&scope, 100);
     }
     if (diagnostic.line != 2U) {
-      return 101;
+      return finish_scope_test(&scope, 101);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected ')' after print argument") != 0) {
-      return 102;
+      return finish_scope_test(&scope, 102);
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -63,14 +65,15 @@ int test_gion_print_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source("count = 42\nprint(count) extra\n", &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return 110;
+      return finish_scope_test(&scope, 110);
     }
     if (diagnostic.line != 2U) {
-      return 111;
+      return finish_scope_test(&scope, 111);
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, "unexpected trailing tokens after print") != 0) {
-      return 112;
+      return finish_scope_test(&scope, 112);
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   return 0;
@@ -94,14 +97,15 @@ int test_gion_unterminated_string_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -124,14 +128,15 @@ int test_gion_invalid_identifier_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -154,14 +159,15 @@ int test_gion_trailing_token_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -174,15 +180,15 @@ int test_gion_reference_before_definition_errors(void) {
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source("copy = count\ncount = 42\n", &scope, &diagnostic);
   if (rc != GINT_ERR_UNKNOWN_OPERAND) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   if (diagnostic.line != 1U || diagnostic.column != 1U) {
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown operand") != 0) {
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_reassignment_and_type_change(void) {
@@ -269,28 +275,28 @@ int test_gion_copy_chains_and_blank_lines(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   c = graphion_runtime_scope_find(&scope, "c");
   if (c == NULL || c->kind != GVM_VALUE_INT || c->as.int_value != 1) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "1\n1\n1\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_late_line_error_diagnostics(void) {
@@ -307,15 +313,15 @@ int test_gion_late_line_error_diagnostics(void) {
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source(source, &scope, &diagnostic);
   if (rc != GINT_ERR_PARSE) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   if (diagnostic.line != 5U || diagnostic.column != 1U) {
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
   if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected scalar literal") != 0) {
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_unexpected_indentation_errors(void) {
@@ -335,14 +341,15 @@ int test_gion_unexpected_indentation_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(invalid_cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.line != 1U || diagnostic.column != 1U) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, "unexpected indentation") != 0) {
-      return (int)(3 + i * 10U);
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -354,12 +361,13 @@ int test_gion_unexpected_indentation_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source("\t  \ncount = 42\nprint(count)\n", &scope, &diagnostic);
     if (rc != GINT_OK) {
-      return 100;
+      return finish_scope_test(&scope, 100);
     }
     count = graphion_runtime_scope_find(&scope, "count");
     if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
-      return 101;
+      return finish_scope_test(&scope, 101);
     }
+    graphion_runtime_scope_dispose(&scope);
   }
 
   {
@@ -371,11 +379,11 @@ int test_gion_unexpected_indentation_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source("flag = true\nif flag:\n    count = 42\nprint(count)\n", &scope, &diagnostic);
     if (rc != GINT_OK) {
-      return 110;
+      return finish_scope_test(&scope, 110);
     }
     count = graphion_runtime_scope_find(&scope, "count");
     if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
-      return 111;
+      return finish_scope_test(&scope, 111);
     }
     graphion_runtime_scope_dispose(&scope);
   }

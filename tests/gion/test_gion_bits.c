@@ -31,13 +31,13 @@ int test_gion_bits_literals(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   bits_two = graphion_runtime_scope_find(&scope, "bits_two");
@@ -46,27 +46,27 @@ int test_gion_bits_literals(void) {
 
   if (bits_two == NULL || bits_two->kind != GVM_VALUE_BITS || bits_two->reserved[0] != 2U || (uint64_t)bits_two->as.int_value != 2U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (bits_four == NULL || bits_four->kind != GVM_VALUE_BITS || bits_four->reserved[0] != 4U ||
       (uint64_t)bits_four->as.int_value != 2U) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (bits_copy == NULL || bits_copy->kind != GVM_VALUE_BITS || bits_copy->reserved[0] != 4U ||
       (uint64_t)bits_copy->as.int_value != 2U) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
   remove(path);
   if (strcmp(output, "0b10\n0b0010\n0b0010\n") != 0) {
-    return 7;
+    return finish_scope_test(&scope, 7);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_literal_syntax_errors(void) {
@@ -88,11 +88,12 @@ int test_gion_bits_literal_syntax_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_PARSE) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -121,34 +122,34 @@ int test_gion_bits_equality(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   same_value = graphion_runtime_scope_find(&scope, "same_value");
   same_copy = graphion_runtime_scope_find(&scope, "same_copy");
   if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 1) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (same_copy == NULL || same_copy->kind != GVM_VALUE_BOOL || same_copy->as.bool_value != 1) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "true\ntrue\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_inequality(void) {
@@ -175,34 +176,34 @@ int test_gion_bits_inequality(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   different_value = graphion_runtime_scope_find(&scope, "different_value");
   same_value = graphion_runtime_scope_find(&scope, "same_value");
   if (different_value == NULL || different_value->kind != GVM_VALUE_BOOL || different_value->as.bool_value != 1) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (same_value == NULL || same_value->kind != GVM_VALUE_BOOL || same_value->as.bool_value != 0) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "true\nfalse\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_mixed_type_errors(void) {
@@ -232,11 +233,12 @@ int test_gion_bits_mixed_type_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -262,30 +264,30 @@ int test_gion_bits_and(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   masked_value = graphion_runtime_scope_find(&scope, "masked_value");
   if (masked_value == NULL || masked_value->kind != GVM_VALUE_BITS || masked_value->reserved[0] != 4U ||
       (uint64_t)masked_value->as.int_value != 8U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "0b1000\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_and_runtime_errors(void) {
@@ -306,11 +308,12 @@ int test_gion_bits_and_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -336,30 +339,30 @@ int test_gion_bits_or(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   merged_value = graphion_runtime_scope_find(&scope, "merged_value");
   if (merged_value == NULL || merged_value->kind != GVM_VALUE_BITS || merged_value->reserved[0] != 4U ||
       (uint64_t)merged_value->as.int_value != 14U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "0b1110\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_or_runtime_errors(void) {
@@ -380,11 +383,12 @@ int test_gion_bits_or_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -410,30 +414,30 @@ int test_gion_bits_xor(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   xor_value = graphion_runtime_scope_find(&scope, "xor_value");
   if (xor_value == NULL || xor_value->kind != GVM_VALUE_BITS || xor_value->reserved[0] != 4U ||
       (uint64_t)xor_value->as.int_value != 6U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   remove(path);
   if (strcmp(output, "0b0110\n") != 0) {
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_xor_runtime_errors(void) {
@@ -454,11 +458,12 @@ int test_gion_bits_xor_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -487,13 +492,13 @@ int test_gion_bits_not(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   not_wide = graphion_runtime_scope_find(&scope, "not_wide");
@@ -501,22 +506,22 @@ int test_gion_bits_not(void) {
   if (not_wide == NULL || not_wide->kind != GVM_VALUE_BITS || not_wide->reserved[0] != 4U ||
       (uint64_t)not_wide->as.int_value != 13U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (not_short == NULL || not_short->kind != GVM_VALUE_BITS || not_short->reserved[0] != 2U ||
       (uint64_t)not_short->as.int_value != 1U) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "0b1101\n0b01\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_not_runtime_errors(void) {
@@ -527,12 +532,12 @@ int test_gion_bits_not_runtime_errors(void) {
   graphion_runtime_scope_init(&scope);
   rc = graphion_interpret_source("value = ~1\n", &scope, &diagnostic);
   if (rc != GINT_ERR_RUN) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   if (diagnostic.message == NULL || strcmp(diagnostic.message, "incompatible operand types") != 0) {
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_shl(void) {
@@ -559,13 +564,13 @@ int test_gion_bits_shl(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
@@ -573,22 +578,22 @@ int test_gion_bits_shl(void) {
   if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
       (uint64_t)shifted_value->as.int_value != 6U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (truncated_value == NULL || truncated_value->kind != GVM_VALUE_BITS || truncated_value->reserved[0] != 4U ||
       (uint64_t)truncated_value->as.int_value != 14U) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "0b0110\n0b1110\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_shl_runtime_errors(void) {
@@ -610,11 +615,12 @@ int test_gion_bits_shl_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
@@ -643,13 +649,13 @@ int test_gion_bits_shr(void) {
   fp = fopen(path, "wb");
 #endif
   if (fp == NULL) {
-    return 1;
+    return finish_scope_test(&scope, 1);
   }
   rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
   fclose(fp);
   if (rc != GINT_OK) {
     remove(path);
-    return 2;
+    return finish_scope_test(&scope, 2);
   }
 
   shifted_value = graphion_runtime_scope_find(&scope, "shifted_value");
@@ -657,22 +663,22 @@ int test_gion_bits_shr(void) {
   if (shifted_value == NULL || shifted_value->kind != GVM_VALUE_BITS || shifted_value->reserved[0] != 4U ||
       (uint64_t)shifted_value->as.int_value != 5U) {
     remove(path);
-    return 3;
+    return finish_scope_test(&scope, 3);
   }
   if (cleared_value == NULL || cleared_value->kind != GVM_VALUE_BITS || cleared_value->reserved[0] != 4U ||
       (uint64_t)cleared_value->as.int_value != 0U) {
     remove(path);
-    return 4;
+    return finish_scope_test(&scope, 4);
   }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
-    return 5;
+    return finish_scope_test(&scope, 5);
   }
   remove(path);
   if (strcmp(output, "0b0101\n0b0000\n") != 0) {
-    return 6;
+    return finish_scope_test(&scope, 6);
   }
-  return 0;
+  return finish_scope_test(&scope, 0);
 }
 
 int test_gion_bits_shr_runtime_errors(void) {
@@ -694,11 +700,12 @@ int test_gion_bits_shr_runtime_errors(void) {
     graphion_runtime_scope_init(&scope);
     rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
     if (rc != GINT_ERR_RUN) {
-      return (int)(1 + i * 10U);
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
-      return (int)(2 + i * 10U);
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
+    graphion_runtime_scope_dispose(&scope);
   }
   return 0;
 }
