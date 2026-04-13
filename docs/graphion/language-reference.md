@@ -2,13 +2,26 @@
 
 This reference describes the currently implemented `.gion` language subset.
 
-## Statements
+Use this page when you need exact rules rather than a guided introduction.
+
+Quick orientation:
+
+- source structure: statements, names, assignment
+- control flow: `if`, ternary expressions, `match`
+- expressions and operators: see [Operators](operators.md)
+- runtime library: builtins and constants
+- errors: current high-level user-visible error classes
+
+## Source Structure
+
+### Statements
 
 Current supported top-level statements:
 
 - assignment
 - compound assignment
 - `if` / `elif` / `else`
+- `match`
 - `print(...)`
 
 Examples:
@@ -27,17 +40,13 @@ print(count)
 
 Unsupported statements are parse errors in the current `.gion` frontend path.
 
-## Values
+### Values
 
-Current scalar value kinds:
+Graphion currently exposes scalar values only.
 
-- `int`
-- `float`
-- `bool`
-- `string`
-- `bits`
+For the current scalar types, literal forms, and built-in numeric constants, see [Types](types.md).
 
-## Identifiers
+### Identifiers
 
 Identifiers:
 
@@ -50,77 +59,91 @@ Examples:
 - `_tmp`
 - `alpha_1`
 
-## Reserved Names
+### Reserved Names
 
 These names are currently reserved and cannot be assigned:
 
 - `print`
 - `true`
 - `false`
+- `pi`
+- `tau`
+- `phi`
+- `e`
+- `nan`
+- `inf`
 - `abs`
 - `min`
 - `max`
 - `clamp`
 - `sqrt`
+- `cbrt`
+- `sin`
+- `sinh`
+- `asinh`
+- `acosh`
+- `cosh`
+- `cos`
+- `tan`
+- `tanh`
+- `atanh`
+- `asin`
+- `acos`
+- `atan`
+- `atan2`
+- `hypot`
+- `copysign`
+- `fma`
+- `fdim`
+- `remainder`
+- `rint`
+- `degrees`
+- `radians`
+- `isnan`
+- `isinf`
+- `isfinite`
+- `expm1`
+- `log1p`
+- `erf`
+- `erfc`
+- `gamma`
+- `lgamma`
+- `fract`
+- `exp`
+- `ln`
+- `log`
+- `log10`
+- `log2`
+- `floor`
+- `ceil`
+- `round`
+- `trunc`
+- `sign`
+- `len`
 - `if`
 - `elif`
 - `else`
 - `and`
+- `nand`
 - `or`
+- `nor`
 - `not`
 - `match`
 - `default`
 
-## Literals
+### Literals
 
-### Integers
+Graphion currently supports literals for:
 
-```gion
-count = 42
-negative = -7
-```
+- `int`
+- `float`
+- `bool`
+- `string`
+- `bits`
 
-### Floats
+For the exact literal forms and examples, see [Types](types.md).
 
-```gion
-ratio = 3.5
-negative_ratio = -2.25
-```
-
-### Booleans
-
-```gion
-ready = true
-failed = false
-```
-
-### Strings
-
-```gion
-name = "graphion"
-```
-
-Current string literals are double-quoted.
-
-### Bits
-
-```gion
-short_bits = 0b10
-wide_bits = 0b0010
-```
-
-Current `bits` literals:
-
-- start with `0b`
-- require one or more binary digits after the prefix
-- preserve the written width
-
-That means:
-
-- `0b10` has width `2`
-- `0b0010` has width `4`
-
-## Assignment
+### Assignment
 
 Simple assignment:
 
@@ -144,7 +167,9 @@ count **= 2
 
 Compound assignment requires the target variable to already exist.
 
-## Conditional Statements
+## Control Flow
+
+### Conditional Statements
 
 Graphion currently supports Python-style conditional blocks:
 
@@ -173,7 +198,7 @@ else:
     message = "other"
 ```
 
-### Condition Rules
+#### Condition Rules
 
 Current conditions must evaluate to:
 
@@ -229,7 +254,7 @@ These currently fail with:
 `if condition must be boolean or 0/1`
 : runtime error for conditions outside the current accepted boolean subset
 
-### Block Rules
+#### Block Rules
 
 Conditional blocks currently use indentation-significant syntax.
 
@@ -261,7 +286,7 @@ else:
     print("bad")
 ```
 
-### Nested Conditionals
+#### Nested Conditionals
 
 You can place an `if` block inside another `if` block.
 
@@ -285,7 +310,7 @@ In this example:
 
 That binding is determined by indentation, not by the nearest visible `if` keyword alone.
 
-### Multiline Conditions
+#### Multiline Conditions
 
 Long conditions can span multiple physical lines, but only when the full condition is wrapped in grouping parentheses.
 
@@ -314,7 +339,7 @@ if ready and
     print("bad")
 ```
 
-### Ternary Expressions
+#### Ternary Expressions
 
 Graphion also supports inline conditional expressions in the form:
 
@@ -358,7 +383,7 @@ if ready
 else "not ready"
 ```
 
-### Reading Tips
+#### Reading Tips
 
 To keep conditions and ternary expressions readable:
 
@@ -384,7 +409,7 @@ label = "outer" if ready else "inner" if fallback else "none"
 
 The last form is valid, but a block is usually easier to read once nested ternary logic grows.
 
-### Conditional Precedence
+#### Conditional Precedence
 
 When several conditional operators appear in the same expression, Graphion reads them in this order:
 
@@ -429,7 +454,7 @@ is read as:
 "ready" if (true or (false and false)) else "fallback"
 ```
 
-### Match Blocks
+#### Match Blocks
 
 Graphion also supports value-based branching with `match`:
 
@@ -484,7 +509,7 @@ match value:
         print("y")
 ```
 
-## Comments
+## Comments And Directives
 
 Graphion currently supports two comment forms:
 
@@ -557,640 +582,20 @@ The current diagnostic is:
 `unterminated block comment`
 : parse error when `/*` does not have a matching closing `*/`
 
-## Arithmetic Operators
+## Expressions And Operators
 
-Supported arithmetic operators:
+See [Operators](operators.md) for:
 
-- `+`
-- `-`
-- `*`
-- `/`
-- `//`
-- `%`
-- `**`
+- arithmetic operators
+- comparisons
+- boolean logic
+- precedence and grouping
+- `bits` operator semantics
+- string concatenation and `print(...)`
 
-### Operator Notes
+## Runtime Library
 
-`/`
-: division, produces a float result
-
-`//`
-: floor division
-
-`%`
-: modulo
-
-`**`
-: power, right-associative
-
-Unary minus is also supported on variables and grouped expressions, for example:
-
-```gion
-count = 5
-neg_count = -count
-neg_group = -(1 + 2)
-```
-
-## Comparison Operators
-
-Currently supported comparison operators:
-
-- `==`
-- `!=`
-- `<`
-- `<=`
-- `>`
-- `>=`
-
-`==`, `!=`, `<`, `<=`, `>`, and `>=` return a `bool`.
-
-Examples:
-
-```gion
-same_int = 42 == 42
-same_number = 42 == 42.0
-same_bool_bridge = 1 == true
-same_false_bridge = 0 == false
-same_text = "ok" == "ok"
-different_int = 42 != 41
-different_text = "ok" != "no"
-smaller_number = 2 < 3
-same_or_smaller = 3 <= 3
-greater_number = 4 > 3
-same_or_greater = 4 >= 4
-```
-
-Current comparison semantics:
-
-- `int == int`
-- `int == float`
-- `float == float`
-- `int == bool` only when the integer is `0` or `1`
-- `bool == int` only when the integer is `0` or `1`
-- `bool == bool`
-- `string == string`
-
-`1 == true`, `true == 1`, `0 == false`, and `false == 0` currently return `true`.
-
-These are currently runtime errors:
-
-- `2 == true`
-- `true == 2`
-- `1.0 == true`
-- `"1" == 1`
-- `"true" == true`
-
-`!=` follows the same type rules as `==`, but negates the final boolean result.
-
-`<`, `<=`, `>`, and `>=` currently support numeric comparisons only:
-
-- `int < int`
-- `int < float`
-- `float < float`
-
-`<=`, `>`, and `>=` follow the same numeric-only rule.
-
-Using `<`, `<=`, `>`, or `>=` with `bool` or `string` currently raises a runtime error.
-
-## Boolean Logic
-
-Currently supported boolean logic operators:
-
-- `and`
-- `nand`
-- `or`
-- `nor`
-- `not`
-
-`and`, `nand`, `or`, `nor`, and `not` return a `bool`.
-
-## Truth Rules
-
-Graphion currently uses a strict boolean subset for boolean logic and conditions:
-
-- `true` is true
-- `false` is false
-- integer `1` is treated as true
-- integer `0` is treated as false
-- other integers are rejected
-- `float` values are rejected
-- `string` values are rejected
-
-This rule currently applies to:
-
-- `if` / `elif` conditions
-- `not`
-- `and` / `nand`
-- `or` / `nor`
-
-Examples:
-
-```gion
-if 1:
-    print("true")
-
-if 0:
-    print("bad")
-else:
-    print("false")
-
-print(not 1)
-print(false nor 0)
-```
-
-### Truth Tables
-
-`and`
-
-| left | right | result |
-| --- | --- | --- |
-| `true` | `true` | `true` |
-| `true` | `false` | `false` |
-| `false` | `true` | `false` |
-| `false` | `false` | `false` |
-
-`nand`
-
-| left | right | result |
-| --- | --- | --- |
-| `true` | `true` | `false` |
-| `true` | `false` | `true` |
-| `false` | `true` | `true` |
-| `false` | `false` | `true` |
-
-`or`
-
-| left | right | result |
-| --- | --- | --- |
-| `true` | `true` | `true` |
-| `true` | `false` | `true` |
-| `false` | `true` | `true` |
-| `false` | `false` | `false` |
-
-`nor`
-
-| left | right | result |
-| --- | --- | --- |
-| `true` | `true` | `false` |
-| `true` | `false` | `false` |
-| `false` | `true` | `false` |
-| `false` | `false` | `true` |
-
-`not`
-
-| value | result |
-| --- | --- |
-| `true` | `false` |
-| `false` | `true` |
-
-Examples:
-
-```gion
-both_true = true and true
-bridge_true = 1 and true
-bridge_false = false and 1
-all_ready = true and 1 and 2 < 3
-not_both_ready = true nand 1
-any_ready = false or 1
-none_ready = false nor 0
-any_path = false or 1 == 1 or false
-inverted_ready = not false
-inverted_path = not (false or 0)
-
-print(both_true)
-print(bridge_true)
-print(bridge_false)
-print(all_ready)
-print(not_both_ready)
-print(any_ready)
-print(none_ready)
-print(any_path)
-print(inverted_ready)
-print(inverted_path)
-```
-
-`and` can be chained multiple times.
-
-This:
-
-```gion
-true and 1 and 2 < 3
-```
-
-is currently evaluated left to right as repeated `and` operations, with comparisons evaluated before `and`.
-
-`nand` currently follows the same precedence and type rules as `and`, but inverts the final boolean result.
-
-```gion
-true nand 1
-```
-
-currently evaluates to:
-
-```gion
-false
-```
-
-`or` can also be chained multiple times.
-
-This:
-
-```gion
-false or 1 == 1 or false
-```
-
-is currently evaluated left to right as repeated `or` operations, with comparisons evaluated before `or`.
-
-`nor` currently follows the same precedence and type rules as `or`, but inverts the final boolean result.
-
-```gion
-false nor 0
-```
-
-currently evaluates to:
-
-```gion
-true
-```
-
-When `and` / `nand` and `or` / `nor` are mixed, `and` / `nand` currently bind tighter than `or` / `nor`.
-
-So:
-
-```gion
-true or true nand true
-```
-
-is currently interpreted as:
-
-```gion
-true or (true nand true)
-```
-
-`not` currently binds tighter than both `and` and `or`.
-
-```gion
-not false and false
-```
-
-is currently interpreted as:
-
-```gion
-(not false) and false
-```
-
-Current `and` rules:
-
-- `bool and bool`
-- `int and bool` only when the integer is `0` or `1`
-- `bool and int` only when the integer is `0` or `1`
-- `int and int` only when both integers are `0` or `1`
-
-These are currently runtime errors when the invalid side must actually be evaluated:
-
-- `2 and true`
-- `true and 2`
-- `1.0 and true`
-- `"x" and true`
-
-These currently succeed because the left side short-circuits first:
-
-- `false and 2`
-- `0 and "x"`
-
-`or` currently follows the same type rules as `and`, but returns true when either side is true.
-
-`nand` currently follows the same type rules as `and`, but returns the negation of `and`.
-
-These are currently runtime errors when the invalid side must actually be evaluated:
-
-- `2 nand true`
-- `true nand 2`
-- `1.0 nand true`
-- `"x" nand true`
-
-These currently succeed because the left side short-circuits first:
-
-- `false nand 2`
-- `0 nand "x"`
-
-These are currently runtime errors when the invalid side must actually be evaluated:
-
-- `2 or true`
-- `false or 2`
-- `1.0 or true`
-- `"x" or true`
-
-These currently succeed because the left side short-circuits first:
-
-- `true or 2`
-- `1 or "x"`
-
-`nor` currently follows the same type rules as `or`, but returns the negation of `or`.
-
-These are currently runtime errors when the invalid side must actually be evaluated:
-
-- `2 nor false`
-- `false nor 2`
-- `1.0 nor false`
-- `"x" nor false`
-
-These currently succeed because the left side short-circuits first:
-
-- `true nor 2`
-- `1 nor "x"`
-
-`not` currently accepts:
-
-- `bool`
-- integer `0` / `1`
-
-These are currently runtime errors:
-
-- `not 2`
-- `not 1.0`
-- `not "x"`
-
-Current evaluation note:
-
-- `not` evaluates its operand and negates the resulting boolean value
-- `and` short-circuits when the left side is `false` or `0`
-- `nand` short-circuits when the left side is `false` or `0`
-- `or` short-circuits when the left side is `true` or `1`
-- `nor` short-circuits when the left side is `true` or `1`
-
-## Precedence
-
-Current precedence order:
-
-1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `len(...)`
-3. `**`
-4. `*`, `/`, `//`, `%`
-5. `+`, `-`
-6. `==`, `!=`, `<`, `<=`, `>`, `>=`
-7. `not`
-8. `and`, `nand`
-9. `or`, `nor`
-
-Examples:
-
-```gion
-value = 1 + 2 * 3
-```
-
-is interpreted as:
-
-```gion
-value = 1 + (2 * 3)
-```
-
-And:
-
-```gion
-value = 2 ** 3 ** 2
-```
-
-is interpreted as:
-
-```gion
-value = 2 ** (3 ** 2)
-```
-
-## Parentheses
-
-Parentheses currently group arithmetic expressions:
-
-```gion
-grouped = (1 + 2) * 3
-```
-
-This is the current implemented behavior.
-
-Tuple syntax is not part of the current documented language subset.
-
-## Bits
-
-Current `bits` support includes:
-
-- literals written as `0b...`
-- preserved width from literal spelling
-- `==`
-- `!=`
-- `&`
-- `|`
-- `^`
-- `~`
-- `<<` with an integer shift count
-- `>>` with an integer shift count
-- `&=` with another `bits` value of the same stored width
-- `|=` with another `bits` value of the same stored width
-- `^=` with another `bits` value of the same stored width
-- `<<=` with a non-negative `int` shift count
-- `>>=` with a non-negative `int` shift count
-
-Examples:
-
-```gion
-short_bits = 0b10
-wide_bits = 0b0010
-same_bits = 0b10 == 0b0010
-shifted_bits = 0b0011 << 1
-right_shifted_bits = 0b1010 >> 1
-```
-
-Current behavior:
-
-- `0b10` and `0b0010` print differently because width is preserved
-- `==` and `!=` compare normalized values, so leading zeroes do not affect equality
-- `&`, `|`, and `^` require both operands to be `bits`
-- `&`, `|`, and `^` currently require matching widths
-- `&=` follows the same width and type rules as `&`
-- `|=` follows the same width and type rules as `|`
-- `^=` follows the same width and type rules as `^`
-- `<<=` follows the same width, truncation, and shift-count rules as `<<`
-- `>>=` follows the same width, zero-fill, and shift-count rules as `>>`
-- `~` keeps the stored width
-- `<<` takes a `bits` value on the left and a non-negative `int` shift count on the right
-- `<<` keeps the stored width and truncates overflow back to that width
-- `>>` takes a `bits` value on the left and a non-negative `int` shift count on the right
-- `>>` keeps the stored width and shifts in zeroes from the left
-
-Current precedence for `bits` operators:
-
-1. grouping parentheses
-2. `~`
-3. `+` / `-` inside shift counts
-4. `<<` / `>>`
-5. `&`
-6. `|` / `^`
-7. comparisons
-
-Examples:
-
-```gion
-~0b0011 & 0b1111
-```
-
-is read as:
-
-```gion
-(~0b0011) & 0b1111
-```
-
-```gion
-0b0011 << 1 + 1
-```
-
-is read as:
-
-```gion
-0b0011 << (1 + 1)
-```
-
-```gion
-0b1111 >> 1 & 0b0111
-```
-
-is read as:
-
-```gion
-(0b1111 >> 1) & 0b0111
-```
-
-Current restrictions:
-
-- non-bitwise arithmetic on `bits` is rejected:
-  - `+`
-  - `-`
-  - `*`
-  - `/`
-  - `//`
-  - `%`
-  - `**`
-- ordered comparisons on `bits` are rejected:
-  - `<`
-  - `<=`
-  - `>`
-  - `>=`
-- boolean logic on `bits` is rejected:
-  - `and`
-  - `nand`
-  - `or`
-  - `nor`
-  - `not`
-- direct use of `bits` as an `if` condition is rejected
-- direct use of `bits` as a ternary condition is rejected
-
-Examples:
-
-```gion
-0b1100 & 0b1010
-```
-
-produces:
-
-```gion
-0b1000
-```
-
-```gion
-0b0011 << 1
-```
-
-produces:
-
-```gion
-0b0110
-```
-
-```gion
-0b1111 << 1
-```
-
-produces:
-
-```gion
-0b1110
-```
-
-```gion
-0b1010 >> 1
-```
-
-produces:
-
-```gion
-0b0101
-```
-
-These are currently runtime errors:
-
-- `0b10 & 0b0010`
-- `mask = 0b10` followed by `mask &= 0b0010`
-- `merge = 0b10` followed by `merge |= 0b0010`
-- `flip = 0b10` followed by `flip ^= 0b0010`
-- `shift = 0b10` followed by `shift <<= 0b0010`
-- `shift = 0b10` followed by `shift <<= 1.0`
-- `shift = 0b10` followed by `shift <<= -1`
-- `shift = 0b10` followed by `shift >>= 0b0010`
-- `shift = 0b10` followed by `shift >>= 1.0`
-- `shift = 0b10` followed by `shift >>= -1`
-- `0b10 | 0b0010`
-- `0b10 ^ 0b0010`
-- `0b10 << 0b0010`
-- `0b10 << 1.0`
-- `0b10 << -1`
-- `0b10 >> 0b0010`
-- `0b10 >> 1.0`
-- `0b10 >> -1`
-- `0b10 + 1`
-- `0b10 < 0b0010`
-- `0b10 and true`
-- `if 0b10:`
-
-Error wording:
-
-- invalid `bits` operators currently report `incompatible operand types`
-- invalid direct `if` conditions currently report `if condition must be boolean or 0/1`
-
-## Strings
-
-String concatenation currently supports:
-
-```gion
-message = "graph" + "ion"
-message += "!"
-```
-
-General mixed-type addition is not supported in assignment expressions.
-
-This is invalid:
-
-```gion
-value = "count=" + 7
-```
-
-## `print(...)`
-
-`print(...)` outputs a scalar value followed by a newline.
-
-Examples:
-
-```gion
-print(42)
-print("graphion")
-print(7 / 2)
-```
-
-Inside `print(...)`, string concatenation can coerce non-string scalar values into text:
-
-```gion
-count = 7
-print("count=" + count)
-```
-
-## Builtins
+### Builtins
 
 Current builtin functions:
 
@@ -1199,9 +604,64 @@ Current builtin functions:
 - `max(a, b)`
 - `clamp(x, lo, hi)`
 - `sqrt(x)`
+- `cbrt(x)`
+- `sin(x)`
+- `sinh(x)`
+- `asinh(x)`
+- `acosh(x)`
+- `cosh(x)`
+- `cos(x)`
+- `tan(x)`
+- `tanh(x)`
+- `atanh(x)`
+- `asin(x)`
+- `acos(x)`
+- `atan(x)`
+- `atan2(y, x)`
+- `hypot(x, y)`
+- `copysign(x, y)`
+- `fma(a, b, c)`
+- `fdim(x, y)`
+- `remainder(x, y)`
+- `rint(x)`
+- `degrees(x)`
+- `radians(x)`
+- `isnan(x)`
+- `isinf(x)`
+- `isfinite(x)`
+- `expm1(x)`
+- `log1p(x)`
+- `erf(x)`
+- `erfc(x)`
+- `gamma(x)`
+- `lgamma(x)`
+- `exp(x)`
+- `ln(x)`
+- `log(x, base)`
+- `log10(x)`
+- `log2(x)`
+- `floor(x)`
+- `ceil(x)`
+- `round(x)`
+- `trunc(x)`
+- `fract(x)`
+- `sign(x)`
 - `len(x)`
 
 See [Builtins](builtins.md).
+
+### Constants
+
+Current built-in scalar constants:
+
+- `pi`
+- `tau`
+- `phi`
+- `e`
+- `nan`
+- `inf`
+
+See [Types](types.md) for their current values and basic usage.
 
 ## Errors
 

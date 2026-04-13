@@ -1,39 +1,59 @@
 # Graphion User Guide
 
-This is the starting point for Graphion user documentation.
+This section documents the user-facing `.gion` language.
 
-Graphion is currently an early-stage language with a small but already usable subset:
+Use it in this order:
 
-- scalar assignments
-- variable copies
+1. [Tutorial](tutorial.md)
+2. [Types](types.md)
+3. [Operators](operators.md)
+4. [Language Reference](language-reference.md)
+5. [Builtins](builtins.md)
+
+That split is intentional:
+
+- the tutorial teaches by building small scripts step by step
+- the types page centralizes scalar values, literals, and built-in constants
+- the operators page centralizes precedence, arithmetic, comparisons, boolean logic, strings, and `bits`
+- the language reference states the exact rules of the currently implemented language
+- the builtins page is a focused catalog of callable builtins
+
+## Current Scope
+
+Graphion currently exposes a small but usable scalar language.
+
+Implemented today:
+
+- variable assignment and reuse
 - `print(...)`
-- scalar types:
+- scalar values:
   - `int`
   - `float`
   - `bool`
   - `string`
-  - `bits` through `0b...` literals, normalized equality, `&`, `|`, `^`, `~`, `<<`, and `>>`
+  - `bits`
+- numeric constants:
+  - `pi`
+  - `tau`
+  - `phi`
+  - `e`
+  - `nan`
+  - `inf`
 - arithmetic expressions
+- postfix factorial `!`
 - grouped expressions with parentheses
 - compound assignments
-- boolean `if / elif / else` blocks
-- grouped multiline conditions
+- boolean logic with `and`, `nand`, `or`, `nor`, and `not`
+- comparisons with `==`, `!=`, `<`, `<=`, `>`, and `>=`
+- `if / elif / else`
 - ternary expressions
-- grouped multiline ternary expressions
-- value-based `match` blocks with `default`
-- pre-execution warnings with `# graphion: warnings=off`
-- boolean `and`
-- boolean `nand`
-- boolean `or`
-- boolean `nor`
-- boolean `not`
-- `bits` literals and bitwise operators
+- `match` blocks with `default`
 - line comments with `#`
 - block comments with `/* ... */`
-- equality comparisons with `==`, `!=`, numeric ordering with `<` / `<=` / `>` / `>=`, and boolean `and` / `nand` / `or` / `nor` / `not`
-- the `abs()`, `min()`, `max()`, `clamp()`, `sqrt()`, and `len()` builtins
+- `bits` literals and bitwise operators
+- scalar builtins documented in [Builtins](builtins.md)
 
-This guide only documents behavior that is implemented today.
+This user guide documents only behavior that is implemented now.
 
 ## Sections
 
@@ -41,50 +61,54 @@ This guide only documents behavior that is implemented today.
 :maxdepth: 2
 
 tutorial
+types
+operators
 language-reference
 builtins
 ```
 
-## Current Scope
+## Reading Advice
 
-The current language subset is centered on scalar values and expressions.
+Start with the tutorial if you want to learn the language.
 
-Example:
+Jump straight to the language reference if you want exact rules for:
 
-```gion
-count = 42
-ratio = 7 / 2
-message = "graph" + "ion"
-ready = true
+- condition rules
+- reserved names
+- current error behavior
 
-count += 1
+Use the operators page when you need:
 
-if ready:
-    message += "!"
+- precedence
+- arithmetic and comparison rules
+- boolean logic details
+- `bits` operator semantics
+- string concatenation behavior
 
-print("count=" + count)
-print("ratio=" + ratio)
-print("message=" + message)
-```
+Use the builtins page when you need:
 
-Expected output:
+- the accepted input kinds for a builtin
+- its current result type
+- domain restrictions
+- the current runtime error wording
 
-```text
-count=43
-ratio=3.5
-message=graphion!
-```
+Use the types page when you need:
+
+- the current scalar value kinds
+- literal syntax
+- `bits` width basics
+- built-in constants such as `pi`, `tau`, `phi`, `e`, `nan`, and `inf`
 
 ## Current Limits
 
-This user guide describes the current implemented subset, not the long-term target language.
+This is still the implemented `v0.x` subset, not the long-term target language.
 
-That means some areas are intentionally still missing or incomplete, including:
+Still missing or intentionally deferred:
 
-- any broader comparison semantics beyond the current numeric `<` / `<=` / `>` / `>=`
-- additional control-flow forms such as loops and ternary expressions
-- tuples
-- functions
-- graph-specific language constructs in the `.gion` frontend path
+- loops and broader control-flow forms beyond the current subset
+- tuples or structured multi-value returns
+- user-defined functions
+- graph-specific source-language constructs in the `.gion` frontend path
+- broader type-system features beyond the current scalar focus
 
-Those can be added later, but they are not documented here until they are actually implemented.
+Those can be added later, but they are not documented here until they actually exist in the language.

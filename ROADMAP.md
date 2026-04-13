@@ -164,3 +164,67 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
   - otherwise returns `x`
 - [x] builtin `sqrt(x)`
 - [x] builtin `len(x)`
+- [x] postfix factorial `n!`
+- [x] constant `pi`
+- [x] constant `e`
+- [x] builtin `exp(x)`
+- [x] builtin `ln(x)`
+- [x] builtin `log(x, base)`
+- [x] builtin `log10(x)`
+- [x] builtin `log2(x)`
+- [x] builtin `floor(x)`
+- [x] builtin `ceil(x)`
+- [x] builtin `round(x)`
+- [x] builtin `trunc(x)`
+- [x] builtin `sign(x)`
+- [x] builtin `cbrt(x)`
+- [x] builtin `sin(x)`
+- [x] builtin `cos(x)`
+- [x] builtin `tan(x)`
+- [x] builtin `asin(x)`
+- [x] builtin `acos(x)`
+- [x] builtin `atan(x)`
+- [x] builtin `atan2(y, x)`
+- [x] builtin `hypot(x, y)`
+- [x] builtin `sinh(x)`
+- [x] builtin `cosh(x)`
+- [x] builtin `tanh(x)`
+- [x] builtin `asinh(x)`
+- [x] builtin `acosh(x)`
+- [x] builtin `atanh(x)`
+- [x] constant `nan`
+- [x] constant `inf`
+- [x] builtin `degrees(x)`
+- [x] builtin `radians(x)`
+- [x] builtin `isnan(x)`
+- [x] builtin `isinf(x)`
+- [x] builtin `isfinite(x)`
+- [x] builtin `fract(x)`
+- [x] builtin `expm1(x)`
+- [x] builtin `log1p(x)`
+- [x] builtin `erf(x)`
+- [x] builtin `erfc(x)`
+- [x] builtin `copysign(x, y)`
+- [x] builtin `fma(a, b, c)`
+- [x] builtin `fdim(x, y)`
+- [x] builtin `remainder(x, y)`
+- [x] builtin `rint(x)`
+- [x] builtin `gamma(x)`
+- [x] builtin `lgamma(x)`
+- [x] constant `tau`
+- [x] constant `phi`
+- [ ] builtin `exp2(x)`
+- [ ] builtin `csc(x)`
+- [ ] builtin `sec(x)`
+- [ ] builtin `cot(x)`
+- [ ] builtin `acsc(x)`
+- [ ] builtin `asec(x)`
+- [ ] builtin `acot(x)`
+- [ ] builtin `sech(x)`
+- [ ] builtin `csch(x)`
+- [ ] builtin `coth(x)`
+
+Future additions gated by other features:
+
+- [ ] builtin `modf(x)`
+  - needs a multi-value return shape such as a future list/tuple-like type

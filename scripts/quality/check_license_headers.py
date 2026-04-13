@@ -6,7 +6,7 @@ import sys
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SEARCH_DIRS = ["src", "tests", "benchmarks", "fuzz"]
+SEARCH_DIRS = ["src", "tests", "fuzz"]
 EXTENSIONS = {".c", ".h", ".s"}
 SPDX = "SPDX-License-Identifier: MIT"
 

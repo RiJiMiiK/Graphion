@@ -72,7 +72,48 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_MAX`
 - `GVM_OP_CLAMP`
 - `GVM_OP_SQRT`
+- `GVM_OP_CBRT`
+- `GVM_OP_SIN`
+- `GVM_OP_SINH`
+- `GVM_OP_ASINH`
+- `GVM_OP_ACOSH`
+- `GVM_OP_COSH`
+- `GVM_OP_TANH`
+- `GVM_OP_ATANH`
+- `GVM_OP_COS`
+- `GVM_OP_TAN`
+- `GVM_OP_ASIN`
+- `GVM_OP_ACOS`
+- `GVM_OP_ATAN`
+- `GVM_OP_ATAN2`
+- `GVM_OP_HYPOT`
+- `GVM_OP_COPYSIGN`
+- `GVM_OP_FMA`
+- `GVM_OP_FDIM`
+- `GVM_OP_REMAINDER`
+- `GVM_OP_DEGREES`
+- `GVM_OP_RADIANS`
+- `GVM_OP_ISNAN`
+- `GVM_OP_ISINF`
+- `GVM_OP_ISFINITE`
+- `GVM_OP_EXPM1`
+- `GVM_OP_LOG1P`
+- `GVM_OP_ERF`
+- `GVM_OP_ERFC`
+- `GVM_OP_GAMMA`
+- `GVM_OP_LGAMMA`
+- `GVM_OP_EXP`
+- `GVM_OP_LN`
+- `GVM_OP_LOG`
+- `GVM_OP_FLOOR`
+- `GVM_OP_CEIL`
+- `GVM_OP_ROUND`
+- `GVM_OP_TRUNC`
+- `GVM_OP_RINT`
+- `GVM_OP_FRACT`
+- `GVM_OP_SIGN`
 - `GVM_OP_LEN`
+- `GVM_OP_FACTORIAL`
 
 These back the current `.gion` scalar language features:
 
@@ -83,11 +124,55 @@ These back the current `.gion` scalar language features:
 - `//`
 - `%`
 - `**`
+- postfix `!`
 - `abs(...)`
 - `min(a, b)`
 - `max(a, b)`
 - `clamp(x, lo, hi)`
 - `sqrt(x)`
+- `cbrt(x)`
+- `sin(x)`
+- `sinh(x)`
+- `asinh(x)`
+- `acosh(x)`
+- `cosh(x)`
+- `tanh(x)`
+- `atanh(x)`
+- `cos(x)`
+- `tan(x)`
+- `asin(x)`
+- `acos(x)`
+- `atan(x)`
+- `atan2(y, x)`
+- `hypot(x, y)`
+- `copysign(x, y)`
+- `fma(a, b, c)`
+- `fdim(x, y)`
+- `remainder(x, y)`
+- `rint(x)`
+- `degrees(x)`
+- `radians(x)`
+- `isnan(x)`
+- `isinf(x)`
+- `isfinite(x)`
+- `expm1(x)`
+- `log1p(x)`
+- `erf(x)`
+- `erfc(x)`
+- `gamma(x)`
+- `lgamma(x)`
+- `exp(x)`
+- `ln(x)`
+- `log(x, base)`
+- `log10(x)`
+- `log2(x)`
+- `floor(x)`
+- `ceil(x)`
+- `round(x)`
+- `trunc(x)`
+- `rint(x)`
+- `fract(x)`
+- `sign(x)`
 - `len(x)`
 
 ## Other VM opcode families present in the repo
@@ -126,6 +211,14 @@ Important currently visible VM codes include:
 - `GVM_ERR_OUTPUT_UNBOUND`
 - `GVM_ERR_DIVIDE_BY_ZERO`
 - `GVM_ERR_DOMAIN`
+- `GVM_ERR_ASIN_DOMAIN`
+- `GVM_ERR_ACOS_DOMAIN`
+- `GVM_ERR_ACOSH_DOMAIN`
+- `GVM_ERR_ATANH_DOMAIN`
+- `GVM_ERR_LOG1P_DOMAIN`
+- `GVM_ERR_REMAINDER_DOMAIN`
+- `GVM_ERR_GAMMA_DOMAIN`
+- `GVM_ERR_LGAMMA_DOMAIN`
 
 Graph/frontier-specific errors also exist for the broader VM surface.
 

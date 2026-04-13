@@ -4,5 +4,4 @@ build
 build-*
 out
 dist
-graphion_rust
 .vscode

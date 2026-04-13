@@ -68,9 +68,11 @@ int graphion_run_gion_path(const char *path,
   graphion_runtime_scope_init(scope);
   rc = graphion_interpret_source(source, scope, diagnostic);
   if (rc == GINT_ERR_PARSE || rc == GINT_ERR_RESERVED_NAME) {
+    graphion_runtime_scope_dispose(scope);
     return GENTRY_ERR_PARSE;
   }
   if (rc != GINT_OK) {
+    graphion_runtime_scope_dispose(scope);
     return GENTRY_ERR_RUN;
   }
   return GENTRY_OK;

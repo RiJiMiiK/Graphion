@@ -76,29 +76,6 @@ Enable local hooks:
 ./scripts/dev/setup_hooks.ps1
 ```
 
-## Benchmarks
-
-Build benchmark targets:
-
-```bash
-cmake -S . -B build-bench -G Ninja -DGRAPHION_ENABLE_BENCHMARKS=ON
-cmake --build build-bench
-```
-
-Collect local benchmark JSON:
-
-```bash
-python3 scripts/bench/run/run_bench.py --build-dir build-bench --iterations 500000
-```
-
-Key benchmark docs:
-
-- [docs/performance/guides/BENCHMARKS.md](docs/performance/guides/BENCHMARKS.md)
-- [docs/performance/guides/PGO.md](docs/performance/guides/PGO.md)
-- [docs/performance/reports/PERFORMANCE_RESULTS.md](docs/performance/reports/PERFORMANCE_RESULTS.md)
-
-Current scalar-language tracking uses the `scalar_values_print` workload.
-
 ## Documentation
 
 Primary documentation entry points:

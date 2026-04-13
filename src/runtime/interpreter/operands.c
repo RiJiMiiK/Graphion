@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "runtime/interpreter/operands.h"
+
+#include <math.h>
 int parse_identifier_token(const char **cursor,
                                   char *buffer,
                                   size_t buffer_size,
@@ -94,6 +96,42 @@ int parse_scalar_literal(graphion_runtime_program *program,
     *cursor += 5;
     return GINT_OK;
   }
+  if (strncmp(start, "pi", 2U) == 0 && !is_ident_char(start[2])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 3.14159265358979323846;
+    *cursor += 2;
+    return GINT_OK;
+  }
+  if (strncmp(start, "tau", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 6.28318530717958647692;
+    *cursor += 3;
+    return GINT_OK;
+  }
+  if (strncmp(start, "phi", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 1.61803398874989484820;
+    *cursor += 3;
+    return GINT_OK;
+  }
+  if (start[0] == 'e' && !is_ident_char(start[1])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = 2.71828182845904523536;
+    *cursor += 1;
+    return GINT_OK;
+  }
+  if (strncmp(start, "nan", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = NAN;
+    *cursor += 3;
+    return GINT_OK;
+  }
+  if (strncmp(start, "inf", 3U) == 0 && !is_ident_char(start[3])) {
+    value_out->kind = GVM_VALUE_FLOAT;
+    value_out->as.float_value = INFINITY;
+    *cursor += 3;
+    return GINT_OK;
+  }
   if (start[0] == '0' && (start[1] == 'b' || start[1] == 'B')) {
     const char *scan = start + 2;
     uint64_t bits_value = 0U;
@@ -181,7 +219,9 @@ int parse_operand(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
-    if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0) {
+    if (strcmp(name, "true") == 0 || strcmp(name, "false") == 0 || strcmp(name, "pi") == 0 ||
+        strcmp(name, "tau") == 0 || strcmp(name, "phi") == 0 || strcmp(name, "e") == 0 || strcmp(name, "nan") == 0 ||
+        strcmp(name, "inf") == 0) {
       *cursor = saved;
     } else {
       int index;
@@ -349,6 +389,3 @@ int scan_ternary_segments(const char *cursor,
   *expr_end_out = scan;
   return 1;
 }
-
-
-

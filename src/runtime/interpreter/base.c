@@ -98,8 +98,30 @@ int is_ident_char(char ch) {
 
 int is_reserved_name(const char *name) {
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
+         strcmp(name, "pi") == 0 || strcmp(name, "tau") == 0 || strcmp(name, "phi") == 0 ||
+         strcmp(name, "e") == 0 ||
+         strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0 ||
          strcmp(name, "abs") == 0 || strcmp(name, "min") == 0 || strcmp(name, "max") == 0 ||
-         strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "len") == 0 ||
+         strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "exp") == 0 ||
+         strcmp(name, "ln") == 0 || strcmp(name, "log") == 0 || strcmp(name, "log10") == 0 ||
+         strcmp(name, "log2") == 0 || strcmp(name, "floor") == 0 || strcmp(name, "ceil") == 0 ||
+         strcmp(name, "round") == 0 || strcmp(name, "trunc") == 0 || strcmp(name, "fract") == 0 ||
+         strcmp(name, "sign") == 0 ||
+         strcmp(name, "cbrt") == 0 || strcmp(name, "sin") == 0 || strcmp(name, "sinh") == 0 ||
+         strcmp(name, "asinh") == 0 || strcmp(name, "acosh") == 0 ||
+         strcmp(name, "cos") == 0 || strcmp(name, "cosh") == 0 || strcmp(name, "tan") == 0 ||
+         strcmp(name, "tanh") == 0 || strcmp(name, "atanh") == 0 ||
+         strcmp(name, "asin") == 0 || strcmp(name, "acos") == 0 ||
+         strcmp(name, "atan") == 0 || strcmp(name, "atan2") == 0 || strcmp(name, "hypot") == 0 ||
+         strcmp(name, "copysign") == 0 || strcmp(name, "fma") == 0 || strcmp(name, "fdim") == 0 ||
+         strcmp(name, "remainder") == 0 || strcmp(name, "rint") == 0 ||
+         strcmp(name, "degrees") == 0 ||
+         strcmp(name, "radians") == 0 ||
+         strcmp(name, "isnan") == 0 ||
+         strcmp(name, "isinf") == 0 || strcmp(name, "isfinite") == 0 || strcmp(name, "expm1") == 0 ||
+         strcmp(name, "log1p") == 0 || strcmp(name, "erf") == 0 || strcmp(name, "erfc") == 0 ||
+         strcmp(name, "gamma") == 0 || strcmp(name, "lgamma") == 0 ||
+         strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

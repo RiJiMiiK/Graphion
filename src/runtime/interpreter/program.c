@@ -1,6 +1,94 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "runtime/interpreter/program.h"
+
+static size_t next_global_capacity(size_t current, size_t min_capacity) {
+  size_t capacity = current == 0U ? GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY : current;
+  while (capacity < min_capacity) {
+    if (capacity > ((size_t)-1) / 2U) {
+      capacity = min_capacity;
+      break;
+    }
+    capacity *= 2U;
+  }
+  return capacity;
+}
+
+int graphion_runtime_scope_reserve_globals(graphion_runtime_scope *scope,
+                                                  size_t min_capacity,
+                                                  unsigned int line,
+                                                  graphion_runtime_diagnostic *diagnostic) {
+  char(*new_names)[GRAPHION_RUNTIME_NAME_MAX];
+  char **new_owners;
+  graphion_runtime_value *new_globals;
+  size_t i;
+  size_t new_capacity;
+
+  if (scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (min_capacity <= scope->global_capacity) {
+    return GINT_OK;
+  }
+
+  new_capacity = next_global_capacity(scope->global_capacity, min_capacity);
+  new_names = (char(*)[GRAPHION_RUNTIME_NAME_MAX])realloc(
+      scope->global_names, new_capacity * sizeof(*new_names));
+  if (new_names == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  scope->global_names = new_names;
+
+  new_owners = (char **)realloc(scope->owned_string_values, new_capacity * sizeof(*new_owners));
+  if (new_owners == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  scope->owned_string_values = new_owners;
+
+  new_globals = (graphion_runtime_value *)realloc(scope->globals, new_capacity * sizeof(*new_globals));
+  if (new_globals == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  scope->globals = new_globals;
+
+  for (i = scope->global_capacity; i < new_capacity; ++i) {
+    scope->global_names[i][0] = '\0';
+    scope->owned_string_values[i] = NULL;
+    vm_value_set_none(&scope->globals[i]);
+  }
+  scope->global_capacity = new_capacity;
+  return GINT_OK;
+}
+
+int graphion_runtime_program_reserve_globals(graphion_runtime_program *program,
+                                                    size_t min_capacity,
+                                                    unsigned int line,
+                                                    graphion_runtime_diagnostic *diagnostic) {
+  char(*new_names)[GRAPHION_RUNTIME_NAME_MAX];
+  size_t i;
+  size_t new_capacity;
+
+  if (program == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (min_capacity <= program->global_capacity) {
+    return GINT_OK;
+  }
+
+  new_capacity = next_global_capacity(program->global_capacity, min_capacity);
+  new_names = (char(*)[GRAPHION_RUNTIME_NAME_MAX])realloc(
+      program->global_names, new_capacity * sizeof(*new_names));
+  if (new_names == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  program->global_names = new_names;
+  for (i = program->global_capacity; i < new_capacity; ++i) {
+    program->global_names[i][0] = '\0';
+  }
+  program->global_capacity = new_capacity;
+  return GINT_OK;
+}
+
 int scope_find_global_index(const graphion_runtime_scope *scope, const char *name) {
   size_t i;
   if (scope == NULL || name == NULL) {
@@ -45,8 +133,8 @@ int program_find_or_add_global(graphion_runtime_program *program,
     *index_out = (size_t)existing;
     return GINT_OK;
   }
-  if (program->global_count >= GRAPHION_RUNTIME_BINDING_MAX) {
-    return fail(diagnostic, line, 1U, "too many globals", GINT_ERR_CAPACITY);
+  if (graphion_runtime_program_reserve_globals(program, program->global_count + 1U, line, diagnostic) != GINT_OK) {
+    return GINT_ERR_CAPACITY;
   }
   copy_name(program->global_names[program->global_count], name);
   *index_out = program->global_count;
@@ -229,16 +317,14 @@ int scalar_values_match_equal(const graphion_vm_value *lhs,
 }
 
 void graphion_runtime_scope_init(graphion_runtime_scope *scope) {
-  size_t i;
   if (scope == NULL) {
     return;
   }
+  scope->global_names = NULL;
+  scope->owned_string_values = NULL;
+  scope->globals = NULL;
   scope->global_count = 0U;
-  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
-    scope->global_names[i][0] = '\0';
-    scope->owned_string_values[i] = NULL;
-    vm_value_set_none(&scope->globals[i]);
-  }
+  scope->global_capacity = 0U;
 }
 
 void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
@@ -246,12 +332,17 @@ void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
   if (scope == NULL) {
     return;
   }
-  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
+  for (i = 0U; i < scope->global_capacity; ++i) {
     runtime_free_string(&scope->owned_string_values[i]);
-    scope->global_names[i][0] = '\0';
-    vm_value_set_none(&scope->globals[i]);
   }
+  free(scope->global_names);
+  free(scope->owned_string_values);
+  free(scope->globals);
+  scope->global_names = NULL;
+  scope->owned_string_values = NULL;
+  scope->globals = NULL;
   scope->global_count = 0U;
+  scope->global_capacity = 0U;
 }
 
 const graphion_runtime_value *graphion_runtime_scope_find(const graphion_runtime_scope *scope,
@@ -268,12 +359,11 @@ void graphion_runtime_program_init(graphion_runtime_program *program) {
   if (program == NULL) {
     return;
   }
+  program->global_names = NULL;
   program->global_count = 0U;
+  program->global_capacity = 0U;
   program->const_count = 0U;
   program->program_len = 0U;
-  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
-    program->global_names[i][0] = '\0';
-  }
   for (i = 0U; i < GRAPHION_RUNTIME_CONST_MAX; ++i) {
     program->owned_const_strings[i] = NULL;
     vm_value_set_none(&program->const_pool[i]);
@@ -290,12 +380,11 @@ void graphion_runtime_program_dispose(graphion_runtime_program *program) {
     runtime_free_string(&program->owned_const_strings[i]);
     vm_value_set_none(&program->const_pool[i]);
   }
-  for (i = 0U; i < GRAPHION_RUNTIME_BINDING_MAX; ++i) {
-    program->global_names[i][0] = '\0';
-  }
+  free(program->global_names);
+  program->global_names = NULL;
   program->global_count = 0U;
+  program->global_capacity = 0U;
   program->const_count = 0U;
   program->program_len = 0U;
   memset(program->program, 0, sizeof(program->program));
 }
-

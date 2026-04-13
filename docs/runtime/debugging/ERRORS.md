@@ -88,6 +88,16 @@ Typical messages include:
 - `division by zero`
 - `incompatible operand types`
 - `sqrt requires non-negative input`
+- `asin requires input in [-1, 1]`
+- `acos requires input in [-1, 1]`
+- `acosh requires input >= 1`
+- `atanh requires input in (-1, 1)`
+- `log1p requires input > -1`
+- `gamma is undefined at 0 and negative integers`
+- `lgamma is undefined at 0 and negative integers`
+- `ln requires strictly positive input`
+- `log requires x > 0 and base > 0 with base != 1`
+- `factorial requires non-negative integer input`
 
 ## Current `.gion` behavior examples
 
@@ -142,6 +152,17 @@ Typical result:
 
 - runtime failure
 - message `incompatible operand types`
+
+Input:
+
+```gion
+value = (-1)!
+```
+
+Typical result:
+
+- runtime failure
+- message `factorial requires non-negative integer input`
 
 ## Bytecode decode errors
 

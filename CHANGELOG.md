@@ -16,7 +16,6 @@ The format follows Keep a Changelog and Semantic Versioning in spirit, but this 
   - tutorial
   - language reference
   - builtins
-- scalar-language benchmark lane `scalar_values_print` integrated into the performance reporting flow
 - arithmetic support in `.gion` for:
   - `+`
   - `-`
@@ -49,7 +48,6 @@ The format follows Keep a Changelog and Semantic Versioning in spirit, but this 
 - documentation was heavily reduced and reorganized around the docs that are still relevant
 - the main engineering docs were rewritten to match the current project state instead of historical intermediate states
 - the roadmap now tracks remaining work instead of completed historical milestones
-- generated or report-style benchmark artifacts are now treated more clearly as artifacts rather than policy docs
 
 ### Removed
 

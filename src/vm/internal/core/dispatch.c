@@ -119,8 +119,131 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_SQRT:
         rc = op_sqrt(vm, &in);
         break;
+      case GVM_OP_CBRT:
+        rc = op_cbrt_builtin(vm, &in);
+        break;
+      case GVM_OP_SIN:
+        rc = op_sin_builtin(vm, &in);
+        break;
+      case GVM_OP_SINH:
+        rc = op_sinh_builtin(vm, &in);
+        break;
+      case GVM_OP_ASINH:
+        rc = op_asinh_builtin(vm, &in);
+        break;
+      case GVM_OP_ACOSH:
+        rc = op_acosh_builtin(vm, &in);
+        break;
+      case GVM_OP_COSH:
+        rc = op_cosh_builtin(vm, &in);
+        break;
+      case GVM_OP_TANH:
+        rc = op_tanh_builtin(vm, &in);
+        break;
+      case GVM_OP_ATANH:
+        rc = op_atanh_builtin(vm, &in);
+        break;
+      case GVM_OP_COS:
+        rc = op_cos_builtin(vm, &in);
+        break;
+      case GVM_OP_TAN:
+        rc = op_tan_builtin(vm, &in);
+        break;
+      case GVM_OP_ASIN:
+        rc = op_asin_builtin(vm, &in);
+        break;
+      case GVM_OP_ACOS:
+        rc = op_acos_builtin(vm, &in);
+        break;
+      case GVM_OP_ATAN:
+        rc = op_atan_builtin(vm, &in);
+        break;
+      case GVM_OP_ATAN2:
+        rc = op_atan2_builtin(vm, &in);
+        break;
+      case GVM_OP_HYPOT:
+        rc = op_hypot_builtin(vm, &in);
+        break;
+      case GVM_OP_COPYSIGN:
+        rc = op_copysign_builtin(vm, &in);
+        break;
+      case GVM_OP_DEGREES:
+        rc = op_degrees_builtin(vm, &in);
+        break;
+      case GVM_OP_RADIANS:
+        rc = op_radians_builtin(vm, &in);
+        break;
+      case GVM_OP_ISNAN:
+        rc = op_isnan_builtin(vm, &in);
+        break;
+      case GVM_OP_ISINF:
+        rc = op_isinf_builtin(vm, &in);
+        break;
+      case GVM_OP_ISFINITE:
+        rc = op_isfinite_builtin(vm, &in);
+        break;
+      case GVM_OP_EXPM1:
+        rc = op_expm1_builtin(vm, &in);
+        break;
+      case GVM_OP_LOG1P:
+        rc = op_log1p_builtin(vm, &in);
+        break;
+      case GVM_OP_ERF:
+        rc = op_erf_builtin(vm, &in);
+        break;
+      case GVM_OP_ERFC:
+        rc = op_erfc_builtin(vm, &in);
+        break;
+      case GVM_OP_GAMMA:
+        rc = op_gamma_builtin(vm, &in);
+        break;
+      case GVM_OP_LGAMMA:
+        rc = op_lgamma_builtin(vm, &in);
+        break;
+      case GVM_OP_FMA:
+        rc = op_fma_builtin(vm, &in);
+        break;
+      case GVM_OP_FDIM:
+        rc = op_fdim_builtin(vm, &in);
+        break;
+      case GVM_OP_REMAINDER:
+        rc = op_remainder_builtin(vm, &in);
+        break;
+      case GVM_OP_RINT:
+        rc = op_rint_builtin(vm, &in);
+        break;
+      case GVM_OP_EXP:
+        rc = op_exp(vm, &in);
+        break;
+      case GVM_OP_LN:
+        rc = op_ln(vm, &in);
+        break;
+      case GVM_OP_LOG:
+        rc = op_log(vm, &in);
+        break;
+      case GVM_OP_FLOOR:
+        rc = op_floor_builtin(vm, &in);
+        break;
+      case GVM_OP_CEIL:
+        rc = op_ceil_builtin(vm, &in);
+        break;
+      case GVM_OP_ROUND:
+        rc = op_round_builtin(vm, &in);
+        break;
+      case GVM_OP_TRUNC:
+        rc = op_trunc_builtin(vm, &in);
+        break;
+      case GVM_OP_FRACT:
+        rc = op_fract_builtin(vm, &in);
+        break;
+      case GVM_OP_SIGN:
+        rc = op_sign_builtin(vm, &in);
+        break;
       case GVM_OP_LEN:
         rc = op_len(vm, &in);
+        break;
+      case GVM_OP_FACTORIAL:
+        rc = op_factorial(vm, &in);
         break;
       case GVM_OP_MOV:
         rc = op_mov(vm, &in);
@@ -267,7 +390,43 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_MAX] = op_max,
       [GVM_OP_CLAMP] = op_clamp,
       [GVM_OP_SQRT] = op_sqrt,
+      [GVM_OP_CBRT] = op_cbrt_builtin,
+      [GVM_OP_SIN] = op_sin_builtin,
+      [GVM_OP_SINH] = op_sinh_builtin,
+      [GVM_OP_ASINH] = op_asinh_builtin,
+      [GVM_OP_ACOSH] = op_acosh_builtin,
+      [GVM_OP_COSH] = op_cosh_builtin,
+      [GVM_OP_TANH] = op_tanh_builtin,
+      [GVM_OP_ATANH] = op_atanh_builtin,
+      [GVM_OP_COS] = op_cos_builtin,
+      [GVM_OP_TAN] = op_tan_builtin,
+      [GVM_OP_ASIN] = op_asin_builtin,
+      [GVM_OP_ACOS] = op_acos_builtin,
+      [GVM_OP_ATAN] = op_atan_builtin,
+      [GVM_OP_ATAN2] = op_atan2_builtin,
+      [GVM_OP_HYPOT] = op_hypot_builtin,
+      [GVM_OP_COPYSIGN] = op_copysign_builtin,
+      [GVM_OP_EXPM1] = op_expm1_builtin,
+      [GVM_OP_LOG1P] = op_log1p_builtin,
+      [GVM_OP_ERF] = op_erf_builtin,
+      [GVM_OP_ERFC] = op_erfc_builtin,
+      [GVM_OP_GAMMA] = op_gamma_builtin,
+      [GVM_OP_LGAMMA] = op_lgamma_builtin,
+      [GVM_OP_FMA] = op_fma_builtin,
+      [GVM_OP_FDIM] = op_fdim_builtin,
+      [GVM_OP_REMAINDER] = op_remainder_builtin,
+      [GVM_OP_RINT] = op_rint_builtin,
+      [GVM_OP_EXP] = op_exp,
+      [GVM_OP_LN] = op_ln,
+      [GVM_OP_LOG] = op_log,
+      [GVM_OP_FLOOR] = op_floor_builtin,
+      [GVM_OP_CEIL] = op_ceil_builtin,
+      [GVM_OP_ROUND] = op_round_builtin,
+      [GVM_OP_TRUNC] = op_trunc_builtin,
+      [GVM_OP_FRACT] = op_fract_builtin,
+      [GVM_OP_SIGN] = op_sign_builtin,
       [GVM_OP_LEN] = op_len,
+      [GVM_OP_FACTORIAL] = op_factorial,
       [GVM_OP_MOV] = op_mov,
       [GVM_OP_LOAD_CONST] = op_load_const,
       [GVM_OP_LOAD_GLOBAL] = op_load_global,
@@ -360,7 +519,43 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_MAX] = &&L_max,
       [GVM_OP_CLAMP] = &&L_clamp,
       [GVM_OP_SQRT] = &&L_sqrt,
+      [GVM_OP_CBRT] = &&L_cbrt_builtin,
+      [GVM_OP_SIN] = &&L_sin_builtin,
+      [GVM_OP_SINH] = &&L_sinh_builtin,
+      [GVM_OP_ASINH] = &&L_asinh_builtin,
+      [GVM_OP_ACOSH] = &&L_acosh_builtin,
+      [GVM_OP_COSH] = &&L_cosh_builtin,
+      [GVM_OP_TANH] = &&L_tanh_builtin,
+      [GVM_OP_ATANH] = &&L_atanh_builtin,
+      [GVM_OP_COS] = &&L_cos_builtin,
+      [GVM_OP_TAN] = &&L_tan_builtin,
+      [GVM_OP_ASIN] = &&L_asin_builtin,
+      [GVM_OP_ACOS] = &&L_acos_builtin,
+      [GVM_OP_ATAN] = &&L_atan_builtin,
+      [GVM_OP_ATAN2] = &&L_atan2_builtin,
+      [GVM_OP_HYPOT] = &&L_hypot_builtin,
+      [GVM_OP_COPYSIGN] = &&L_copysign_builtin,
+      [GVM_OP_EXPM1] = &&L_expm1_builtin,
+      [GVM_OP_LOG1P] = &&L_log1p_builtin,
+      [GVM_OP_ERF] = &&L_erf_builtin,
+      [GVM_OP_ERFC] = &&L_erfc_builtin,
+      [GVM_OP_GAMMA] = &&L_gamma_builtin,
+      [GVM_OP_LGAMMA] = &&L_lgamma_builtin,
+      [GVM_OP_FMA] = &&L_fma_builtin,
+      [GVM_OP_FDIM] = &&L_fdim_builtin,
+      [GVM_OP_REMAINDER] = &&L_remainder_builtin,
+      [GVM_OP_RINT] = &&L_rint_builtin,
+      [GVM_OP_EXP] = &&L_exp,
+      [GVM_OP_LN] = &&L_ln,
+      [GVM_OP_LOG] = &&L_log,
+      [GVM_OP_FLOOR] = &&L_floor_builtin,
+      [GVM_OP_CEIL] = &&L_ceil_builtin,
+      [GVM_OP_ROUND] = &&L_round_builtin,
+      [GVM_OP_TRUNC] = &&L_trunc_builtin,
+      [GVM_OP_FRACT] = &&L_fract_builtin,
+      [GVM_OP_SIGN] = &&L_sign_builtin,
       [GVM_OP_LEN] = &&L_len,
+      [GVM_OP_FACTORIAL] = &&L_factorial,
       [GVM_OP_MOV] = &&L_mov,
       [GVM_OP_LOAD_CONST] = &&L_load_const,
       [GVM_OP_LOAD_GLOBAL] = &&L_load_global,
@@ -606,14 +801,230 @@ L_clamp:
       return rc;
     }
     continue;
-L_sqrt:
+  L_sqrt:
     rc = op_sqrt(vm, &in);
     if (rc != 0) {
       return rc;
     }
     continue;
-L_len:
+  L_cbrt_builtin:
+    rc = op_cbrt_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sin_builtin:
+    rc = op_sin_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sinh_builtin:
+    rc = op_sinh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_asinh_builtin:
+    rc = op_asinh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_acosh_builtin:
+    rc = op_acosh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_cosh_builtin:
+    rc = op_cosh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_tanh_builtin:
+    rc = op_tanh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_atanh_builtin:
+    rc = op_atanh_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_cos_builtin:
+    rc = op_cos_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_tan_builtin:
+    rc = op_tan_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_asin_builtin:
+    rc = op_asin_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_acos_builtin:
+    rc = op_acos_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_atan_builtin:
+    rc = op_atan_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_atan2_builtin:
+    rc = op_atan2_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_hypot_builtin:
+    rc = op_hypot_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_copysign_builtin:
+    rc = op_copysign_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_exp:
+    rc = op_exp(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_expm1_builtin:
+    rc = op_expm1_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_log1p_builtin:
+    rc = op_log1p_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_erf_builtin:
+      rc = op_erf_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_erfc_builtin:
+      rc = op_erfc_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_gamma_builtin:
+      rc = op_gamma_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_lgamma_builtin:
+      rc = op_lgamma_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_fma_builtin:
+      rc = op_fma_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_fdim_builtin:
+      rc = op_fdim_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_remainder_builtin:
+      rc = op_remainder_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_rint_builtin:
+      rc = op_rint_builtin(vm, &in);
+      if (rc != 0) {
+        return rc;
+      }
+      continue;
+  L_ln:
+    rc = op_ln(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_log:
+    rc = op_log(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_floor_builtin:
+    rc = op_floor_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_ceil_builtin:
+    rc = op_ceil_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_round_builtin:
+    rc = op_round_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_trunc_builtin:
+    rc = op_trunc_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_fract_builtin:
+    rc = op_fract_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sign_builtin:
+    rc = op_sign_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_len:
     rc = op_len(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+L_factorial:
+    rc = op_factorial(vm, &in);
     if (rc != 0) {
       return rc;
     }
@@ -843,4 +1254,3 @@ int graphion_vm_run(graphion_vm *vm) {
   return run_dispatch_switch(vm);
 #endif
 }
-

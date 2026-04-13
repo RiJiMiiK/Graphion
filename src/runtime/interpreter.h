@@ -8,7 +8,7 @@
 #include "vm/vm.h"
 
 enum {
-  GRAPHION_RUNTIME_BINDING_MAX = 128,
+  GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY = 16,
   GRAPHION_RUNTIME_NAME_MAX = 64,
   GRAPHION_RUNTIME_CONST_MAX = 256,
   GRAPHION_RUNTIME_PROGRAM_MAX = 512
@@ -40,15 +40,17 @@ typedef struct {
 typedef graphion_vm_value graphion_runtime_value;
 
 typedef struct {
-  char global_names[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX];
-  char *owned_string_values[GRAPHION_RUNTIME_BINDING_MAX];
-  graphion_runtime_value globals[GRAPHION_RUNTIME_BINDING_MAX];
+  char (*global_names)[GRAPHION_RUNTIME_NAME_MAX];
+  char **owned_string_values;
+  graphion_runtime_value *globals;
   size_t global_count;
+  size_t global_capacity;
 } graphion_runtime_scope;
 
 typedef struct {
-  char global_names[GRAPHION_RUNTIME_BINDING_MAX][GRAPHION_RUNTIME_NAME_MAX];
+  char (*global_names)[GRAPHION_RUNTIME_NAME_MAX];
   size_t global_count;
+  size_t global_capacity;
   char *owned_const_strings[GRAPHION_RUNTIME_CONST_MAX];
   graphion_vm_value const_pool[GRAPHION_RUNTIME_CONST_MAX];
   size_t const_count;

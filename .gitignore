@@ -25,9 +25,6 @@ compile_commands.json
 CTestTestfile.cmake
 _deps/
 
-# Rust comparison project
-graphion_rust/target/
-
 # IDE/editor
 .vscode/
 .idea/
@@ -42,8 +39,7 @@ Thumbs.db
 __pycache__/
 docs/_build/
 
-# Benchmark and fuzz local outputs
-benchmarks/results/
+# Fuzz local outputs
 fuzz/corpus/
 fuzz/crashers/
 coverage-html/
