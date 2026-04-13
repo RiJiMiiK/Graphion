@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_parser_helpers.h"
 
 #include <math.h>

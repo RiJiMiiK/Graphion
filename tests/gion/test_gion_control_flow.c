@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_parser_helpers.h"
 
 int test_gion_if_elif_else_control_flow(void) {
@@ -736,4 +738,3 @@ int test_gion_boolean_short_circuit_runtime_errors(void) {
   }
   return 0;
 }
-

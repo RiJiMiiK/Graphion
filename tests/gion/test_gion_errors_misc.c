@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_parser_helpers.h"
 
 int test_gion_print_syntax_errors(void) {
@@ -623,4 +625,3 @@ int test_gion_warning_directives_from_path(void) {
 
   return 0;
 }
-

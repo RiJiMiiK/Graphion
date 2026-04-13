@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_parser_helpers.h"
 
 int test_gion_bits_literals(void) {
@@ -700,4 +702,3 @@ int test_gion_bits_shr_runtime_errors(void) {
   }
   return 0;
 }
-

@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <string.h>
+
 #include "test_parser_helpers.h"
 
 int test_gion_equality_expressions(void) {
@@ -1503,4 +1505,3 @@ int test_gion_nor_syntax_errors(void) {
   }
   return 0;
 }
-
