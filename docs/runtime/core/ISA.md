@@ -81,6 +81,7 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_ASEC`
 - `GVM_OP_ACOT`
 - `GVM_OP_SECH`
+- `GVM_OP_CSCH`
 - `GVM_OP_SINH`
 - `GVM_OP_ASINH`
 - `GVM_OP_ACOSH`
@@ -146,6 +147,7 @@ These back the current `.gion` scalar language features:
 - `asec(x)`
 - `acot(x)`
 - `sech(x)`
+- `csch(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`

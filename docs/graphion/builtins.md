@@ -30,6 +30,7 @@ Unless a builtin says otherwise:
 | `asec(x)` | inverse secant in radians | `float` | requires `x <= -1` or `x >= 1` |
 | `acot(x)` | inverse cotangent in radians | `float` | principal branch implemented with `atan2(1, x)` |
 | `sech(x)` | hyperbolic secant | `float` | implemented as `1 / cosh(x)` |
+| `csch(x)` | hyperbolic cosecant | `float` | implemented as `1 / sinh(x)` |
 | `cos(x)` | cosine in radians | `float` | |
 | `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
 | `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
@@ -610,6 +611,24 @@ Expected output:
 0.648054
 ```
 
+### `csch(x)`
+
+`csch(x)` returns the hyperbolic cosecant. It is implemented as `1 / sinh(x)`, so positive and negative inputs preserve their sign and larger magnitudes move toward `0`.
+
+```gion
+print(csch(1))
+print(csch(-1))
+print(csch(2))
+```
+
+Expected output:
+
+```text
+0.850918
+-0.850918
+0.275721
+```
+
 ### `atan(x)` and `atan2(y, x)`
 
 `atan(x)` returns the arctangent of one numeric expression.
@@ -807,10 +826,11 @@ true
 
 ## Hyperbolic Functions
 
-### `sinh(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `sech(x)`, `tanh(x)`, `atanh(x)`
+### `sinh(x)`, `csch(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `sech(x)`, `tanh(x)`, `atanh(x)`
 
 ```gion
 print(sinh(1))
+print(csch(1))
 print(asinh(1))
 print(acosh(2))
 print(cosh(1))
@@ -823,6 +843,7 @@ Expected output:
 
 ```text
 1.1752
+0.850918
 0.881374
 1.31696
 1.54308

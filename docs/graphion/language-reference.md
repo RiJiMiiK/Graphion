@@ -620,6 +620,7 @@ Current builtin functions:
 - `asec(x)`
 - `acot(x)`
 - `sech(x)`
+- `csch(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`
