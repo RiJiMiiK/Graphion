@@ -47,6 +47,7 @@ Unless a builtin says otherwise:
 | `tanh(x)` | hyperbolic tangent | `float` | |
 | `atanh(x)` | inverse hyperbolic tangent | `float` | requires `x in (-1, 1)` |
 | `exp(x)` | `e ** x` | `float` | |
+| `exp2(x)` | `2 ** x` | `float` | |
 | `expm1(x)` | `e ** x - 1` | `float` | useful for small values near zero |
 | `log1p(x)` | `ln(1 + x)` | `float` | useful for small values near zero, requires `x > -1` |
 | `erf(x)` | error function | `float` | often used with Gaussian-style formulas |
@@ -227,6 +228,22 @@ Expected output:
 
 ```text
 2.71828
+1
+```
+
+### `exp2(x)`
+
+Returns `2 ** x`.
+
+```gion
+print(exp2(1))
+print(exp2(0.0))
+```
+
+Expected output:
+
+```text
+2
 1
 ```
 

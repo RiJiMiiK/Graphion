@@ -314,6 +314,7 @@ int test_gion_reserved_name_errors(void) {
       {"isinf = 1\n", "reserved name cannot be assigned", "gion_reserved_isinf.gion"},
       {"isfinite = 1\n", "reserved name cannot be assigned", "gion_reserved_isfinite.gion"},
       {"expm1 = 1\n", "reserved name cannot be assigned", "gion_reserved_expm1.gion"},
+      {"exp2 = 1\n", "reserved name cannot be assigned", "gion_reserved_exp2.gion"},
       {"log1p = 1\n", "reserved name cannot be assigned", "gion_reserved_log1p.gion"},
       {"erf = 1\n", "reserved name cannot be assigned", "gion_reserved_erf.gion"},
       {"erfc = 1\n", "reserved name cannot be assigned", "gion_reserved_erfc.gion"},
@@ -539,6 +540,9 @@ int test_gion_arithmetic_expressions(void) {
       "expm1_int = expm1(1)\n"
       "expm1_float = expm1(0.0)\n"
       "expm1_expr = expm1(1 + 1)\n"
+      "exp2_int = exp2(1)\n"
+      "exp2_float = exp2(0.0)\n"
+      "exp2_expr = exp2(1 + 1)\n"
       "log1p_int = log1p(1)\n"
       "log1p_float = log1p(0.0)\n"
       "log1p_expr = log1p(2 - 1.5)\n"
@@ -722,6 +726,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(expm1_int)\n"
       "print(expm1_float)\n"
       "print(expm1_expr)\n"
+      "print(exp2_int)\n"
+      "print(exp2_float)\n"
+      "print(exp2_expr)\n"
       "print(log1p_int)\n"
       "print(log1p_float)\n"
       "print(log1p_expr)\n"
@@ -910,6 +917,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *expm1_int;
   const graphion_runtime_value *expm1_float;
   const graphion_runtime_value *expm1_expr;
+  const graphion_runtime_value *exp2_int;
+  const graphion_runtime_value *exp2_float;
+  const graphion_runtime_value *exp2_expr;
   const graphion_runtime_value *log1p_int;
   const graphion_runtime_value *log1p_float;
   const graphion_runtime_value *log1p_expr;
@@ -1122,6 +1132,9 @@ int test_gion_arithmetic_expressions(void) {
   expm1_int = graphion_runtime_scope_find(&scope, "expm1_int");
   expm1_float = graphion_runtime_scope_find(&scope, "expm1_float");
   expm1_expr = graphion_runtime_scope_find(&scope, "expm1_expr");
+  exp2_int = graphion_runtime_scope_find(&scope, "exp2_int");
+  exp2_float = graphion_runtime_scope_find(&scope, "exp2_float");
+  exp2_expr = graphion_runtime_scope_find(&scope, "exp2_expr");
   log1p_int = graphion_runtime_scope_find(&scope, "log1p_int");
   log1p_float = graphion_runtime_scope_find(&scope, "log1p_float");
   log1p_expr = graphion_runtime_scope_find(&scope, "log1p_expr");
@@ -1691,60 +1704,74 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 24368;
   }
-  if (log1p_int == NULL || log1p_int->kind != GVM_VALUE_FLOAT || log1p_int->as.float_value < 0.693147180 ||
-      log1p_int->as.float_value > 0.693147181) {
+  if (exp2_int == NULL || exp2_int->kind != GVM_VALUE_FLOAT || exp2_int->as.float_value < 1.999999999 ||
+      exp2_int->as.float_value > 2.000000001) {
     remove(path);
     return 24369;
   }
-  if (log1p_float == NULL || log1p_float->kind != GVM_VALUE_FLOAT || log1p_float->as.float_value != 0.0) {
+  if (exp2_float == NULL || exp2_float->kind != GVM_VALUE_FLOAT || exp2_float->as.float_value != 1.0) {
     remove(path);
     return 24370;
+  }
+  if (exp2_expr == NULL || exp2_expr->kind != GVM_VALUE_FLOAT || exp2_expr->as.float_value < 3.999999999 ||
+      exp2_expr->as.float_value > 4.000000001) {
+    remove(path);
+    return 24371;
+  }
+  if (log1p_int == NULL || log1p_int->kind != GVM_VALUE_FLOAT || log1p_int->as.float_value < 0.693147180 ||
+      log1p_int->as.float_value > 0.693147181) {
+    remove(path);
+    return 24372;
+  }
+  if (log1p_float == NULL || log1p_float->kind != GVM_VALUE_FLOAT || log1p_float->as.float_value != 0.0) {
+    remove(path);
+    return 24373;
   }
   if (log1p_expr == NULL || log1p_expr->kind != GVM_VALUE_FLOAT || log1p_expr->as.float_value < 0.405465108 ||
       log1p_expr->as.float_value > 0.405465109) {
     remove(path);
-    return 24371;
+    return 24374;
   }
   if (erf_zero == NULL || erf_zero->kind != GVM_VALUE_FLOAT || erf_zero->as.float_value != 0.0) {
     remove(path);
-    return 24372;
+    return 24375;
   }
   if (erf_one == NULL || erf_one->kind != GVM_VALUE_FLOAT || erf_one->as.float_value < 0.842700792 ||
       erf_one->as.float_value > 0.842700793) {
     remove(path);
-    return 24373;
+    return 24376;
   }
   if (erf_negative_one == NULL || erf_negative_one->kind != GVM_VALUE_FLOAT ||
       erf_negative_one->as.float_value < -0.842700793 || erf_negative_one->as.float_value > -0.842700792) {
     remove(path);
-    return 24374;
+    return 24377;
   }
   if (erfc_zero == NULL || erfc_zero->kind != GVM_VALUE_FLOAT || erfc_zero->as.float_value != 1.0) {
     remove(path);
-    return 24375;
+    return 24378;
   }
   if (erfc_one == NULL || erfc_one->kind != GVM_VALUE_FLOAT || erfc_one->as.float_value < 0.157299207 ||
       erfc_one->as.float_value > 0.157299208) {
     remove(path);
-    return 24376;
+    return 24379;
   }
   if (erfc_negative_one == NULL || erfc_negative_one->kind != GVM_VALUE_FLOAT ||
       erfc_negative_one->as.float_value < 1.842700792 || erfc_negative_one->as.float_value > 1.842700793) {
     remove(path);
-    return 24377;
+    return 24380;
   }
   if (gamma_one == NULL || gamma_one->kind != GVM_VALUE_FLOAT || gamma_one->as.float_value != 1.0) {
     remove(path);
-    return 24378;
+    return 24381;
   }
   if (gamma_five == NULL || gamma_five->kind != GVM_VALUE_FLOAT || gamma_five->as.float_value != 24.0) {
     remove(path);
-    return 24379;
+    return 24382;
   }
   if (gamma_half == NULL || gamma_half->kind != GVM_VALUE_FLOAT ||
       gamma_half->as.float_value < 1.772453849 || gamma_half->as.float_value > 1.772453851) {
     remove(path);
-    return 24380;
+    return 24383;
   }
   if (lgamma_one == NULL || lgamma_one->kind != GVM_VALUE_FLOAT || lgamma_one->as.float_value != 0.0) {
     remove(path);
@@ -1994,7 +2021,7 @@ int test_gion_arithmetic_expressions(void) {
   normalize_text_newlines(output);
   {
     const char *expected_output =
-        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n";
+        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2\n1\n4\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n";
     char expected_copy[3072];
     const char *expected_lines[512];
     const char *output_lines[512];
@@ -2410,6 +2437,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = isinf(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = isfinite(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = expm1(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = exp2(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = log1p(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = erf(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = erfc(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2585,6 +2613,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = isfinite(1 + 2\n", GINT_ERR_PARSE, "expected ')' after isfinite argument"},
       {"value = expm1()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = expm1(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expm1 argument"},
+      {"value = exp2()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = exp2(1 + 2\n", GINT_ERR_PARSE, "expected ')' after exp2 argument"},
       {"value = log1p()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = log1p(1 + 2\n", GINT_ERR_PARSE, "expected ')' after log1p argument"},
       {"value = erf()\n", GINT_ERR_PARSE, "expected scalar literal"},

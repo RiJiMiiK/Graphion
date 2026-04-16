@@ -213,7 +213,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `lgamma(x)`
 - [x] constant `tau`
 - [x] constant `phi`
-- [ ] builtin `exp2(x)`
+- [x] builtin `exp2(x)`
 - [ ] builtin `csc(x)`
 - [ ] builtin `sec(x)`
 - [ ] builtin `cot(x)`

@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -131,6 +131,9 @@ isfinite_count = isfinite(7)
 exp_count = exp(1)
 exp_zero = exp(0.0)
 exp_expression = exp(1 + 1)
+exp2_count = exp2(1)
+exp2_zero = exp2(0.0)
+exp2_expression = exp2(1 + 1)
 expm1_count = expm1(1)
 expm1_zero = expm1(0.0)
 expm1_expression = expm1(1 + 1)
@@ -313,6 +316,9 @@ print("isfinite on an int -> isfinite_count=" + isfinite_count)
 print("exp of an integer -> exp_count=" + exp_count)
 print("exp of zero -> exp_zero=" + exp_zero)
 print("exp of an expression -> exp_expression=" + exp_expression)
+print("exp2 of an integer -> exp2_count=" + exp2_count)
+print("exp2 of zero -> exp2_zero=" + exp2_zero)
+print("exp2 of an expression -> exp2_expression=" + exp2_expression)
 print("expm1 of an integer -> expm1_count=" + expm1_count)
 print("expm1 of zero -> expm1_zero=" + expm1_zero)
 print("expm1 of an expression -> expm1_expression=" + expm1_expression)

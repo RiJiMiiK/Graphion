@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
         {"vm_isfinite_builtin_opcode", test_vm_isfinite_builtin_opcode},
         {"vm_fract_builtin_opcode", test_vm_fract_builtin_opcode},
         {"vm_expm1_builtin_opcode", test_vm_expm1_builtin_opcode},
+        {"vm_exp2_builtin_opcode", test_vm_exp2_builtin_opcode},
         {"vm_log1p_builtin_opcode", test_vm_log1p_builtin_opcode},
         {"vm_erf_builtin_opcode", test_vm_erf_builtin_opcode},
         {"vm_erfc_builtin_opcode", test_vm_erfc_builtin_opcode},

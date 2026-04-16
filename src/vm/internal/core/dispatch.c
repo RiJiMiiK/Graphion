@@ -185,6 +185,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_EXPM1:
         rc = op_expm1_builtin(vm, &in);
         break;
+      case GVM_OP_EXP2:
+        rc = op_exp2_builtin(vm, &in);
+        break;
       case GVM_OP_LOG1P:
         rc = op_log1p_builtin(vm, &in);
         break;
@@ -407,6 +410,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_HYPOT] = op_hypot_builtin,
       [GVM_OP_COPYSIGN] = op_copysign_builtin,
       [GVM_OP_EXPM1] = op_expm1_builtin,
+      [GVM_OP_EXP2] = op_exp2_builtin,
       [GVM_OP_LOG1P] = op_log1p_builtin,
       [GVM_OP_ERF] = op_erf_builtin,
       [GVM_OP_ERFC] = op_erfc_builtin,
@@ -536,6 +540,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_HYPOT] = &&L_hypot_builtin,
       [GVM_OP_COPYSIGN] = &&L_copysign_builtin,
       [GVM_OP_EXPM1] = &&L_expm1_builtin,
+      [GVM_OP_EXP2] = &&L_exp2_builtin,
       [GVM_OP_LOG1P] = &&L_log1p_builtin,
       [GVM_OP_ERF] = &&L_erf_builtin,
       [GVM_OP_ERFC] = &&L_erfc_builtin,
@@ -911,6 +916,12 @@ L_clamp:
     continue;
   L_expm1_builtin:
     rc = op_expm1_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_exp2_builtin:
+    rc = op_exp2_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

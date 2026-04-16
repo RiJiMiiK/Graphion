@@ -156,12 +156,14 @@ These back the current `.gion` scalar language features:
 - `isinf(x)`
 - `isfinite(x)`
 - `expm1(x)`
+- `exp2(x)`
 - `log1p(x)`
 - `erf(x)`
 - `erfc(x)`
 - `gamma(x)`
 - `lgamma(x)`
 - `exp(x)`
+- `exp2(x)`
 - `ln(x)`
 - `log(x, base)`
 - `log10(x)`
