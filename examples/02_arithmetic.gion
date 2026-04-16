@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), csc(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -58,6 +58,9 @@ cbrt_expression = cbrt(1 + 26)
 sin_zero = sin(0)
 sin_half_turn = sin(pi / 2)
 sin_expression = sin(1.5707963267948966)
+csc_right_angle = csc(pi / 2)
+csc_negative_right_angle = csc(-pi / 2)
+csc_pi_sixth = csc(0.5235987755982988)
 sinh_zero = sinh(0)
 sinh_one = sinh(1)
 sinh_negative = sinh(-1)
@@ -243,6 +246,9 @@ print("cube root of an expression -> cbrt_expression=" + cbrt_expression)
 print("sin at zero radians -> sin_zero=" + sin_zero)
 print("sin at pi/2 radians -> sin_half_turn=" + sin_half_turn)
 print("sin of a radians literal -> sin_expression=" + sin_expression)
+print("csc at pi/2 radians -> csc_right_angle=" + csc_right_angle)
+print("csc at -pi/2 radians -> csc_negative_right_angle=" + csc_negative_right_angle)
+print("csc at pi/6 radians -> csc_pi_sixth=" + csc_pi_sixth)
 print("sinh at zero radians -> sinh_zero=" + sinh_zero)
 print("sinh at one radian -> sinh_one=" + sinh_one)
 print("sinh at minus one radian -> sinh_negative=" + sinh_negative)
