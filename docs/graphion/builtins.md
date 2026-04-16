@@ -26,6 +26,7 @@ Unless a builtin says otherwise:
 | `csc(x)` | cosecant in radians | `float` | values near `sin(x) = 0` can grow very large |
 | `sec(x)` | secant in radians | `float` | values near `cos(x) = 0` can grow very large |
 | `cot(x)` | cotangent in radians | `float` | values near `sin(x) = 0` can grow very large |
+| `acsc(x)` | inverse cosecant in radians | `float` | requires `x <= -1` or `x >= 1` |
 | `cos(x)` | cosine in radians | `float` | |
 | `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
 | `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
@@ -512,6 +513,34 @@ Current domain errors:
 ```text
 asin requires input in [-1, 1]
 acos requires input in [-1, 1]
+```
+
+### `acsc(x)`
+
+`acsc(x)` returns the inverse cosecant in radians. It is implemented as `asin(1 / x)`.
+
+```gion
+print(acsc(1))
+print(acsc(2))
+print(acsc(-2))
+```
+
+Expected output:
+
+```text
+1.5708
+0.523599
+-0.523599
+```
+
+Domain restriction:
+
+- `x` must satisfy `x <= -1` or `x >= 1`
+
+Current domain error:
+
+```text
+acsc requires input <= -1 or >= 1
 ```
 
 ### `atan(x)` and `atan2(y, x)`

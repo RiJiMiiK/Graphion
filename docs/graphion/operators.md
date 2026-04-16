@@ -365,7 +365,7 @@ Current evaluation note:
 Current precedence order:
 
 1. grouped expressions with parentheses
-2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `csc(...)`, `sec(...)`, `cot(...)`, `sinh(...)`, `asinh(...)`, `acosh(...)`, `cos(...)`, `cosh(...)`, `tan(...)`, `tanh(...)`, `atanh(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `copysign(...)`, `fma(...)`, `fdim(...)`, `remainder(...)`, `rint(...)`, `exp(...)`, `exp2(...)`, `expm1(...)`, `log1p(...)`, `erf(...)`, `erfc(...)`, `gamma(...)`, `lgamma(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
+2. `abs(...)`, `min(...)`, `max(...)`, `clamp(...)`, `sqrt(...)`, `cbrt(...)`, `sin(...)`, `csc(...)`, `sec(...)`, `cot(...)`, `acsc(...)`, `sinh(...)`, `asinh(...)`, `acosh(...)`, `cos(...)`, `cosh(...)`, `tan(...)`, `tanh(...)`, `atanh(...)`, `asin(...)`, `acos(...)`, `atan(...)`, `atan2(...)`, `hypot(...)`, `copysign(...)`, `fma(...)`, `fdim(...)`, `remainder(...)`, `rint(...)`, `exp(...)`, `exp2(...)`, `expm1(...)`, `log1p(...)`, `erf(...)`, `erfc(...)`, `gamma(...)`, `lgamma(...)`, `ln(...)`, `log(...)`, `log10(...)`, `log2(...)`, `floor(...)`, `ceil(...)`, `round(...)`, `trunc(...)`, `sign(...)`, `len(...)`
 3. postfix factorial `!`
 4. `**`
 5. `*`, `/`, `//`, `%`
