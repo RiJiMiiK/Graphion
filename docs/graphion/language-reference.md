@@ -83,6 +83,7 @@ These names are currently reserved and cannot be assigned:
 - `sec`
 - `cot`
 - `acsc`
+- `asec`
 - `sinh`
 - `asinh`
 - `acosh`
@@ -615,6 +616,7 @@ Current builtin functions:
 - `sec(x)`
 - `cot(x)`
 - `acsc(x)`
+- `asec(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`

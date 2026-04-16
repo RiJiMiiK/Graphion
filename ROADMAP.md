@@ -218,7 +218,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] builtin `sec(x)`
 - [x] builtin `cot(x)`
 - [x] builtin `acsc(x)`
-- [ ] builtin `asec(x)`
+- [x] builtin `asec(x)`
 - [ ] builtin `acot(x)`
 - [ ] builtin `sech(x)`
 - [ ] builtin `csch(x)`

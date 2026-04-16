@@ -46,6 +46,7 @@ int op_csc_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_sec_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_cot_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_acsc_builtin(graphion_vm *vm, const graphion_insn *in);
+int op_asec_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_sinh_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_asinh_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_acosh_builtin(graphion_vm *vm, const graphion_insn *in);

@@ -70,6 +70,9 @@ static int execute_condition_program(const graphion_runtime_program *program,
     if (rc == GVM_ERR_ACSC_DOMAIN) {
       return fail(diagnostic, line, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
     }
+    if (rc == GVM_ERR_ASEC_DOMAIN) {
+      return fail(diagnostic, line, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
+    }
     if (rc == GVM_ERR_ACOSH_DOMAIN) {
       return fail(diagnostic, line, 1U, "acosh requires input >= 1", GINT_ERR_RUN);
     }
@@ -804,6 +807,9 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
     }
     if (rc == GVM_ERR_ACSC_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
+    }
+    if (rc == GVM_ERR_ASEC_DOMAIN) {
+      return fail(diagnostic, 1U, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
     }
     if (rc == GVM_ERR_ACOSH_DOMAIN) {
       return fail(diagnostic, 1U, 1U, "acosh requires input >= 1", GINT_ERR_RUN);

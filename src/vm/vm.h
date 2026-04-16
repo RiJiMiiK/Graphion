@@ -119,6 +119,7 @@ typedef enum {
   GVM_OP_SEC = 111,
   GVM_OP_COT = 112,
   GVM_OP_ACSC = 113,
+  GVM_OP_ASEC = 114,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -164,7 +165,8 @@ typedef enum {
   GVM_ERR_REMAINDER_DOMAIN = -32,
   GVM_ERR_GAMMA_DOMAIN = -33,
   GVM_ERR_LGAMMA_DOMAIN = -34,
-  GVM_ERR_ACSC_DOMAIN = -35
+  GVM_ERR_ACSC_DOMAIN = -35,
+  GVM_ERR_ASEC_DOMAIN = -36
 } graphion_vm_result;
 
 typedef enum {
