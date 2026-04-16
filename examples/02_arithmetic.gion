@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), csc(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), csc(), sec(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -61,6 +61,9 @@ sin_expression = sin(1.5707963267948966)
 csc_right_angle = csc(pi / 2)
 csc_negative_right_angle = csc(-pi / 2)
 csc_pi_sixth = csc(0.5235987755982988)
+sec_zero = sec(0)
+sec_pi = sec(pi)
+sec_pi_third = sec(1.0471975511965976)
 sinh_zero = sinh(0)
 sinh_one = sinh(1)
 sinh_negative = sinh(-1)
@@ -249,6 +252,9 @@ print("sin of a radians literal -> sin_expression=" + sin_expression)
 print("csc at pi/2 radians -> csc_right_angle=" + csc_right_angle)
 print("csc at -pi/2 radians -> csc_negative_right_angle=" + csc_negative_right_angle)
 print("csc at pi/6 radians -> csc_pi_sixth=" + csc_pi_sixth)
+print("sec at zero radians -> sec_zero=" + sec_zero)
+print("sec at pi radians -> sec_pi=" + sec_pi)
+print("sec at pi/3 radians -> sec_pi_third=" + sec_pi_third)
 print("sinh at zero radians -> sinh_zero=" + sinh_zero)
 print("sinh at one radian -> sinh_one=" + sinh_one)
 print("sinh at minus one radian -> sinh_negative=" + sinh_negative)

@@ -292,6 +292,7 @@ int test_gion_reserved_name_errors(void) {
       {"cbrt = 1\n", "reserved name cannot be assigned", "gion_reserved_cbrt.gion"},
       {"sin = 1\n", "reserved name cannot be assigned", "gion_reserved_sin.gion"},
       {"csc = 1\n", "reserved name cannot be assigned", "gion_reserved_csc.gion"},
+      {"sec = 1\n", "reserved name cannot be assigned", "gion_reserved_sec.gion"},
       {"sinh = 1\n", "reserved name cannot be assigned", "gion_reserved_sinh.gion"},
       {"asinh = 1\n", "reserved name cannot be assigned", "gion_reserved_asinh.gion"},
       {"acosh = 1\n", "reserved name cannot be assigned", "gion_reserved_acosh.gion"},
@@ -471,6 +472,9 @@ int test_gion_arithmetic_expressions(void) {
       "csc_right_angle = csc(pi / 2)\n"
       "csc_negative_right_angle = csc(-pi / 2)\n"
       "csc_pi_sixth = csc(0.5235987755982988)\n"
+      "sec_zero = sec(0)\n"
+      "sec_pi = sec(pi)\n"
+      "sec_pi_third = sec(1.0471975511965976)\n"
       "sinh_zero = sinh(0)\n"
       "sinh_one = sinh(1)\n"
       "sinh_negative = sinh(-1)\n"
@@ -660,6 +664,9 @@ int test_gion_arithmetic_expressions(void) {
       "print(csc_right_angle)\n"
       "print(csc_negative_right_angle)\n"
       "print(csc_pi_sixth)\n"
+      "print(sec_zero)\n"
+      "print(sec_pi)\n"
+      "print(sec_pi_third)\n"
       "print(sinh_zero)\n"
       "print(sinh_one)\n"
       "print(sinh_negative)\n"
@@ -857,6 +864,9 @@ int test_gion_arithmetic_expressions(void) {
   const graphion_runtime_value *csc_right_angle;
   const graphion_runtime_value *csc_negative_right_angle;
   const graphion_runtime_value *csc_pi_sixth;
+  const graphion_runtime_value *sec_zero;
+  const graphion_runtime_value *sec_pi;
+  const graphion_runtime_value *sec_pi_third;
   const graphion_runtime_value *sinh_zero;
   const graphion_runtime_value *sinh_one;
   const graphion_runtime_value *sinh_negative;
@@ -1075,6 +1085,9 @@ int test_gion_arithmetic_expressions(void) {
   csc_right_angle = graphion_runtime_scope_find(&scope, "csc_right_angle");
   csc_negative_right_angle = graphion_runtime_scope_find(&scope, "csc_negative_right_angle");
   csc_pi_sixth = graphion_runtime_scope_find(&scope, "csc_pi_sixth");
+  sec_zero = graphion_runtime_scope_find(&scope, "sec_zero");
+  sec_pi = graphion_runtime_scope_find(&scope, "sec_pi");
+  sec_pi_third = graphion_runtime_scope_find(&scope, "sec_pi_third");
   sinh_zero = graphion_runtime_scope_find(&scope, "sinh_zero");
   sinh_one = graphion_runtime_scope_find(&scope, "sinh_one");
   sinh_negative = graphion_runtime_scope_find(&scope, "sinh_negative");
@@ -1404,6 +1417,21 @@ int test_gion_arithmetic_expressions(void) {
       csc_pi_sixth->as.float_value < 1.999999999 || csc_pi_sixth->as.float_value > 2.000000001) {
     remove(path);
     return 2432802;
+  }
+  if (sec_zero == NULL || sec_zero->kind != GVM_VALUE_FLOAT || sec_zero->as.float_value < 0.999999999 ||
+      sec_zero->as.float_value > 1.000000001) {
+    remove(path);
+    return 2432803;
+  }
+  if (sec_pi == NULL || sec_pi->kind != GVM_VALUE_FLOAT || sec_pi->as.float_value < -1.000000001 ||
+      sec_pi->as.float_value > -0.999999999) {
+    remove(path);
+    return 2432804;
+  }
+  if (sec_pi_third == NULL || sec_pi_third->kind != GVM_VALUE_FLOAT ||
+      sec_pi_third->as.float_value < 1.999999999 || sec_pi_third->as.float_value > 2.000000001) {
+    remove(path);
+    return 2432805;
   }
   if (sinh_zero == NULL || sinh_zero->kind != GVM_VALUE_FLOAT || sinh_zero->as.float_value != 0.0) {
     remove(path);
@@ -2050,7 +2078,7 @@ int test_gion_arithmetic_expressions(void) {
   normalize_text_newlines(output);
   {
     const char *expected_output =
-        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n2\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2\n1\n4\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n";
+        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n2\n1\n-1\n2\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2\n1\n4\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n";
     char expected_copy[3072];
     const char *expected_lines[512];
     const char *output_lines[512];
@@ -2436,6 +2464,7 @@ int test_gion_arithmetic_runtime_errors(void) {
       {"value = cbrt(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sin(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = csc(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = sec(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = sinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = asinh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
       {"value = acosh(\"x\")\n", GINT_ERR_RUN, "incompatible operand types"},
@@ -2579,6 +2608,8 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = sin(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sin argument"},
       {"value = csc()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = csc(1 + 2\n", GINT_ERR_PARSE, "expected ')' after csc argument"},
+      {"value = sec()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = sec(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sec argument"},
       {"value = sinh()\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = sinh(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sinh argument"},
       {"value = asinh()\n", GINT_ERR_PARSE, "expected scalar literal"},

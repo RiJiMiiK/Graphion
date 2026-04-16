@@ -80,6 +80,7 @@ These names are currently reserved and cannot be assigned:
 - `cbrt`
 - `sin`
 - `csc`
+- `sec`
 - `sinh`
 - `asinh`
 - `acosh`
@@ -609,6 +610,7 @@ Current builtin functions:
 - `cbrt(x)`
 - `sin(x)`
 - `csc(x)`
+- `sec(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`

@@ -24,6 +24,7 @@ Unless a builtin says otherwise:
 | `cbrt(x)` | cube root | `float` | negatives allowed |
 | `sin(x)` | sine in radians | `float` | |
 | `csc(x)` | cosecant in radians | `float` | values near `sin(x) = 0` can grow very large |
+| `sec(x)` | secant in radians | `float` | values near `cos(x) = 0` can grow very large |
 | `cos(x)` | cosine in radians | `float` | |
 | `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
 | `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
@@ -461,11 +462,12 @@ They therefore follow the same domain rule and error wording as `log(x, base)`.
 
 All trigonometric builtins use radians and return a `float`.
 
-### `sin(x)`, `csc(x)`, `cos(x)`, `tan(x)`
+### `sin(x)`, `csc(x)`, `sec(x)`, `cos(x)`, `tan(x)`
 
 ```gion
 print(sin(0))
 print(csc(pi / 2))
+print(sec(0))
 print(cos(pi))
 print(tan(pi / 4))
 ```
@@ -475,11 +477,12 @@ Expected output:
 ```text
 0
 1
+1
 -1
 1
 ```
 
-For `csc(x)` and `tan(x)`, values near singularities such as `pi / 2 + k*pi` for `tan(x)` or `k*pi` for `csc(x)` can become very large. Graphion currently follows ordinary floating-point behavior here rather than raising a special error.
+For `csc(x)`, `sec(x)`, and `tan(x)`, values near singularities such as `k*pi` for `csc(x)`, `pi / 2 + k*pi` for `sec(x)`, or `pi / 2 + k*pi` for `tan(x)` can become very large. Graphion currently follows ordinary floating-point behavior here rather than raising a special error.
 
 ### `asin(x)` and `acos(x)`
 

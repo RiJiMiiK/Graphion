@@ -215,7 +215,7 @@ The next planned lane is arithmetic and bit-level scalar work after the conditio
 - [x] constant `phi`
 - [x] builtin `exp2(x)`
 - [x] builtin `csc(x)`
-- [ ] builtin `sec(x)`
+- [x] builtin `sec(x)`
 - [ ] builtin `cot(x)`
 - [ ] builtin `acsc(x)`
 - [ ] builtin `asec(x)`
