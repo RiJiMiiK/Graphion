@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), csc(), sec(), cot(), acsc(), asec(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), csc(), sec(), cot(), acsc(), asec(), acot(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -73,6 +73,9 @@ acsc_negative_two = acsc(-2)
 asec_one = asec(1)
 asec_two = asec(2)
 asec_negative_two = asec(-2)
+acot_one = acot(1)
+acot_zero = acot(0)
+acot_negative_one = acot(-1)
 sinh_zero = sinh(0)
 sinh_one = sinh(1)
 sinh_negative = sinh(-1)
@@ -273,6 +276,9 @@ print("acsc at minus two -> acsc_negative_two=" + acsc_negative_two)
 print("asec at one -> asec_one=" + asec_one)
 print("asec at two -> asec_two=" + asec_two)
 print("asec at minus two -> asec_negative_two=" + asec_negative_two)
+print("acot at one -> acot_one=" + acot_one)
+print("acot at zero -> acot_zero=" + acot_zero)
+print("acot at minus one -> acot_negative_one=" + acot_negative_one)
 print("sinh at zero radians -> sinh_zero=" + sinh_zero)
 print("sinh at one radian -> sinh_one=" + sinh_one)
 print("sinh at minus one radian -> sinh_negative=" + sinh_negative)

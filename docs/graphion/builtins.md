@@ -28,6 +28,7 @@ Unless a builtin says otherwise:
 | `cot(x)` | cotangent in radians | `float` | values near `sin(x) = 0` can grow very large |
 | `acsc(x)` | inverse cosecant in radians | `float` | requires `x <= -1` or `x >= 1` |
 | `asec(x)` | inverse secant in radians | `float` | requires `x <= -1` or `x >= 1` |
+| `acot(x)` | inverse cotangent in radians | `float` | principal branch implemented with `atan2(1, x)` |
 | `cos(x)` | cosine in radians | `float` | |
 | `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
 | `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
@@ -570,6 +571,24 @@ Current domain error:
 
 ```text
 asec requires input <= -1 or >= 1
+```
+
+### `acot(x)`
+
+`acot(x)` returns the inverse cotangent in radians. It is implemented as `atan2(1, x)`, which keeps `acot(0)` well-defined and uses the principal branch in `(0, pi)`.
+
+```gion
+print(acot(1))
+print(acot(0))
+print(acot(-1))
+```
+
+Expected output:
+
+```text
+0.785398
+1.5708
+2.35619
 ```
 
 ### `atan(x)` and `atan2(y, x)`
