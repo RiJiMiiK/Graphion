@@ -2083,6 +2083,13 @@ int test_vm_isfinite_builtin_opcode(void) {
     return 18151;
   }
 
+  memset(&vm, 0, sizeof(vm));
+  insn.a = 16;
+  rc = op_isfinite_builtin(&vm, &insn);
+  if (rc != GVM_ERR_INVALID_REG) {
+    return 18152;
+  }
+
   return 0;
 }
 
