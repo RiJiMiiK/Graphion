@@ -15,9 +15,8 @@ The current active lane is hygiene, maintainability, and project health.
 
 - [x] restore a clean `-Werror` build on the Windows GCC / MinGW toolchain
 - [x] add a regression check for the scalar builtin `isinf` / `isfinite` warning path
-- [ ] decide explicitly whether Windows GCC / MinGW is a supported toolchain
-- [ ] if Windows GCC / MinGW is supported, add it to CI
-- [ ] if Windows GCC / MinGW is not supported, document the supported Windows toolchain clearly
+- [x] decide explicitly whether Windows GCC / MinGW is a supported toolchain
+- [x] if Windows GCC / MinGW is not supported, document the supported Windows toolchain clearly
 
 ### Safety and correctness
 
@@ -82,6 +81,9 @@ The current active lane is hygiene, maintainability, and project health.
 
 Future additions gated by other features:
 
+- [ ] optional future support for Windows GCC / MinGW
+  - only if the project later chooses to support it as a first-class toolchain
+  - would require adding it to CI and keeping its warning policy green
 - [ ] builtin `modf(x)`
   - needs a multi-value return shape such as a future list/tuple-like type
 - [ ] builtin `cis(x)`
