@@ -1,7 +1,7 @@
 # 02_arithmetic.gion
 # This file demonstrates arithmetic operators, precedence, grouping,
 # negative operands, postfix factorial, numeric builtins such as abs(), min(), max(),
-# clamp(), sqrt(), cbrt(), sin(), csc(), sec(), cot(), acsc(), asec(), acot(), sech(), csch(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
+# clamp(), sqrt(), cbrt(), sin(), csc(), sec(), cot(), acsc(), asec(), acot(), sech(), csch(), coth(), sinh(), asinh(), acosh(), cos(), cosh(), tan(), tanh(), atanh(), asin(), acos(), atan(), atan2(), hypot(), copysign(), fma(), fdim(), remainder(), rint(), degrees(), radians(), isnan(), isinf(), isfinite(), exp(), exp2(), expm1(), log1p(), erf(), erfc(), gamma(), lgamma(), ln(), log(), log10(), log2(), floor(), ceil(), round(), trunc(), fract(), sign(), and the string builtin len().
 
 sum = 40 + 2
 mixed = 1 + 2 * 3
@@ -82,6 +82,9 @@ sech_negative = sech(-1)
 csch_one = csch(1)
 csch_negative = csch(-1)
 csch_two = csch(2)
+coth_one = coth(1)
+coth_negative = coth(-1)
+coth_two = coth(2)
 sinh_zero = sinh(0)
 sinh_one = sinh(1)
 sinh_negative = sinh(-1)
@@ -291,6 +294,9 @@ print("sech at minus one -> sech_negative=" + sech_negative)
 print("csch at one -> csch_one=" + csch_one)
 print("csch at minus one -> csch_negative=" + csch_negative)
 print("csch at two -> csch_two=" + csch_two)
+print("coth at one -> coth_one=" + coth_one)
+print("coth at minus one -> coth_negative=" + coth_negative)
+print("coth at two -> coth_two=" + coth_two)
 print("sinh at zero radians -> sinh_zero=" + sinh_zero)
 print("sinh at one radian -> sinh_one=" + sinh_one)
 print("sinh at minus one radian -> sinh_negative=" + sinh_negative)
