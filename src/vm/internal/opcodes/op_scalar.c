@@ -2,6 +2,7 @@
 
 #include "vm/internal/opcodes/op_scalar.h"
 
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <stdint.h>
@@ -1253,7 +1254,7 @@ int op_isinf_builtin(graphion_vm *vm, const graphion_insn *in) {
   }
 
   vm_free_owned_reg_string(vm, in->a);
-  vm_value_set_bool(&vm->regs[in->a], is_float != 0 && isinf(value_f));
+  vm_value_set_bool(&vm->regs[in->a], is_float != 0 && (value_f > DBL_MAX || value_f < -DBL_MAX));
   return GVM_OK;
 }
 
@@ -1266,7 +1267,7 @@ int op_isfinite_builtin(graphion_vm *vm, const graphion_insn *in) {
     return GVM_ERR_TYPE_MISMATCH;
   }
 
-  is_finite = is_float == 0 || (!isnan(value_f) && !isinf(value_f));
+  is_finite = is_float == 0 || (value_f == value_f && value_f <= DBL_MAX && value_f >= -DBL_MAX);
   vm_free_owned_reg_string(vm, in->a);
   vm_value_set_bool(&vm->regs[in->a], is_finite);
   return GVM_OK;

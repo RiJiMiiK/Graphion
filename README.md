@@ -26,6 +26,12 @@ The project also contains broader VM work for graph and hypergraph execution, bu
 
 ## Quick start
 
+Supported toolchains today:
+
+- Linux: GCC and Clang are supported and covered in CI.
+- Windows: MSVC is supported and covered in CI.
+- Windows GCC / MinGW: not currently a supported toolchain. Local builds may work, but this path is not covered in CI and is not treated as a release-blocking configuration.
+
 Configure, build, and test:
 
 ```bash
