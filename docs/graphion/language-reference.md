@@ -653,7 +653,6 @@ Current builtin functions:
 - `gamma(x)`
 - `lgamma(x)`
 - `exp(x)`
-- `exp2(x)`
 - `ln(x)`
 - `log(x, base)`
 - `log10(x)`

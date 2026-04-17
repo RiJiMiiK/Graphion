@@ -7,14 +7,18 @@
 
 Graphion is a language project built around a `.gion` source pipeline and a VM backend.
 
-Today, the active language surface is the scalar subset:
+Today, the implemented user-facing `.gion` surface is a scalar language subset with:
 
-- assignment
+- variable assignment, reuse, and compound assignments
 - `print(...)`
-- arithmetic expressions
-- grouped expressions with parentheses
-- compound assignments
-- `abs(...)`
+- scalar values: `int`, `float`, `bool`, `string`, and `bits`
+- built-in numeric constants such as `pi`, `tau`, `phi`, `e`, `nan`, and `inf`
+- arithmetic expressions, grouped expressions, and postfix factorial
+- comparisons and boolean logic
+- `if / elif / else`, ternary expressions, and `match ... default`
+- line comments and block comments
+- `bits` literals and bitwise operators
+- documented scalar builtins such as `abs`, `min`, `max`, `clamp`, trigonometric helpers, rounding helpers, and numeric predicates
 
 ## Current direction
 
@@ -22,7 +26,11 @@ The rebuild is guided by one target pipeline:
 
 - `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
 
-The project also contains broader VM work for graph and hypergraph execution, but the user-facing `.gion` language is currently documented only for the subset that is actually implemented.
+Current project state:
+
+- the user-facing `.gion` frontend is documented for the implemented scalar subset only
+- the repository also contains broader VM work for graph and hypergraph execution
+- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
 
 ## Quick start
 
