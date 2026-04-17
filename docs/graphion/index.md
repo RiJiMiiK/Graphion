@@ -22,6 +22,9 @@ That split is intentional:
 
 Graphion currently exposes a small but usable scalar language.
 
+This is the current documented `.gion` frontend scope.
+The repository also contains broader VM work for graph and hypergraph execution, while the active repo lane is currently hygiene and maintenance.
+
 Implemented today:
 
 - variable assignment and reuse

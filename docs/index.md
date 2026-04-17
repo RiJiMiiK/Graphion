@@ -2,6 +2,12 @@
 
 Welcome to the Graphion documentation site.
 
+Current project state:
+
+- the documented `.gion` frontend currently covers the implemented scalar subset
+- the repository also contains broader VM work for graph and hypergraph execution
+- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
+
 This documentation is split into two main tracks:
 
 - **Graphion user documentation**

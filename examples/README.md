@@ -2,6 +2,12 @@
 
 This directory contains focused `.gion` examples for the currently implemented language subset.
 
+Current project state:
+
+- these examples track the implemented scalar `.gion` subset
+- the repository also contains broader VM work for graph and hypergraph execution
+- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
+
 Files:
 
 - `01_scalars_and_print.gion`

@@ -26,7 +26,11 @@ The rebuild is guided by one target pipeline:
 
 - `source Graphion -> tokens/parsing -> internal representation -> bytecode -> VM`
 
-The project also contains broader VM work for graph and hypergraph execution, but the user-facing `.gion` frontend is still documented only for the subset that is actually implemented today.
+Current project state:
+
+- the user-facing `.gion` frontend is documented for the implemented scalar subset only
+- the repository also contains broader VM work for graph and hypergraph execution
+- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
 
 ## Quick start
 

@@ -33,7 +33,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] resync `README.md` with the implemented `.gion` scalar surface
 - [x] keep `ROADMAP.md` focused on the active maintenance lane while preserving future language work below
 - [x] remove duplicated or drifted builtin entries in the user docs
-- [ ] make the documented current scope consistent across README, docs, examples, and roadmap
+- [x] make the documented current scope consistent across README, docs, examples, and roadmap
 - [ ] review docs wording so the public entry points match the post-`gion-arithmetic` project state
 
 ### Test robustness
