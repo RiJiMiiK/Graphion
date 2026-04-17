@@ -14,7 +14,7 @@ The current active lane is hygiene, maintainability, and project health.
 ### Build health and portability
 
 - [x] restore a clean `-Werror` build on the Windows GCC / MinGW toolchain
-- [ ] add a regression check for the scalar builtin `isinf` / `isfinite` warning path
+- [x] add a regression check for the scalar builtin `isinf` / `isfinite` warning path
 - [ ] decide explicitly whether Windows GCC / MinGW is a supported toolchain
 - [ ] if Windows GCC / MinGW is supported, add it to CI
 - [ ] if Windows GCC / MinGW is not supported, document the supported Windows toolchain clearly
