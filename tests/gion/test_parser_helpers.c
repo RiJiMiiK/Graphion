@@ -104,6 +104,45 @@ int test_read_file_text(const char *path, char *buffer, size_t capacity) {
   return 1;
 }
 
+int test_capture_gion_output(const char *source,
+                             const char *label,
+                             graphion_runtime_scope *scope,
+                             graphion_runtime_diagnostic *diagnostic,
+                             char *path_buffer,
+                             size_t path_capacity,
+                             char *output_buffer,
+                             size_t output_capacity) {
+  FILE *fp = NULL;
+  int rc;
+
+  if (source == NULL || scope == NULL || diagnostic == NULL || path_buffer == NULL || output_buffer == NULL ||
+      path_capacity == 0U || output_capacity == 0U) {
+    return 0;
+  }
+  path_buffer[0] = '\0';
+  fp = test_open_temp_output(path_buffer, path_capacity, label);
+  if (fp == NULL) {
+    return 0;
+  }
+  rc = graphion_interpret_source_with_output(source, scope, diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    test_cleanup_temp_path(path_buffer);
+    return 0;
+  }
+  if (!test_read_file_text(path_buffer, output_buffer, output_capacity)) {
+    test_cleanup_temp_path(path_buffer);
+    return 0;
+  }
+  return 1;
+}
+
+void test_cleanup_temp_path(const char *path) {
+  if (path != NULL && *path != '\0') {
+    remove(path);
+  }
+}
+
 void normalize_text_newlines(char *text) {
   size_t read_index = 0U;
   size_t write_index = 0U;
