@@ -1263,6 +1263,10 @@ int op_isfinite_builtin(graphion_vm *vm, const graphion_insn *in) {
   double value_f;
   int is_float;
   int is_finite;
+
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
   if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
     return GVM_ERR_TYPE_MISMATCH;
   }
