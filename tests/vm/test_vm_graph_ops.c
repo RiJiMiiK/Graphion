@@ -503,6 +503,9 @@ int test_vm_neighbor_iteration_errors(void) {
       {GVM_OP_MOV_IMM, 0U, 0U, 99},
       {GVM_OP_NEIGHBORS_OF, 0U, 0U, 0},
   };
+  const graphion_insn invalid_reg_program[] = {
+      {GVM_OP_NEIGHBORS_OF, 16U, 0U, 0},
+  };
   int rc;
 
   rc = graphion_csr_graph_init(&graph, 4U, 6U, offsets, neighbors);
@@ -532,6 +535,18 @@ int test_vm_neighbor_iteration_errors(void) {
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_INVALID_NODE_ID) {
     return 5;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_csr(&vm, &graph, NULL, NULL, 0U);
+  graphion_vm_bind_frontier(&vm, frontier_a, 2U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, invalid_reg_program, sizeof(invalid_reg_program) / sizeof(invalid_reg_program[0]));
+  if (rc != 0) {
+    return 6;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_REG) {
+    return 7;
   }
   return 0;
 }
@@ -712,6 +727,9 @@ int test_vm_hyperedge_traversal_errors(void) {
       {GVM_OP_MOV_IMM, 0U, 0U, 99},
       {GVM_OP_HYPEREDGE_NODES_OF, 0U, 0U, 0},
   };
+  const graphion_insn invalid_reg_program[] = {
+      {GVM_OP_HYPEREDGE_NODES_OF, 16U, 0U, 0},
+  };
   int rc;
 
   rc = graphion_hypergraph_init(&graph,
@@ -748,6 +766,18 @@ int test_vm_hyperedge_traversal_errors(void) {
   rc = graphion_vm_run(&vm);
   if (rc != GVM_ERR_INVALID_HYPEREDGE_ID) {
     return 5;
+  }
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_hypergraph(&vm, &graph);
+  graphion_vm_bind_frontier(&vm, frontier_a, 0U, frontier_b, 2U);
+  rc = graphion_vm_load(&vm, invalid_reg_program, sizeof(invalid_reg_program) / sizeof(invalid_reg_program[0]));
+  if (rc != 0) {
+    return 6;
+  }
+  rc = graphion_vm_run(&vm);
+  if (rc != GVM_ERR_INVALID_REG) {
+    return 7;
   }
   return 0;
 }

@@ -20,10 +20,10 @@ The current active lane is hygiene, maintainability, and project health.
 
 ### Safety and correctness
 
-- [ ] add the missing invalid-register guard in the affected scalar builtin path
-- [ ] add a VM regression test that the affected builtin returns `GVM_ERR_INVALID_REG` on malformed bytecode
-- [ ] review neighboring scalar builtin opcodes for similar defensive-check gaps
-- [ ] keep malformed-bytecode behavior consistent across scalar, graph, and hypergraph opcode families
+- [x] add the missing invalid-register guard in the affected scalar builtin path
+- [x] add a VM regression test that the affected builtin returns `GVM_ERR_INVALID_REG` on malformed bytecode
+- [x] review neighboring scalar builtin opcodes for similar defensive-check gaps
+- [x] keep malformed-bytecode behavior consistent across scalar, graph, and hypergraph opcode families
 
 ## Maintenance irritants
 
