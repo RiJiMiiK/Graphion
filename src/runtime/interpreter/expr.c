@@ -514,6 +514,35 @@ static int parse_factor(const char **cursor,
     lhs.reg_index = target_reg;
     lhs.const_index = 0U;
     lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "exp2", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after exp2", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after exp2 argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_EXP2, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
   } else if (strncmp(*cursor, "log1p", 5U) == 0 && !is_ident_char((*cursor)[5])) {
     const uint8_t target_reg = base_reg;
     const char *after_name = *cursor + 5;
@@ -1010,6 +1039,267 @@ static int parse_factor(const char **cursor,
       return rc;
     }
     rc = program_emit(program, GVM_OP_SIN, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "csc", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 3;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after csc", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after csc argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_CSC, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "sec", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 3;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after sec", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after sec argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_SEC, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "cot", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 3;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after cot", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after cot argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_COT, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "acsc", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after acsc", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after acsc argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_ACSC, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "asec", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after asec", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after asec argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_ASEC, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "acot", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after acot", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after acot argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_ACOT, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "sech", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after sech", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after sech argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_SECH, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "csch", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after csch", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after csch argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_CSCH, target_reg, 0U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  } else if (strncmp(*cursor, "coth", 4U) == 0 && !is_ident_char((*cursor)[4])) {
+    const uint8_t target_reg = base_reg;
+    const char *after_name = *cursor + 4;
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail(diagnostic, line, 1U, "expected '(' after coth", GINT_ERR_PARSE);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after coth argument", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_COTH, target_reg, 0U, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

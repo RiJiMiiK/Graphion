@@ -23,6 +23,15 @@ Unless a builtin says otherwise:
 | `sqrt(x)` | square root | `float` | requires `x >= 0` |
 | `cbrt(x)` | cube root | `float` | negatives allowed |
 | `sin(x)` | sine in radians | `float` | |
+| `csc(x)` | cosecant in radians | `float` | values near `sin(x) = 0` can grow very large |
+| `sec(x)` | secant in radians | `float` | values near `cos(x) = 0` can grow very large |
+| `cot(x)` | cotangent in radians | `float` | values near `sin(x) = 0` can grow very large |
+| `acsc(x)` | inverse cosecant in radians | `float` | requires `x <= -1` or `x >= 1` |
+| `asec(x)` | inverse secant in radians | `float` | requires `x <= -1` or `x >= 1` |
+| `acot(x)` | inverse cotangent in radians | `float` | principal branch implemented with `atan2(1, x)` |
+| `sech(x)` | hyperbolic secant | `float` | implemented as `1 / cosh(x)` |
+| `csch(x)` | hyperbolic cosecant | `float` | implemented as `1 / sinh(x)` |
+| `coth(x)` | hyperbolic cotangent | `float` | implemented as `1 / tanh(x)` |
 | `cos(x)` | cosine in radians | `float` | |
 | `tan(x)` | tangent in radians | `float` | values near asymptotes can grow very large |
 | `asin(x)` | arcsine in radians | `float` | requires `x in [-1, 1]` |
@@ -47,6 +56,7 @@ Unless a builtin says otherwise:
 | `tanh(x)` | hyperbolic tangent | `float` | |
 | `atanh(x)` | inverse hyperbolic tangent | `float` | requires `x in (-1, 1)` |
 | `exp(x)` | `e ** x` | `float` | |
+| `exp2(x)` | `2 ** x` | `float` | |
 | `expm1(x)` | `e ** x - 1` | `float` | useful for small values near zero |
 | `log1p(x)` | `ln(1 + x)` | `float` | useful for small values near zero, requires `x > -1` |
 | `erf(x)` | error function | `float` | often used with Gaussian-style formulas |
@@ -227,6 +237,22 @@ Expected output:
 
 ```text
 2.71828
+1
+```
+
+### `exp2(x)`
+
+Returns `2 ** x`.
+
+```gion
+print(exp2(1))
+print(exp2(0.0))
+```
+
+Expected output:
+
+```text
+2
 1
 ```
 
@@ -443,10 +469,13 @@ They therefore follow the same domain rule and error wording as `log(x, base)`.
 
 All trigonometric builtins use radians and return a `float`.
 
-### `sin(x)`, `cos(x)`, `tan(x)`
+### `sin(x)`, `csc(x)`, `sec(x)`, `cot(x)`, `cos(x)`, `tan(x)`
 
 ```gion
 print(sin(0))
+print(csc(pi / 2))
+print(sec(0))
+print(cot(pi / 4))
 print(cos(pi))
 print(tan(pi / 4))
 ```
@@ -455,11 +484,14 @@ Expected output:
 
 ```text
 0
+1
+1
+1
 -1
 1
 ```
 
-For `tan(x)`, values near asymptotes such as `pi / 2 + k*pi` can become very large. Graphion currently follows ordinary floating-point behavior here rather than raising a special error.
+For `csc(x)`, `sec(x)`, `cot(x)`, and `tan(x)`, values near singularities such as `k*pi` for `csc(x)` and `cot(x)`, `pi / 2 + k*pi` for `sec(x)`, or `pi / 2 + k*pi` for `tan(x)` can become very large. Graphion currently follows ordinary floating-point behavior here rather than raising a special error.
 
 ### `asin(x)` and `acos(x)`
 
@@ -486,6 +518,134 @@ Current domain errors:
 ```text
 asin requires input in [-1, 1]
 acos requires input in [-1, 1]
+```
+
+### `acsc(x)`
+
+`acsc(x)` returns the inverse cosecant in radians. It is implemented as `asin(1 / x)`.
+
+```gion
+print(acsc(1))
+print(acsc(2))
+print(acsc(-2))
+```
+
+Expected output:
+
+```text
+1.5708
+0.523599
+-0.523599
+```
+
+Domain restriction:
+
+- `x` must satisfy `x <= -1` or `x >= 1`
+
+Current domain error:
+
+```text
+acsc requires input <= -1 or >= 1
+```
+
+### `asec(x)`
+
+`asec(x)` returns the inverse secant in radians. It is implemented as `acos(1 / x)`.
+
+```gion
+print(asec(1))
+print(asec(2))
+print(asec(-2))
+```
+
+Expected output:
+
+```text
+0
+1.0472
+2.0944
+```
+
+Domain restriction:
+
+- `x` must satisfy `x <= -1` or `x >= 1`
+
+Current domain error:
+
+```text
+asec requires input <= -1 or >= 1
+```
+
+### `acot(x)`
+
+`acot(x)` returns the inverse cotangent in radians. It is implemented as `atan2(1, x)`, which keeps `acot(0)` well-defined and uses the principal branch in `(0, pi)`.
+
+```gion
+print(acot(1))
+print(acot(0))
+print(acot(-1))
+```
+
+Expected output:
+
+```text
+0.785398
+1.5708
+2.35619
+```
+
+### `sech(x)`
+
+`sech(x)` returns the hyperbolic secant. It is implemented as `1 / cosh(x)`, so `sech(0)` is exactly `1`, and large-magnitude inputs shrink toward `0`.
+
+```gion
+print(sech(0))
+print(sech(1))
+print(sech(-1))
+```
+
+Expected output:
+
+```text
+1
+0.648054
+0.648054
+```
+
+### `csch(x)`
+
+`csch(x)` returns the hyperbolic cosecant. It is implemented as `1 / sinh(x)`, so positive and negative inputs preserve their sign and larger magnitudes move toward `0`.
+
+```gion
+print(csch(1))
+print(csch(-1))
+print(csch(2))
+```
+
+Expected output:
+
+```text
+0.850918
+-0.850918
+0.275721
+```
+
+### `coth(x)`
+
+`coth(x)` returns the hyperbolic cotangent. It is implemented as `1 / tanh(x)`, so positive and negative inputs preserve their sign while larger magnitudes approach `1` or `-1`.
+
+```gion
+print(coth(1))
+print(coth(-1))
+print(coth(2))
+```
+
+Expected output:
+
+```text
+1.313035
+-1.313035
+1.037315
 ```
 
 ### `atan(x)` and `atan2(y, x)`
@@ -685,14 +845,17 @@ true
 
 ## Hyperbolic Functions
 
-### `sinh(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `tanh(x)`, `atanh(x)`
+### `sinh(x)`, `csch(x)`, `asinh(x)`, `acosh(x)`, `cosh(x)`, `sech(x)`, `tanh(x)`, `coth(x)`, `atanh(x)`
 
 ```gion
 print(sinh(1))
+print(csch(1))
 print(asinh(1))
 print(acosh(2))
 print(cosh(1))
+print(sech(1))
 print(tanh(1))
+print(coth(1))
 print(atanh(0.5))
 ```
 
@@ -700,10 +863,13 @@ Expected output:
 
 ```text
 1.1752
+0.850918
 0.881374
 1.31696
 1.54308
+0.648054
 0.761594
+1.313035
 0.549306
 ```
 

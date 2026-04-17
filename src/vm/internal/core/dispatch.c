@@ -125,6 +125,33 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_SIN:
         rc = op_sin_builtin(vm, &in);
         break;
+      case GVM_OP_CSC:
+        rc = op_csc_builtin(vm, &in);
+        break;
+      case GVM_OP_SEC:
+        rc = op_sec_builtin(vm, &in);
+        break;
+      case GVM_OP_COT:
+        rc = op_cot_builtin(vm, &in);
+        break;
+      case GVM_OP_ACSC:
+        rc = op_acsc_builtin(vm, &in);
+        break;
+      case GVM_OP_ASEC:
+        rc = op_asec_builtin(vm, &in);
+        break;
+      case GVM_OP_ACOT:
+        rc = op_acot_builtin(vm, &in);
+        break;
+      case GVM_OP_SECH:
+        rc = op_sech_builtin(vm, &in);
+        break;
+      case GVM_OP_CSCH:
+        rc = op_csch_builtin(vm, &in);
+        break;
+      case GVM_OP_COTH:
+        rc = op_coth_builtin(vm, &in);
+        break;
       case GVM_OP_SINH:
         rc = op_sinh_builtin(vm, &in);
         break;
@@ -184,6 +211,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
         break;
       case GVM_OP_EXPM1:
         rc = op_expm1_builtin(vm, &in);
+        break;
+      case GVM_OP_EXP2:
+        rc = op_exp2_builtin(vm, &in);
         break;
       case GVM_OP_LOG1P:
         rc = op_log1p_builtin(vm, &in);
@@ -392,6 +422,15 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_SQRT] = op_sqrt,
       [GVM_OP_CBRT] = op_cbrt_builtin,
       [GVM_OP_SIN] = op_sin_builtin,
+      [GVM_OP_CSC] = op_csc_builtin,
+      [GVM_OP_SEC] = op_sec_builtin,
+      [GVM_OP_COT] = op_cot_builtin,
+      [GVM_OP_ACSC] = op_acsc_builtin,
+      [GVM_OP_ASEC] = op_asec_builtin,
+      [GVM_OP_ACOT] = op_acot_builtin,
+      [GVM_OP_SECH] = op_sech_builtin,
+      [GVM_OP_CSCH] = op_csch_builtin,
+      [GVM_OP_COTH] = op_coth_builtin,
       [GVM_OP_SINH] = op_sinh_builtin,
       [GVM_OP_ASINH] = op_asinh_builtin,
       [GVM_OP_ACOSH] = op_acosh_builtin,
@@ -407,6 +446,7 @@ static int run_dispatch_jumptable(graphion_vm *vm) {
       [GVM_OP_HYPOT] = op_hypot_builtin,
       [GVM_OP_COPYSIGN] = op_copysign_builtin,
       [GVM_OP_EXPM1] = op_expm1_builtin,
+      [GVM_OP_EXP2] = op_exp2_builtin,
       [GVM_OP_LOG1P] = op_log1p_builtin,
       [GVM_OP_ERF] = op_erf_builtin,
       [GVM_OP_ERFC] = op_erfc_builtin,
@@ -521,6 +561,15 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_SQRT] = &&L_sqrt,
       [GVM_OP_CBRT] = &&L_cbrt_builtin,
       [GVM_OP_SIN] = &&L_sin_builtin,
+      [GVM_OP_CSC] = &&L_csc_builtin,
+      [GVM_OP_SEC] = &&L_sec_builtin,
+      [GVM_OP_COT] = &&L_cot_builtin,
+      [GVM_OP_ACSC] = &&L_acsc_builtin,
+      [GVM_OP_ASEC] = &&L_asec_builtin,
+      [GVM_OP_ACOT] = &&L_acot_builtin,
+      [GVM_OP_SECH] = &&L_sech_builtin,
+      [GVM_OP_CSCH] = &&L_csch_builtin,
+      [GVM_OP_COTH] = &&L_coth_builtin,
       [GVM_OP_SINH] = &&L_sinh_builtin,
       [GVM_OP_ASINH] = &&L_asinh_builtin,
       [GVM_OP_ACOSH] = &&L_acosh_builtin,
@@ -536,6 +585,7 @@ static int run_dispatch_computed_goto(graphion_vm *vm) {
       [GVM_OP_HYPOT] = &&L_hypot_builtin,
       [GVM_OP_COPYSIGN] = &&L_copysign_builtin,
       [GVM_OP_EXPM1] = &&L_expm1_builtin,
+      [GVM_OP_EXP2] = &&L_exp2_builtin,
       [GVM_OP_LOG1P] = &&L_log1p_builtin,
       [GVM_OP_ERF] = &&L_erf_builtin,
       [GVM_OP_ERFC] = &&L_erfc_builtin,
@@ -819,6 +869,60 @@ L_clamp:
       return rc;
     }
     continue;
+  L_csc_builtin:
+    rc = op_csc_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sec_builtin:
+    rc = op_sec_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_cot_builtin:
+    rc = op_cot_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_acsc_builtin:
+    rc = op_acsc_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_asec_builtin:
+    rc = op_asec_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_acot_builtin:
+    rc = op_acot_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_sech_builtin:
+    rc = op_sech_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_csch_builtin:
+    rc = op_csch_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_coth_builtin:
+    rc = op_coth_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
   L_sinh_builtin:
     rc = op_sinh_builtin(vm, &in);
     if (rc != 0) {
@@ -911,6 +1015,12 @@ L_clamp:
     continue;
   L_expm1_builtin:
     rc = op_expm1_builtin(vm, &in);
+    if (rc != 0) {
+      return rc;
+    }
+    continue;
+  L_exp2_builtin:
+    rc = op_exp2_builtin(vm, &in);
     if (rc != 0) {
       return rc;
     }

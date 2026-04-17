@@ -74,6 +74,15 @@ These support both ordinary printing and the current print-only string coercion 
 - `GVM_OP_SQRT`
 - `GVM_OP_CBRT`
 - `GVM_OP_SIN`
+- `GVM_OP_CSC`
+- `GVM_OP_SEC`
+- `GVM_OP_COT`
+- `GVM_OP_ACSC`
+- `GVM_OP_ASEC`
+- `GVM_OP_ACOT`
+- `GVM_OP_SECH`
+- `GVM_OP_CSCH`
+- `GVM_OP_COTH`
 - `GVM_OP_SINH`
 - `GVM_OP_ASINH`
 - `GVM_OP_ACOSH`
@@ -132,6 +141,15 @@ These back the current `.gion` scalar language features:
 - `sqrt(x)`
 - `cbrt(x)`
 - `sin(x)`
+- `csc(x)`
+- `sec(x)`
+- `cot(x)`
+- `acsc(x)`
+- `asec(x)`
+- `acot(x)`
+- `sech(x)`
+- `csch(x)`
+- `coth(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`
@@ -156,12 +174,14 @@ These back the current `.gion` scalar language features:
 - `isinf(x)`
 - `isfinite(x)`
 - `expm1(x)`
+- `exp2(x)`
 - `log1p(x)`
 - `erf(x)`
 - `erfc(x)`
 - `gamma(x)`
 - `lgamma(x)`
 - `exp(x)`
+- `exp2(x)`
 - `ln(x)`
 - `log(x, base)`
 - `log10(x)`

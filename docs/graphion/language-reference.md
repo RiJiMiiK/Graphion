@@ -79,6 +79,12 @@ These names are currently reserved and cannot be assigned:
 - `sqrt`
 - `cbrt`
 - `sin`
+- `csc`
+- `sec`
+- `cot`
+- `acsc`
+- `asec`
+- `acot`
 - `sinh`
 - `asinh`
 - `acosh`
@@ -103,6 +109,7 @@ These names are currently reserved and cannot be assigned:
 - `isinf`
 - `isfinite`
 - `expm1`
+- `exp2`
 - `log1p`
 - `erf`
 - `erfc`
@@ -606,6 +613,15 @@ Current builtin functions:
 - `sqrt(x)`
 - `cbrt(x)`
 - `sin(x)`
+- `csc(x)`
+- `sec(x)`
+- `cot(x)`
+- `acsc(x)`
+- `asec(x)`
+- `acot(x)`
+- `sech(x)`
+- `csch(x)`
+- `coth(x)`
 - `sinh(x)`
 - `asinh(x)`
 - `acosh(x)`
@@ -630,12 +646,14 @@ Current builtin functions:
 - `isinf(x)`
 - `isfinite(x)`
 - `expm1(x)`
+- `exp2(x)`
 - `log1p(x)`
 - `erf(x)`
 - `erfc(x)`
 - `gamma(x)`
 - `lgamma(x)`
 - `exp(x)`
+- `exp2(x)`
 - `ln(x)`
 - `log(x, base)`
 - `log10(x)`
