@@ -3,7 +3,8 @@
 > The rebuild is governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
 
 This roadmap is temporarily focused on project and code hygiene after the `feat/gion-arithmetic` lane.
-Future language additions stay listed at the end for traceability, but the active lane is maintenance.
+Everything above the final future section belongs to the active maintenance lane.
+Future language additions stay isolated at the end for traceability and are not part of the current execution lane.
 
 ## Current focus
 
@@ -30,7 +31,7 @@ The current active lane is hygiene, maintainability, and project health.
 ### Roadmap and docs consistency
 
 - [x] resync `README.md` with the implemented `.gion` scalar surface
-- [ ] keep `ROADMAP.md` focused on the active maintenance lane while preserving future language work below
+- [x] keep `ROADMAP.md` focused on the active maintenance lane while preserving future language work below
 - [ ] remove duplicated or drifted builtin entries in the user docs
 - [ ] make the documented current scope consistent across README, docs, examples, and roadmap
 - [ ] review docs wording so the public entry points match the post-`gion-arithmetic` project state
@@ -79,7 +80,9 @@ The current active lane is hygiene, maintainability, and project health.
 - [ ] review whether `MAINTAINERS.md` and `OWNERSHIP.md` should stay separate or collapse into a single lightweight maintainer note
 - [ ] review whether `SUPPORT.md` and `SECURITY_CONTACTS.md` should stay separate or merge into `README.md` / `SECURITY.md`
 
-Future additions gated by other features:
+## Future additions gated by other features
+
+These items stay visible for traceability, but they are intentionally outside the current maintenance lane.
 
 - [ ] optional future support for Windows GCC / MinGW
   - only if the project later chooses to support it as a first-class toolchain
