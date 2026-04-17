@@ -712,7 +712,7 @@ int test_gion_arithmetic_expressions(void) {
       "print(sech_negative)\n"
       "print(csch_one)\n"
       "print(csch_negative)\n"
-      "print(csch_two)\n"
+      "print(csch_two)\n",
       "print(coth_one)\n"
       "print(coth_negative)\n"
       "print(coth_two)\n"
@@ -2273,21 +2273,26 @@ int test_gion_arithmetic_expressions(void) {
   remove(path);
   normalize_text_newlines(output);
   {
-    const char *expected_output =
-        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n2\n1\n-1\n2\n1\n-1\n1.73205\n1.5708\n0.523599\n-0.523599\n0\n1.0472\n2.0944\n0.785398\n1.5708\n2.35619\n1\n0.648054\n0.648054\n0.850918\n-0.850918\n0.275721\n1.313035\n-1.313035\n1.037315\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2\n1\n4\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n";
+    const char *expected_output_parts[] = {
+        "42\n7\n9\n5\n3.5\n15\n-3\n7\n-12\n-3.5\n3\n-4\n3\n8\n-8\n0.5\n-5\n-3\n-3\n512\n9\n42\n3.5\n3\n3\n2\n8\n7\n3.5\n9\n0\n5\n10\n10\n3\n1.5\n3\n3\n-2\n3\n0\n1\n1\n1\n-1\n2\n1\n-1\n2\n1\n-1\n1.73205\n1.5708\n0.523599\n-0.523599\n0\n1.0472\n2.0944\n0.785398\n1.5708\n2.35619\n1\n0.648054\n0.648054\n0.850918\n-0.850918\n0.275721\n1.313035\n-1.313035\n1.037315\n0\n1.1752\n-1.1752\n0\n0.881374\n-0.881374\n0\n1.31696\n2.06344\n1\n1.54308\n1.54308\n0\n0.761594\n-0.761594\n0\n0.549306\n-0.549306\n1\n-1\n-1\n0\n1\n1\n0\n1.5708\n0.523599\n0\n1.5708\n1.0472\n0\n0.785398\n-0.785398\n0.785398\n2.35619\n-2.35619\n5\n13\n5\n-3\n3.5\n-3\n10\n3\n-6.5\n4\n0\n0\n-1\n-0.5\n1\n7\n7\n-3\n0\n90\n-45\n0\n3.14159\n-0.785398\ntrue\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\n1.71828\n0\n6.38906\n2\n1\n4\n0.693147\n0\n0.405465\n0\n0.842701\n-0.842701\n1\n0.157299\n1.8427\n1\n24\n1.77245\n0\n3.17805\n0.572365\n2.71828\n1\n7.38906\n0\n1\n2\n3\n2\n5\n3\n1\n4\n3\n1\n6\n7\n7\n-4\n",
+        "7\n8\n-3\n7\n7\n8\n-3\n-4\n7\n7\n-3\n0\n0\n0.25\n0.25\n1\n-1\n0\n3.14159\n6.28319\n1.61803\n2.71828\n1\n120\n6\n0\n8\n8\n2\n-2\n1.5\n11\n14\n2\n",
+    };
     char expected_copy[3072];
     const char *expected_lines[512];
     const char *output_lines[512];
     size_t expected_count;
     size_t output_count;
     size_t line_index;
+    size_t expected_len = 0U;
 
-    {
-      size_t expected_len = strlen(expected_output);
-      if (expected_len >= sizeof(expected_copy)) {
-        expected_len = sizeof(expected_copy) - 1U;
+    expected_copy[0] = '\0';
+    for (i = 0U; i < sizeof(expected_output_parts) / sizeof(expected_output_parts[0]); ++i) {
+      size_t part_len = strlen(expected_output_parts[i]);
+      if (expected_len + part_len + 1U > sizeof(expected_copy)) {
+        part_len = sizeof(expected_copy) - expected_len - 1U;
       }
-      memcpy(expected_copy, expected_output, expected_len);
+      memcpy(expected_copy + expected_len, expected_output_parts[i], part_len);
+      expected_len += part_len;
       expected_copy[expected_len] = '\0';
     }
     expected_count = split_lines_inplace(expected_copy, expected_lines, sizeof(expected_lines) / sizeof(expected_lines[0]));
