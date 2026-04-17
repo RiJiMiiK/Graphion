@@ -200,7 +200,7 @@ int test_gion_reassignment_and_type_change(void) {
       "flag = false\n"
       "print(value)\n"
       "print(flag)\n";
-  const char *path = "gion_reassignment_and_type_change.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -210,13 +210,7 @@ int test_gion_reassignment_and_type_change(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_reassignment_and_type_change.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -258,7 +252,7 @@ int test_gion_copy_chains_and_blank_lines(void) {
       "print(a)\n"
       "print(b)\n"
       "print(c)\n";
-  const char *path = "gion_copy_chains_and_blank_lines.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -267,13 +261,7 @@ int test_gion_copy_chains_and_blank_lines(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_copy_chains_and_blank_lines.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -422,7 +410,7 @@ int test_gion_comments(void) {
       "print(message)\n"
       "print(label)\n"
       "print(ratio)\n";
-  const char *path = "gion_comments.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -440,13 +428,7 @@ int test_gion_comments(void) {
     return finish_scope_test(&scope, 1);
   }
   graphion_runtime_program_dispose(&program);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_comments.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 2);
   }
@@ -600,19 +582,13 @@ int test_gion_warning_directives(void) {
 }
 
 int test_gion_warning_directives_from_path(void) {
-  const char *path = "gion_warning_directives_path.gion";
+  char path[512];
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;
   FILE *fp = NULL;
   int rc;
 
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_warning_directives_path.gion");
   if (fp == NULL) {
     return 1;
   }

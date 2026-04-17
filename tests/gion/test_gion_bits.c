@@ -12,7 +12,7 @@ int test_gion_bits_literals(void) {
       "print(bits_two)\n"
       "print(bits_four)\n"
       "print(bits_copy)\n";
-  const char *path = "gion_bits_literals.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -23,13 +23,7 @@ int test_gion_bits_literals(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_literals.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -104,7 +98,7 @@ int test_gion_bits_equality(void) {
       "same_copy = 0b0010 == 0b0010\n"
       "print(same_value)\n"
       "print(same_copy)\n";
-  const char *path = "gion_bits_equality.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -114,13 +108,7 @@ int test_gion_bits_equality(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_equality.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -158,7 +146,7 @@ int test_gion_bits_inequality(void) {
       "same_value = 0b10 != 0b0010\n"
       "print(different_value)\n"
       "print(same_value)\n";
-  const char *path = "gion_bits_inequality.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -168,13 +156,7 @@ int test_gion_bits_inequality(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_inequality.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -247,7 +229,7 @@ int test_gion_bits_and(void) {
   const char *source =
       "masked_value = 0b1100 & 0b1010\n"
       "print(masked_value)\n";
-  const char *path = "gion_bits_and.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -256,13 +238,7 @@ int test_gion_bits_and(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_and.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -322,7 +298,7 @@ int test_gion_bits_or(void) {
   const char *source =
       "merged_value = 0b1100 | 0b1010\n"
       "print(merged_value)\n";
-  const char *path = "gion_bits_or.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -331,13 +307,7 @@ int test_gion_bits_or(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_or.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -397,7 +367,7 @@ int test_gion_bits_xor(void) {
   const char *source =
       "xor_value = 0b1100 ^ 0b1010\n"
       "print(xor_value)\n";
-  const char *path = "gion_bits_xor.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -406,13 +376,7 @@ int test_gion_bits_xor(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_xor.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -474,7 +438,7 @@ int test_gion_bits_not(void) {
       "not_short = ~0b10\n"
       "print(not_wide)\n"
       "print(not_short)\n";
-  const char *path = "gion_bits_not.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -484,13 +448,7 @@ int test_gion_bits_not(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_not.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -546,7 +504,7 @@ int test_gion_bits_shl(void) {
       "truncated_value = 0b1111 << 1\n"
       "print(shifted_value)\n"
       "print(truncated_value)\n";
-  const char *path = "gion_bits_shl.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -556,13 +514,7 @@ int test_gion_bits_shl(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_shl.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -631,7 +583,7 @@ int test_gion_bits_shr(void) {
       "cleared_value = 0b1010 >> 4\n"
       "print(shifted_value)\n"
       "print(cleared_value)\n";
-  const char *path = "gion_bits_shr.txt";
+  char path[512];
   char output[32];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -641,13 +593,7 @@ int test_gion_bits_shr(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_bits_shr.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }

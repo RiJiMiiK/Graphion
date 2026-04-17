@@ -107,7 +107,7 @@ int test_gion_if_elif_else_control_flow(void) {
       "print(not_branch)\n"
       "print(multiline_branch)\n"
       "print(nested_result)\n";
-  const char *path = "gion_if_elif_else_control_flow.txt";
+  char path[512];
   char output[512];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -133,13 +133,7 @@ int test_gion_if_elif_else_control_flow(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_if_elif_else_control_flow.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -389,7 +383,7 @@ int test_gion_match_control_flow(void) {
       "print(no_default)\n"
       "print(numeric_match)\n"
       "print(bool_int_match)\n";
-  const char *path = "gion_match_control_flow.txt";
+  char path[512];
   char output[256];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -404,13 +398,7 @@ int test_gion_match_control_flow(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_match_control_flow.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -542,7 +530,7 @@ int test_gion_ternary_expressions(void) {
       "print(nested)\n"
       "print(grouped)\n"
       "print(multiline)\n";
-  const char *path = "gion_ternary_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -551,13 +539,7 @@ int test_gion_ternary_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_ternary_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -661,7 +643,7 @@ int test_gion_boolean_short_circuit(void) {
       "print(safe_nand)\n"
       "print(safe_nor)\n"
       "print(mixed_safe)\n";
-  const char *path = "gion_boolean_short_circuit.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -671,13 +653,7 @@ int test_gion_boolean_short_circuit(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_boolean_short_circuit.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }

@@ -38,7 +38,7 @@ The current active lane is hygiene, maintainability, and project health.
 
 ### Test robustness
 
-- [ ] replace fixed temporary output filenames in tests with unique per-test temp paths
+- [x] replace fixed temporary output filenames in tests with unique per-test temp paths
 - [ ] make the test suite safe to run in parallel without file collisions
 - [ ] reduce repeated file-open / file-read / cleanup boilerplate through shared test helpers
 - [ ] split the single `graphion_tests` CTest entry into smaller logical test targets or suites

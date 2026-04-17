@@ -290,7 +290,7 @@ int test_vm_string_addition_opcode(void) {
 }
 
 int test_vm_print_scalar_opcodes(void) {
-  const char *path = "vm_print_scalar_output.txt";
+  char path[512];
   graphion_vm vm;
   graphion_vm_value const_pool[2];
   graphion_vm_value globals[2];
@@ -315,13 +315,7 @@ int test_vm_print_scalar_opcodes(void) {
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, const_pool, 2U);
   graphion_vm_bind_globals(&vm, globals, 2U);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output_vm(path, sizeof(path), "vm_print_scalar_output.txt");
   if (fp == NULL) {
     return 1;
   }
@@ -361,7 +355,7 @@ int test_vm_print_scalar_opcodes(void) {
 }
 
 int test_vm_print_reg_opcode(void) {
-  const char *path = "vm_print_reg_output.txt";
+  char path[512];
   graphion_vm vm;
   graphion_vm_value const_pool[2];
   const graphion_insn program[] = {
@@ -383,13 +377,7 @@ int test_vm_print_reg_opcode(void) {
 
   graphion_vm_init(&vm);
   graphion_vm_bind_constants(&vm, const_pool, 2U);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output_vm(path, sizeof(path), "vm_print_reg_output.txt");
   if (fp == NULL) {
     return 1;
   }

@@ -13,10 +13,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define TEST_VM_REG_I(vm_, idx_) ((vm_).regs[(idx_)].as.int_value)
 
 int finish_scope_test(graphion_runtime_scope *scope, int code);
+int test_make_temp_path(char *buffer, size_t capacity, const char *label);
+FILE *test_open_temp_output(char *path_buffer, size_t capacity, const char *label);
 int test_read_file_text(const char *path, char *buffer, size_t capacity);
 void normalize_text_newlines(char *text);
 
