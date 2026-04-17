@@ -20,7 +20,7 @@ That split is intentional:
 
 ## Current Scope
 
-Graphion currently exposes a small but usable scalar language.
+Graphion currently exposes a documented scalar `.gion` frontend with arithmetic, logic, control-flow, comments, `bits`, and scalar builtins.
 
 This is the current documented `.gion` frontend scope.
 The repository also contains broader VM work for graph and hypergraph execution, while the active repo lane is currently hygiene and maintenance.
@@ -104,7 +104,7 @@ Use the types page when you need:
 
 ## Current Limits
 
-This is still the implemented `v0.x` subset, not the long-term target language.
+This is still the implemented `v0.x` frontend, not the long-term target language.
 
 Still missing or intentionally deferred:
 

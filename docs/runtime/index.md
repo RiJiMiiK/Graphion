@@ -52,8 +52,8 @@ debugging/ERRORS
 
 Two distinctions matter when reading runtime documentation:
 
-1. the VM is broader than the currently documented `.gion` language subset
-- some runtime and opcode families exist in the backend without being exposed directly in the current source language
+1. the VM is broader than the current documented `.gion` frontend
+- some runtime and opcode families exist in the backend without being exposed directly in the current source language surface
 
 2. runtime docs are backend-facing, not language-facing
 - they describe structure, execution, and contracts

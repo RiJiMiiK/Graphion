@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains focused `.gion` examples for the currently implemented language subset.
+This directory contains focused `.gion` examples for the current documented scalar frontend.
 
 Current project state:
 
