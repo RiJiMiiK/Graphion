@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <float.h>
 
 #include "test_parser_helpers.h"
 
@@ -44,6 +45,12 @@ static int parse_double_strict(const char *text, double *value_out) {
   return 1;
 }
 
+static int double_is_nan(double value) { return value != value; }
+
+static int double_is_infinite(double value) { return value > DBL_MAX || value < -DBL_MAX; }
+
+static int double_is_negative(double value) { return copysign(1.0, value) < 0.0; }
+
 static int lines_match_with_tolerance(const char *actual, const char *expected) {
   double actual_value;
   double expected_value;
@@ -56,10 +63,11 @@ static int lines_match_with_tolerance(const char *actual, const char *expected) 
   if (!parse_double_strict(actual, &actual_value) || !parse_double_strict(expected, &expected_value)) {
     return 0;
   }
-  if (isnan(actual_value) && isnan(expected_value)) {
+  if (double_is_nan(actual_value) && double_is_nan(expected_value)) {
     return 1;
   }
-  if (isinf(actual_value) && isinf(expected_value) && (signbit(actual_value) == signbit(expected_value))) {
+  if (double_is_infinite(actual_value) && double_is_infinite(expected_value) &&
+      (double_is_negative(actual_value) == double_is_negative(expected_value))) {
     return 1;
   }
   diff = fabs(actual_value - expected_value);
@@ -2217,11 +2225,11 @@ int test_gion_arithmetic_expressions(void) {
     remove(path);
     return 2432;
   }
-  if (nan_value == NULL || nan_value->kind != GVM_VALUE_FLOAT || !isnan(nan_value->as.float_value)) {
+  if (nan_value == NULL || nan_value->kind != GVM_VALUE_FLOAT || !double_is_nan(nan_value->as.float_value)) {
     remove(path);
     return 2433;
   }
-  if (inf_value == NULL || inf_value->kind != GVM_VALUE_FLOAT || !isinf(inf_value->as.float_value) ||
+  if (inf_value == NULL || inf_value->kind != GVM_VALUE_FLOAT || !double_is_infinite(inf_value->as.float_value) ||
       inf_value->as.float_value <= 0.0) {
     remove(path);
     return 2434;
