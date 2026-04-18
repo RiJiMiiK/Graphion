@@ -19,12 +19,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          LYCHEE_IMAGE="lycheeverse/lychee:latest"
           for attempt in 1 2 3; do
-            if docker pull lycheeverse/lychee:lychee-v0.23.0; then
+            if docker pull "${LYCHEE_IMAGE}"; then
               break
             fi
             if [ "${attempt}" -eq 3 ]; then
-              echo "Failed to pull lycheeverse/lychee:lychee-v0.23.0" >&2
+              echo "Failed to pull ${LYCHEE_IMAGE}" >&2
               exit 1
             fi
             sleep 5
@@ -33,7 +34,7 @@ jobs:
             -e GITHUB_TOKEN="${GITHUB_TOKEN}" \
             -v "${GITHUB_WORKSPACE}:/input" \
             -w /input \
-            lycheeverse/lychee:lychee-v0.23.0 \
+            "${LYCHEE_IMAGE}" \
             --no-progress \
             --verbose \
             README.md \

@@ -20,6 +20,8 @@ require_cmd docker "install Docker to mirror the links-check workflow locally"
 
 cd "${ROOT_DIR}"
 
+LYCHEE_IMAGE="lycheeverse/lychee:latest"
+
 python3 scripts/quality/check_repo_health.py
 python3 -m sphinx -b html docs docs/_build/html
 
@@ -38,11 +40,11 @@ cspell \
   .github/**/*.md
 
 for attempt in 1 2 3; do
-  if docker pull lycheeverse/lychee:lychee-v0.23.0; then
+  if docker pull "${LYCHEE_IMAGE}"; then
     break
   fi
   if [ "${attempt}" -eq 3 ]; then
-    echo "repo gate: failed to pull lycheeverse/lychee:lychee-v0.23.0"
+    echo "repo gate: failed to pull ${LYCHEE_IMAGE}"
     exit 1
   fi
   sleep 5
@@ -52,7 +54,7 @@ docker run --rm \
   -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   -v "${ROOT_DIR}:/input" \
   -w /input \
-  lycheeverse/lychee:lychee-v0.23.0 \
+  "${LYCHEE_IMAGE}" \
   --no-progress \
   --verbose \
   README.md \
