@@ -224,9 +224,7 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
-  bool frontier_filter_map_reduce_fastpath;
   bool frontier_fastpath;
-  bool graph_ops_fastpath;
   bool value_move_fastpath;
   bool global_materialize_fastpath;
   bool global_print_fastpath;
