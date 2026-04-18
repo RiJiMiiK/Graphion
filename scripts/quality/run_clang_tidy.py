@@ -8,7 +8,7 @@ import sys
 
 
 def main() -> int:
-  parser = argparse.ArgumentParser(description="Run clang-tidy on project C sources.")
+  parser = argparse.ArgumentParser(description="Run clang-tidy on src/ C sources.")
   parser.add_argument("--build-dir", default="build", help="CMake build directory containing compile_commands.json")
   args = parser.parse_args()
 
@@ -34,7 +34,7 @@ def main() -> int:
       print(f"clang-tidy failed for {src}", file=sys.stderr)
       return proc.returncode
 
-  print(f"clang-tidy: OK ({len(sources)} file(s))")
+  print(f"clang-tidy: OK ({len(sources)} src file(s))")
   return 0
 
 

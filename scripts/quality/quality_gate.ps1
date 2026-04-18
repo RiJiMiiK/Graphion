@@ -4,7 +4,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-cmake -S . -B $BuildDir -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+$ConfigureArgs = @(
+  "-S", ".",
+  "-B", $BuildDir,
+  "-G", "Ninja",
+  "-DCMAKE_BUILD_TYPE=Debug",
+  "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+)
+
+if (-not $IsWindows) {
+  $ConfigureArgs += "-DGRAPHION_ENABLE_SANITIZERS=ON"
+} else {
+  Write-Host "Quality gate: sanitizers disabled on Windows toolchains"
+}
+
+cmake @ConfigureArgs
 cmake --build $BuildDir
 ctest --test-dir $BuildDir --output-on-failure -C Debug
 python "$PSScriptRoot\check_asm_safety.py"
