@@ -35,7 +35,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] remove duplicated or drifted builtin entries in the user docs
 - [x] make the documented current scope consistent across README, docs, examples, and roadmap
 - [x] review docs wording so the public entry points match the post-`gion-arithmetic` project state
-- [ ] align `.github/ISSUE_TEMPLATE/config.yml` support links with the current `README.md` / `SECURITY.md` contact policy
+- [x] align `.github/ISSUE_TEMPLATE/config.yml` support links with the current `README.md` / `SECURITY.md` contact policy
 
 ### Test robustness
 
