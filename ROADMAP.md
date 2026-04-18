@@ -60,7 +60,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] remove duplicated CMake logic such as the repeated VM dispatch block
 - [x] improve runtime error wording where distinct failures currently collapse into overly generic messages
 - [x] normalize formatting and indentation drift in recently expanded scalar code and tests
-- [ ] split oversized files in the scalar/runtime path into smaller units
+- [x] split oversized files in the scalar/runtime path into smaller units
 - [ ] reduce builtin duplication between parser, VM, docs, and tests where a shared definition table or helper layer makes sense
 
 ### Repository hygiene

@@ -94,6 +94,7 @@ add_library(graphion_vm
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
   src/runtime/interpreter/exec.c
+  src/runtime/interpreter/exec_vm.c
   src/parser/bytecode.c
   src/parser/frontend.c
   src/compiler/ir.c
