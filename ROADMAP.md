@@ -25,7 +25,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] add a VM regression test that the affected builtin returns `GVM_ERR_INVALID_REG` on malformed bytecode
 - [x] review neighboring scalar builtin opcodes for similar defensive-check gaps
 - [x] keep malformed-bytecode behavior consistent across scalar, graph, and hypergraph opcode families
-- [ ] replace the pseudo-private Discord security contact path with a genuinely private reporting channel or explicitly downgrade the wording in `SECURITY.md` and issue templates
+- [x] replace the pseudo-private Discord security contact path with a genuinely private reporting channel or explicitly downgrade the wording in `SECURITY.md` and issue templates
 
 ## Maintenance irritants
 

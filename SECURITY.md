@@ -7,7 +7,7 @@ Security fixes are applied on the active main line.
 
 ## Reporting a vulnerability
 
-Use the Discord server for private contact:
+Use the Discord server to contact the maintainer for coordinated disclosure:
 
 - https://discord.com/invite/mPzDQ7TYkj
 
