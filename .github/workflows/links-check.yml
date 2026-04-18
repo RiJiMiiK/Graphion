@@ -14,8 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - name: Check markdown links
-        uses: lycheeverse/lychee-action@v2.8.0
-        with:
-          fail: true
-          args: --no-progress --verbose README.md QUALITY.md ROADMAP.md examples/README.md docs/**/*.md CONTRIBUTING.md SECURITY.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for attempt in 1 2 3; do
+            if docker pull lycheeverse/lychee:lychee-v0.23.0; then
+              break
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              echo "Failed to pull lycheeverse/lychee:lychee-v0.23.0" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          docker run --rm \
+            -e GITHUB_TOKEN="${GITHUB_TOKEN}" \
+            -v "${GITHUB_WORKSPACE}:/input" \
+            -w /input \
+            lycheeverse/lychee:lychee-v0.23.0 \
+            --no-progress \
+            --verbose \
+            README.md \
+            QUALITY.md \
+            ROADMAP.md \
+            examples/README.md \
+            docs/**/*.md \
+            CONTRIBUTING.md \
+            SECURITY.md
