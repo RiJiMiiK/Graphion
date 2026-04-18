@@ -77,6 +77,7 @@ add_library(graphion_vm
   src/runtime/interpreter/program.c
   src/runtime/interpreter/operands.c
   src/runtime/interpreter/expr.c
+  src/runtime/interpreter/expr_direct_builtins.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
   src/runtime/interpreter/exec.c
@@ -133,12 +134,14 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_helpers.c
     tests/vm/test_vm_core.c
     tests/vm/test_vm_scalars.c
+    tests/vm/test_vm_scalar_compare.c
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
     tests/core/test_arena.c
     tests/gion/test_parser_helpers.c
     tests/gion/test_parser_frontend.c
     tests/gion/test_gion_scalars.c
+    tests/gion/test_gion_scalar_core.c
     tests/gion/test_gion_bits.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c

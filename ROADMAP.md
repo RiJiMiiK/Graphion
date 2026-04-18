@@ -69,7 +69,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] reduce builtin duplication between parser, VM, docs, and tests where a shared definition table or helper layer makes sense
 - [x] review the project code for obvious legacy or dead paths after the hygiene lane
   - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
-- [ ] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
+- [x] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
 
 ### Repository hygiene
 
