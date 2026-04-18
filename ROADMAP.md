@@ -73,7 +73,7 @@ The current active lane is hygiene, maintainability, and project health.
 
 - [x] review whether `CODEOWNERS` still adds value with a single maintainer, or remove it from the required repo-health baseline
 - [x] review whether `.github/pull_request_template.md` and PR-title enforcement still justify their maintenance cost for a solo workflow
-- [ ] review whether PR auto-labeling and label-sync automation still provide enough value for a solo-maintained repo
+- [x] review whether PR auto-labeling and label-sync automation still provide enough value for a solo-maintained repo
 - [ ] review whether `contributors-sync.yml` and `CONTRIBUTORS.md` automation are still worth keeping while the project is effectively solo-maintained
 - [ ] review whether `stale.yml` and `monthly-audit.yml` reduce workload or mostly create repo noise in a solo-maintainer workflow
 - [ ] review whether issue templates, RFC discussion templates, and contributor-oriented labels such as `good first issue`, `help wanted`, and `triage` still match the actual maintenance model
