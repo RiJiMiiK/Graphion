@@ -53,8 +53,8 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] align the local quality-gate scripts across Bash and PowerShell
 - [x] decide whether `clang-tidy` and `cppcheck` should stay `src`-only or also cover part of `tests`
 - [x] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
-- [ ] retire or repurpose `check_asm_safety.py` and the related assembly-only gate after removal of the VM ASM path
-- [ ] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
+- [x] retire or repurpose `check_asm_safety.py` and the related assembly-only gate after removal of the VM ASM path
+- [x] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
 - [ ] align the `cppcheck` option set between CI and the local quality-gate scripts
 - [ ] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
 

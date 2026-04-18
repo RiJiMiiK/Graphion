@@ -56,7 +56,6 @@ The quality gate should stay aligned on:
 - configure a Debug build with compile commands enabled
 - build the project
 - run `ctest`
-- run `check_asm_safety.py`
 - run `run_clang_tidy.py`
 - run `cppcheck` when available
 
