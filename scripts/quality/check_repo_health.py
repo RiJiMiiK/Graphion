@@ -9,6 +9,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 REQUIRED_FILES = [
     "README.md",
+    "QUALITY.md",
     "LICENSE",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -18,9 +19,21 @@ REQUIRED_FILES = [
     "OWNERSHIP.md",
     "MAINTAINERS.md",
     "ROADMAP.md",
+    "examples/README.md",
+    "docs/index.md",
+    "scripts/README.md",
+    "scripts/quality/check_repo_health.py",
+    "scripts/quality/quality_gate.sh",
+    "scripts/quality/quality_gate.ps1",
+    ".gitignore",
+    "CMakeLists.txt",
     ".github/CODEOWNERS",
     ".github/pull_request_template.md",
     ".github/workflows/ci.yml",
+    ".github/workflows/docs.yml",
+    ".github/workflows/spellcheck.yml",
+    ".github/workflows/links-check.yml",
+    ".github/workflows/repo-health.yml",
 ]
 
 
