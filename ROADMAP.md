@@ -71,7 +71,7 @@ The current active lane is hygiene, maintainability, and project health.
 
 ### Solo-dev simplification
 
-- [ ] review whether `CODEOWNERS` still adds value with a single maintainer, or remove it from the required repo-health baseline
+- [x] review whether `CODEOWNERS` still adds value with a single maintainer, or remove it from the required repo-health baseline
 - [ ] review whether `.github/pull_request_template.md` and PR-title enforcement still justify their maintenance cost for a solo workflow
 - [ ] review whether PR auto-labeling and label-sync automation still provide enough value for a solo-maintained repo
 - [ ] review whether `contributors-sync.yml` and `CONTRIBUTORS.md` automation are still worth keeping while the project is effectively solo-maintained

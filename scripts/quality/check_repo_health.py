@@ -27,7 +27,6 @@ REQUIRED_FILES = [
     "scripts/quality/quality_gate.ps1",
     ".gitignore",
     "CMakeLists.txt",
-    ".github/CODEOWNERS",
     ".github/pull_request_template.md",
     ".github/workflows/ci.yml",
     ".github/workflows/docs.yml",
