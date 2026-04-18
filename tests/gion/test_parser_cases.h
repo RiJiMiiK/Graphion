@@ -1,97 +1,107 @@
 /* SPDX-License-Identifier: MIT */
 
-int test_parser_decode_valid_program(void);
-int test_parser_rejects_truncated_input(void);
-int test_frontend_parse_and_ir_lowering(void);
-int test_frontend_rejects_invalid_source(void);
-int test_frontend_source_to_vm_execution(void);
-int test_frontend_reference_graph_execution_examples(void);
-int test_gion_source_path_detection(void);
-int test_gion_scalar_assignments_and_prints(void);
-int test_gion_scalar_feature_varied_names(void);
-int test_gion_unknown_variable_errors(void);
-int test_gion_partial_execution_stops_at_first_unsupported_line(void);
-int test_gion_reserved_name_errors(void);
-int test_gion_assignment_syntax_errors(void);
-int test_gion_arithmetic_expressions(void);
-int test_gion_string_concatenation(void);
-int test_gion_print_string_coercion(void);
-int test_gion_compound_assignments(void);
-int test_gion_compound_assignment_errors(void);
-int test_gion_arithmetic_precedence_and_associativity(void);
-int test_gion_arithmetic_runtime_errors(void);
-int test_gion_arithmetic_syntax_errors(void);
-int test_gion_mixed_scalar_values(void);
-int test_gion_capacity_errors(void);
-int test_gion_bits_literals(void);
-int test_gion_bits_literal_syntax_errors(void);
-int test_gion_bits_equality(void);
-int test_gion_bits_inequality(void);
-int test_gion_bits_mixed_type_errors(void);
-int test_gion_bits_and(void);
-int test_gion_bits_and_runtime_errors(void);
-int test_gion_bits_or(void);
-int test_gion_bits_or_runtime_errors(void);
-int test_gion_bits_xor(void);
-int test_gion_bits_xor_runtime_errors(void);
-int test_gion_bits_not(void);
-int test_gion_bits_not_runtime_errors(void);
-int test_gion_bits_shl(void);
-int test_gion_bits_shl_runtime_errors(void);
-int test_gion_bits_shr(void);
-int test_gion_bits_shr_runtime_errors(void);
-int test_gion_print_syntax_errors(void);
-int test_gion_unterminated_string_errors(void);
-int test_gion_invalid_identifier_errors(void);
-int test_gion_trailing_token_errors(void);
-int test_gion_reference_before_definition_errors(void);
-int test_gion_reassignment_and_type_change(void);
-int test_gion_copy_chains_and_blank_lines(void);
-int test_gion_late_line_error_diagnostics(void);
-int test_gion_unexpected_indentation_errors(void);
-int test_gion_comments(void);
-int test_gion_comment_errors(void);
-int test_gion_warning_directives(void);
-int test_gion_warning_directives_from_path(void);
-int test_gion_if_elif_else_control_flow(void);
-int test_gion_if_elif_else_errors(void);
-int test_gion_match_control_flow(void);
-int test_gion_match_errors(void);
-int test_gion_ternary_expressions(void);
-int test_gion_ternary_runtime_errors(void);
-int test_gion_ternary_syntax_errors(void);
-int test_gion_boolean_short_circuit(void);
-int test_gion_boolean_short_circuit_runtime_errors(void);
-int test_gion_equality_expressions(void);
-int test_gion_equality_runtime_errors(void);
-int test_gion_equality_syntax_errors(void);
-int test_gion_inequality_expressions(void);
-int test_gion_inequality_runtime_errors(void);
-int test_gion_inequality_syntax_errors(void);
-int test_gion_less_than_expressions(void);
-int test_gion_less_than_runtime_errors(void);
-int test_gion_less_than_syntax_errors(void);
-int test_gion_less_equal_expressions(void);
-int test_gion_less_equal_runtime_errors(void);
-int test_gion_less_equal_syntax_errors(void);
-int test_gion_greater_than_expressions(void);
-int test_gion_greater_than_runtime_errors(void);
-int test_gion_greater_than_syntax_errors(void);
-int test_gion_greater_equal_expressions(void);
-int test_gion_greater_equal_runtime_errors(void);
-int test_gion_greater_equal_syntax_errors(void);
-int test_gion_and_expressions(void);
-int test_gion_and_runtime_errors(void);
-int test_gion_and_syntax_errors(void);
-int test_gion_or_expressions(void);
-int test_gion_or_runtime_errors(void);
-int test_gion_or_syntax_errors(void);
-int test_gion_not_expressions(void);
-int test_gion_not_runtime_errors(void);
-int test_gion_not_syntax_errors(void);
-int test_gion_nand_expressions(void);
-int test_gion_nand_runtime_errors(void);
-int test_gion_nand_syntax_errors(void);
-int test_gion_nor_expressions(void);
-int test_gion_nor_runtime_errors(void);
-int test_gion_nor_syntax_errors(void);
+#ifndef GRAPHION_TESTS_GION_TEST_PARSER_CASES_H
+#define GRAPHION_TESTS_GION_TEST_PARSER_CASES_H
+
+#define GRAPHION_PARSER_TEST_CASES(X)                  \
+  X(parser_decode_valid_program)                       \
+  X(parser_rejects_truncated_input)                    \
+  X(frontend_parse_and_ir_lowering)                    \
+  X(frontend_rejects_invalid_source)                   \
+  X(frontend_source_to_vm_execution)                   \
+  X(frontend_reference_graph_execution_examples)       \
+  X(gion_source_path_detection)                        \
+  X(gion_scalar_assignments_and_prints)                \
+  X(gion_scalar_feature_varied_names)                  \
+  X(gion_unknown_variable_errors)                      \
+  X(gion_partial_execution_stops_at_first_unsupported_line) \
+  X(gion_reserved_name_errors)                         \
+  X(gion_assignment_syntax_errors)                     \
+  X(gion_arithmetic_expressions)                       \
+  X(gion_string_concatenation)                         \
+  X(gion_print_string_coercion)                        \
+  X(gion_compound_assignments)                         \
+  X(gion_compound_assignment_errors)                   \
+  X(gion_arithmetic_precedence_and_associativity)      \
+  X(gion_arithmetic_runtime_errors)                    \
+  X(gion_arithmetic_syntax_errors)                     \
+  X(gion_mixed_scalar_values)                          \
+  X(gion_capacity_errors)                              \
+  X(gion_bits_literals)                                \
+  X(gion_bits_literal_syntax_errors)                   \
+  X(gion_bits_equality)                                \
+  X(gion_bits_inequality)                              \
+  X(gion_bits_mixed_type_errors)                       \
+  X(gion_bits_and)                                     \
+  X(gion_bits_and_runtime_errors)                      \
+  X(gion_bits_or)                                      \
+  X(gion_bits_or_runtime_errors)                       \
+  X(gion_bits_xor)                                     \
+  X(gion_bits_xor_runtime_errors)                      \
+  X(gion_bits_not)                                     \
+  X(gion_bits_not_runtime_errors)                      \
+  X(gion_bits_shl)                                     \
+  X(gion_bits_shl_runtime_errors)                      \
+  X(gion_bits_shr)                                     \
+  X(gion_bits_shr_runtime_errors)                      \
+  X(gion_print_syntax_errors)                          \
+  X(gion_unterminated_string_errors)                   \
+  X(gion_invalid_identifier_errors)                    \
+  X(gion_trailing_token_errors)                        \
+  X(gion_reference_before_definition_errors)           \
+  X(gion_reassignment_and_type_change)                 \
+  X(gion_copy_chains_and_blank_lines)                  \
+  X(gion_late_line_error_diagnostics)                  \
+  X(gion_unexpected_indentation_errors)                \
+  X(gion_comments)                                     \
+  X(gion_comment_errors)                               \
+  X(gion_warning_directives)                           \
+  X(gion_warning_directives_from_path)                 \
+  X(gion_if_elif_else_control_flow)                    \
+  X(gion_if_elif_else_errors)                          \
+  X(gion_match_control_flow)                           \
+  X(gion_match_errors)                                 \
+  X(gion_ternary_expressions)                          \
+  X(gion_ternary_runtime_errors)                       \
+  X(gion_ternary_syntax_errors)                        \
+  X(gion_boolean_short_circuit)                        \
+  X(gion_boolean_short_circuit_runtime_errors)         \
+  X(gion_equality_expressions)                         \
+  X(gion_equality_runtime_errors)                      \
+  X(gion_equality_syntax_errors)                       \
+  X(gion_inequality_expressions)                       \
+  X(gion_inequality_runtime_errors)                    \
+  X(gion_inequality_syntax_errors)                     \
+  X(gion_less_than_expressions)                        \
+  X(gion_less_than_runtime_errors)                     \
+  X(gion_less_than_syntax_errors)                      \
+  X(gion_less_equal_expressions)                       \
+  X(gion_less_equal_runtime_errors)                    \
+  X(gion_less_equal_syntax_errors)                     \
+  X(gion_greater_than_expressions)                     \
+  X(gion_greater_than_runtime_errors)                  \
+  X(gion_greater_than_syntax_errors)                   \
+  X(gion_greater_equal_expressions)                    \
+  X(gion_greater_equal_runtime_errors)                 \
+  X(gion_greater_equal_syntax_errors)                  \
+  X(gion_and_expressions)                              \
+  X(gion_and_runtime_errors)                           \
+  X(gion_and_syntax_errors)                            \
+  X(gion_or_expressions)                               \
+  X(gion_or_runtime_errors)                            \
+  X(gion_or_syntax_errors)                             \
+  X(gion_not_expressions)                              \
+  X(gion_not_runtime_errors)                           \
+  X(gion_not_syntax_errors)                            \
+  X(gion_nand_expressions)                             \
+  X(gion_nand_runtime_errors)                          \
+  X(gion_nand_syntax_errors)                           \
+  X(gion_nor_expressions)                              \
+  X(gion_nor_runtime_errors)                           \
+  X(gion_nor_syntax_errors)
+
+#define GRAPHION_DECLARE_TEST(name) int test_##name(void);
+GRAPHION_PARSER_TEST_CASES(GRAPHION_DECLARE_TEST)
+#undef GRAPHION_DECLARE_TEST
+
+#endif

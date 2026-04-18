@@ -1,132 +1,142 @@
 /* SPDX-License-Identifier: MIT */
 
-int test_vm_addition_program(void);
-int test_vm_invalid_register_fails(void);
-int test_vm_typed_register_defaults(void);
-int test_vm_value_movement_and_globals(void);
-int test_vm_typed_value_errors(void);
-int test_vm_jump_opcode(void);
-int test_vm_string_addition_opcode(void);
-int test_vm_print_scalar_opcodes(void);
-int test_vm_print_reg_opcode(void);
-int test_vm_numeric_arithmetic_opcodes(void);
-int test_vm_numeric_arithmetic_precedence_shapes(void);
-int test_vm_divide_by_zero_fails(void);
-int test_vm_modulo_opcode(void);
-int test_vm_power_opcode(void);
-int test_vm_floor_div_opcode(void);
-int test_vm_abs_opcode(void);
-int test_vm_min_opcode(void);
-int test_vm_max_opcode(void);
-int test_vm_clamp_opcode(void);
-int test_vm_sqrt_opcode(void);
-int test_vm_cbrt_builtin_opcode(void);
-int test_vm_sin_builtin_opcode(void);
-int test_vm_csc_builtin_opcode(void);
-int test_vm_sec_builtin_opcode(void);
-int test_vm_cot_builtin_opcode(void);
-int test_vm_acsc_builtin_opcode(void);
-int test_vm_asec_builtin_opcode(void);
-int test_vm_acot_builtin_opcode(void);
-int test_vm_sech_builtin_opcode(void);
-int test_vm_csch_builtin_opcode(void);
-int test_vm_coth_builtin_opcode(void);
-int test_vm_sinh_builtin_opcode(void);
-int test_vm_asinh_builtin_opcode(void);
-int test_vm_acosh_builtin_opcode(void);
-int test_vm_cosh_builtin_opcode(void);
-int test_vm_tanh_builtin_opcode(void);
-int test_vm_atanh_builtin_opcode(void);
-int test_vm_cos_builtin_opcode(void);
-int test_vm_tan_builtin_opcode(void);
-int test_vm_asin_builtin_opcode(void);
-int test_vm_acos_builtin_opcode(void);
-int test_vm_atan_builtin_opcode(void);
-int test_vm_atan2_builtin_opcode(void);
-int test_vm_hypot_builtin_opcode(void);
-int test_vm_copysign_builtin_opcode(void);
-int test_vm_fma_builtin_opcode(void);
-int test_vm_fdim_builtin_opcode(void);
-int test_vm_remainder_builtin_opcode(void);
-int test_vm_rint_builtin_opcode(void);
-int test_vm_degrees_builtin_opcode(void);
-int test_vm_radians_builtin_opcode(void);
-int test_vm_isnan_builtin_opcode(void);
-int test_vm_isinf_builtin_opcode(void);
-int test_vm_isfinite_builtin_opcode(void);
-int test_vm_fract_builtin_opcode(void);
-int test_vm_expm1_builtin_opcode(void);
-int test_vm_exp2_builtin_opcode(void);
-int test_vm_log1p_builtin_opcode(void);
-int test_vm_erf_builtin_opcode(void);
-int test_vm_erfc_builtin_opcode(void);
-int test_vm_gamma_builtin_opcode(void);
-int test_vm_exp_opcode(void);
-int test_vm_ln_opcode(void);
-int test_vm_log_opcode(void);
-int test_vm_floor_builtin_opcode(void);
-int test_vm_ceil_builtin_opcode(void);
-int test_vm_round_builtin_opcode(void);
-int test_vm_trunc_builtin_opcode(void);
-int test_vm_sign_builtin_opcode(void);
-int test_vm_len_opcode(void);
-int test_vm_factorial_opcode(void);
-int test_vm_eq_opcode(void);
-int test_vm_eq_incompatible_types_fail(void);
-int test_vm_eq_int_bool_out_of_range_fail(void);
-int test_vm_ne_opcode(void);
-int test_vm_ne_incompatible_types_fail(void);
-int test_vm_ne_int_bool_out_of_range_fail(void);
-int test_vm_lt_opcode(void);
-int test_vm_lt_incompatible_types_fail(void);
-int test_vm_le_opcode(void);
-int test_vm_le_incompatible_types_fail(void);
-int test_vm_gt_opcode(void);
-int test_vm_gt_incompatible_types_fail(void);
-int test_vm_ge_opcode(void);
-int test_vm_ge_incompatible_types_fail(void);
-int test_vm_and_opcode(void);
-int test_vm_and_incompatible_types_fail(void);
-int test_vm_bit_and_opcode(void);
-int test_vm_bit_and_incompatible_types_fail(void);
-int test_vm_bit_or_opcode(void);
-int test_vm_bit_or_incompatible_types_fail(void);
-int test_vm_bit_xor_opcode(void);
-int test_vm_bit_xor_incompatible_types_fail(void);
-int test_vm_bit_not_opcode(void);
-int test_vm_bit_not_incompatible_types_fail(void);
-int test_vm_bit_shl_opcode(void);
-int test_vm_bit_shl_incompatible_types_fail(void);
-int test_vm_bit_shr_opcode(void);
-int test_vm_bit_shr_incompatible_types_fail(void);
-int test_vm_or_opcode(void);
-int test_vm_or_incompatible_types_fail(void);
-int test_vm_not_opcode(void);
-int test_vm_not_incompatible_types_fail(void);
-int test_vm_nand_opcode(void);
-int test_vm_nand_incompatible_types_fail(void);
-int test_vm_nor_opcode(void);
-int test_vm_nor_incompatible_types_fail(void);
-int test_vm_bfs_levels_opcode(void);
-int test_vm_bfs_level_count_opcode(void);
-int test_vm_bfs_order_opcode(void);
-int test_vm_hypergraph_opcodes(void);
-int test_vm_superinstruction_add_pair_semantics(void);
-int test_vm_superinstruction_movimm_add_semantics(void);
-int test_vm_deterministic_mode_toggle(void);
-int test_vm_deterministic_mode_unknown_opcode(void);
-int test_vm_deterministic_mode_graph_semantics(void);
-int test_vm_add_wraparound_semantics(void);
-int test_vm_frontier_primitives(void);
-int test_vm_frontier_errors(void);
-int test_vm_neighbor_iteration_primitives(void);
-int test_vm_neighbor_iteration_errors(void);
-int test_vm_weighted_graph_opcodes(void);
-int test_vm_weighted_graph_opcode_errors(void);
-int test_vm_hyperedge_traversal_primitives(void);
-int test_vm_hyperedge_traversal_errors(void);
-int test_vm_snapshot_format(void);
-int test_vm_fastpath_shape_cache_load_flags(void);
-int test_vm_fastpath_shape_cache_same_pointer_content_change(void);
-int test_vm_dispatch_variant_edge_semantics(void);
-int test_vm_lgamma_builtin_opcode(void);
+#ifndef GRAPHION_TESTS_VM_TEST_VM_CASES_H
+#define GRAPHION_TESTS_VM_TEST_VM_CASES_H
+
+#define GRAPHION_VM_TEST_CASES(X)                       \
+  X(vm_addition_program)                               \
+  X(vm_invalid_register_fails)                         \
+  X(vm_typed_register_defaults)                        \
+  X(vm_value_movement_and_globals)                     \
+  X(vm_typed_value_errors)                             \
+  X(vm_jump_opcode)                                    \
+  X(vm_string_addition_opcode)                         \
+  X(vm_print_scalar_opcodes)                           \
+  X(vm_print_reg_opcode)                               \
+  X(vm_numeric_arithmetic_opcodes)                     \
+  X(vm_numeric_arithmetic_precedence_shapes)           \
+  X(vm_divide_by_zero_fails)                           \
+  X(vm_modulo_opcode)                                  \
+  X(vm_power_opcode)                                   \
+  X(vm_floor_div_opcode)                               \
+  X(vm_abs_opcode)                                     \
+  X(vm_min_opcode)                                     \
+  X(vm_max_opcode)                                     \
+  X(vm_clamp_opcode)                                   \
+  X(vm_sqrt_opcode)                                    \
+  X(vm_cbrt_builtin_opcode)                            \
+  X(vm_sin_builtin_opcode)                             \
+  X(vm_csc_builtin_opcode)                             \
+  X(vm_sec_builtin_opcode)                             \
+  X(vm_cot_builtin_opcode)                             \
+  X(vm_acsc_builtin_opcode)                            \
+  X(vm_asec_builtin_opcode)                            \
+  X(vm_acot_builtin_opcode)                            \
+  X(vm_sech_builtin_opcode)                            \
+  X(vm_csch_builtin_opcode)                            \
+  X(vm_coth_builtin_opcode)                            \
+  X(vm_sinh_builtin_opcode)                            \
+  X(vm_asinh_builtin_opcode)                           \
+  X(vm_acosh_builtin_opcode)                           \
+  X(vm_cosh_builtin_opcode)                            \
+  X(vm_tanh_builtin_opcode)                            \
+  X(vm_atanh_builtin_opcode)                           \
+  X(vm_cos_builtin_opcode)                             \
+  X(vm_tan_builtin_opcode)                             \
+  X(vm_asin_builtin_opcode)                            \
+  X(vm_acos_builtin_opcode)                            \
+  X(vm_atan_builtin_opcode)                            \
+  X(vm_atan2_builtin_opcode)                           \
+  X(vm_hypot_builtin_opcode)                           \
+  X(vm_copysign_builtin_opcode)                        \
+  X(vm_fma_builtin_opcode)                             \
+  X(vm_fdim_builtin_opcode)                            \
+  X(vm_remainder_builtin_opcode)                       \
+  X(vm_rint_builtin_opcode)                            \
+  X(vm_degrees_builtin_opcode)                         \
+  X(vm_radians_builtin_opcode)                         \
+  X(vm_isnan_builtin_opcode)                           \
+  X(vm_isinf_builtin_opcode)                           \
+  X(vm_isfinite_builtin_opcode)                        \
+  X(vm_fract_builtin_opcode)                           \
+  X(vm_expm1_builtin_opcode)                           \
+  X(vm_exp2_builtin_opcode)                            \
+  X(vm_log1p_builtin_opcode)                           \
+  X(vm_erf_builtin_opcode)                             \
+  X(vm_erfc_builtin_opcode)                            \
+  X(vm_gamma_builtin_opcode)                           \
+  X(vm_exp_opcode)                                     \
+  X(vm_ln_opcode)                                      \
+  X(vm_log_opcode)                                     \
+  X(vm_floor_builtin_opcode)                           \
+  X(vm_ceil_builtin_opcode)                            \
+  X(vm_round_builtin_opcode)                           \
+  X(vm_trunc_builtin_opcode)                           \
+  X(vm_sign_builtin_opcode)                            \
+  X(vm_len_opcode)                                     \
+  X(vm_factorial_opcode)                               \
+  X(vm_eq_opcode)                                      \
+  X(vm_eq_incompatible_types_fail)                     \
+  X(vm_eq_int_bool_out_of_range_fail)                  \
+  X(vm_ne_opcode)                                      \
+  X(vm_ne_incompatible_types_fail)                     \
+  X(vm_ne_int_bool_out_of_range_fail)                  \
+  X(vm_lt_opcode)                                      \
+  X(vm_lt_incompatible_types_fail)                     \
+  X(vm_le_opcode)                                      \
+  X(vm_le_incompatible_types_fail)                     \
+  X(vm_gt_opcode)                                      \
+  X(vm_gt_incompatible_types_fail)                     \
+  X(vm_ge_opcode)                                      \
+  X(vm_ge_incompatible_types_fail)                     \
+  X(vm_and_opcode)                                     \
+  X(vm_and_incompatible_types_fail)                    \
+  X(vm_bit_and_opcode)                                 \
+  X(vm_bit_and_incompatible_types_fail)                \
+  X(vm_bit_or_opcode)                                  \
+  X(vm_bit_or_incompatible_types_fail)                 \
+  X(vm_bit_xor_opcode)                                 \
+  X(vm_bit_xor_incompatible_types_fail)                \
+  X(vm_bit_not_opcode)                                 \
+  X(vm_bit_not_incompatible_types_fail)                \
+  X(vm_bit_shl_opcode)                                 \
+  X(vm_bit_shl_incompatible_types_fail)                \
+  X(vm_bit_shr_opcode)                                 \
+  X(vm_bit_shr_incompatible_types_fail)                \
+  X(vm_or_opcode)                                      \
+  X(vm_or_incompatible_types_fail)                     \
+  X(vm_not_opcode)                                     \
+  X(vm_not_incompatible_types_fail)                    \
+  X(vm_nand_opcode)                                    \
+  X(vm_nand_incompatible_types_fail)                   \
+  X(vm_nor_opcode)                                     \
+  X(vm_nor_incompatible_types_fail)                    \
+  X(vm_bfs_levels_opcode)                              \
+  X(vm_bfs_level_count_opcode)                         \
+  X(vm_bfs_order_opcode)                               \
+  X(vm_hypergraph_opcodes)                             \
+  X(vm_superinstruction_add_pair_semantics)            \
+  X(vm_superinstruction_movimm_add_semantics)          \
+  X(vm_deterministic_mode_toggle)                      \
+  X(vm_deterministic_mode_unknown_opcode)              \
+  X(vm_deterministic_mode_graph_semantics)             \
+  X(vm_add_wraparound_semantics)                       \
+  X(vm_frontier_primitives)                            \
+  X(vm_frontier_errors)                                \
+  X(vm_neighbor_iteration_primitives)                  \
+  X(vm_neighbor_iteration_errors)                      \
+  X(vm_weighted_graph_opcodes)                         \
+  X(vm_weighted_graph_opcode_errors)                   \
+  X(vm_hyperedge_traversal_primitives)                 \
+  X(vm_hyperedge_traversal_errors)                     \
+  X(vm_snapshot_format)                                \
+  X(vm_fastpath_shape_cache_load_flags)                \
+  X(vm_fastpath_shape_cache_same_pointer_content_change) \
+  X(vm_dispatch_variant_edge_semantics)                \
+  X(vm_lgamma_builtin_opcode)
+
+#define GRAPHION_DECLARE_TEST(name) int test_##name(void);
+GRAPHION_VM_TEST_CASES(GRAPHION_DECLARE_TEST)
+#undef GRAPHION_DECLARE_TEST
+
+#endif
