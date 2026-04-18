@@ -7,6 +7,67 @@ static int scope_sync_to_program(graphion_runtime_scope *scope,
                                  unsigned int line,
                                  graphion_runtime_diagnostic *diagnostic);
 
+static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
+                                     unsigned int line,
+                                     unsigned int column,
+                                     int vm_rc) {
+  if (vm_rc == GVM_ERR_DIVIDE_BY_ZERO) {
+    return fail(diagnostic, line, column, "division by zero", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_DOMAIN) {
+    return fail(diagnostic, line, column, "sqrt requires non-negative input", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_LN_DOMAIN) {
+    return fail(diagnostic, line, column, "ln requires strictly positive input", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_LOG_DOMAIN) {
+    return fail(diagnostic, line, column, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ASIN_DOMAIN) {
+    return fail(diagnostic, line, column, "asin requires input in [-1, 1]", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ACOS_DOMAIN) {
+    return fail(diagnostic, line, column, "acos requires input in [-1, 1]", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ACSC_DOMAIN) {
+    return fail(diagnostic, line, column, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ASEC_DOMAIN) {
+    return fail(diagnostic, line, column, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ACOSH_DOMAIN) {
+    return fail(diagnostic, line, column, "acosh requires input >= 1", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_ATANH_DOMAIN) {
+    return fail(diagnostic, line, column, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_LOG1P_DOMAIN) {
+    return fail(diagnostic, line, column, "log1p requires input > -1", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_REMAINDER_DOMAIN) {
+    return fail(diagnostic, line, column, "remainder requires non-zero divisor", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_GAMMA_DOMAIN) {
+    return fail(diagnostic, line, column, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_LGAMMA_DOMAIN) {
+    return fail(diagnostic, line, column, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_FACTORIAL_DOMAIN) {
+    return fail(diagnostic, line, column, "factorial requires non-negative integer input", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_BITS_WIDTH_MISMATCH) {
+    return fail(diagnostic, line, column, "bitwise operations require matching bits widths", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_NEGATIVE_SHIFT) {
+    return fail(diagnostic, line, column, "bit shifts require non-negative integer counts", GINT_ERR_RUN);
+  }
+  if (vm_rc == GVM_ERR_TYPE_MISMATCH) {
+    return fail(diagnostic, line, column, "incompatible operand types", GINT_ERR_RUN);
+  }
+  return fail(diagnostic, line, column, "failed to execute VM program", GINT_ERR_RUN);
+}
+
 static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
   static graphion_vm_value empty_globals[1];
   static char *empty_global_owners[1];
@@ -49,55 +110,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
-      return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_DOMAIN) {
-      return fail(diagnostic, line, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LN_DOMAIN) {
-      return fail(diagnostic, line, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
-      return fail(diagnostic, line, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASIN_DOMAIN) {
-      return fail(diagnostic, line, 1U, "asin requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOS_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acos requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACSC_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASEC_DOMAIN) {
-      return fail(diagnostic, line, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOSH_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acosh requires input >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ATANH_DOMAIN) {
-      return fail(diagnostic, line, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG1P_DOMAIN) {
-      return fail(diagnostic, line, 1U, "log1p requires input > -1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_REMAINDER_DOMAIN) {
-      return fail(diagnostic, line, 1U, "remainder requires non-zero divisor", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_GAMMA_DOMAIN) {
-      return fail(diagnostic, line, 1U, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LGAMMA_DOMAIN) {
-      return fail(diagnostic, line, 1U, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
-      return fail(diagnostic, line, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, line, 1U, "incompatible operand types", GINT_ERR_RUN);
-    }
-    return fail(diagnostic, line, 1U, "failed to execute VM program", GINT_ERR_RUN);
+    return fail_for_vm_runtime_error(diagnostic, line, 1U, rc);
   }
   *value_out = vm.regs[reg_index];
   if (value_out->kind == GVM_VALUE_STRING) {
@@ -787,55 +800,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
-      return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LN_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASIN_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "asin requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOS_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acos requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACSC_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASEC_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOSH_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acosh requires input >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ATANH_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG1P_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "log1p requires input > -1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_REMAINDER_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "remainder requires non-zero divisor", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_GAMMA_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LGAMMA_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, 1U, 1U, "incompatible operand types", GINT_ERR_RUN);
-    }
-    return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
+    return fail_for_vm_runtime_error(diagnostic, 1U, 1U, rc);
   }
   graphion_vm_dispose(&vm);
   return GINT_OK;

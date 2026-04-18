@@ -223,7 +223,7 @@ int test_gion_bits_and_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 & 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 & 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 & 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -280,7 +280,7 @@ int test_gion_bits_or_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 | 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 | 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 | 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -337,7 +337,7 @@ int test_gion_bits_xor_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 ^ 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 ^ 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 ^ 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -459,7 +459,7 @@ int test_gion_bits_shl_runtime_errors(void) {
   } cases[] = {
       {"value = 0b10 << 0b0010\n", "incompatible operand types"},
       {"value = 0b10 << 1.0\n", "incompatible operand types"},
-      {"value = 0b10 << -1\n", "incompatible operand types"},
+      {"value = 0b10 << -1\n", "bit shifts require non-negative integer counts"},
   };
   size_t i;
 
@@ -526,7 +526,7 @@ int test_gion_bits_shr_runtime_errors(void) {
   } cases[] = {
       {"value = 0b10 >> 0b0010\n", "incompatible operand types"},
       {"value = 0b10 >> 1.0\n", "incompatible operand types"},
-      {"value = 0b10 >> -1\n", "incompatible operand types"},
+      {"value = 0b10 >> -1\n", "bit shifts require non-negative integer counts"},
   };
   size_t i;
 

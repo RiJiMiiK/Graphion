@@ -407,7 +407,7 @@ static int op_bit_and(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) & vm_value_get_bits_payload(rhs);
@@ -435,7 +435,7 @@ static int op_bit_or(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) | vm_value_get_bits_payload(rhs);
@@ -463,7 +463,7 @@ static int op_bit_xor(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) ^ vm_value_get_bits_payload(rhs);
@@ -524,7 +524,7 @@ static int op_bit_shl(graphion_vm *vm, const graphion_insn *in) {
   }
   shift_i = rhs->as.int_value;
   if (shift_i < 0) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_NEGATIVE_SHIFT;
   }
 
   payload = vm_value_get_bits_payload(lhs);
@@ -558,7 +558,7 @@ static int op_bit_shr(graphion_vm *vm, const graphion_insn *in) {
   }
   shift_i = rhs->as.int_value;
   if (shift_i < 0) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_NEGATIVE_SHIFT;
   }
 
   payload = vm_value_get_bits_payload(lhs);
