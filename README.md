@@ -113,7 +113,7 @@ python -m sphinx -b html docs docs/_build/html
 
 ## Contact
 
-Use the Discord server for questions, support, and private contact:
+Use the Discord server for questions and general support:
 
 - https://discord.com/invite/mPzDQ7TYkj
 

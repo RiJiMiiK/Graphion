@@ -34,12 +34,3 @@
 - name: blocked
   color: "000000"
   description: Cannot proceed until external dependency is resolved
-- name: good first issue
-  color: "7057ff"
-  description: Good for first-time contributors
-- name: help wanted
-  color: "008672"
-  description: Extra attention is needed
-- name: triage
-  color: "ededed"
-  description: Needs initial triage

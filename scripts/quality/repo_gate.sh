@@ -31,12 +31,8 @@ cspell \
   CHANGELOG.md \
   CODE_OF_CONDUCT.md \
   CONTRIBUTING.md \
-  CONTRIBUTORS.md \
   MAINTAINERS.md \
-  OWNERSHIP.md \
   SECURITY.md \
-  SECURITY_CONTACTS.md \
-  SUPPORT.md \
   examples/README.md \
   docs/**/*.md \
   .github/**/*.md
@@ -49,7 +45,6 @@ lychee \
   ROADMAP.md \
   examples/README.md \
   docs/**/*.md \
-  SUPPORT.md \
   CONTRIBUTING.md \
   SECURITY.md
 
