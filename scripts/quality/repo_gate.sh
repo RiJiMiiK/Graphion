@@ -31,7 +31,6 @@ cspell \
   CHANGELOG.md \
   CODE_OF_CONDUCT.md \
   CONTRIBUTING.md \
-  CONTRIBUTORS.md \
   MAINTAINERS.md \
   OWNERSHIP.md \
   SECURITY.md \
