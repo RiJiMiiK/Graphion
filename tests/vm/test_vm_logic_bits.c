@@ -183,7 +183,7 @@ int test_vm_bit_and_opcode(void) {
 
 int test_vm_bit_and_incompatible_types_fail(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[2];
+  graphion_vm_value const_pool[2] = {0};
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -201,7 +201,7 @@ int test_vm_bit_and_incompatible_types_fail(void) {
     return finish_vm_test(&vm, 10);
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_TYPE_MISMATCH) {
+  if (rc != GVM_ERR_BITS_WIDTH_MISMATCH) {
     return finish_vm_test(&vm, 11);
   }
   graphion_vm_dispose(&vm);
@@ -258,7 +258,7 @@ int test_vm_bit_or_opcode(void) {
 
 int test_vm_bit_or_incompatible_types_fail(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[2];
+  graphion_vm_value const_pool[2] = {0};
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -276,7 +276,7 @@ int test_vm_bit_or_incompatible_types_fail(void) {
     return finish_vm_test(&vm, 10);
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_TYPE_MISMATCH) {
+  if (rc != GVM_ERR_BITS_WIDTH_MISMATCH) {
     return finish_vm_test(&vm, 11);
   }
   graphion_vm_dispose(&vm);
@@ -333,7 +333,7 @@ int test_vm_bit_xor_opcode(void) {
 
 int test_vm_bit_xor_incompatible_types_fail(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[2];
+  graphion_vm_value const_pool[2] = {0};
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -351,7 +351,7 @@ int test_vm_bit_xor_incompatible_types_fail(void) {
     return finish_vm_test(&vm, 10);
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_TYPE_MISMATCH) {
+  if (rc != GVM_ERR_BITS_WIDTH_MISMATCH) {
     return finish_vm_test(&vm, 11);
   }
   graphion_vm_dispose(&vm);
@@ -485,7 +485,7 @@ int test_vm_bit_shl_opcode(void) {
 
 int test_vm_bit_shl_incompatible_types_fail(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[2];
+  graphion_vm_value const_pool[2] = {0};
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -531,7 +531,7 @@ int test_vm_bit_shl_incompatible_types_fail(void) {
     return finish_vm_test(&vm, 14);
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_TYPE_MISMATCH) {
+  if (rc != GVM_ERR_NEGATIVE_SHIFT) {
     return finish_vm_test(&vm, 15);
   }
   return finish_vm_test(&vm, 0);
@@ -585,7 +585,7 @@ int test_vm_bit_shr_opcode(void) {
 
 int test_vm_bit_shr_incompatible_types_fail(void) {
   graphion_vm vm;
-  graphion_vm_value const_pool[2];
+  graphion_vm_value const_pool[2] = {0};
   const graphion_insn program[] = {
       {GVM_OP_LOAD_CONST, 0, 0, 0},
       {GVM_OP_LOAD_CONST, 1, 0, 1},
@@ -631,7 +631,7 @@ int test_vm_bit_shr_incompatible_types_fail(void) {
     return finish_vm_test(&vm, 14);
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_TYPE_MISMATCH) {
+  if (rc != GVM_ERR_NEGATIVE_SHIFT) {
     return finish_vm_test(&vm, 15);
   }
   return finish_vm_test(&vm, 0);
@@ -1183,4 +1183,3 @@ int test_vm_nor_incompatible_types_fail(void) {
   graphion_vm_dispose(&vm);
   return 0;
 }
-

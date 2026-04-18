@@ -15,13 +15,25 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
     return fail(diagnostic, line, column, "division by zero", GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_DOMAIN) {
-    return fail(diagnostic, line, column, "sqrt requires non-negative input", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "sqrt requires non-negative input",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_LN_DOMAIN) {
-    return fail(diagnostic, line, column, "ln requires strictly positive input", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "ln requires strictly positive input",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_LOG_DOMAIN) {
-    return fail(diagnostic, line, column, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "log requires x > 0 and base > 0 with base != 1",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_ASIN_DOMAIN) {
     return fail(diagnostic, line, column, "asin requires input in [-1, 1]", GINT_ERR_RUN);
@@ -48,19 +60,35 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
     return fail(diagnostic, line, column, "remainder requires non-zero divisor", GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_GAMMA_DOMAIN) {
-    return fail(diagnostic, line, column, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "gamma is undefined at 0 and negative integers",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_LGAMMA_DOMAIN) {
-    return fail(diagnostic, line, column, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "lgamma is undefined at 0 and negative integers",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_FACTORIAL_DOMAIN) {
     return fail(diagnostic, line, column, "factorial requires non-negative integer input", GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_BITS_WIDTH_MISMATCH) {
-    return fail(diagnostic, line, column, "bitwise operations require matching bits widths", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "bitwise operations require matching bits widths",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_NEGATIVE_SHIFT) {
-    return fail(diagnostic, line, column, "bit shifts require non-negative integer counts", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                column,
+                "bit shifts require non-negative integer counts",
+                GINT_ERR_RUN);
   }
   if (vm_rc == GVM_ERR_TYPE_MISMATCH) {
     return fail(diagnostic, line, column, "incompatible operand types", GINT_ERR_RUN);
