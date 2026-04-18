@@ -12,12 +12,9 @@ static int is_scalar_builtin_name(const char *name) {
   GRAPHION_BINARY_DIRECT_BUILTINS(GRAPHION_MATCH_BUILTIN)
   GRAPHION_TERNARY_DIRECT_BUILTINS(GRAPHION_MATCH_BUILTIN)
 #undef GRAPHION_MATCH_BUILTIN
-#define GRAPHION_MATCH_NAME(builtin_name) \
-  if (strcmp(name, builtin_name) == 0) {  \
-    return 1;                             \
+  if (strcmp(name, "log10") == 0 || strcmp(name, "log2") == 0) {
+    return 1;
   }
-  GRAPHION_SPECIAL_BUILTIN_NAMES(GRAPHION_MATCH_NAME)
-#undef GRAPHION_MATCH_NAME
   return 0;
 }
 
