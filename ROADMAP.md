@@ -35,6 +35,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] remove duplicated or drifted builtin entries in the user docs
 - [x] make the documented current scope consistent across README, docs, examples, and roadmap
 - [x] review docs wording so the public entry points match the post-`gion-arithmetic` project state
+- [ ] align `.github/ISSUE_TEMPLATE/config.yml` support links with the current `README.md` / `SECURITY.md` contact policy
 
 ### Test robustness
 
@@ -52,6 +53,10 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] align the local quality-gate scripts across Bash and PowerShell
 - [x] decide whether `clang-tidy` and `cppcheck` should stay `src`-only or also cover part of `tests`
 - [x] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
+- [ ] retire or repurpose `check_asm_safety.py` and the related assembly-only gate after removal of the VM ASM path
+- [ ] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
+- [ ] align the `cppcheck` option set between CI and the local quality-gate scripts
+- [ ] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
 
 ## Opportunistic improvements
 
@@ -64,6 +69,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] reduce builtin duplication between parser, VM, docs, and tests where a shared definition table or helper layer makes sense
 - [x] review the project code for obvious legacy or dead paths after the hygiene lane
   - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
+- [ ] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
 
 ### Repository hygiene
 
