@@ -30,7 +30,6 @@ try {
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
     "MAINTAINERS.md",
-    "OWNERSHIP.md",
     "SECURITY.md",
     "SECURITY_CONTACTS.md",
     "SUPPORT.md",

@@ -77,7 +77,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] review whether `contributors-sync.yml` and `CONTRIBUTORS.md` automation are still worth keeping while the project is effectively solo-maintained
 - [x] review whether `stale.yml` and `monthly-audit.yml` reduce workload or mostly create repo noise in a solo-maintainer workflow
 - [x] review whether issue templates, RFC discussion templates, and contributor-oriented labels such as `good first issue`, `help wanted`, and `triage` still match the actual maintenance model
-- [ ] review whether `MAINTAINERS.md` and `OWNERSHIP.md` should stay separate or collapse into a single lightweight maintainer note
+- [x] review whether `MAINTAINERS.md` and `OWNERSHIP.md` should stay separate or collapse into a single lightweight maintainer note
 - [ ] review whether `SUPPORT.md` and `SECURITY_CONTACTS.md` should stay separate or merge into `README.md` / `SECURITY.md`
 
 ## Future additions gated by other features

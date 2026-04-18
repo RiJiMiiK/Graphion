@@ -16,7 +16,6 @@ REQUIRED_FILES = [
     "SECURITY.md",
     "SECURITY_CONTACTS.md",
     "SUPPORT.md",
-    "OWNERSHIP.md",
     "MAINTAINERS.md",
     "ROADMAP.md",
     "examples/README.md",
