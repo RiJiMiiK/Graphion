@@ -80,6 +80,10 @@ Repository bootstrap:
 ./scripts/dev/bootstrap.ps1
 ```
 
+Quality expectations and checks:
+
+- [QUALITY.md](QUALITY.md)
+
 Enable local hooks:
 
 ```bash

@@ -20,6 +20,7 @@ jobs:
           config: .cspell.json
           files: |
             README.md
+            QUALITY.md
             ROADMAP.md
             CHANGELOG.md
             CODE_OF_CONDUCT.md

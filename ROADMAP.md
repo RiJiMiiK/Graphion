@@ -51,7 +51,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] extend link-check coverage to roadmap and examples entry points
 - [x] align the local quality-gate scripts across Bash and PowerShell
 - [x] decide whether `clang-tidy` and `cppcheck` should stay `src`-only or also cover part of `tests`
-- [ ] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
+- [x] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
 
 ## Opportunistic improvements
 
