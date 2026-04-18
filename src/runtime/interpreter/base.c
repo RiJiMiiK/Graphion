@@ -2,6 +2,28 @@
 
 #include "runtime/interpreter/base.h"
 
+static int is_scalar_builtin_name(const char *name) {
+  static const char *const names[] = {
+      "abs",       "min",      "max",       "clamp",    "sqrt",     "cbrt",   "sin",   "csc",
+      "sec",       "cot",      "acsc",      "asec",     "acot",     "sech",   "csch",  "coth",
+      "sinh",      "asinh",    "acosh",     "cosh",     "tanh",     "atanh",  "cos",   "tan",
+      "asin",      "acos",     "atan",      "atan2",    "hypot",    "copysign",
+      "fma",       "fdim",     "remainder", "rint",     "degrees",  "radians",
+      "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
+      "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
+      "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
+      "round",     "trunc",    "sign",      "len"
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+    if (strcmp(name, names[i]) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -97,36 +119,13 @@ int is_ident_char(char ch) {
 }
 
 int is_reserved_name(const char *name) {
+  if (is_scalar_builtin_name(name)) {
+    return 1;
+  }
   return strcmp(name, "print") == 0 || strcmp(name, "true") == 0 || strcmp(name, "false") == 0 ||
          strcmp(name, "pi") == 0 || strcmp(name, "tau") == 0 || strcmp(name, "phi") == 0 ||
          strcmp(name, "e") == 0 ||
          strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0 ||
-         strcmp(name, "abs") == 0 || strcmp(name, "min") == 0 || strcmp(name, "max") == 0 ||
-         strcmp(name, "clamp") == 0 || strcmp(name, "sqrt") == 0 || strcmp(name, "exp") == 0 ||
-         strcmp(name, "exp2") == 0 ||
-         strcmp(name, "ln") == 0 || strcmp(name, "log") == 0 || strcmp(name, "log10") == 0 ||
-         strcmp(name, "log2") == 0 || strcmp(name, "floor") == 0 || strcmp(name, "ceil") == 0 ||
-         strcmp(name, "round") == 0 || strcmp(name, "trunc") == 0 || strcmp(name, "fract") == 0 ||
-         strcmp(name, "sign") == 0 ||
-         strcmp(name, "cbrt") == 0 || strcmp(name, "sin") == 0 || strcmp(name, "csc") == 0 ||
-         strcmp(name, "sec") == 0 || strcmp(name, "cot") == 0 || strcmp(name, "acsc") == 0 ||
-         strcmp(name, "asec") == 0 || strcmp(name, "acot") == 0 || strcmp(name, "sech") == 0 ||
-         strcmp(name, "csch") == 0 || strcmp(name, "coth") == 0 ||
-         strcmp(name, "sinh") == 0 ||
-         strcmp(name, "asinh") == 0 || strcmp(name, "acosh") == 0 ||
-         strcmp(name, "cos") == 0 || strcmp(name, "cosh") == 0 || strcmp(name, "tan") == 0 ||
-         strcmp(name, "tanh") == 0 || strcmp(name, "atanh") == 0 ||
-         strcmp(name, "asin") == 0 || strcmp(name, "acos") == 0 ||
-         strcmp(name, "atan") == 0 || strcmp(name, "atan2") == 0 || strcmp(name, "hypot") == 0 ||
-         strcmp(name, "copysign") == 0 || strcmp(name, "fma") == 0 || strcmp(name, "fdim") == 0 ||
-         strcmp(name, "remainder") == 0 || strcmp(name, "rint") == 0 ||
-         strcmp(name, "degrees") == 0 ||
-         strcmp(name, "radians") == 0 ||
-         strcmp(name, "isnan") == 0 ||
-         strcmp(name, "isinf") == 0 || strcmp(name, "isfinite") == 0 || strcmp(name, "expm1") == 0 ||
-         strcmp(name, "log1p") == 0 || strcmp(name, "erf") == 0 || strcmp(name, "erfc") == 0 ||
-         strcmp(name, "gamma") == 0 || strcmp(name, "lgamma") == 0 ||
-         strcmp(name, "len") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

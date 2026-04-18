@@ -170,7 +170,9 @@ typedef enum {
   GVM_ERR_GAMMA_DOMAIN = -33,
   GVM_ERR_LGAMMA_DOMAIN = -34,
   GVM_ERR_ACSC_DOMAIN = -35,
-  GVM_ERR_ASEC_DOMAIN = -36
+  GVM_ERR_ASEC_DOMAIN = -36,
+  GVM_ERR_BITS_WIDTH_MISMATCH = -37,
+  GVM_ERR_NEGATIVE_SHIFT = -38
 } graphion_vm_result;
 
 typedef enum {

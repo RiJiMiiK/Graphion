@@ -21,7 +21,13 @@ int test_gion_bits_literals(void) {
   const graphion_runtime_value *bits_copy;
 
   graphion_runtime_scope_init(&scope);
-  if (!test_capture_gion_output(source, "gion_bits_literals.txt", &scope, &diagnostic, path, sizeof(path), output,
+  if (!test_capture_gion_output(source,
+                                "gion_bits_literals.txt",
+                                &scope,
+                                &diagnostic,
+                                path,
+                                sizeof(path),
+                                output,
                                 sizeof(output))) {
     return finish_scope_test(&scope, 1);
   }
@@ -30,7 +36,9 @@ int test_gion_bits_literals(void) {
   bits_four = graphion_runtime_scope_find(&scope, "bits_four");
   bits_copy = graphion_runtime_scope_find(&scope, "bits_copy");
 
-  if (bits_two == NULL || bits_two->kind != GVM_VALUE_BITS || bits_two->reserved[0] != 2U || (uint64_t)bits_two->as.int_value != 2U) {
+  if (bits_two == NULL || bits_two->kind != GVM_VALUE_BITS ||
+      bits_two->reserved[0] != 2U ||
+      (uint64_t)bits_two->as.int_value != 2U) {
     test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 3);
   }
@@ -94,7 +102,13 @@ int test_gion_bits_equality(void) {
   const graphion_runtime_value *same_copy;
 
   graphion_runtime_scope_init(&scope);
-  if (!test_capture_gion_output(source, "gion_bits_equality.txt", &scope, &diagnostic, path, sizeof(path), output,
+  if (!test_capture_gion_output(source,
+                                "gion_bits_equality.txt",
+                                &scope,
+                                &diagnostic,
+                                path,
+                                sizeof(path),
+                                output,
                                 sizeof(output))) {
     return finish_scope_test(&scope, 1);
   }
@@ -130,7 +144,13 @@ int test_gion_bits_inequality(void) {
   const graphion_runtime_value *same_value;
 
   graphion_runtime_scope_init(&scope);
-  if (!test_capture_gion_output(source, "gion_bits_inequality.txt", &scope, &diagnostic, path, sizeof(path), output,
+  if (!test_capture_gion_output(source,
+                                "gion_bits_inequality.txt",
+                                &scope,
+                                &diagnostic,
+                                path,
+                                sizeof(path),
+                                output,
                                 sizeof(output))) {
     return finish_scope_test(&scope, 1);
   }
@@ -200,7 +220,13 @@ int test_gion_bits_and(void) {
   const graphion_runtime_value *masked_value;
 
   graphion_runtime_scope_init(&scope);
-  if (!test_capture_gion_output(source, "gion_bits_and.txt", &scope, &diagnostic, path, sizeof(path), output,
+  if (!test_capture_gion_output(source,
+                                "gion_bits_and.txt",
+                                &scope,
+                                &diagnostic,
+                                path,
+                                sizeof(path),
+                                output,
                                 sizeof(output))) {
     return finish_scope_test(&scope, 2);
   }
@@ -223,7 +249,7 @@ int test_gion_bits_and_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 & 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 & 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 & 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -257,7 +283,13 @@ int test_gion_bits_or(void) {
   const graphion_runtime_value *merged_value;
 
   graphion_runtime_scope_init(&scope);
-  if (!test_capture_gion_output(source, "gion_bits_or.txt", &scope, &diagnostic, path, sizeof(path), output,
+  if (!test_capture_gion_output(source,
+                                "gion_bits_or.txt",
+                                &scope,
+                                &diagnostic,
+                                path,
+                                sizeof(path),
+                                output,
                                 sizeof(output))) {
     return finish_scope_test(&scope, 2);
   }
@@ -280,7 +312,7 @@ int test_gion_bits_or_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 | 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 | 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 | 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -337,7 +369,7 @@ int test_gion_bits_xor_runtime_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 0b10 ^ 0b0010\n", "incompatible operand types"},
+      {"value = 0b10 ^ 0b0010\n", "bitwise operations require matching bits widths"},
       {"value = 0b10 ^ 1\n", "incompatible operand types"},
   };
   size_t i;
@@ -459,7 +491,7 @@ int test_gion_bits_shl_runtime_errors(void) {
   } cases[] = {
       {"value = 0b10 << 0b0010\n", "incompatible operand types"},
       {"value = 0b10 << 1.0\n", "incompatible operand types"},
-      {"value = 0b10 << -1\n", "incompatible operand types"},
+      {"value = 0b10 << -1\n", "bit shifts require non-negative integer counts"},
   };
   size_t i;
 
@@ -526,7 +558,7 @@ int test_gion_bits_shr_runtime_errors(void) {
   } cases[] = {
       {"value = 0b10 >> 0b0010\n", "incompatible operand types"},
       {"value = 0b10 >> 1.0\n", "incompatible operand types"},
-      {"value = 0b10 >> -1\n", "incompatible operand types"},
+      {"value = 0b10 >> -1\n", "bit shifts require non-negative integer counts"},
   };
   size_t i;
 

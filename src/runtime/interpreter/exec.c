@@ -1,187 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
-#include "runtime/interpreter/exec.h"
-
-static int scope_sync_to_program(graphion_runtime_scope *scope,
-                                 const graphion_runtime_program *program,
-                                 unsigned int line,
-                                 graphion_runtime_diagnostic *diagnostic);
-
-static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
-  static graphion_vm_value empty_globals[1];
-  static char *empty_global_owners[1];
-
-  if (vm == NULL || scope == NULL) {
-    return;
-  }
-
-  graphion_vm_bind_globals(vm,
-                           scope->global_count > 0U ? scope->globals : empty_globals,
-                           scope->global_count);
-  graphion_vm_bind_global_string_owners(vm,
-                                        scope->global_count > 0U ? scope->owned_string_values : empty_global_owners,
-                                        scope->global_count);
-}
-
-static int execute_condition_program(const graphion_runtime_program *program,
-                                     graphion_runtime_scope *scope,
-                                     uint8_t reg_index,
-                                     unsigned int line,
-                                     graphion_runtime_diagnostic *diagnostic,
-                                     graphion_vm_value *value_out) {
-  graphion_vm vm;
-  int rc;
-  if (program == NULL || scope == NULL || value_out == NULL) {
-    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
-  }
-  rc = scope_sync_to_program(scope, program, line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  graphion_vm_init(&vm);
-  graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
-  bind_scope_to_vm(&vm, scope);
-  rc = graphion_vm_load(&vm, program->program, program->program_len);
-  if (rc != GVM_OK) {
-    graphion_vm_dispose(&vm);
-    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_PARSE);
-  }
-  rc = graphion_vm_run(&vm);
-  if (rc != GVM_OK) {
-    graphion_vm_dispose(&vm);
-    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
-      return fail(diagnostic, line, 1U, "division by zero", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_DOMAIN) {
-      return fail(diagnostic, line, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LN_DOMAIN) {
-      return fail(diagnostic, line, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
-      return fail(diagnostic, line, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASIN_DOMAIN) {
-      return fail(diagnostic, line, 1U, "asin requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOS_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acos requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACSC_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASEC_DOMAIN) {
-      return fail(diagnostic, line, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOSH_DOMAIN) {
-      return fail(diagnostic, line, 1U, "acosh requires input >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ATANH_DOMAIN) {
-      return fail(diagnostic, line, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG1P_DOMAIN) {
-      return fail(diagnostic, line, 1U, "log1p requires input > -1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_REMAINDER_DOMAIN) {
-      return fail(diagnostic, line, 1U, "remainder requires non-zero divisor", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_GAMMA_DOMAIN) {
-      return fail(diagnostic, line, 1U, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LGAMMA_DOMAIN) {
-      return fail(diagnostic, line, 1U, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
-      return fail(diagnostic, line, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, line, 1U, "incompatible operand types", GINT_ERR_RUN);
-    }
-    return fail(diagnostic, line, 1U, "failed to execute VM program", GINT_ERR_RUN);
-  }
-  *value_out = vm.regs[reg_index];
-  if (value_out->kind == GVM_VALUE_STRING) {
-    value_out->as.string_value = NULL;
-  }
-  graphion_vm_dispose(&vm);
-  return GINT_OK;
-}
-
-static int evaluate_expression_text_to_value(const char *expression_text,
-                                             size_t expression_len,
-                                             graphion_runtime_scope *scope,
-                                             unsigned int line,
-                                             graphion_runtime_diagnostic *diagnostic,
-                                             graphion_vm_value *value_out) {
-  char expression_buffer[512];
-  const char *cursor = expression_buffer;
-  parsed_expr_result expr;
-  graphion_runtime_program program;
-  int rc;
-  if (scope == NULL || expression_text == NULL || value_out == NULL) {
-    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
-  }
-  if (expression_len >= sizeof(expression_buffer)) {
-    return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
-  }
-  memcpy(expression_buffer, expression_text, expression_len);
-  expression_buffer[expression_len] = '\0';
-  rc = seed_program_from_scope(&program, scope, line, diagnostic);
-  if (rc != GINT_OK) {
-    graphion_runtime_program_dispose(&program);
-    return rc;
-  }
-  rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
-  if (rc != GINT_OK) {
-    graphion_runtime_program_dispose(&program);
-    return rc;
-  }
-  skip_spaces(&cursor);
-  if (*cursor != '\0') {
-    graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after expression", GINT_ERR_PARSE);
-  }
-  if (expr.kind == EXPR_RESULT_LITERAL) {
-    *value_out = program.const_pool[expr.const_index];
-  } else if (expr.kind == EXPR_RESULT_GLOBAL) {
-    *value_out = scope->globals[expr.global_index];
-  } else {
-    rc = program_emit(&program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
-    if (rc != GINT_OK) {
-      graphion_runtime_program_dispose(&program);
-      return rc;
-    }
-    rc = execute_condition_program(&program, scope, expr.reg_index, line, diagnostic, value_out);
-    graphion_runtime_program_dispose(&program);
-    return rc;
-  }
-  graphion_runtime_program_dispose(&program);
-  return GINT_OK;
-}
-
-static int evaluate_condition_text(const char *condition_text,
-                                   size_t condition_len,
-                                   graphion_runtime_scope *scope,
-                                   unsigned int line,
-                                   graphion_runtime_diagnostic *diagnostic,
-                                   int *result_out) {
-  graphion_vm_value value;
-  int rc;
-
-  rc = evaluate_expression_text_to_value(condition_text, condition_len, scope, line, diagnostic, &value);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  if (value.kind == GVM_VALUE_BOOL) {
-    *result_out = value.as.bool_value != 0;
-    return GINT_OK;
-  }
-  if (value.kind == GVM_VALUE_INT && (value.as.int_value == 0 || value.as.int_value == 1)) {
-    *result_out = value.as.int_value != 0;
-    return GINT_OK;
-  }
-  return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
-}
+#include "runtime/interpreter/exec_internal.h"
 
 static int collect_assignment_statement_text(const runtime_source_line *lines,
                                              size_t count,
@@ -375,12 +194,12 @@ static int execute_statement_source_line(const runtime_source_line *lines,
 }
 
 int execute_block(const runtime_source_line *lines,
-                         size_t count,
-                         size_t *index,
-                         unsigned int block_indent,
-                         graphion_runtime_scope *scope,
-                         graphion_runtime_diagnostic *diagnostic,
-                         FILE *output);
+                  size_t count,
+                  size_t *index,
+                  unsigned int block_indent,
+                  graphion_runtime_scope *scope,
+                  graphion_runtime_diagnostic *diagnostic,
+                  FILE *output);
 
 static int execute_if_chain(const runtime_source_line *lines,
                             size_t count,
@@ -685,12 +504,12 @@ cleanup:
 }
 
 int execute_block(const runtime_source_line *lines,
-                         size_t count,
-                         size_t *index,
-                         unsigned int block_indent,
-                         graphion_runtime_scope *scope,
-                         graphion_runtime_diagnostic *diagnostic,
-                         FILE *output) {
+                  size_t count,
+                  size_t *index,
+                  unsigned int block_indent,
+                  graphion_runtime_scope *scope,
+                  graphion_runtime_diagnostic *diagnostic,
+                  FILE *output) {
   size_t i = *index;
   while (i < count) {
     if (line_is_blank(&lines[i])) {
@@ -735,119 +554,6 @@ int execute_block(const runtime_source_line *lines,
   }
   *index = i;
   return GINT_OK;
-}
-
-static int scope_sync_to_program(graphion_runtime_scope *scope,
-                                 const graphion_runtime_program *program,
-                                 unsigned int line,
-                                 graphion_runtime_diagnostic *diagnostic) {
-  size_t i;
-  int rc;
-  if (scope == NULL || program == NULL) {
-    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
-  }
-  rc = graphion_runtime_scope_reserve_globals(scope, program->global_count, line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  for (i = scope->global_count; i < program->global_count; ++i) {
-    copy_name(scope->global_names[i], program->global_names[i]);
-    vm_value_set_none(&scope->globals[i]);
-  }
-  scope->global_count = program->global_count;
-  return GINT_OK;
-}
-
-int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *program,
-                                                graphion_runtime_scope *scope,
-                                                graphion_runtime_diagnostic *diagnostic,
-                                                const graphion_output_sink *output) {
-  graphion_vm vm;
-  int rc;
-  if (program == NULL || scope == NULL) {
-    clear_diagnostic(diagnostic);
-    return GINT_ERR_INVALID_ARG;
-  }
-  clear_diagnostic(diagnostic);
-  rc = scope_sync_to_program(scope, program, 1U, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  graphion_vm_init(&vm);
-  graphion_vm_bind_constants(&vm, program->const_pool, program->const_count);
-  bind_scope_to_vm(&vm, scope);
-  if (output != NULL) {
-    graphion_vm_bind_output_sink(&vm, output);
-  }
-  rc = graphion_vm_load(&vm, program->program, program->program_len);
-  if (rc != GVM_OK) {
-    graphion_vm_dispose(&vm);
-    return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_PARSE);
-  }
-  rc = graphion_vm_run(&vm);
-  if (rc != GVM_OK) {
-    graphion_vm_dispose(&vm);
-    if (rc == GVM_ERR_DIVIDE_BY_ZERO) {
-      return fail(diagnostic, 1U, 1U, "division by zero", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "sqrt requires non-negative input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LN_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "ln requires strictly positive input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "log requires x > 0 and base > 0 with base != 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASIN_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "asin requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOS_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acos requires input in [-1, 1]", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACSC_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acsc requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ASEC_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "asec requires input <= -1 or >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ACOSH_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "acosh requires input >= 1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_ATANH_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "atanh requires input in (-1, 1)", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LOG1P_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "log1p requires input > -1", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_REMAINDER_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "remainder requires non-zero divisor", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_GAMMA_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "gamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_LGAMMA_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "lgamma is undefined at 0 and negative integers", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_FACTORIAL_DOMAIN) {
-      return fail(diagnostic, 1U, 1U, "factorial requires non-negative integer input", GINT_ERR_RUN);
-    }
-    if (rc == GVM_ERR_TYPE_MISMATCH) {
-      return fail(diagnostic, 1U, 1U, "incompatible operand types", GINT_ERR_RUN);
-    }
-    return fail(diagnostic, 1U, 1U, "failed to execute VM program", GINT_ERR_RUN);
-  }
-  graphion_vm_dispose(&vm);
-  return GINT_OK;
-}
-
-int graphion_execute_program(const graphion_runtime_program *program,
-                             graphion_runtime_scope *scope,
-                             graphion_runtime_diagnostic *diagnostic,
-                             FILE *output) {
-  graphion_output_sink sink;
-  graphion_output_sink_from_file(&sink, output);
-  return graphion_execute_prepared_program_with_sink(program, scope, diagnostic, &sink);
 }
 
 int graphion_interpret_source_with_output(const char *source,

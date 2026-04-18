@@ -407,7 +407,7 @@ static int op_bit_and(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) & vm_value_get_bits_payload(rhs);
@@ -435,7 +435,7 @@ static int op_bit_or(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) | vm_value_get_bits_payload(rhs);
@@ -463,7 +463,7 @@ static int op_bit_xor(graphion_vm *vm, const graphion_insn *in) {
   lhs_width = vm_value_get_bits_width(lhs);
   rhs_width = vm_value_get_bits_width(rhs);
   if (lhs_width == 0U || rhs_width == 0U || lhs_width != rhs_width) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_BITS_WIDTH_MISMATCH;
   }
 
   result = vm_value_get_bits_payload(lhs) ^ vm_value_get_bits_payload(rhs);
@@ -524,7 +524,7 @@ static int op_bit_shl(graphion_vm *vm, const graphion_insn *in) {
   }
   shift_i = rhs->as.int_value;
   if (shift_i < 0) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_NEGATIVE_SHIFT;
   }
 
   payload = vm_value_get_bits_payload(lhs);
@@ -558,7 +558,7 @@ static int op_bit_shr(graphion_vm *vm, const graphion_insn *in) {
   }
   shift_i = rhs->as.int_value;
   if (shift_i < 0) {
-    return GVM_ERR_TYPE_MISMATCH;
+    return GVM_ERR_NEGATIVE_SHIFT;
   }
 
   payload = vm_value_get_bits_payload(lhs);
@@ -1071,8 +1071,8 @@ int op_tan_builtin(graphion_vm *vm, const graphion_insn *in) {
 }
 
 int op_asin_builtin(graphion_vm *vm, const graphion_insn *in) {
-    int64_t value_i;
-    double value_f;
+  int64_t value_i;
+  double value_f;
   int is_float;
 
   if (!is_valid_reg(in->a)) {
@@ -1086,45 +1086,45 @@ int op_asin_builtin(graphion_vm *vm, const graphion_insn *in) {
   }
 
   vm_free_owned_reg_string(vm, in->a);
-    vm_value_set_float(&vm->regs[in->a], asin(value_f));
-    return GVM_OK;
+  vm_value_set_float(&vm->regs[in->a], asin(value_f));
+  return GVM_OK;
 }
 
 int op_acos_builtin(graphion_vm *vm, const graphion_insn *in) {
-    int64_t value_i;
-    double value_f;
-    int is_float;
+  int64_t value_i;
+  double value_f;
+  int is_float;
 
-    if (!is_valid_reg(in->a)) {
-        return GVM_ERR_INVALID_REG;
-    }
-    if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
-        return GVM_ERR_TYPE_MISMATCH;
-    }
-    if (value_f < -1.0 || value_f > 1.0) {
-        return GVM_ERR_ACOS_DOMAIN;
-    }
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (value_f < -1.0 || value_f > 1.0) {
+    return GVM_ERR_ACOS_DOMAIN;
+  }
 
-    vm_free_owned_reg_string(vm, in->a);
-    vm_value_set_float(&vm->regs[in->a], acos(value_f));
-    return GVM_OK;
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], acos(value_f));
+  return GVM_OK;
 }
 
 int op_atan_builtin(graphion_vm *vm, const graphion_insn *in) {
-    int64_t value_i;
-    double value_f;
-    int is_float;
+  int64_t value_i;
+  double value_f;
+  int is_float;
 
-    if (!is_valid_reg(in->a)) {
-        return GVM_ERR_INVALID_REG;
-    }
-    if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
-        return GVM_ERR_TYPE_MISMATCH;
-    }
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (!vm_value_get_numeric(&vm->regs[in->a], &value_i, &value_f, &is_float)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
 
-    vm_free_owned_reg_string(vm, in->a);
-    vm_value_set_float(&vm->regs[in->a], atan(value_f));
-    return GVM_OK;
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_float(&vm->regs[in->a], atan(value_f));
+  return GVM_OK;
 }
 
 int op_atan2_builtin(graphion_vm *vm, const graphion_insn *in) {

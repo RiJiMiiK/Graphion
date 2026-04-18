@@ -16,6 +16,30 @@ option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" O
 option(GRAPHION_ENABLE_IPO "Enable IPO/LTO in release-like builds when supported" ON)
 option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
 option(GRAPHION_ENABLE_FUZZING "Build fuzzing target (Clang only)" OFF)
+
+function(graphion_apply_vm_dispatch target_name)
+  if(GRAPHION_VM_DISPATCH STREQUAL "switch")
+    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
+  elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
+    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_JUMPTABLE=1)
+  elseif(GRAPHION_VM_DISPATCH STREQUAL "computed-goto")
+    if(MSVC)
+      message(FATAL_ERROR "GRAPHION_VM_DISPATCH=computed-goto is not supported with MSVC.")
+    endif()
+    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_COMPUTED_GOTO=1)
+  else()
+    message(FATAL_ERROR "Invalid GRAPHION_VM_DISPATCH='${GRAPHION_VM_DISPATCH}'. Use switch, jumptable, or computed-goto.")
+  endif()
+endfunction()
+
+function(graphion_enable_ipo_if_supported target_name)
+  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
+    set_property(TARGET ${target_name} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set_property(TARGET ${target_name} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    set_property(TARGET ${target_name} PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
+  endif()
+endfunction()
+
 if(MSVC)
   add_compile_options(/W4)
   if(GRAPHION_ENABLE_WERROR)
@@ -70,6 +94,7 @@ add_library(graphion_vm
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
   src/runtime/interpreter/exec.c
+  src/runtime/interpreter/exec_vm.c
   src/parser/bytecode.c
   src/parser/frontend.c
   src/compiler/ir.c
@@ -90,42 +115,16 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   endif()
 endif()
 
-if(GRAPHION_VM_DISPATCH STREQUAL "switch")
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
-elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_JUMPTABLE=1)
-elseif(GRAPHION_VM_DISPATCH STREQUAL "computed-goto")
-  if(MSVC)
-    message(FATAL_ERROR "GRAPHION_VM_DISPATCH=computed-goto is not supported with MSVC.")
-  endif()
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_COMPUTED_GOTO=1)
-else()
-  message(FATAL_ERROR "Invalid GRAPHION_VM_DISPATCH='${GRAPHION_VM_DISPATCH}'. Use switch, jumptable, or computed-goto.")
-endif()
-
-if(GRAPHION_VM_DISPATCH STREQUAL "switch")
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
-elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_JUMPTABLE=1)
-elseif(GRAPHION_VM_DISPATCH STREQUAL "computed-goto")
-  if(MSVC)
-    message(FATAL_ERROR "GRAPHION_VM_DISPATCH=computed-goto is not supported with MSVC.")
-  endif()
-  target_compile_definitions(graphion_vm PRIVATE GRAPHION_VM_DISPATCH_COMPUTED_GOTO=1)
-else()
-  message(FATAL_ERROR "Invalid GRAPHION_VM_DISPATCH='${GRAPHION_VM_DISPATCH}'. Use switch, jumptable, or computed-goto.")
-endif()
+graphion_apply_vm_dispatch(graphion_vm)
 
 if(GRAPHION_ENABLE_IPO)
   check_ipo_supported(RESULT graphion_ipo_supported OUTPUT graphion_ipo_error)
-  if(graphion_ipo_supported)
-    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_vm PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  else()
+  if(NOT graphion_ipo_supported)
     message(WARNING "IPO requested but not supported: ${graphion_ipo_error}")
   endif()
 endif()
+
+graphion_enable_ipo_if_supported(graphion_vm)
 
 if(GRAPHION_ENABLE_ASM)
   if(MSVC)
@@ -152,11 +151,7 @@ add_executable(graphion
 
 target_link_libraries(graphion PRIVATE graphion_vm)
 
-if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-  set_property(TARGET graphion PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-endif()
+graphion_enable_ipo_if_supported(graphion)
 
 if(GRAPHION_ENABLE_TESTS)
   enable_testing()
@@ -186,11 +181,7 @@ if(GRAPHION_ENABLE_TESTS)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/vm
   )
   target_link_libraries(graphion_tests PRIVATE graphion_vm)
-  if(GRAPHION_ENABLE_IPO AND graphion_ipo_supported)
-    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-    set_property(TARGET graphion_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
-  endif()
+  graphion_enable_ipo_if_supported(graphion_tests)
   add_test(NAME graphion_tests_vm COMMAND graphion_tests --suite vm)
   set_tests_properties(graphion_tests_vm PROPERTIES LABELS "vm")
   add_test(NAME graphion_tests_parser COMMAND graphion_tests --suite parser)
