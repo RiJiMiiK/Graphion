@@ -31,8 +31,6 @@ try {
     "CONTRIBUTING.md",
     "MAINTAINERS.md",
     "SECURITY.md",
-    "SECURITY_CONTACTS.md",
-    "SUPPORT.md",
     "examples/README.md",
     "docs/**/*.md",
     ".github/**/*.md"
@@ -46,7 +44,6 @@ try {
     "ROADMAP.md",
     "examples/README.md",
     "docs/**/*.md",
-    "SUPPORT.md",
     "CONTRIBUTING.md",
     "SECURITY.md"
   )

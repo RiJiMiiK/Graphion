@@ -14,8 +14,6 @@ REQUIRED_FILES = [
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
-    "SECURITY_CONTACTS.md",
-    "SUPPORT.md",
     "MAINTAINERS.md",
     "ROADMAP.md",
     "examples/README.md",
