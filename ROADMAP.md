@@ -62,6 +62,8 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] normalize formatting and indentation drift in recently expanded scalar code and tests
 - [x] split oversized files in the scalar/runtime path into smaller units
 - [x] reduce builtin duplication between parser, VM, docs, and tests where a shared definition table or helper layer makes sense
+- [x] review the project code for obvious legacy or dead paths after the hygiene lane
+  - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
 
 ### Repository hygiene
 
