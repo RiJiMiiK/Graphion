@@ -48,7 +48,7 @@ The current active lane is hygiene, maintainability, and project health.
 
 - [x] run the docs build on pull requests, not only on pushes to `main`
 - [x] extend `cspell` coverage to `ROADMAP.md`, `examples/README.md`, and maintained project docs outside `docs/`
-- [ ] extend link-check coverage to roadmap and examples entry points
+- [x] extend link-check coverage to roadmap and examples entry points
 - [ ] align the local quality-gate scripts across Bash and PowerShell
 - [ ] decide whether `clang-tidy` and `cppcheck` should stay `src`-only or also cover part of `tests`
 - [ ] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
