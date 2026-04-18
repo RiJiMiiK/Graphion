@@ -66,7 +66,7 @@ The current active lane is hygiene, maintainability, and project health.
 ### Repository hygiene
 
 - [x] keep root-level local build and debug artefacts ignored consistently
-- [ ] review whether repo-health checks should assert a few more actively maintained files
+- [x] review whether repo-health checks should assert a few more actively maintained files
 - [ ] keep local helper scripts and CI workflows aligned so the same quality bar is enforceable both locally and in CI
 
 ### Solo-dev simplification
