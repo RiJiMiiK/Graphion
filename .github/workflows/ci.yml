@@ -94,7 +94,7 @@ jobs:
         run: ctest --test-dir build-sanitize --output-on-failure -C Debug
 
       - name: Cppcheck
-        run: cppcheck --enable=warning,style,portability --error-exitcode=1 --inline-suppr src
+        run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr src
 
   docker-build:
     runs-on: ubuntu-latest
