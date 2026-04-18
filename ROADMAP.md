@@ -46,7 +46,7 @@ The current active lane is hygiene, maintainability, and project health.
 
 ### CI and checks
 
-- [ ] run the docs build on pull requests, not only on pushes to `main`
+- [x] run the docs build on pull requests, not only on pushes to `main`
 - [ ] extend `cspell` coverage to `ROADMAP.md`, `examples/README.md`, and maintained project docs outside `docs/`
 - [ ] extend link-check coverage to roadmap and examples entry points
 - [ ] align the local quality-gate scripts across Bash and PowerShell
