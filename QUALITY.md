@@ -64,7 +64,7 @@ The repo gate should stay aligned on:
 - run `check_repo_health.py`
 - build Sphinx docs
 - run `cspell` against the maintained Markdown entry points
-- run `lychee` against the maintained Markdown link-check entry points
+- run the same Docker-based `lychee` image and target set used by the `links-check` workflow
 
 ## CI map
 

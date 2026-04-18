@@ -56,7 +56,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] retire or repurpose `check_asm_safety.py` and the related assembly-only gate after removal of the VM ASM path
 - [x] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
 - [x] align the `cppcheck` option set between CI and the local quality-gate scripts
-- [ ] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
+- [x] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
 
 ## Opportunistic improvements
 
