@@ -1,19 +1,25 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "runtime/interpreter/base.h"
-#include "runtime/interpreter/builtin_catalog.h"
 
 static int is_scalar_builtin_name(const char *name) {
-#define GRAPHION_MATCH_BUILTIN(builtin_name, opcode) \
-  if (strcmp(name, builtin_name) == 0) {             \
-    return 1;                                        \
-  }
-  GRAPHION_UNARY_DIRECT_BUILTINS(GRAPHION_MATCH_BUILTIN)
-  GRAPHION_BINARY_DIRECT_BUILTINS(GRAPHION_MATCH_BUILTIN)
-  GRAPHION_TERNARY_DIRECT_BUILTINS(GRAPHION_MATCH_BUILTIN)
-#undef GRAPHION_MATCH_BUILTIN
-  if (strcmp(name, "log10") == 0 || strcmp(name, "log2") == 0) {
-    return 1;
+  static const char *const names[] = {
+      "abs",       "min",      "max",       "clamp",    "sqrt",     "cbrt",   "sin",   "csc",
+      "sec",       "cot",      "acsc",      "asec",     "acot",     "sech",   "csch",  "coth",
+      "sinh",      "asinh",    "acosh",     "cosh",     "tanh",     "atanh",  "cos",   "tan",
+      "asin",      "acos",     "atan",      "atan2",    "hypot",    "copysign",
+      "fma",       "fdim",     "remainder", "rint",     "degrees",  "radians",
+      "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
+      "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
+      "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
+      "round",     "trunc",    "sign",      "len"
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+    if (strcmp(name, names[i]) == 0) {
+      return 1;
+    }
   }
   return 0;
 }
