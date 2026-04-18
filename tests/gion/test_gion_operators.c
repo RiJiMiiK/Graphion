@@ -34,7 +34,7 @@ int test_gion_equality_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_equality_expressions.txt";
+  char path[512];
   char output[160];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -50,13 +50,7 @@ int test_gion_equality_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_equality_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -211,7 +205,7 @@ int test_gion_inequality_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_inequality_expressions.txt";
+  char path[512];
   char output[160];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -227,13 +221,7 @@ int test_gion_inequality_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_inequality_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -376,7 +364,7 @@ int test_gion_less_than_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_less_than_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -386,13 +374,7 @@ int test_gion_less_than_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_less_than_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -501,7 +483,7 @@ int test_gion_less_equal_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_less_equal_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -511,13 +493,7 @@ int test_gion_less_equal_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_less_equal_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -626,7 +602,7 @@ int test_gion_greater_than_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_greater_than_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -636,13 +612,7 @@ int test_gion_greater_than_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_greater_than_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -751,7 +721,7 @@ int test_gion_greater_equal_expressions(void) {
       "print(grouped)\n"
       "print(precedence)\n"
       "print(power_cmp)\n";
-  const char *path = "gion_greater_equal_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -761,13 +731,7 @@ int test_gion_greater_equal_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_greater_equal_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -880,7 +844,7 @@ int test_gion_and_expressions(void) {
       "print(precedence)\n"
       "print(precedence_over_or)\n"
       "print(grouped)\n";
-  const char *path = "gion_and_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -890,13 +854,7 @@ int test_gion_and_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_and_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -1013,7 +971,7 @@ int test_gion_or_expressions(void) {
       "print(precedence)\n"
       "print(precedence_under_and)\n"
       "print(grouped)\n";
-  const char *path = "gion_or_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -1023,13 +981,7 @@ int test_gion_or_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_or_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -1146,7 +1098,7 @@ int test_gion_not_expressions(void) {
       "print(mixed_precedence)\n"
       "print(under_or)\n"
       "print(grouped)\n";
-  const char *path = "gion_not_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -1156,13 +1108,7 @@ int test_gion_not_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_not_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -1274,7 +1220,7 @@ int test_gion_nand_expressions(void) {
       "print(comparisons)\n"
       "print(precedence_over_or)\n"
       "print(grouped)\n";
-  const char *path = "gion_nand_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -1283,13 +1229,7 @@ int test_gion_nand_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_nand_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -1399,7 +1339,7 @@ int test_gion_nor_expressions(void) {
       "print(comparisons)\n"
       "print(precedence_with_and)\n"
       "print(grouped)\n";
-  const char *path = "gion_nor_expressions.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -1408,13 +1348,7 @@ int test_gion_nor_expressions(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_nor_expressions.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }

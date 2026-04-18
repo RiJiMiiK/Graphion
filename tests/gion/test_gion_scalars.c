@@ -93,7 +93,7 @@ int test_gion_scalar_assignments_and_prints(void) {
       "print(name)\n"
       "print(ready)\n"
       "print(copy)\n";
-  const char *path = "gion_scalar_assignments_and_prints.txt";
+  char path[512];
   char output[3072];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -106,13 +106,7 @@ int test_gion_scalar_assignments_and_prints(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_scalar_assignments_and_prints.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -168,7 +162,7 @@ int test_gion_scalar_feature_varied_names(void) {
       "print(copied_name)\n"
       "print(z_value)\n"
       "print(shadow_0)\n";
-  const char *path = "gion_scalar_feature_varied_names.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -179,13 +173,7 @@ int test_gion_scalar_feature_varied_names(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_scalar_feature_varied_names.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -245,7 +233,7 @@ int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
       "print(count)\n"
       "graph G:\n"
       "print(count)\n";
-  const char *path = "gion_partial_execution.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -253,13 +241,7 @@ int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_partial_execution.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -369,26 +351,21 @@ int test_gion_reserved_name_errors(void) {
   size_t i;
 
   for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    char path[512];
     graphion_runtime_scope scope;
     graphion_runtime_diagnostic diagnostic;
     FILE *fp = NULL;
     int rc;
 
     memset(&scope, 0, sizeof(scope));
-#if defined(_MSC_VER)
-    if (fopen_s(&fp, cases[i].path, "wb") != 0) {
-      fp = NULL;
-    }
-#else
-    fp = fopen(cases[i].path, "wb");
-#endif
+    fp = test_open_temp_output(path, sizeof(path), cases[i].path);
     if (fp == NULL) {
       return (int)(1 + i * 10U);
     }
     fputs(cases[i].source, fp);
     fclose(fp);
-    rc = graphion_run_gion_path(cases[i].path, &scope, &diagnostic);
-    remove(cases[i].path);
+    rc = graphion_run_gion_path(path, &scope, &diagnostic);
+    remove(path);
     if (rc != GENTRY_ERR_PARSE) {
       return (int)(2 + i * 10U);
     }
@@ -868,7 +845,7 @@ int test_gion_arithmetic_expressions(void) {
       "print((3 + 4) * 2)\n"
       "print(10 % 4)\n",
   };
-  const char *path = "gion_arithmetic_expressions.txt";
+  char path[512];
   char source[12288];
   char output[3072];
   size_t source_len = 0U;
@@ -1100,13 +1077,7 @@ int test_gion_arithmetic_expressions(void) {
   }
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_arithmetic_expressions.txt");
   if (fp == NULL) {
     return 1;
   }
@@ -2323,7 +2294,7 @@ int test_gion_string_concatenation(void) {
       "full = label + \"!\"\n"
       "print(label)\n"
       "print(full)\n";
-  const char *path = "gion_string_concatenation.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -2333,13 +2304,7 @@ int test_gion_string_concatenation(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_string_concatenation.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -2376,7 +2341,7 @@ int test_gion_print_string_coercion(void) {
       "print(\"Test \" + 7)\n"
       "print(name + 7)\n"
       "print(\"value=\" + (3 + 4))\n";
-  const char *path = "gion_print_string_coercion.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -2384,13 +2349,7 @@ int test_gion_print_string_coercion(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_print_string_coercion.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -2439,7 +2398,7 @@ int test_gion_compound_assignments(void) {
       "shift_right_clear >>= 4\n"
       "print(count)\n"
       "print(text)\n";
-  const char *path = "gion_compound_assignments.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -2456,13 +2415,7 @@ int test_gion_compound_assignments(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_compound_assignments.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -2617,7 +2570,7 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
       "print(j)\n"
       "print(k)\n"
       "print(l)\n";
-  const char *path = "gion_arithmetic_precedence.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -2625,13 +2578,7 @@ int test_gion_arithmetic_precedence_and_associativity(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_arithmetic_precedence.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }
@@ -2991,7 +2938,7 @@ int test_gion_mixed_scalar_values(void) {
       "print(b)\n"
       "print(s)\n"
       "print(copy_i)\n";
-  const char *path = "gion_mixed_scalar_values.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -3000,13 +2947,7 @@ int test_gion_mixed_scalar_values(void) {
   int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_mixed_scalar_values.txt");
   if (fp == NULL) {
     return finish_scope_test(&scope, 1);
   }

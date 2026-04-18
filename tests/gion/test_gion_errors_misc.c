@@ -200,47 +200,29 @@ int test_gion_reassignment_and_type_change(void) {
       "flag = false\n"
       "print(value)\n"
       "print(flag)\n";
-  const char *path = "gion_reassignment_and_type_change.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *value;
   const graphion_runtime_value *flag;
-  FILE *fp = NULL;
-  int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
-  if (fp == NULL) {
+  if (!test_capture_gion_output(source, "gion_reassignment_and_type_change.txt", &scope, &diagnostic, path,
+                                sizeof(path), output, sizeof(output))) {
     return finish_scope_test(&scope, 1);
-  }
-  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
-  fclose(fp);
-  if (rc != GINT_OK) {
-    remove(path);
-    return finish_scope_test(&scope, 2);
   }
   value = graphion_runtime_scope_find(&scope, "value");
   flag = graphion_runtime_scope_find(&scope, "flag");
   if (value == NULL || value->kind != GVM_VALUE_STRING || strcmp(value->as.string_value, "ok") != 0) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 3);
   }
   if (flag == NULL || flag->kind != GVM_VALUE_BOOL || flag->as.bool_value != 0) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 4);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
-    remove(path);
-    return finish_scope_test(&scope, 5);
-  }
-  remove(path);
+  test_cleanup_temp_path(path);
   if (strcmp(output, "ok\nfalse\n") != 0) {
     return finish_scope_test(&scope, 6);
   }
@@ -258,41 +240,23 @@ int test_gion_copy_chains_and_blank_lines(void) {
       "print(a)\n"
       "print(b)\n"
       "print(c)\n";
-  const char *path = "gion_copy_chains_and_blank_lines.txt";
+  char path[512];
   char output[64];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *c;
-  FILE *fp = NULL;
-  int rc;
 
   graphion_runtime_scope_init(&scope);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
-  if (fp == NULL) {
+  if (!test_capture_gion_output(source, "gion_copy_chains_and_blank_lines.txt", &scope, &diagnostic, path,
+                                sizeof(path), output, sizeof(output))) {
     return finish_scope_test(&scope, 1);
-  }
-  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
-  fclose(fp);
-  if (rc != GINT_OK) {
-    remove(path);
-    return finish_scope_test(&scope, 2);
   }
   c = graphion_runtime_scope_find(&scope, "c");
   if (c == NULL || c->kind != GVM_VALUE_INT || c->as.int_value != 1) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 3);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
-    remove(path);
-    return finish_scope_test(&scope, 4);
-  }
-  remove(path);
+  test_cleanup_temp_path(path);
   if (strcmp(output, "1\n1\n1\n") != 0) {
     return finish_scope_test(&scope, 5);
   }
@@ -422,7 +386,7 @@ int test_gion_comments(void) {
       "print(message)\n"
       "print(label)\n"
       "print(ratio)\n";
-  const char *path = "gion_comments.txt";
+  char path[512];
   char output[128];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
@@ -431,7 +395,6 @@ int test_gion_comments(void) {
   const graphion_runtime_value *message;
   const graphion_runtime_value *label;
   const graphion_runtime_value *ratio;
-  FILE *fp = NULL;
   int rc;
 
   graphion_runtime_scope_init(&scope);
@@ -440,20 +403,8 @@ int test_gion_comments(void) {
     return finish_scope_test(&scope, 1);
   }
   graphion_runtime_program_dispose(&program);
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
-  if (fp == NULL) {
-    return finish_scope_test(&scope, 2);
-  }
-  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
-  fclose(fp);
-  if (rc != GINT_OK) {
-    remove(path);
+  if (!test_capture_gion_output(source, "gion_comments.txt", &scope, &diagnostic, path, sizeof(path), output,
+                                sizeof(output))) {
     return finish_scope_test(&scope, 3);
   }
   count = graphion_runtime_scope_find(&scope, "count");
@@ -461,26 +412,22 @@ int test_gion_comments(void) {
   label = graphion_runtime_scope_find(&scope, "label");
   ratio = graphion_runtime_scope_find(&scope, "ratio");
   if (count == NULL || count->kind != GVM_VALUE_INT || count->as.int_value != 42) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 4);
   }
   if (message == NULL || message->kind != GVM_VALUE_STRING || strcmp(message->as.string_value, "/* not a comment */") != 0) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 5);
   }
   if (label == NULL || label->kind != GVM_VALUE_STRING || strcmp(label->as.string_value, "ok") != 0) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 6);
   }
   if (ratio == NULL || ratio->kind != GVM_VALUE_FLOAT || ratio->as.float_value != 3.5) {
-    remove(path);
+    test_cleanup_temp_path(path);
     return finish_scope_test(&scope, 7);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
-    remove(path);
-    return finish_scope_test(&scope, 8);
-  }
-  remove(path);
+  test_cleanup_temp_path(path);
   if (strcmp(output, "42\n/* not a comment */\nok\n3.5\n") != 0) {
     return finish_scope_test(&scope, 9);
   }
@@ -600,19 +547,13 @@ int test_gion_warning_directives(void) {
 }
 
 int test_gion_warning_directives_from_path(void) {
-  const char *path = "gion_warning_directives_path.gion";
+  char path[512];
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;
   FILE *fp = NULL;
   int rc;
 
-#if defined(_MSC_VER)
-  if (fopen_s(&fp, path, "wb") != 0) {
-    fp = NULL;
-  }
-#else
-  fp = fopen(path, "wb");
-#endif
+  fp = test_open_temp_output(path, sizeof(path), "gion_warning_directives_path.gion");
   if (fp == NULL) {
     return 1;
   }

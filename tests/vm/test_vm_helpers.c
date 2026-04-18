@@ -1,8 +1,85 @@
 /* SPDX-License-Identifier: MIT */
 
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "test_vm_helpers.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
+int test_make_temp_path_vm(char *buffer, size_t capacity, const char *label) {
+  if (buffer == NULL || capacity == 0U) {
+    return 0;
+  }
+
+#if defined(_WIN32)
+  {
+    char temp_dir[MAX_PATH];
+    char temp_file[MAX_PATH];
+    DWORD dir_len = GetTempPathA((DWORD)sizeof(temp_dir), temp_dir);
+    int written;
+
+    if (dir_len == 0U || dir_len >= sizeof(temp_dir)) {
+      return 0;
+    }
+    if (GetTempFileNameA(temp_dir, "gio", 0U, temp_file) == 0U) {
+      return 0;
+    }
+    remove(temp_file);
+    written =
+        snprintf(buffer, capacity, "%s%s%s", temp_file, label != NULL ? "_" : "", label != NULL ? label : "");
+    return written > 0 && (size_t)written < capacity;
+  }
+#else
+  {
+    const char *tmp_dir = getenv("TMPDIR");
+    char temp_template[256];
+    int fd;
+    int written;
+
+    if (tmp_dir == NULL || *tmp_dir == '\0') {
+      tmp_dir = "/tmp";
+    }
+    written = snprintf(temp_template, sizeof(temp_template), "%s/graphion_test_XXXXXX", tmp_dir);
+    if (written <= 0 || (size_t)written >= sizeof(temp_template)) {
+      return 0;
+    }
+    fd = mkstemp(temp_template);
+    if (fd < 0) {
+      return 0;
+    }
+    close(fd);
+    remove(temp_template);
+    written = snprintf(buffer, capacity, "%s%s%s", temp_template, label != NULL ? "_" : "", label != NULL ? label : "");
+    return written > 0 && (size_t)written < capacity;
+  }
+#endif
+}
+
+FILE *test_open_temp_output_vm(char *path_buffer, size_t capacity, const char *label) {
+  FILE *fp = NULL;
+
+  if (!test_make_temp_path_vm(path_buffer, capacity, label)) {
+    return NULL;
+  }
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path_buffer, "wb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path_buffer, "wb");
+#endif
+  return fp;
+}
 
 void test_set_reg_i(graphion_vm *vm, uint8_t reg, int64_t value) {
   vm->regs[reg].kind = GVM_VALUE_INT;
