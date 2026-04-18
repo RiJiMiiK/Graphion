@@ -46,9 +46,7 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->arith_only_fastpath = false;
   vm->arith_only_halt_terminated = false;
   vm->weighted_sum_fastpath = false;
-  vm->frontier_filter_map_reduce_fastpath = false;
   vm->frontier_fastpath = false;
-  vm->graph_ops_fastpath = false;
   vm->value_move_fastpath = false;
   vm->global_materialize_fastpath = false;
   vm->global_print_fastpath = false;
@@ -237,8 +235,6 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
                    vm->arith_only_halt_terminated ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "weighted_sum_fastpath=%d\n",
                    vm->weighted_sum_fastpath ? 1 : 0);
-  offset = appendf(buffer, buffer_size, offset, "graph_ops_fastpath=%d\n",
-                   vm->graph_ops_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "value_move_fastpath=%d\n",
                    vm->value_move_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "global_materialize_fastpath=%d\n",

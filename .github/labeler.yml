@@ -10,7 +10,6 @@ language:
             "docs/graphion/**",
             "examples/**/*.gion",
             "examples/*.gion",
-            "tests/test_parser.c",
           ]
 
 runtime:
@@ -37,7 +36,7 @@ tests:
 
 security:
   - changed-files:
-      - any-glob-to-any-file: ["SECURITY.md", "scripts/quality/check_asm_safety.py", ".github/workflows/secrets.yml", ".github/workflows/sbom.yml"]
+      - any-glob-to-any-file: ["SECURITY.md", ".github/workflows/secrets.yml", ".github/workflows/sbom.yml"]
 
 
 dependencies:

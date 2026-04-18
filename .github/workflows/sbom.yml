@@ -17,12 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SYFT_VERSION: v1.42.3
+      GRYPE_VERSION: v0.110.0
     steps:
       - uses: actions/checkout@v6
 
       - name: Generate SBOM (SPDX JSON)
         run: |
-          docker pull anchore/syft:${SYFT_VERSION}
+          for attempt in 1 2 3; do
+            if docker pull anchore/syft:${SYFT_VERSION}; then
+              break
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              echo "Failed to pull anchore/syft:${SYFT_VERSION}" >&2
+              exit 1
+            fi
+            sleep 5
+          done
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/work" \
             -w /work \
@@ -37,12 +47,22 @@ jobs:
           retention-days: 30
 
       - name: Vulnerability scan (SARIF)
-        uses: anchore/scan-action@v7
-        with:
-          sbom: sbom.spdx.json
-          fail-build: false
-          output-format: sarif
-          output-file: grype.sarif
+        run: |
+          for attempt in 1 2 3; do
+            if docker pull anchore/grype:${GRYPE_VERSION}; then
+              break
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              echo "Failed to pull anchore/grype:${GRYPE_VERSION}" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/work" \
+            -w /work \
+            anchore/grype:${GRYPE_VERSION} \
+            sbom:/work/sbom.spdx.json -o sarif > grype.sarif || true
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4

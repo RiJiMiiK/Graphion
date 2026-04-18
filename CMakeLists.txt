@@ -9,27 +9,13 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 option(GRAPHION_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
 option(GRAPHION_ENABLE_WERROR "Treat warnings as errors" ON)
-option(GRAPHION_ENABLE_ASM "Enable architecture-specific assembly hot paths" OFF)
-set(GRAPHION_VM_DISPATCH "switch" CACHE STRING "VM dispatch strategy: switch, jumptable, computed-goto")
-set_property(CACHE GRAPHION_VM_DISPATCH PROPERTY STRINGS switch jumptable computed-goto)
 option(GRAPHION_ENABLE_HARDENING "Enable hardening flags for non-debug builds" ON)
 option(GRAPHION_ENABLE_IPO "Enable IPO/LTO in release-like builds when supported" ON)
 option(GRAPHION_ENABLE_TESTS "Build unit tests" ON)
 option(GRAPHION_ENABLE_FUZZING "Build fuzzing target (Clang only)" OFF)
 
 function(graphion_apply_vm_dispatch target_name)
-  if(GRAPHION_VM_DISPATCH STREQUAL "switch")
-    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
-  elseif(GRAPHION_VM_DISPATCH STREQUAL "jumptable")
-    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_JUMPTABLE=1)
-  elseif(GRAPHION_VM_DISPATCH STREQUAL "computed-goto")
-    if(MSVC)
-      message(FATAL_ERROR "GRAPHION_VM_DISPATCH=computed-goto is not supported with MSVC.")
-    endif()
-    target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_COMPUTED_GOTO=1)
-  else()
-    message(FATAL_ERROR "Invalid GRAPHION_VM_DISPATCH='${GRAPHION_VM_DISPATCH}'. Use switch, jumptable, or computed-goto.")
-  endif()
+  target_compile_definitions(${target_name} PRIVATE GRAPHION_VM_DISPATCH_SWITCH=1)
 endfunction()
 
 function(graphion_enable_ipo_if_supported target_name)
@@ -91,6 +77,7 @@ add_library(graphion_vm
   src/runtime/interpreter/program.c
   src/runtime/interpreter/operands.c
   src/runtime/interpreter/expr.c
+  src/runtime/interpreter/expr_direct_builtins.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
   src/runtime/interpreter/exec.c
@@ -126,20 +113,6 @@ endif()
 
 graphion_enable_ipo_if_supported(graphion_vm)
 
-if(GRAPHION_ENABLE_ASM)
-  if(MSVC)
-    message(FATAL_ERROR "GRAPHION_ENABLE_ASM currently requires GCC/Clang toolchains (GNU-style .s file).")
-  elseif(WIN32)
-    message(FATAL_ERROR "GRAPHION_ENABLE_ASM currently requires a SysV x86_64 ABI environment (Linux/macOS).")
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64|x64")
-    enable_language(ASM)
-    target_sources(graphion_vm PRIVATE src/vm/hotpaths.s)
-    target_compile_definitions(graphion_vm PRIVATE GRAPHION_ENABLE_ASM=1)
-  else()
-    message(FATAL_ERROR "GRAPHION_ENABLE_ASM is only supported on x86_64/AMD64 for now.")
-  endif()
-endif()
-
 target_include_directories(graphion_vm
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -161,12 +134,14 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_helpers.c
     tests/vm/test_vm_core.c
     tests/vm/test_vm_scalars.c
+    tests/vm/test_vm_scalar_compare.c
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
     tests/core/test_arena.c
     tests/gion/test_parser_helpers.c
     tests/gion/test_parser_frontend.c
     tests/gion/test_gion_scalars.c
+    tests/gion/test_gion_scalar_core.c
     tests/gion/test_gion_bits.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c

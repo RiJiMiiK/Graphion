@@ -17,9 +17,7 @@ typedef struct {
   bool arith_only_fastpath;
   bool arith_only_halt_terminated;
   bool weighted_sum_fastpath;
-  bool frontier_filter_map_reduce_fastpath;
   bool frontier_fastpath;
-  bool graph_ops_fastpath;
   bool value_move_fastpath;
   bool global_materialize_fastpath;
   bool global_print_fastpath;
@@ -50,9 +48,7 @@ static int shape_cache_lookup(const graphion_insn *program,
                               bool *arith_only_fastpath,
                               bool *arith_only_halt_terminated,
                               bool *weighted_sum_fastpath,
-                              bool *frontier_filter_map_reduce_fastpath,
                               bool *frontier_fastpath,
-                              bool *graph_ops_fastpath,
                               bool *value_move_fastpath,
                               bool *global_materialize_fastpath,
                               bool *global_print_fastpath) {
@@ -65,9 +61,7 @@ static int shape_cache_lookup(const graphion_insn *program,
   *arith_only_fastpath = e.arith_only_fastpath;
   *arith_only_halt_terminated = e.arith_only_halt_terminated;
   *weighted_sum_fastpath = e.weighted_sum_fastpath;
-  *frontier_filter_map_reduce_fastpath = e.frontier_filter_map_reduce_fastpath;
   *frontier_fastpath = e.frontier_fastpath;
-  *graph_ops_fastpath = e.graph_ops_fastpath;
   *value_move_fastpath = e.value_move_fastpath;
   *global_materialize_fastpath = e.global_materialize_fastpath;
   *global_print_fastpath = e.global_print_fastpath;
@@ -79,9 +73,7 @@ static void shape_cache_store(const graphion_insn *program,
                               bool arith_only_fastpath,
                               bool arith_only_halt_terminated,
                               bool weighted_sum_fastpath,
-                              bool frontier_filter_map_reduce_fastpath,
                               bool frontier_fastpath,
-                              bool graph_ops_fastpath,
                               bool value_move_fastpath,
                               bool global_materialize_fastpath,
                               bool global_print_fastpath) {
@@ -92,9 +84,7 @@ static void shape_cache_store(const graphion_insn *program,
   g_shape_cache[slot].arith_only_fastpath = arith_only_fastpath;
   g_shape_cache[slot].arith_only_halt_terminated = arith_only_halt_terminated;
   g_shape_cache[slot].weighted_sum_fastpath = weighted_sum_fastpath;
-  g_shape_cache[slot].frontier_filter_map_reduce_fastpath = frontier_filter_map_reduce_fastpath;
   g_shape_cache[slot].frontier_fastpath = frontier_fastpath;
-  g_shape_cache[slot].graph_ops_fastpath = graph_ops_fastpath;
   g_shape_cache[slot].value_move_fastpath = value_move_fastpath;
   g_shape_cache[slot].global_materialize_fastpath = global_materialize_fastpath;
   g_shape_cache[slot].global_print_fastpath = global_print_fastpath;
@@ -239,46 +229,6 @@ static int is_frontier_fastpath_candidate(const graphion_insn *program, size_t p
     }
   }
   return has_frontier_ops;
-}
-
-static int is_frontier_filter_map_reduce_fastpath_candidate(const graphion_insn *program, size_t program_len) {
-  if (program_len != 6U) {
-    return 0;
-  }
-  if (program[0].op != GVM_OP_FRONTIER_FILTER_LT_IMM || !is_valid_reg(program[0].a)) {
-    return 0;
-  }
-  if (program[1].op != GVM_OP_FRONTIER_SWAP || !is_valid_reg(program[1].a)) {
-    return 0;
-  }
-  if (program[2].op != GVM_OP_FRONTIER_MAP_ADD_IMM || !is_valid_reg(program[2].a)) {
-    return 0;
-  }
-  if (program[3].op != GVM_OP_FRONTIER_SWAP || !is_valid_reg(program[3].a)) {
-    return 0;
-  }
-  if (program[4].op != GVM_OP_FRONTIER_REDUCE_SUM || !is_valid_reg(program[4].a)) {
-    return 0;
-  }
-  return program[5].op == GVM_OP_HALT;
-}
-
-static int is_graph_ops_fastpath_candidate(const graphion_insn *program, size_t program_len) {
-  if (program_len != 12U) {
-    return 0;
-  }
-  return program[0].op == GVM_OP_MOV_IMM && program[0].a == 0U && program[0].imm == 0 &&
-         program[1].op == GVM_OP_BFS_LEVEL_COUNT && program[1].a == 0U && program[1].b == 1U &&
-         program[2].op == GVM_OP_MOV_IMM && program[2].a == 2U && program[2].imm == 0 &&
-         program[3].op == GVM_OP_BFS_ORDER && program[3].a == 2U && program[3].b == 3U &&
-         program[4].op == GVM_OP_MOV_IMM && program[4].a == 4U && program[4].imm == 1 &&
-         program[5].op == GVM_OP_INCIDENT_COUNT && program[5].a == 4U && program[5].b == 5U &&
-         program[6].op == GVM_OP_INCIDENT_SUM && program[6].a == 4U && program[6].b == 6U &&
-         program[7].op == GVM_OP_ADD && program[7].a == 7U && program[7].b == 1U &&
-         program[8].op == GVM_OP_ADD && program[8].a == 7U && program[8].b == 3U &&
-         program[9].op == GVM_OP_ADD && program[9].a == 7U && program[9].b == 5U &&
-         program[10].op == GVM_OP_ADD && program[10].a == 7U && program[10].b == 6U &&
-         program[11].op == GVM_OP_HALT;
 }
 
 static int is_value_move_fastpath_candidate(const graphion_insn *program, size_t program_len) {
@@ -607,9 +557,7 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   bool halt_terminated = false;
   bool arith_only_fastpath = false;
   bool weighted_sum_fastpath = false;
-  bool frontier_filter_map_reduce_fastpath = false;
   bool frontier_fastpath = false;
-  bool graph_ops_fastpath = false;
   bool value_move_fastpath = false;
   bool global_materialize_fastpath = false;
   bool global_print_fastpath = false;
@@ -622,21 +570,18 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->halted = false;
 
   if (!shape_cache_lookup(program, program_len, &arith_only_fastpath, &halt_terminated,
-                          &weighted_sum_fastpath, &frontier_filter_map_reduce_fastpath, &frontier_fastpath, &graph_ops_fastpath, &value_move_fastpath, &global_materialize_fastpath,
-                          &global_print_fastpath)) {
+                          &weighted_sum_fastpath, &frontier_fastpath, &value_move_fastpath,
+                          &global_materialize_fastpath, &global_print_fastpath)) {
     arith_only_fastpath = is_arith_only_fastpath_candidate(program, program_len, &halt_terminated) != 0;
     weighted_sum_fastpath = is_weighted_sum_fastpath_candidate(program, program_len) != 0;
-    frontier_filter_map_reduce_fastpath =
-        is_frontier_filter_map_reduce_fastpath_candidate(program, program_len) != 0;
     frontier_fastpath = is_frontier_fastpath_candidate(program, program_len) != 0;
-    graph_ops_fastpath = is_graph_ops_fastpath_candidate(program, program_len) != 0;
     value_move_fastpath = is_value_move_fastpath_candidate(program, program_len) != 0;
     global_materialize_fastpath =
         is_global_materialize_fastpath_candidate(program, program_len) != 0;
     global_print_fastpath = is_global_print_fastpath_candidate(program, program_len) != 0;
-    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated, weighted_sum_fastpath,
-                      frontier_filter_map_reduce_fastpath, frontier_fastpath, graph_ops_fastpath,
-                      value_move_fastpath, global_materialize_fastpath, global_print_fastpath);
+    shape_cache_store(program, program_len, arith_only_fastpath, halt_terminated,
+                      weighted_sum_fastpath, frontier_fastpath, value_move_fastpath,
+                      global_materialize_fastpath, global_print_fastpath);
   }
   if (vm->global_string_owners != NULL) {
     value_move_fastpath = false;
@@ -646,9 +591,7 @@ int graphion_vm_load(graphion_vm *vm, const graphion_insn *program, size_t progr
   vm->arith_only_fastpath = arith_only_fastpath;
   vm->arith_only_halt_terminated = halt_terminated;
   vm->weighted_sum_fastpath = weighted_sum_fastpath;
-  vm->frontier_filter_map_reduce_fastpath = frontier_filter_map_reduce_fastpath;
   vm->frontier_fastpath = frontier_fastpath;
-  vm->graph_ops_fastpath = graph_ops_fastpath;
   vm->value_move_fastpath = value_move_fastpath;
   vm->global_materialize_fastpath = global_materialize_fastpath;
   vm->global_print_fastpath = global_print_fastpath;

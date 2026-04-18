@@ -21,7 +21,6 @@ if (-not $IsWindows) {
 cmake @ConfigureArgs
 cmake --build $BuildDir
 ctest --test-dir $BuildDir --output-on-failure -C Debug
-python "$PSScriptRoot\check_asm_safety.py"
 python "$PSScriptRoot\run_clang_tidy.py" --build-dir $BuildDir
 
 if (Get-Command cppcheck -ErrorAction SilentlyContinue) {

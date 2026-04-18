@@ -31,6 +31,3 @@
 - name: tests
   color: "0e8a16"
   description: Test changes
-- name: blocked
-  color: "000000"
-  description: Cannot proceed until external dependency is resolved

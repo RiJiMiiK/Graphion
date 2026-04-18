@@ -23,7 +23,6 @@ esac
 cmake "${CONFIGURE_ARGS[@]}"
 cmake --build "${BUILD_DIR}"
 ctest --test-dir "${BUILD_DIR}" --output-on-failure -C Debug
-python3 "${SCRIPT_DIR}/check_asm_safety.py"
 python3 "${SCRIPT_DIR}/run_clang_tidy.py" --build-dir "${BUILD_DIR}"
 
 if command -v cppcheck >/dev/null 2>&1; then
