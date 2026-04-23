@@ -152,6 +152,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_gion_control_flow.c
     tests/gion/test_gion_operators.c
     tests/gion/test_gion_operator_equality.c
+    tests/gion/test_gion_operator_inequality.c
     tests/core/test_isa.c
     tests/graph/test_graph.c
     tests/graph/test_hypergraph.c
