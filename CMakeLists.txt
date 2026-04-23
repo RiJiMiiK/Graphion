@@ -61,6 +61,7 @@ add_library(graphion_vm
   src/vm/vm.c
   src/vm/internal/core/value.c
   src/vm/internal/opcodes/op_scalar.c
+  src/vm/internal/opcodes/op_scalar_math_builtins.c
   src/vm/internal/opcodes/op_state.c
   src/vm/internal/opcodes/op_io.c
   src/vm/internal/opcodes/op_frontier.c
