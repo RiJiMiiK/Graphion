@@ -135,6 +135,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_helpers.c
     tests/vm/test_vm_core.c
     tests/vm/test_vm_scalars.c
+    tests/vm/test_vm_scalar_builtins_misc.c
     tests/vm/test_vm_scalar_compare.c
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
@@ -143,6 +144,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_parser_frontend.c
     tests/gion/test_gion_scalars.c
     tests/gion/test_gion_scalar_core.c
+    tests/gion/test_gion_scalar_arithmetic.c
     tests/gion/test_gion_bits.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c
