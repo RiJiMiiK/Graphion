@@ -139,6 +139,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_scalars.c
     tests/vm/test_vm_scalar_builtins_misc.c
     tests/vm/test_vm_scalar_compare.c
+    tests/vm/test_vm_scalar_trig_core.c
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
     tests/core/test_arena.c
@@ -153,6 +154,8 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_gion_operators.c
     tests/gion/test_gion_operator_equality.c
     tests/gion/test_gion_operator_inequality.c
+    tests/gion/test_gion_operator_ordering_less.c
+    tests/gion/test_gion_operator_ordering_greater.c
     tests/core/test_isa.c
     tests/graph/test_graph.c
     tests/graph/test_hypergraph.c
