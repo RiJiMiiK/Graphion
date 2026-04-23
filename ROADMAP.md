@@ -59,7 +59,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] align the `cppcheck` option set between CI and the local quality-gate scripts
 - [x] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
 - [x] replace the floating Docker `lychee:latest` usage with a deterministic image reference that is actually published
-- [ ] keep the local repo gate and `links-check` workflow aligned on the same pinned `lychee` image reference
+- [x] keep the local repo gate and `links-check` workflow aligned on the same pinned `lychee` image reference
 
 ## Opportunistic improvements
 
