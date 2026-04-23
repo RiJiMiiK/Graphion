@@ -79,6 +79,7 @@ add_library(graphion_vm
   src/runtime/interpreter/expr.c
   src/runtime/interpreter/expr_direct_builtins.c
   src/runtime/interpreter/expr_special_builtins.c
+  src/runtime/interpreter/expr_opcode_builtins.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
   src/runtime/interpreter/exec.c
