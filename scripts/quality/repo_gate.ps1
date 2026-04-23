@@ -20,7 +20,7 @@ Require-Command docker "Install Docker to mirror the links-check workflow locall
 Push-Location (Resolve-Path "$PSScriptRoot\..\..")
 try {
   $RootPath = (Get-Location).Path
-  $LycheeImage = "lycheeverse/lychee:latest"
+  $LycheeImage = "lycheeverse/lychee:sha-4b588d4"
   python scripts/quality/check_repo_health.py
   python -m sphinx -b html docs docs/_build/html
 
