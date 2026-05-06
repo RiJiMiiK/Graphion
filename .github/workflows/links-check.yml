@@ -19,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LYCHEE_IMAGE="lycheeverse/lychee:latest"
+          LYCHEE_IMAGE="lycheeverse/lychee:sha-4b588d4"
           for attempt in 1 2 3; do
             if docker pull "${LYCHEE_IMAGE}"; then
               break

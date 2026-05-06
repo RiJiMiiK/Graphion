@@ -25,6 +25,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] add a VM regression test that the affected builtin returns `GVM_ERR_INVALID_REG` on malformed bytecode
 - [x] review neighboring scalar builtin opcodes for similar defensive-check gaps
 - [x] keep malformed-bytecode behavior consistent across scalar, graph, and hypergraph opcode families
+- [x] replace the pseudo-private Discord security contact path with a genuinely private reporting channel or explicitly downgrade the wording in `SECURITY.md` and issue templates
 
 ## Maintenance irritants
 
@@ -57,6 +58,8 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
 - [x] align the `cppcheck` option set between CI and the local quality-gate scripts
 - [x] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
+- [x] replace the floating Docker `lychee:latest` usage with a deterministic image reference that is actually published
+- [x] keep the local repo gate and `links-check` workflow aligned on the same pinned `lychee` image reference
 
 ## Opportunistic improvements
 
@@ -70,6 +73,17 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] review the project code for obvious legacy or dead paths after the hygiene lane
   - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
 - [x] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
+- [x] continue splitting oversized files such as `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar.c`, `tests/gion/test_gion_scalars.c`, `tests/gion/test_gion_operators.c`, and `tests/vm/test_vm_scalars.c`
+- [x] review the remaining VM fastpaths and decide which ones are still worth carrying
+  - keep `arith_only_fastpath`, `weighted_sum_fastpath`, and `frontier_fastpath`
+  - remove `value_move_fastpath`, `global_materialize_fastpath`, and `global_print_fastpath`
+- [x] reduce duplication between the remaining fastpath executors and the main VM execution path where practical
+- [x] add targeted coverage or simplification for the remaining fastpath planner / executor combinations
+- [x] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
+- [x] split the still-oversized scalar math test monolith in `tests/gion/test_gion_scalar_math_suite.c`
+- [x] split the still-oversized VM suites in `tests/vm/test_vm_logic_bits.c` and `tests/vm/test_vm_graph_ops.c`
+- [x] continue slimming the remaining near-1k code units such as `src/vm/internal/opcodes/op_scalar.c`, `src/runtime/interpreter/source.c`, `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar_math_builtins.c`, and `tests/vm/test_vm_scalar_builtins_misc.c`
+- [x] factor the repeated `frontier_is_bound` helper logic shared across `src/vm/vm.c`, `src/vm/internal/core/fastpath_exec.c`, `src/vm/internal/opcodes/op_frontier.c`, and `src/vm/internal/opcodes/op_graph.c`
 
 ### Repository hygiene
 

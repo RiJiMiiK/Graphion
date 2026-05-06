@@ -61,6 +61,7 @@ add_library(graphion_vm
   src/vm/vm.c
   src/vm/internal/core/value.c
   src/vm/internal/opcodes/op_scalar.c
+  src/vm/internal/opcodes/op_scalar_math_builtins.c
   src/vm/internal/opcodes/op_state.c
   src/vm/internal/opcodes/op_io.c
   src/vm/internal/opcodes/op_frontier.c
@@ -78,8 +79,11 @@ add_library(graphion_vm
   src/runtime/interpreter/operands.c
   src/runtime/interpreter/expr.c
   src/runtime/interpreter/expr_direct_builtins.c
+  src/runtime/interpreter/expr_special_builtins.c
+  src/runtime/interpreter/expr_opcode_builtins.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
+  src/runtime/interpreter/source_warnings.c
   src/runtime/interpreter/exec.c
   src/runtime/interpreter/exec_vm.c
   src/parser/bytecode.c
@@ -134,18 +138,35 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_helpers.c
     tests/vm/test_vm_core.c
     tests/vm/test_vm_scalars.c
+    tests/vm/test_vm_scalar_builtins_misc.c
     tests/vm/test_vm_scalar_compare.c
+    tests/vm/test_vm_scalar_builtins_predicates.c
+    tests/vm/test_vm_scalar_builtins_advanced.c
+    tests/vm/test_vm_scalar_trig_core.c
+    tests/vm/test_vm_scalar_hyperbolic.c
+    tests/vm/test_vm_scalar_angles_misc.c
     tests/vm/test_vm_logic_bits.c
+    tests/vm/test_vm_logic_bits_bitwise.c
+    tests/vm/test_vm_logic_bits_nand_nor.c
     tests/vm/test_vm_graph_ops.c
+    tests/vm/test_vm_graph_ops_modes.c
+    tests/vm/test_vm_graph_ops_frontier.c
     tests/core/test_arena.c
     tests/gion/test_parser_helpers.c
     tests/gion/test_parser_frontend.c
     tests/gion/test_gion_scalars.c
     tests/gion/test_gion_scalar_core.c
+    tests/gion/test_gion_scalar_arithmetic.c
+    tests/gion/test_gion_scalar_math_suite.c
+    tests/gion/test_gion_scalar_math_case.c
     tests/gion/test_gion_bits.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c
     tests/gion/test_gion_operators.c
+    tests/gion/test_gion_operator_equality.c
+    tests/gion/test_gion_operator_inequality.c
+    tests/gion/test_gion_operator_ordering_less.c
+    tests/gion/test_gion_operator_ordering_greater.c
     tests/core/test_isa.c
     tests/graph/test_graph.c
     tests/graph/test_hypergraph.c

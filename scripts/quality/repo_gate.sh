@@ -20,7 +20,7 @@ require_cmd docker "install Docker to mirror the links-check workflow locally"
 
 cd "${ROOT_DIR}"
 
-LYCHEE_IMAGE="lycheeverse/lychee:latest"
+LYCHEE_IMAGE="lycheeverse/lychee:sha-4b588d4"
 
 python3 scripts/quality/check_repo_health.py
 python3 -m sphinx -b html docs docs/_build/html

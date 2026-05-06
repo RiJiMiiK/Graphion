@@ -4,17 +4,14 @@
 
 #include <limits.h>
 
+#include "vm/internal/core/frontier.h"
 #include "vm/internal/core/value.h"
-
-static int frontier_is_bound(const graphion_vm *vm) {
-  return vm->frontier_input != NULL && vm->frontier_output != NULL && vm->frontier_input_len <= vm->frontier_capacity;
-}
 
 int op_frontier_clear(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   vm->frontier_output_len = 0U;
@@ -27,7 +24,7 @@ int op_frontier_push(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   if (!vm_reg_get_int(vm, in->a, &value)) {
@@ -50,7 +47,7 @@ int op_frontier_filter_lt_imm(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   for (i = 0U; i < vm->frontier_input_len; ++i) {
@@ -72,7 +69,7 @@ int op_frontier_map_add_imm(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   if (vm->frontier_input_len > vm->frontier_capacity) {
@@ -97,7 +94,7 @@ int op_frontier_reduce_sum(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   for (i = 0U; i < vm->frontier_input_len; ++i) {
@@ -112,7 +109,7 @@ int op_frontier_swap(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   tmp = vm->frontier_input;

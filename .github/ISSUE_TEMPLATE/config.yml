@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Security report (private)
+  - name: Security report
     url: https://discord.com/invite/mPzDQ7TYkj
-    about: Use the Discord server for private security contact and coordinated disclosure.
+    about: Use the Discord server to contact the maintainer for coordinated disclosure.
   - name: Questions and support
     url: https://discord.com/invite/mPzDQ7TYkj
     about: Use the Discord server for questions and general support.

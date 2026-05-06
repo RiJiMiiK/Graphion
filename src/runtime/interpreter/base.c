@@ -30,6 +30,7 @@ void clear_diagnostic(graphion_runtime_diagnostic *diagnostic) {
   }
   diagnostic->line = 0U;
   diagnostic->column = 0U;
+  diagnostic->message_storage[0] = '\0';
   diagnostic->message = NULL;
 }
 
@@ -53,7 +54,19 @@ int fail(graphion_runtime_diagnostic *diagnostic,
   if (diagnostic != NULL) {
     diagnostic->line = line;
     diagnostic->column = column;
-    diagnostic->message = message;
+    if (message == NULL) {
+      diagnostic->message_storage[0] = '\0';
+      diagnostic->message = NULL;
+    } else {
+      size_t len;
+      len = strlen(message);
+      if (len >= sizeof(diagnostic->message_storage)) {
+        len = sizeof(diagnostic->message_storage) - 1U;
+      }
+      memcpy(diagnostic->message_storage, message, len);
+      diagnostic->message_storage[len] = '\0';
+      diagnostic->message = diagnostic->message_storage;
+    }
   }
   return code;
 }
