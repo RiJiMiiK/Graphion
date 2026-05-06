@@ -160,6 +160,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_gion_scalar_math_suite.c
     tests/gion/test_gion_scalar_math_case.c
     tests/gion/test_gion_bits.c
+    tests/gion/test_gion_lists.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c
     tests/gion/test_gion_operators.c

@@ -44,6 +44,9 @@
   X(gion_bits_shl_runtime_errors)                      \
   X(gion_bits_shr)                                     \
   X(gion_bits_shr_runtime_errors)                      \
+  X(gion_list_literals_and_prints)                     \
+  X(gion_list_runtime_errors)                          \
+  X(gion_list_syntax_errors)                           \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \

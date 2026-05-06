@@ -2,6 +2,8 @@
 
 #include "runtime/interpreter/program.h"
 
+#include "vm/internal/core/value.h"
+
 static size_t next_global_capacity(size_t current, size_t min_capacity) {
   size_t capacity = current == 0U ? GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY : current;
   while (capacity < min_capacity) {
@@ -334,6 +336,9 @@ void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
   }
   for (i = 0U; i < scope->global_capacity; ++i) {
     runtime_free_string(&scope->owned_string_values[i]);
+    if (scope->globals[i].kind == GVM_VALUE_LIST) {
+      vm_value_dispose_owned(&scope->globals[i]);
+    }
   }
   free(scope->global_names);
   free(scope->owned_string_values);
@@ -378,6 +383,9 @@ void graphion_runtime_program_dispose(graphion_runtime_program *program) {
   }
   for (i = 0U; i < GRAPHION_RUNTIME_CONST_MAX; ++i) {
     runtime_free_string(&program->owned_const_strings[i]);
+    if (program->const_pool[i].kind == GVM_VALUE_LIST) {
+      vm_value_dispose_owned(&program->const_pool[i]);
+    }
     vm_value_set_none(&program->const_pool[i]);
   }
   free(program->global_names);

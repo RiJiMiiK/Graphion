@@ -1,25 +1,26 @@
 # Types
 
-This page documents the scalar value kinds currently available in Graphion.
+This page documents the currently implemented value kinds in Graphion.
 
 Use it when you need:
 
-- the current scalar types
+- the current scalar and non-scalar types
 - literal forms
 - built-in numeric constants
 - the current `bits` value model
 
 For syntax and statement rules, see [Language Reference](language-reference.md).
 
-## Current Scalar Types
+## Current Types
 
-Graphion currently exposes these scalar value kinds:
+Graphion currently exposes these value kinds:
 
 - `int`
 - `float`
 - `bool`
 - `string`
 - `bits`
+- `list`
 
 ## Built-In Numeric Constants
 
@@ -98,6 +99,22 @@ That means:
 - `0b10` has width `2`
 - `0b0010` has width `4`
 
+### Lists
+
+```gion
+values = [1, 2, 3]
+mixed = [1, true, "graphion"]
+nested = [values, [4, 5], []]
+```
+
+Current `list` literals:
+
+- start with `[`
+- end with `]`
+- use commas between elements
+- may contain nested lists
+- currently reject trailing commas
+
 ## Type Notes
 
 ### Numeric Values
@@ -137,6 +154,25 @@ Current string support includes:
 - concatenation with other strings
 - `len(x)`
 - print-only scalar coercion inside `print(...)`
+
+### Lists
+
+`list` values are ordered non-scalar containers.
+
+Current list support includes:
+
+- literal construction with `[ ... ]`
+- indexing with `list_expr[index_expr]`
+- equality and inequality with other lists
+- nested list values
+- `len(x)`
+- printing as bracketed values
+
+Current index rules:
+
+- indexes must be `int`
+- indexes must be non-negative
+- out-of-range access is a runtime error
 
 ### Bits
 

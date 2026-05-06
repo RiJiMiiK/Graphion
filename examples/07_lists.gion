@@ -1,0 +1,12 @@
+items = [1, 2, 3]
+nested = [items, [4, "x"], []]
+
+second = items[1]
+same = items == [1, 2, 3]
+size = len(items)
+
+print(items)
+print(nested)
+print(second)
+print(same)
+print(size)

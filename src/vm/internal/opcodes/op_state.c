@@ -2,8 +2,6 @@
 
 #include "vm/internal/opcodes/op_state.h"
 
-#include <stdlib.h>
-
 #include "vm/internal/opcodes/op_scalar.h"
 #include "vm/internal/core/value.h"
 
@@ -74,11 +72,21 @@ int op_jump_if_false(graphion_vm *vm, const graphion_insn *in) {
 }
 
 int op_mov(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return GVM_ERR_INVALID_REG;
   }
   if (vm->regs[in->b].kind == GVM_VALUE_STRING && vm->regs[in->b].as.string_value != NULL) {
     return vm_reg_set_string_copy(vm, in->a, vm->regs[in->b].as.string_value);
+  }
+  if (vm->regs[in->b].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->regs[in->b]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    vm->regs[in->a] = cloned;
+    return GVM_OK;
   }
   vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->regs[in->b]);
@@ -86,6 +94,7 @@ int op_mov(graphion_vm *vm, const graphion_insn *in) {
 }
 
 int op_load_const(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
@@ -99,12 +108,22 @@ int op_load_const(graphion_vm *vm, const graphion_insn *in) {
       vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
     return vm_reg_set_string_copy(vm, in->a, vm->const_pool[(size_t)in->imm].as.string_value);
   }
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    vm->regs[in->a] = cloned;
+    return GVM_OK;
+  }
   vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->const_pool[(size_t)in->imm]);
   return 0;
 }
 
 int op_load_global(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
@@ -118,12 +137,22 @@ int op_load_global(graphion_vm *vm, const graphion_insn *in) {
       vm->globals[(size_t)in->imm].as.string_value != NULL) {
     return vm_reg_set_string_copy(vm, in->a, vm->globals[(size_t)in->imm].as.string_value);
   }
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    vm->regs[in->a] = cloned;
+    return GVM_OK;
+  }
   vm_free_owned_reg_string(vm, in->a);
   vm_value_copy(&vm->regs[in->a], &vm->globals[(size_t)in->imm]);
   return 0;
 }
 
 int op_store_global(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
@@ -136,15 +165,22 @@ int op_store_global(graphion_vm *vm, const graphion_insn *in) {
   if (vm->regs[in->a].kind == GVM_VALUE_STRING && vm->regs[in->a].as.string_value != NULL) {
     return vm_global_set_string_copy(vm, (size_t)in->imm, vm->regs[in->a].as.string_value);
   }
-  if (vm->global_string_owners != NULL && vm->global_string_owners[(size_t)in->imm] != NULL) {
-    free(vm->global_string_owners[(size_t)in->imm]);
-    vm->global_string_owners[(size_t)in->imm] = NULL;
+  if (vm->regs[in->a].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->regs[in->a]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_release_global_value(vm, (size_t)in->imm);
+    vm->globals[(size_t)in->imm] = cloned;
+    return GVM_OK;
   }
+  vm_release_global_value(vm, (size_t)in->imm);
   vm_value_copy(&vm->globals[(size_t)in->imm], &vm->regs[in->a]);
   return 0;
 }
 
 int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (vm->const_pool == NULL) {
     return GVM_ERR_CONST_UNBOUND;
   }
@@ -161,15 +197,22 @@ int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
       vm->const_pool[(size_t)in->imm].as.string_value != NULL) {
     return vm_global_set_string_copy(vm, (size_t)in->b, vm->const_pool[(size_t)in->imm].as.string_value);
   }
-  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
-    free(vm->global_string_owners[in->b]);
-    vm->global_string_owners[in->b] = NULL;
+  if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_release_global_value(vm, in->b);
+    vm->globals[in->b] = cloned;
+    return GVM_OK;
   }
+  vm_release_global_value(vm, in->b);
   vm_value_copy(&vm->globals[in->b], &vm->const_pool[(size_t)in->imm]);
   return 0;
 }
 
 int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
+  graphion_vm_value cloned;
   if (vm->globals == NULL) {
     return GVM_ERR_GLOBALS_UNBOUND;
   }
@@ -180,11 +223,31 @@ int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
       vm->globals[(size_t)in->imm].as.string_value != NULL) {
     return vm_global_set_string_copy(vm, (size_t)in->b, vm->globals[(size_t)in->imm].as.string_value);
   }
-  if (vm->global_string_owners != NULL && vm->global_string_owners[in->b] != NULL) {
-    free(vm->global_string_owners[in->b]);
-    vm->global_string_owners[in->b] = NULL;
+  if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_LIST) {
+    int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    vm_release_global_value(vm, in->b);
+    vm->globals[in->b] = cloned;
+    return GVM_OK;
   }
+  vm_release_global_value(vm, in->b);
   vm_value_copy(&vm->globals[in->b], &vm->globals[(size_t)in->imm]);
   return 0;
 }
 
+int op_list_new(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  return vm_reg_set_empty_list(vm, in->a);
+}
+
+int op_list_append(graphion_vm *vm, const graphion_insn *in) {
+  return vm_list_append_reg(vm, in->a, in->b);
+}
+
+int op_list_get(graphion_vm *vm, const graphion_insn *in) {
+  return vm_list_get_element(vm, in->a, in->b);
+}

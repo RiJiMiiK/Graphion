@@ -51,6 +51,97 @@ static int parse_additive_expression(const char **cursor,
                                      unsigned int line,
                                      graphion_runtime_diagnostic *diagnostic);
 
+static int parse_primary_expression(const char **cursor,
+                                    graphion_runtime_program *program,
+                                    parsed_expr_result *result_out,
+                                    uint8_t base_reg,
+                                    unsigned int line,
+                                    graphion_runtime_diagnostic *diagnostic) {
+  parsed_expr_result lhs;
+  int rc;
+
+  skip_spaces(cursor);
+  if ((rc = try_parse_direct_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
+    if (rc < 0) {
+      return rc;
+    }
+  } else if ((rc = try_parse_special_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
+    if (rc < 0) {
+      return rc;
+    }
+  } else if ((rc = try_parse_opcode_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
+    if (rc < 0) {
+      return rc;
+    }
+  } else if (**cursor == '(') {
+    (*cursor)++;
+    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+  } else if (**cursor == '[') {
+    rc = parse_list_literal(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  } else {
+    parsed_operand operand;
+    rc = parse_operand(cursor, program, &operand, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = operand.kind == OPERAND_LITERAL ? EXPR_RESULT_LITERAL : EXPR_RESULT_GLOBAL;
+    lhs.const_index = operand.const_index;
+    lhs.global_index = operand.global_index;
+    lhs.reg_index = 0U;
+  }
+
+  for (;;) {
+    parsed_expr_result index_expr;
+    const uint8_t target_reg = base_reg;
+    const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+
+    skip_spaces(cursor);
+    if (**cursor != '[') {
+      break;
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &lhs, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = parse_expression(cursor, program, &index_expr, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &index_expr, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ']') {
+      return fail(diagnostic, line, 1U, "expected ']' after index expression", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = program_emit(program, GVM_OP_LIST_GET, target_reg, scratch_reg, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    lhs.kind = EXPR_RESULT_REG;
+    lhs.reg_index = target_reg;
+    lhs.const_index = 0U;
+    lhs.global_index = 0U;
+  }
+
+  *result_out = lhs;
+  return GINT_OK;
+}
+
 static int parse_factor(const char **cursor,
                         graphion_runtime_program *program,
                         parsed_expr_result *result_out,
@@ -104,39 +195,11 @@ static int parse_factor(const char **cursor,
     lhs.reg_index = target_reg;
     lhs.const_index = 0U;
     lhs.global_index = 0U;
-  } else if ((rc = try_parse_direct_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
-    if (rc < 0) {
-      return rc;
-    }
-  } else if ((rc = try_parse_special_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
-    if (rc < 0) {
-      return rc;
-    }
-  } else if ((rc = try_parse_opcode_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
-    if (rc < 0) {
-      return rc;
-    }
-  } else if (**cursor == '(') {
-    (*cursor)++;
-    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
-    }
-    skip_spaces(cursor);
-    if (**cursor != ')') {
-      return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
-    }
-    (*cursor)++;
   } else {
-    parsed_operand operand;
-    rc = parse_operand(cursor, program, &operand, line, diagnostic);
+    rc = parse_primary_expression(cursor, program, &lhs, base_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    lhs.kind = operand.kind == OPERAND_LITERAL ? EXPR_RESULT_LITERAL : EXPR_RESULT_GLOBAL;
-    lhs.const_index = operand.const_index;
-    lhs.global_index = operand.global_index;
-    lhs.reg_index = 0U;
   }
   skip_spaces(cursor);
   if ((*cursor)[0] == '*' && (*cursor)[1] == '*') {

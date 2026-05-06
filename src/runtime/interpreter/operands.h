@@ -39,6 +39,12 @@ int parse_string_literal(graphion_runtime_program *program,
                          graphion_vm_value *value_out,
                          unsigned int line,
                          graphion_runtime_diagnostic *diagnostic);
+int parse_list_literal(const char **cursor,
+                       graphion_runtime_program *program,
+                       parsed_expr_result *result_out,
+                       uint8_t base_reg,
+                       unsigned int line,
+                       graphion_runtime_diagnostic *diagnostic);
 int parse_scalar_literal(graphion_runtime_program *program,
                          const char **cursor,
                          graphion_vm_value *value_out,

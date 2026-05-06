@@ -11,6 +11,7 @@
   X(vm_typed_value_errors)                             \
   X(vm_jump_opcode)                                    \
   X(vm_string_addition_opcode)                         \
+  X(vm_list_opcodes)                                   \
   X(vm_print_scalar_opcodes)                           \
   X(vm_print_reg_opcode)                               \
   X(vm_numeric_arithmetic_opcodes)                     \

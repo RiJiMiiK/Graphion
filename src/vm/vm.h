@@ -124,6 +124,9 @@ typedef enum {
   GVM_OP_SECH = 116,
   GVM_OP_CSCH = 117,
   GVM_OP_COTH = 118,
+  GVM_OP_LIST_NEW = 119,
+  GVM_OP_LIST_APPEND = 120,
+  GVM_OP_LIST_GET = 121,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -172,7 +175,8 @@ typedef enum {
   GVM_ERR_ACSC_DOMAIN = -35,
   GVM_ERR_ASEC_DOMAIN = -36,
   GVM_ERR_BITS_WIDTH_MISMATCH = -37,
-  GVM_ERR_NEGATIVE_SHIFT = -38
+  GVM_ERR_NEGATIVE_SHIFT = -38,
+  GVM_ERR_INDEX_OUT_OF_RANGE = -39
 } graphion_vm_result;
 
 typedef enum {
@@ -184,7 +188,8 @@ typedef enum {
   GVM_VALUE_GRAPH_REF = 5,
   GVM_VALUE_HYPERGRAPH_REF = 6,
   GVM_VALUE_INT_SEQUENCE_REF = 7,
-  GVM_VALUE_BITS = 8
+  GVM_VALUE_BITS = 8,
+  GVM_VALUE_LIST = 9
 } graphion_vm_value_kind;
 
 typedef struct {

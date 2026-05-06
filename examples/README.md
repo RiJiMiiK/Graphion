@@ -1,12 +1,12 @@
 # Examples
 
-This directory contains focused `.gion` examples for the current documented scalar frontend.
+This directory contains focused `.gion` examples for the current documented frontend.
 
 Current project state:
 
-- these examples track the implemented scalar `.gion` subset
+- these examples track the implemented `.gion` subset
 - the repository also contains broader VM work for graph and hypergraph execution
-- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
+- the active repo lane currently includes non-scalar language work
 
 Files:
 
@@ -22,6 +22,8 @@ Files:
   - line comments with `#` and block comments with `/* ... */`
 - `06_bits_literals.gion`
   - `bits` literals with `0b...`, preserved width, normalized equality, `&`, `|`, `^`, `~`, `<<`, and `>>`
+- `07_lists.gion`
+  - list literals, nested lists, indexing, equality, printing, and `len(...)`
 
 Run any example with:
 

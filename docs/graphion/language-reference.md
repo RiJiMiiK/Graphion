@@ -42,9 +42,9 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values only.
+Graphion currently exposes scalar values plus `list`.
 
-For the current scalar types, literal forms, and built-in numeric constants, see [Types](types.md).
+For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
 ### Identifiers
 
@@ -147,6 +147,7 @@ Graphion currently supports literals for:
 - `bool`
 - `string`
 - `bits`
+- `list`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -173,6 +174,23 @@ count **= 2
 ```
 
 Compound assignment requires the target variable to already exist.
+
+### Indexing
+
+Graphion currently supports list indexing with `[...]`:
+
+```gion
+values = [10, 20, 30]
+second = values[1]
+print(second)
+```
+
+Current indexing rules:
+
+- the left-hand side must evaluate to `list`
+- the index must evaluate to `int`
+- negative indexes are rejected
+- out-of-range indexes are runtime errors
 
 ## Control Flow
 

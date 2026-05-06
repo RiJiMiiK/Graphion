@@ -124,6 +124,7 @@ static int op_numeric_binary(graphion_vm *vm, const graphion_insn *in, uint8_t o
 static int op_eq(graphion_vm *vm, const graphion_insn *in) {
   const graphion_vm_value *lhs;
   const graphion_vm_value *rhs;
+  int compatible = 0;
   int result = 0;
 
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
@@ -132,39 +133,7 @@ static int op_eq(graphion_vm *vm, const graphion_insn *in) {
 
   lhs = &vm->regs[in->a];
   rhs = &vm->regs[in->b];
-
-  if ((lhs->kind == GVM_VALUE_INT || lhs->kind == GVM_VALUE_FLOAT) &&
-      (rhs->kind == GVM_VALUE_INT || rhs->kind == GVM_VALUE_FLOAT)) {
-    int64_t lhs_i;
-    int64_t rhs_i;
-    double lhs_f;
-    double rhs_f;
-    int lhs_is_float;
-    int rhs_is_float;
-    if (!vm_value_get_numeric(lhs, &lhs_i, &lhs_f, &lhs_is_float) ||
-        !vm_value_get_numeric(rhs, &rhs_i, &rhs_f, &rhs_is_float)) {
-      return GVM_ERR_TYPE_MISMATCH;
-    }
-    result = lhs_f == rhs_f;
-  } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_INT) {
-    if (rhs->as.int_value != 0 && rhs->as.int_value != 1) {
-      return GVM_ERR_TYPE_MISMATCH;
-    }
-    result = rhs->as.int_value == (int64_t)lhs->as.bool_value;
-  } else if (lhs->kind == GVM_VALUE_INT && rhs->kind == GVM_VALUE_BOOL) {
-    if (lhs->as.int_value != 0 && lhs->as.int_value != 1) {
-      return GVM_ERR_TYPE_MISMATCH;
-    }
-    result = lhs->as.int_value == (int64_t)rhs->as.bool_value;
-  } else if (lhs->kind == GVM_VALUE_BOOL && rhs->kind == GVM_VALUE_BOOL) {
-    result = lhs->as.bool_value == rhs->as.bool_value;
-  } else if (lhs->kind == GVM_VALUE_BITS && rhs->kind == GVM_VALUE_BITS) {
-    result = (uint64_t)lhs->as.int_value == (uint64_t)rhs->as.int_value;
-  } else if (lhs->kind == GVM_VALUE_STRING && rhs->kind == GVM_VALUE_STRING) {
-    const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
-    const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
-    result = strcmp(lhs_text, rhs_text) == 0;
-  } else {
+  if (vm_values_deep_equal(lhs, rhs, &compatible, &result) != GVM_OK || !compatible) {
     return GVM_ERR_TYPE_MISMATCH;
   }
 
@@ -981,6 +950,14 @@ int op_len(graphion_vm *vm, const graphion_insn *in) {
 
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind == GVM_VALUE_LIST) {
+    if (!vm_value_list_length(&vm->regs[in->a], &len)) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    vm_value_set_int(&vm->regs[in->a], (int64_t)len);
+    return GVM_OK;
   }
   if (vm->regs[in->a].kind != GVM_VALUE_STRING) {
     return GVM_ERR_TYPE_MISMATCH;

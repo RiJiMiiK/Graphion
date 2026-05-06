@@ -293,6 +293,15 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_COPY_GLOBAL:
         rc = op_copy_global(vm, &in);
         break;
+      case GVM_OP_LIST_NEW:
+        rc = op_list_new(vm, &in);
+        break;
+      case GVM_OP_LIST_APPEND:
+        rc = op_list_append(vm, &in);
+        break;
+      case GVM_OP_LIST_GET:
+        rc = op_list_get(vm, &in);
+        break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);
         break;

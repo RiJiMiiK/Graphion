@@ -8,7 +8,7 @@ This branch is for active work on non-scalar language types.
 
 ### Non-scalar language types
 
-- [ ] add `list` as the first non-scalar container type
+- [x] add `list` as the first non-scalar container type
   - literals
   - runtime / VM representation
   - basic operations such as indexing, equality, printing, and `len`
