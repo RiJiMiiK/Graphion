@@ -77,7 +77,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] review the remaining VM fastpaths and decide which ones are still worth carrying
   - keep `arith_only_fastpath`, `weighted_sum_fastpath`, and `frontier_fastpath`
   - remove `value_move_fastpath`, `global_materialize_fastpath`, and `global_print_fastpath`
-- [ ] reduce duplication between the remaining fastpath executors and the main VM execution path where practical
+- [x] reduce duplication between the remaining fastpath executors and the main VM execution path where practical
 - [ ] add targeted coverage or simplification for the remaining fastpath planner / executor combinations
 - [x] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
 
