@@ -52,13 +52,13 @@ int fail(graphion_runtime_diagnostic *diagnostic,
                 const char *message,
                 int code) {
   if (diagnostic != NULL) {
-    size_t len;
     diagnostic->line = line;
     diagnostic->column = column;
     if (message == NULL) {
       diagnostic->message_storage[0] = '\0';
       diagnostic->message = NULL;
     } else {
+      size_t len;
       len = strlen(message);
       if (len >= sizeof(diagnostic->message_storage)) {
         len = sizeof(diagnostic->message_storage) - 1U;
