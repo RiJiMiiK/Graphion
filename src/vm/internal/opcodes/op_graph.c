@@ -2,12 +2,9 @@
 
 #include "vm/internal/opcodes/op_graph.h"
 
+#include "vm/internal/core/frontier.h"
 #include "vm/internal/core/sum.h"
 #include "vm/internal/core/value.h"
-
-static int frontier_is_bound(const graphion_vm *vm) {
-  return vm->frontier_input != NULL && vm->frontier_output != NULL && vm->frontier_input_len <= vm->frontier_capacity;
-}
 
 static int64_t count_visited_levels(const int32_t *levels, size_t count) {
   size_t i;
@@ -43,7 +40,7 @@ int op_neighbors_of(graphion_vm *vm, const graphion_insn *in) {
   if (vm->csr_graph == NULL) {
     return GVM_ERR_CSR_UNBOUND;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   if (!vm_reg_get_int(vm, in->a, &reg_value)) {
@@ -78,7 +75,7 @@ int op_neighbors_expand(graphion_vm *vm, const graphion_insn *in) {
   if (vm->csr_graph == NULL) {
     return GVM_ERR_CSR_UNBOUND;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   for (i = 0U; i < vm->frontier_input_len; ++i) {
@@ -234,7 +231,7 @@ int op_bfs_order(graphion_vm *vm, const graphion_insn *in) {
   if (vm->csr_graph == NULL || vm->bfs_levels == NULL || vm->bfs_queue == NULL) {
     return GVM_ERR_CSR_UNBOUND;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
   if (!vm_reg_get_int(vm, in->a, &reg_value)) {

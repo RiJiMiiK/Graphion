@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "vm/internal/core/fastpath.h"
+#include "vm/internal/core/frontier.h"
 #include "vm/internal/core/value.h"
 #include "vm/vm.h"
 
@@ -199,11 +200,6 @@ void graphion_vm_bind_frontier(graphion_vm *vm,
   vm->frontier_capacity = capacity;
 }
 
-static int frontier_is_bound(const graphion_vm *vm) {
-  return vm->frontier_input != NULL && vm->frontier_output != NULL && vm->frontier_input_len <= vm->frontier_capacity;
-}
-
-
 size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t buffer_size) {
   size_t offset = 0U;
   size_t i;
@@ -229,7 +225,7 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
   offset = appendf(buffer, buffer_size, offset, "global_count=%zu\n", vm->global_count);
   offset = appendf(buffer, buffer_size, offset, "csr_bound=%d\n", vm->csr_graph != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "hypergraph_bound=%d\n", vm->hypergraph != NULL ? 1 : 0);
-  offset = appendf(buffer, buffer_size, offset, "frontier_bound=%d\n", frontier_is_bound(vm) ? 1 : 0);
+  offset = appendf(buffer, buffer_size, offset, "frontier_bound=%d\n", vm_frontier_is_bound(vm) ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "frontier_input_len=%zu\n", vm->frontier_input_len);
   offset = appendf(buffer, buffer_size, offset, "frontier_output_len=%zu\n", vm->frontier_output_len);
   offset = appendf(buffer, buffer_size, offset, "frontier_capacity=%zu\n", vm->frontier_capacity);

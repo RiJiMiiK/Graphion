@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "vm/internal/core/fastpath.h"
+#include "vm/internal/core/frontier.h"
 #include "vm/internal/opcodes/op_frontier.h"
 #include "vm/internal/opcodes/op_graph.h"
 #include "vm/internal/opcodes/op_state.h"
@@ -8,11 +9,6 @@
 
 #include <limits.h>
 #include <stdint.h>
-
-static int frontier_is_bound(const graphion_vm *vm) {
-  return vm->frontier_input != NULL && vm->frontier_output != NULL &&
-         vm->frontier_input_len <= vm->frontier_capacity;
-}
 
 static void finish_arith_fastpath(graphion_vm *vm, const graphion_insn *p, const int64_t regs[16], int halted) {
   vm->halted = halted != 0;
@@ -139,7 +135,7 @@ static int run_frontier_fastpath_c(graphion_vm *vm) {
   if (vm == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
-  if (!frontier_is_bound(vm)) {
+  if (!vm_frontier_is_bound(vm)) {
     return GVM_ERR_FRONTIER_UNBOUND;
   }
 
