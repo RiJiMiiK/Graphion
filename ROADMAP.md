@@ -81,7 +81,7 @@ The current active lane is hygiene, maintainability, and project health.
 - [x] add targeted coverage or simplification for the remaining fastpath planner / executor combinations
 - [x] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
 - [x] split the still-oversized scalar math test monolith in `tests/gion/test_gion_scalar_math_suite.c`
-- [ ] split the still-oversized VM suites in `tests/vm/test_vm_logic_bits.c` and `tests/vm/test_vm_graph_ops.c`
+- [x] split the still-oversized VM suites in `tests/vm/test_vm_logic_bits.c` and `tests/vm/test_vm_graph_ops.c`
 - [ ] continue slimming the remaining near-1k code units such as `src/vm/internal/opcodes/op_scalar.c`, `src/runtime/interpreter/source.c`, `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar_math_builtins.c`, and `tests/vm/test_vm_scalar_builtins_misc.c`
 - [ ] factor the repeated `frontier_is_bound` helper logic shared across `src/vm/vm.c`, `src/vm/internal/core/fastpath_exec.c`, `src/vm/internal/opcodes/op_frontier.c`, and `src/vm/internal/opcodes/op_graph.c`
 

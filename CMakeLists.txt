@@ -143,7 +143,11 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_scalar_hyperbolic.c
     tests/vm/test_vm_scalar_angles_misc.c
     tests/vm/test_vm_logic_bits.c
+    tests/vm/test_vm_logic_bits_bitwise.c
+    tests/vm/test_vm_logic_bits_nand_nor.c
     tests/vm/test_vm_graph_ops.c
+    tests/vm/test_vm_graph_ops_modes.c
+    tests/vm/test_vm_graph_ops_frontier.c
     tests/core/test_arena.c
     tests/gion/test_parser_helpers.c
     tests/gion/test_parser_frontend.c
