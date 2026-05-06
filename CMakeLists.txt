@@ -140,6 +140,8 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_scalar_builtins_misc.c
     tests/vm/test_vm_scalar_compare.c
     tests/vm/test_vm_scalar_trig_core.c
+    tests/vm/test_vm_scalar_hyperbolic.c
+    tests/vm/test_vm_scalar_angles_misc.c
     tests/vm/test_vm_logic_bits.c
     tests/vm/test_vm_graph_ops.c
     tests/core/test_arena.c
@@ -148,6 +150,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_gion_scalars.c
     tests/gion/test_gion_scalar_core.c
     tests/gion/test_gion_scalar_arithmetic.c
+    tests/gion/test_gion_scalar_math_suite.c
     tests/gion/test_gion_bits.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c
