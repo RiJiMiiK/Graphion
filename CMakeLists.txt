@@ -83,6 +83,7 @@ add_library(graphion_vm
   src/runtime/interpreter/expr_opcode_builtins.c
   src/runtime/interpreter/stmt.c
   src/runtime/interpreter/source.c
+  src/runtime/interpreter/source_warnings.c
   src/runtime/interpreter/exec.c
   src/runtime/interpreter/exec_vm.c
   src/parser/bytecode.c
@@ -139,6 +140,8 @@ if(GRAPHION_ENABLE_TESTS)
     tests/vm/test_vm_scalars.c
     tests/vm/test_vm_scalar_builtins_misc.c
     tests/vm/test_vm_scalar_compare.c
+    tests/vm/test_vm_scalar_builtins_predicates.c
+    tests/vm/test_vm_scalar_builtins_advanced.c
     tests/vm/test_vm_scalar_trig_core.c
     tests/vm/test_vm_scalar_hyperbolic.c
     tests/vm/test_vm_scalar_angles_misc.c
