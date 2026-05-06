@@ -71,8 +71,8 @@ static int fastpath_fail_at(graphion_vm *vm, const graphion_insn *p, int rc) {
 }
 
 static int run_weighted_sum_fastpath_c(graphion_vm *vm) {
-  const graphion_insn *p = vm->program + vm->pc;
-  const graphion_insn *const end = vm->program + vm->program_len;
+  const graphion_insn *p;
+  const graphion_insn *end;
 
   if (vm == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -80,6 +80,9 @@ static int run_weighted_sum_fastpath_c(graphion_vm *vm) {
   if (vm->csr_graph == NULL) {
     return GVM_ERR_CSR_UNBOUND;
   }
+
+  p = vm->program + vm->pc;
+  end = vm->program + vm->program_len;
 
   while (p < end) {
     const graphion_insn in = *p++;
