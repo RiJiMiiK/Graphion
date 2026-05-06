@@ -47,12 +47,6 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->arith_only_halt_terminated = false;
   vm->weighted_sum_fastpath = false;
   vm->frontier_fastpath = false;
-  vm->value_move_fastpath = false;
-  vm->global_materialize_fastpath = false;
-  vm->global_print_fastpath = false;
-  vm->value_move_indices_valid = false;
-  vm->value_move_int_add_safe = false;
-  vm->global_print_indices_valid = false;
   vm->const_pool = NULL;
   vm->const_count = 0U;
   vm->globals = NULL;
@@ -60,8 +54,6 @@ void graphion_vm_init(graphion_vm *vm) {
   vm->global_count = 0U;
   vm->output.write = NULL;
   vm->output.ctx = NULL;
-  memset(vm->global_print_const_lens, 0, sizeof(vm->global_print_const_lens));
-  memset(vm->global_print_global_lens, 0, sizeof(vm->global_print_global_lens));
   vm->csr_graph = NULL;
   vm->bfs_levels = NULL;
   vm->bfs_queue = NULL;
@@ -122,8 +114,6 @@ void graphion_vm_bind_constants(graphion_vm *vm, const graphion_vm_value *const_
   }
   vm->const_pool = const_pool;
   vm->const_count = const_count;
-  refresh_value_move_validation(vm);
-  refresh_global_print_validation(vm);
 }
 
 void graphion_output_sink_from_file(graphion_output_sink *sink, FILE *output) {
@@ -148,8 +138,6 @@ void graphion_vm_bind_globals(graphion_vm *vm, graphion_vm_value *globals, size_
   }
   vm->globals = globals;
   vm->global_count = global_count;
-  refresh_value_move_validation(vm);
-  refresh_global_print_validation(vm);
 }
 
 void graphion_vm_bind_global_string_owners(graphion_vm *vm, char **owners, size_t owner_count) {
@@ -235,10 +223,6 @@ size_t graphion_vm_write_snapshot(const graphion_vm *vm, char *buffer, size_t bu
                    vm->arith_only_halt_terminated ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "weighted_sum_fastpath=%d\n",
                    vm->weighted_sum_fastpath ? 1 : 0);
-  offset = appendf(buffer, buffer_size, offset, "value_move_fastpath=%d\n",
-                   vm->value_move_fastpath ? 1 : 0);
-  offset = appendf(buffer, buffer_size, offset, "global_materialize_fastpath=%d\n",
-                   vm->global_materialize_fastpath ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_bound=%d\n", vm->const_pool != NULL ? 1 : 0);
   offset = appendf(buffer, buffer_size, offset, "const_count=%zu\n", vm->const_count);
   offset = appendf(buffer, buffer_size, offset, "globals_bound=%d\n", vm->globals != NULL ? 1 : 0);

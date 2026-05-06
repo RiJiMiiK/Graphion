@@ -74,10 +74,12 @@ The current active lane is hygiene, maintainability, and project health.
   - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
 - [x] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
 - [x] continue splitting oversized files such as `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar.c`, `tests/gion/test_gion_scalars.c`, `tests/gion/test_gion_operators.c`, and `tests/vm/test_vm_scalars.c`
-- [ ] review the remaining VM fastpaths and decide which ones are still worth carrying
+- [x] review the remaining VM fastpaths and decide which ones are still worth carrying
+  - keep `arith_only_fastpath`, `weighted_sum_fastpath`, and `frontier_fastpath`
+  - remove `value_move_fastpath`, `global_materialize_fastpath`, and `global_print_fastpath`
 - [ ] reduce duplication between the remaining fastpath executors and the main VM execution path where practical
 - [ ] add targeted coverage or simplification for the remaining fastpath planner / executor combinations
-- [ ] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
+- [x] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
 
 ### Repository hygiene
 
