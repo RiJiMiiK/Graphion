@@ -9,7 +9,9 @@ int parse_assignment(const char *line_text,
   const char *cursor = line_text;
   char target[GRAPHION_RUNTIME_NAME_MAX];
   parsed_expr_result expr;
-  size_t target_index;
+  parsed_expr_result key_expr;
+  size_t target_index = 0U;
+  int indexed_target = 0;
   char assign_op = '=';
   int power_assign = 0;
   int floor_div_assign = 0;
@@ -28,6 +30,30 @@ int parse_assignment(const char *line_text,
     return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
   }
   skip_spaces(&cursor);
+  if (*cursor == '[') {
+    int existing;
+    indexed_target = 1;
+    existing = program_find_global_index(program, target);
+    if (existing < 0) {
+      return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+    }
+    target_index = (size_t)existing;
+    cursor++;
+    rc = parse_expression(&cursor, program, &key_expr, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &key_expr, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(&cursor);
+    if (*cursor != ']') {
+      return fail(diagnostic, line, 1U, "expected ']' after assignment target index", GINT_ERR_PARSE);
+    }
+    cursor++;
+    skip_spaces(&cursor);
+  }
   if (cursor[0] == '*' && cursor[1] == '*' && cursor[2] == '=') {
     assign_op = '*';
     power_assign = 1;
@@ -65,19 +91,22 @@ int parse_assignment(const char *line_text,
   } else {
     return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
   }
-  if (assign_op == '=') {
+  if (indexed_target && assign_op != '=') {
+    return fail(diagnostic, line, 1U, "compound indexed assignment is not supported", GINT_ERR_PARSE);
+  }
+  if (!indexed_target && assign_op == '=') {
     rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
     if (rc != GINT_OK) {
       return rc;
     }
-  } else {
+  } else if (!indexed_target) {
     int existing = program_find_global_index(program, target);
     if (existing < 0) {
       return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
     }
     target_index = (size_t)existing;
   }
-  rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
+  rc = parse_expression(&cursor, program, &expr, indexed_target ? 2U : 0U, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -111,6 +140,21 @@ int parse_assignment(const char *line_text,
                       0,
                       line,
                       diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+  }
+  if (indexed_target) {
+    rc = ensure_expr_in_reg(program, &expr, 2U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_DICT_SET_KEY, 0U, 1U, 2, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

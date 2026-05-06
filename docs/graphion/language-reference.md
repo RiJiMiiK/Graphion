@@ -42,7 +42,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list`.
+Graphion currently exposes scalar values plus `list` and `dict`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -148,6 +148,7 @@ Graphion currently supports literals for:
 - `string`
 - `bits`
 - `list`
+- `dict`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -159,6 +160,8 @@ Simple assignment:
 count = 42
 copy = count
 ratio = 7 / 2
+weights = {"a": 1}
+weights["b"] = 2
 ```
 
 Compound assignment:
@@ -191,6 +194,28 @@ Current indexing rules:
 - the index must evaluate to `int`
 - negative indexes are rejected
 - out-of-range indexes are runtime errors
+
+Graphion also supports dictionary lookup and assignment with the same `[...]` syntax:
+
+```gion
+weights = {"a": 1, "b": 2}
+value = weights["b"]
+weights["c"] = 3
+print(value)
+```
+
+Current dictionary lookup rules:
+
+- the left-hand side must evaluate to `dict`
+- literal keys inside `{...}` must be `string` literals
+- lookup keys must evaluate to `string`
+- assignment keys must evaluate to `string`
+- missing keys are runtime errors
+
+Current dictionary assignment notes:
+
+- `dict_expr[key_expr] = value_expr` updates an existing key or creates a new one
+- only simple `=` assignment is currently supported on indexed dictionary targets
 
 ## Control Flow
 

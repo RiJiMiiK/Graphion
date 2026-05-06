@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "test_vm_helpers.h"
+#include "vm/internal/core/value.h"
 
 int test_vm_addition_program(void) {
   graphion_vm vm;
@@ -370,6 +371,140 @@ int test_vm_list_opcodes(void) {
   remove(path);
   if (strcmp(output, "[1, 2]\n") != 0) {
     return finish_vm_test(&vm, 8);
+  }
+  return finish_vm_test(&vm, 0);
+}
+
+int test_vm_dict_opcodes(void) {
+  char path[512];
+  char output[128];
+  graphion_vm vm;
+  graphion_vm_value const_pool[6];
+  graphion_vm_value globals[1];
+  const graphion_insn program[] = {
+      {GVM_OP_DICT_NEW, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 0},
+      {GVM_OP_DICT_SET, 0, 1, 2},
+      {GVM_OP_LOAD_CONST, 1, 0, 1},
+      {GVM_OP_DICT_SET, 0, 1, 3},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_PRINT_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_GLOBAL, 2, 0, 0},
+      {GVM_OP_LOAD_CONST, 3, 0, 4},
+      {GVM_OP_DICT_GET, 2, 3, 0},
+      {GVM_OP_LOAD_GLOBAL, 0, 0, 0},
+      {GVM_OP_LEN, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  test_set_value_int(&const_pool[0], 1);
+  test_set_value_int(&const_pool[1], 2);
+  test_set_value_string(&const_pool[2], "a");
+  test_set_value_string(&const_pool[3], "b");
+  test_set_value_string(&const_pool[4], "b");
+  test_set_value_string(&const_pool[5], "unused");
+  globals[0].kind = GVM_VALUE_NONE;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 6U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  fp = test_open_temp_output_vm(path, sizeof(path), "vm_dict_output.txt");
+  if (fp == NULL) {
+    return finish_vm_test(&vm, 1);
+  }
+  graphion_vm_bind_output(&vm, fp);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    fclose(fp);
+    remove(path);
+    return finish_vm_test(&vm, 2);
+  }
+  rc = graphion_vm_run(&vm);
+  fclose(fp);
+  if (rc != 0) {
+    remove(path);
+    return finish_vm_test(&vm, 3);
+  }
+  if (globals[0].kind != GVM_VALUE_DICT) {
+    remove(path);
+    return finish_vm_test(&vm, 4);
+  }
+  if (vm.regs[2].kind != GVM_VALUE_INT || vm.regs[2].as.int_value != 2) {
+    remove(path);
+    return finish_vm_test(&vm, 5);
+  }
+  if (vm.regs[0].kind != GVM_VALUE_INT || vm.regs[0].as.int_value != 2) {
+    remove(path);
+    return finish_vm_test(&vm, 6);
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return finish_vm_test(&vm, 7);
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  output[read_len] = '\0';
+  remove(path);
+  if (strcmp(output, "{\"a\": 1, \"b\": 2}\n") != 0) {
+    return finish_vm_test(&vm, 8);
+  }
+  return finish_vm_test(&vm, 0);
+}
+
+int test_vm_dict_set_key_opcode(void) {
+  graphion_vm vm;
+  graphion_vm_value const_pool[4];
+  graphion_vm_value globals[1];
+  const graphion_insn program[] = {
+      {GVM_OP_DICT_NEW, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 0},
+      {GVM_OP_LOAD_CONST, 2, 0, 1},
+      {GVM_OP_DICT_SET_KEY, 0, 1, 2},
+      {GVM_OP_LOAD_CONST, 1, 0, 2},
+      {GVM_OP_LOAD_CONST, 2, 0, 3},
+      {GVM_OP_DICT_SET_KEY, 0, 1, 2},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  const graphion_vm_value *global_value;
+
+  test_set_value_string(&const_pool[0], "a");
+  test_set_value_int(&const_pool[1], 1);
+  test_set_value_string(&const_pool[2], "a");
+  test_set_value_int(&const_pool[3], 2);
+  globals[0].kind = GVM_VALUE_NONE;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 4U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  if (graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0])) != 0) {
+    return finish_vm_test(&vm, 1);
+  }
+  if (graphion_vm_run(&vm) != 0) {
+    return finish_vm_test(&vm, 2);
+  }
+  global_value = &globals[0];
+  if (global_value->kind != GVM_VALUE_DICT) {
+    return finish_vm_test(&vm, 3);
+  }
+  vm.regs[1].kind = GVM_VALUE_STRING;
+  vm.regs[1].as.string_value = "a";
+  if (vm_dict_get_element(&vm, 0U, 1U) != GVM_OK) {
+    return finish_vm_test(&vm, 4);
+  }
+  if (vm.regs[0].kind != GVM_VALUE_INT || vm.regs[0].as.int_value != 2) {
+    return finish_vm_test(&vm, 5);
   }
   return finish_vm_test(&vm, 0);
 }

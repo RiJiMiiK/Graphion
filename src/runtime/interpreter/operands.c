@@ -145,6 +145,93 @@ int parse_list_literal(const char **cursor,
   return GINT_OK;
 }
 
+int parse_dict_literal(const char **cursor,
+                              graphion_runtime_program *program,
+                              parsed_expr_result *result_out,
+                              uint8_t base_reg,
+                              unsigned int line,
+                              graphion_runtime_diagnostic *diagnostic) {
+  const uint8_t target_reg = base_reg;
+  const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  int rc;
+
+  if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(cursor);
+  if (**cursor != '{') {
+    return fail(diagnostic, line, 1U, "expected '{' to start dict literal", GINT_ERR_PARSE);
+  }
+  (*cursor)++;
+  rc = program_emit(program, GVM_OP_DICT_NEW, target_reg, 0U, 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(cursor);
+  if (**cursor == '}') {
+    (*cursor)++;
+    result_out->kind = EXPR_RESULT_REG;
+    result_out->reg_index = target_reg;
+    result_out->const_index = 0U;
+    result_out->global_index = 0U;
+    return GINT_OK;
+  }
+  for (;;) {
+    graphion_vm_value key_value;
+    parsed_expr_result value_expr;
+    size_t key_const_index = 0U;
+
+    vm_value_set_none(&key_value);
+    if (**cursor != '"') {
+      return fail(diagnostic, line, 1U, "dict literal keys must be string literals", GINT_ERR_PARSE);
+    }
+    rc = parse_string_literal(program, cursor, &key_value, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_add_const(program, &key_value, line, diagnostic, &key_const_index);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ':') {
+      return fail(diagnostic, line, 1U, "expected ':' after dict key", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    rc = parse_expression(cursor, program, &value_expr, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &value_expr, scratch_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_DICT_SET, target_reg, scratch_reg, (int32_t)key_const_index, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor == '}') {
+      (*cursor)++;
+      break;
+    }
+    if (**cursor != ',') {
+      return fail(diagnostic, line, 1U, "expected ',' or '}' after dict entry", GINT_ERR_PARSE);
+    }
+    (*cursor)++;
+    skip_spaces(cursor);
+    if (**cursor == '}') {
+      return fail(diagnostic, line, 1U, "trailing comma is not allowed in dict literal", GINT_ERR_PARSE);
+    }
+  }
+
+  result_out->kind = EXPR_RESULT_REG;
+  result_out->reg_index = target_reg;
+  result_out->const_index = 0U;
+  result_out->global_index = 0U;
+  return GINT_OK;
+}
+
 int parse_scalar_literal(graphion_runtime_program *program,
                                 const char **cursor,
                                 graphion_vm_value *value_out,

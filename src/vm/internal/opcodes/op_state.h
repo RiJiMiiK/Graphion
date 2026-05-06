@@ -20,5 +20,9 @@ int op_copy_global(graphion_vm *vm, const graphion_insn *in);
 int op_list_new(graphion_vm *vm, const graphion_insn *in);
 int op_list_append(graphion_vm *vm, const graphion_insn *in);
 int op_list_get(graphion_vm *vm, const graphion_insn *in);
+int op_dict_new(graphion_vm *vm, const graphion_insn *in);
+int op_dict_set(graphion_vm *vm, const graphion_insn *in);
+int op_dict_get(graphion_vm *vm, const graphion_insn *in);
+int op_dict_set_key(graphion_vm *vm, const graphion_insn *in);
 
 #endif

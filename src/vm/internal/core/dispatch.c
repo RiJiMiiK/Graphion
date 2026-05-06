@@ -302,6 +302,18 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_LIST_GET:
         rc = op_list_get(vm, &in);
         break;
+      case GVM_OP_DICT_NEW:
+        rc = op_dict_new(vm, &in);
+        break;
+      case GVM_OP_DICT_SET:
+        rc = op_dict_set(vm, &in);
+        break;
+      case GVM_OP_DICT_GET:
+        rc = op_dict_get(vm, &in);
+        break;
+      case GVM_OP_DICT_SET_KEY:
+        rc = op_dict_set_key(vm, &in);
+        break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);
         break;

@@ -12,6 +12,17 @@ typedef struct {
   graphion_vm_value *items;
 } graphion_vm_list;
 
+typedef struct {
+  char *key;
+  graphion_vm_value value;
+} graphion_vm_dict_entry;
+
+typedef struct {
+  size_t count;
+  size_t capacity;
+  graphion_vm_dict_entry *entries;
+} graphion_vm_dict;
+
 int is_valid_reg(uint8_t reg) { return reg < 16U ? 1 : 0; }
 
 int64_t wrap_add_i64(int64_t lhs, int64_t rhs) {
@@ -50,6 +61,11 @@ static char *vm_strdup_text(const char *text) {
 static graphion_vm_list *vm_list_create(void) {
   graphion_vm_list *list = (graphion_vm_list *)calloc(1U, sizeof(*list));
   return list;
+}
+
+static graphion_vm_dict *vm_dict_create(void) {
+  graphion_vm_dict *dict = (graphion_vm_dict *)calloc(1U, sizeof(*dict));
+  return dict;
 }
 
 static void vm_value_clear(graphion_vm_value *value) {
@@ -105,10 +121,12 @@ void vm_value_copy(graphion_vm_value *dst, const graphion_vm_value *src) {
 }
 
 static int vm_list_append_value(graphion_vm_list *list, const graphion_vm_value *src);
+int vm_dict_get_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg);
 
 void vm_value_dispose_owned(graphion_vm_value *value) {
   size_t i;
   graphion_vm_list *list;
+  graphion_vm_dict *dict;
 
   if (value == NULL) {
     return;
@@ -124,6 +142,16 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
       free(list->items);
       free(list);
     }
+  } else if (value->kind == GVM_VALUE_DICT) {
+    dict = (graphion_vm_dict *)value->as.ref_value;
+    if (dict != NULL) {
+      for (i = 0U; i < dict->count; ++i) {
+        free(dict->entries[i].key);
+        vm_value_dispose_owned(&dict->entries[i].value);
+      }
+      free(dict->entries);
+      free(dict);
+    }
   }
   vm_value_clear(value);
 }
@@ -132,6 +160,8 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   size_t i;
   graphion_vm_list *src_list;
   graphion_vm_list *dst_list;
+  graphion_vm_dict *src_dict;
+  graphion_vm_dict *dst_dict;
 
   if (dst == NULL || src == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -147,39 +177,85 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
     dst->as.string_value = copy;
     return GVM_OK;
   }
-  if (src->kind != GVM_VALUE_LIST) {
+  if (src->kind != GVM_VALUE_LIST && src->kind != GVM_VALUE_DICT) {
     *dst = *src;
     return GVM_OK;
   }
 
-  src_list = (graphion_vm_list *)src->as.ref_value;
-  dst_list = vm_list_create();
-  if (dst_list == NULL) {
-    return GVM_ERR_INVALID_ARG;
-  }
-  if (src_list != NULL && src_list->count > 0U) {
-    dst_list->items = (graphion_vm_value *)calloc(src_list->count, sizeof(*dst_list->items));
-    if (dst_list->items == NULL) {
-      free(dst_list);
+  if (src->kind == GVM_VALUE_LIST) {
+    src_list = (graphion_vm_list *)src->as.ref_value;
+    dst_list = vm_list_create();
+    if (dst_list == NULL) {
       return GVM_ERR_INVALID_ARG;
     }
-    dst_list->capacity = src_list->count;
-    for (i = 0U; i < src_list->count; ++i) {
-      int rc = vm_value_clone(&dst_list->items[i], &src_list->items[i]);
-      if (rc != GVM_OK) {
+    if (src_list != NULL && src_list->count > 0U) {
+      dst_list->items = (graphion_vm_value *)calloc(src_list->count, sizeof(*dst_list->items));
+      if (dst_list->items == NULL) {
+        free(dst_list);
+        return GVM_ERR_INVALID_ARG;
+      }
+      dst_list->capacity = src_list->count;
+      for (i = 0U; i < src_list->count; ++i) {
+        int rc = vm_value_clone(&dst_list->items[i], &src_list->items[i]);
+        if (rc != GVM_OK) {
+          size_t j;
+          for (j = 0U; j < i; ++j) {
+            vm_value_dispose_owned(&dst_list->items[j]);
+          }
+          free(dst_list->items);
+          free(dst_list);
+          return rc;
+        }
+      }
+      dst_list->count = src_list->count;
+    }
+    dst->kind = GVM_VALUE_LIST;
+    dst->as.ref_value = dst_list;
+    return GVM_OK;
+  }
+
+  src_dict = (graphion_vm_dict *)src->as.ref_value;
+  dst_dict = vm_dict_create();
+  if (dst_dict == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (src_dict != NULL && src_dict->count > 0U) {
+    dst_dict->entries = (graphion_vm_dict_entry *)calloc(src_dict->count, sizeof(*dst_dict->entries));
+    if (dst_dict->entries == NULL) {
+      free(dst_dict);
+      return GVM_ERR_INVALID_ARG;
+    }
+    dst_dict->capacity = src_dict->count;
+    for (i = 0U; i < src_dict->count; ++i) {
+      int rc;
+      dst_dict->entries[i].key = vm_strdup_text(src_dict->entries[i].key != NULL ? src_dict->entries[i].key : "");
+      if (dst_dict->entries[i].key == NULL) {
         size_t j;
         for (j = 0U; j < i; ++j) {
-          vm_value_dispose_owned(&dst_list->items[j]);
+          free(dst_dict->entries[j].key);
+          vm_value_dispose_owned(&dst_dict->entries[j].value);
         }
-        free(dst_list->items);
-        free(dst_list);
+        free(dst_dict->entries);
+        free(dst_dict);
+        return GVM_ERR_INVALID_ARG;
+      }
+      rc = vm_value_clone(&dst_dict->entries[i].value, &src_dict->entries[i].value);
+      if (rc != GVM_OK) {
+        size_t j;
+        free(dst_dict->entries[i].key);
+        for (j = 0U; j < i; ++j) {
+          free(dst_dict->entries[j].key);
+          vm_value_dispose_owned(&dst_dict->entries[j].value);
+        }
+        free(dst_dict->entries);
+        free(dst_dict);
         return rc;
       }
     }
-    dst_list->count = src_list->count;
+    dst_dict->count = src_dict->count;
   }
-  dst->kind = GVM_VALUE_LIST;
-  dst->as.ref_value = dst_list;
+  dst->kind = GVM_VALUE_DICT;
+  dst->as.ref_value = dst_dict;
   return GVM_OK;
 }
 
@@ -224,6 +300,16 @@ int vm_value_list_length(const graphion_vm_value *value, size_t *len_out) {
   return 1;
 }
 
+int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out) {
+  graphion_vm_dict *dict;
+  if (value == NULL || len_out == NULL || value->kind != GVM_VALUE_DICT) {
+    return 0;
+  }
+  dict = (graphion_vm_dict *)value->as.ref_value;
+  *len_out = dict != NULL ? dict->count : 0U;
+  return 1;
+}
+
 int vm_values_deep_equal(const graphion_vm_value *lhs,
                          const graphion_vm_value *rhs,
                          int *compatible_out,
@@ -231,6 +317,8 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
   size_t i;
   graphion_vm_list *lhs_list;
   graphion_vm_list *rhs_list;
+  graphion_vm_dict *lhs_dict;
+  graphion_vm_dict *rhs_dict;
 
   if (lhs == NULL || rhs == NULL || compatible_out == NULL || equal_out == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -282,6 +370,49 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
     const char *lhs_text = lhs->as.string_value != NULL ? lhs->as.string_value : "";
     const char *rhs_text = rhs->as.string_value != NULL ? rhs->as.string_value : "";
     *equal_out = strcmp(lhs_text, rhs_text) == 0;
+    return GVM_OK;
+  }
+  if (lhs->kind == GVM_VALUE_DICT && rhs->kind == GVM_VALUE_DICT) {
+    lhs_dict = (graphion_vm_dict *)lhs->as.ref_value;
+    rhs_dict = (graphion_vm_dict *)rhs->as.ref_value;
+    if ((lhs_dict != NULL ? lhs_dict->count : 0U) != (rhs_dict != NULL ? rhs_dict->count : 0U)) {
+      *equal_out = 0;
+      return GVM_OK;
+    }
+    for (i = 0U; i < (lhs_dict != NULL ? lhs_dict->count : 0U); ++i) {
+      int nested_compatible = 0;
+      int nested_equal = 0;
+      int found = 0;
+      size_t j;
+      for (j = 0U; j < (rhs_dict != NULL ? rhs_dict->count : 0U); ++j) {
+        const char *lhs_key = lhs_dict->entries[i].key != NULL ? lhs_dict->entries[i].key : "";
+        const char *rhs_key = rhs_dict->entries[j].key != NULL ? rhs_dict->entries[j].key : "";
+        if (strcmp(lhs_key, rhs_key) != 0) {
+          continue;
+        }
+        found = 1;
+        if (vm_values_deep_equal(&lhs_dict->entries[i].value,
+                                 &rhs_dict->entries[j].value,
+                                 &nested_compatible,
+                                 &nested_equal) != GVM_OK) {
+          return GVM_ERR_INVALID_ARG;
+        }
+        if (!nested_compatible) {
+          *compatible_out = 0;
+          return GVM_OK;
+        }
+        if (!nested_equal) {
+          *equal_out = 0;
+          return GVM_OK;
+        }
+        break;
+      }
+      if (!found) {
+        *equal_out = 0;
+        return GVM_OK;
+      }
+    }
+    *equal_out = 1;
     return GVM_OK;
   }
   if (lhs->kind != GVM_VALUE_LIST || rhs->kind != GVM_VALUE_LIST) {
@@ -354,7 +485,7 @@ static void vm_release_reg_compound(graphion_vm *vm, uint8_t reg) {
   if (vm == NULL || !is_valid_reg(reg)) {
     return;
   }
-  if (vm->regs[reg].kind == GVM_VALUE_LIST) {
+  if (vm->regs[reg].kind == GVM_VALUE_LIST || vm->regs[reg].kind == GVM_VALUE_DICT) {
     vm_value_dispose_owned(&vm->regs[reg]);
   } else {
     vm_value_clear(&vm->regs[reg]);
@@ -394,7 +525,7 @@ void vm_release_global_value(graphion_vm *vm, size_t index) {
     vm_value_clear(&vm->globals[index]);
     return;
   }
-  if (vm->globals[index].kind == GVM_VALUE_LIST) {
+  if (vm->globals[index].kind == GVM_VALUE_LIST || vm->globals[index].kind == GVM_VALUE_DICT) {
     vm_value_dispose_owned(&vm->globals[index]);
   } else {
     vm_value_clear(&vm->globals[index]);
@@ -490,6 +621,100 @@ int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg) {
   return vm_list_append_value(list, &vm->regs[value_reg]);
 }
 
+int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg) {
+  graphion_vm_dict *dict;
+  if (vm == NULL || !is_valid_reg(reg)) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  dict = vm_dict_create();
+  if (dict == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, reg);
+  vm->regs[reg].kind = GVM_VALUE_DICT;
+  vm->regs[reg].as.ref_value = dict;
+  return GVM_OK;
+}
+
+static size_t vm_dict_find_index(const graphion_vm_dict *dict, const char *key) {
+  size_t i;
+  const char *lookup = key != NULL ? key : "";
+  if (dict == NULL) {
+    return (size_t)-1;
+  }
+  for (i = 0U; i < dict->count; ++i) {
+    const char *entry_key = dict->entries[i].key != NULL ? dict->entries[i].key : "";
+    if (strcmp(entry_key, lookup) == 0) {
+      return i;
+    }
+  }
+  return (size_t)-1;
+}
+
+int vm_dict_set_reg(graphion_vm *vm, uint8_t dict_reg, const char *key, uint8_t value_reg) {
+  graphion_vm_dict *dict;
+  size_t index;
+  graphion_vm_value cloned;
+  int has_existing = 0;
+
+  if (vm == NULL || !is_valid_reg(dict_reg) || !is_valid_reg(value_reg) || key == NULL) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[dict_reg].kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  dict = (graphion_vm_dict *)vm->regs[dict_reg].as.ref_value;
+  if (dict == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_value_clear(&cloned);
+  if (vm_value_clone(&cloned, &vm->regs[value_reg]) != GVM_OK) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  index = vm_dict_find_index(dict, key);
+  if (index == (size_t)-1) {
+    if (dict->count == dict->capacity) {
+      size_t new_capacity = dict->capacity == 0U ? 4U : dict->capacity * 2U;
+      graphion_vm_dict_entry *new_entries =
+          (graphion_vm_dict_entry *)realloc(dict->entries, new_capacity * sizeof(*new_entries));
+      if (new_entries == NULL) {
+        return GVM_ERR_INVALID_ARG;
+      }
+      dict->entries = new_entries;
+      dict->capacity = new_capacity;
+    }
+    index = dict->count++;
+    dict->entries[index].key = vm_strdup_text(key);
+    if (dict->entries[index].key == NULL) {
+      dict->count--;
+      vm_value_dispose_owned(&cloned);
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm_value_clear(&dict->entries[index].value);
+  } else {
+    has_existing = 1;
+    vm_value_dispose_owned(&dict->entries[index].value);
+  }
+  dict->entries[index].value = cloned;
+  if (has_existing) {
+    return GVM_OK;
+  }
+  return GVM_OK;
+}
+
+int vm_dict_set_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg, uint8_t value_reg) {
+  const char *key;
+
+  if (vm == NULL || !is_valid_reg(dict_reg) || !is_valid_reg(key_reg) || !is_valid_reg(value_reg)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[key_reg].kind != GVM_VALUE_STRING) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  key = vm->regs[key_reg].as.string_value != NULL ? vm->regs[key_reg].as.string_value : "";
+  return vm_dict_set_reg(vm, dict_reg, key, value_reg);
+}
+
 int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg) {
   const graphion_vm_value *item;
   graphion_vm_list *list;
@@ -498,6 +723,9 @@ int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg) {
 
   if (vm == NULL || !is_valid_reg(list_reg) || !is_valid_reg(index_reg)) {
     return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[list_reg].kind == GVM_VALUE_DICT) {
+    return vm_dict_get_element(vm, list_reg, index_reg);
   }
   if (vm->regs[list_reg].kind != GVM_VALUE_LIST) {
     return GVM_ERR_TYPE_MISMATCH;
@@ -519,6 +747,38 @@ int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg) {
   }
   vm_free_owned_reg_string(vm, list_reg);
   vm->regs[list_reg] = cloned;
+  return GVM_OK;
+}
+
+int vm_dict_get_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg) {
+  graphion_vm_dict *dict;
+  const graphion_vm_value *item;
+  size_t index;
+  graphion_vm_value cloned;
+  const char *key;
+
+  if (vm == NULL || !is_valid_reg(dict_reg) || !is_valid_reg(key_reg)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[dict_reg].kind != GVM_VALUE_DICT || vm->regs[key_reg].kind != GVM_VALUE_STRING) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  dict = (graphion_vm_dict *)vm->regs[dict_reg].as.ref_value;
+  key = vm->regs[key_reg].as.string_value != NULL ? vm->regs[key_reg].as.string_value : "";
+  index = vm_dict_find_index(dict, key);
+  if (index == (size_t)-1) {
+    return GVM_ERR_MISSING_KEY;
+  }
+  item = &dict->entries[index].value;
+  if (item->kind == GVM_VALUE_STRING) {
+    return vm_reg_set_string_copy(vm, dict_reg, item->as.string_value != NULL ? item->as.string_value : "");
+  }
+  vm_value_clear(&cloned);
+  if (vm_value_clone(&cloned, item) != GVM_OK) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, dict_reg);
+  vm->regs[dict_reg] = cloned;
   return GVM_OK;
 }
 
@@ -603,6 +863,7 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
   size_t total;
   size_t i;
   graphion_vm_list *list;
+  graphion_vm_dict *dict;
 
   if (value == NULL || len_out == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -649,7 +910,33 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
           return rc;
         }
         if (list->items[i].kind == GVM_VALUE_STRING && item_len > 0U) {
-          item_len += 1U;
+          item_len += 2U;
+        }
+        total += item_len - 1U;
+      }
+      *len_out = total;
+      return GVM_OK;
+    case GVM_VALUE_DICT:
+      total = 3U;
+      dict = (graphion_vm_dict *)value->as.ref_value;
+      if (dict == NULL || dict->count == 0U) {
+        *len_out = total;
+        return GVM_OK;
+      }
+      for (i = 0U; i < dict->count; ++i) {
+        size_t item_len = 0U;
+        int rc;
+        const char *key = dict->entries[i].key != NULL ? dict->entries[i].key : "";
+        if (i > 0U) {
+          total += 2U;
+        }
+        total += strlen(key) + 4U;
+        rc = vm_value_text_len(&dict->entries[i].value, &item_len);
+        if (rc != GVM_OK) {
+          return rc;
+        }
+        if (dict->entries[i].value.kind == GVM_VALUE_STRING && item_len > 0U) {
+          item_len += 2U;
         }
         total += item_len - 1U;
       }
@@ -681,6 +968,35 @@ static int vm_write_list_inline(const graphion_output_sink *output, const graphi
     }
   }
   return vm_write_bytes_sink(output, "]", 1U);
+}
+
+static int vm_write_dict_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
+  size_t i;
+  graphion_vm_dict *dict;
+  int rc;
+
+  if (vm_write_bytes_sink(output, "{", 1U) != GVM_OK) {
+    return GVM_ERR_OUTPUT_UNBOUND;
+  }
+  dict = (graphion_vm_dict *)value->as.ref_value;
+  if (dict != NULL) {
+    for (i = 0U; i < dict->count; ++i) {
+      const char *key = dict->entries[i].key != NULL ? dict->entries[i].key : "";
+      if (i > 0U && vm_write_bytes_sink(output, ", ", 2U) != GVM_OK) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      if (vm_write_bytes_sink(output, "\"", 1U) != GVM_OK ||
+          vm_write_bytes_sink(output, key, strlen(key)) != GVM_OK ||
+          vm_write_bytes_sink(output, "\": ", 3U) != GVM_OK) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      rc = vm_write_value_sink_inline_ex(output, &dict->entries[i].value, 1);
+      if (rc != GVM_OK) {
+        return rc;
+      }
+    }
+  }
+  return vm_write_bytes_sink(output, "}", 1U);
 }
 
 static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
@@ -733,6 +1049,8 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
       return vm_write_bytes_sink(output, buffer, len);
     case GVM_VALUE_LIST:
       return vm_write_list_inline(output, value);
+    case GVM_VALUE_DICT:
+      return vm_write_dict_inline(output, value);
     default:
       return GVM_ERR_TYPE_MISMATCH;
   }
@@ -740,11 +1058,24 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
 
 int vm_write_value_sink(const graphion_output_sink *output, const graphion_vm_value *value) {
   int rc;
+  size_t len;
   if (output == NULL || output->write == NULL) {
     return GVM_ERR_OUTPUT_UNBOUND;
   }
   if (value == NULL) {
     return GVM_ERR_INVALID_ARG;
+  }
+  if (vm_sink_is_counter(output)) {
+    uint64_t *byte_count = (uint64_t *)output->ctx;
+    rc = vm_value_text_len(value, &len);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    if (byte_count == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    *byte_count += (uint64_t)len;
+    return GVM_OK;
   }
   rc = vm_write_value_sink_inline_ex(output, value, 0);
   if (rc != GVM_OK) {
@@ -754,6 +1085,26 @@ int vm_write_value_sink(const graphion_output_sink *output, const graphion_vm_va
 }
 
 int vm_write_value_sink_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
+  size_t len;
+  int rc;
+  if (output == NULL || output->write == NULL) {
+    return GVM_ERR_OUTPUT_UNBOUND;
+  }
+  if (value == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (vm_sink_is_counter(output)) {
+    uint64_t *byte_count = (uint64_t *)output->ctx;
+    rc = vm_value_text_len(value, &len);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    if (byte_count == NULL || len == 0U) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    *byte_count += (uint64_t)(len - 1U);
+    return GVM_OK;
+  }
   return vm_write_value_sink_inline_ex(output, value, 0);
 }
 

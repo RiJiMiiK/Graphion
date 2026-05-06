@@ -89,6 +89,11 @@ static int parse_primary_expression(const char **cursor,
     if (rc != GINT_OK) {
       return rc;
     }
+  } else if (**cursor == '{') {
+    rc = parse_dict_literal(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
   } else {
     parsed_operand operand;
     rc = parse_operand(cursor, program, &operand, line, diagnostic);

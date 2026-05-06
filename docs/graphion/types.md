@@ -21,6 +21,7 @@ Graphion currently exposes these value kinds:
 - `string`
 - `bits`
 - `list`
+- `dict`
 
 ## Built-In Numeric Constants
 
@@ -115,6 +116,22 @@ Current `list` literals:
 - may contain nested lists
 - currently reject trailing commas
 
+### Dictionaries
+
+```gion
+weights = {"a": 1, "b": 2}
+nested = {"inner": weights, "empty": {}}
+```
+
+Current `dict` literals:
+
+- start with `{`
+- end with `}`
+- use commas between entries
+- require `string` literal keys in the form `"key": value`
+- may contain nested `dict` and `list` values
+- currently reject trailing commas
+
 ## Type Notes
 
 ### Numeric Values
@@ -173,6 +190,26 @@ Current index rules:
 - indexes must be `int`
 - indexes must be non-negative
 - out-of-range access is a runtime error
+
+### Dictionaries
+
+`dict` values are key-value non-scalar containers.
+
+Current dict support includes:
+
+- literal construction with `{ ... }`
+- lookup with `dict_expr[key_expr]`
+- key assignment with `dict_expr[key_expr] = value_expr`
+- equality and inequality with other dicts
+- nested dict values
+- `len(x)`
+- printing as braced values
+
+Current dict key rules:
+
+- literal keys must be `string` literals
+- lookup keys must evaluate to `string`
+- missing keys are runtime errors
 
 ### Bits
 

@@ -104,6 +104,9 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
   if (vm_rc == GVM_ERR_INDEX_OUT_OF_RANGE) {
     return fail(diagnostic, line, column, "list index out of range", GINT_ERR_RUN);
   }
+  if (vm_rc == GVM_ERR_MISSING_KEY) {
+    return fail(diagnostic, line, column, "dict key not found", GINT_ERR_RUN);
+  }
   if (vm_rc == GVM_ERR_TYPE_MISMATCH) {
     return fail(diagnostic, line, column, "incompatible operand types", GINT_ERR_RUN);
   }

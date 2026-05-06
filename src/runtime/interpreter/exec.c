@@ -34,6 +34,28 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
     return rc;
   }
   skip_spaces(&rhs_cursor);
+  if (*rhs_cursor == '[') {
+    int bracket_depth = 0;
+    int bracket_in_string = 0;
+    do {
+      if (*rhs_cursor == '\0') {
+        return fail(diagnostic, line, 1U, "expected ']' after assignment target index", GINT_ERR_PARSE);
+      }
+      if (bracket_in_string) {
+        if (*rhs_cursor == '"') {
+          bracket_in_string = 0;
+        }
+      } else if (*rhs_cursor == '"') {
+        bracket_in_string = 1;
+      } else if (*rhs_cursor == '[') {
+        bracket_depth++;
+      } else if (*rhs_cursor == ']') {
+        bracket_depth--;
+      }
+      rhs_cursor++;
+    } while (bracket_depth > 0);
+    skip_spaces(&rhs_cursor);
+  }
   if (rhs_cursor[0] == '*' && rhs_cursor[1] == '*' && rhs_cursor[2] == '=') {
     rhs_cursor += 3;
   } else if (rhs_cursor[0] == '/' && rhs_cursor[1] == '/' && rhs_cursor[2] == '=') {

@@ -24,6 +24,8 @@ Files:
   - `bits` literals with `0b...`, preserved width, normalized equality, `&`, `|`, `^`, `~`, `<<`, and `>>`
 - `07_lists.gion`
   - list literals, nested lists, indexing, equality, printing, and `len(...)`
+- `08_dicts.gion`
+  - dict literals with `string` keys, nested dict values, lookup, equality, printing, and `len(...)`
 
 Run any example with:
 

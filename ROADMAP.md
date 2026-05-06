@@ -13,7 +13,7 @@ This branch is for active work on non-scalar language types.
   - runtime / VM representation
   - basic operations such as indexing, equality, printing, and `len`
   - tests, docs, and examples
-- [ ] add `dict` as the second non-scalar container type
+- [x] add `dict` as the second non-scalar container type
   - recommended first version with `string` keys
   - literals
   - runtime / VM representation

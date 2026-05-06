@@ -33,6 +33,7 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
                          int *compatible_out,
                          int *equal_out);
 int vm_value_list_length(const graphion_vm_value *value, size_t *len_out);
+int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out);
 uint8_t vm_value_get_bits_width(const graphion_vm_value *value);
 uint64_t vm_value_get_bits_payload(const graphion_vm_value *value);
 size_t vm_write_bits_text(char *buffer,
@@ -48,6 +49,10 @@ int vm_global_set_string_copy(graphion_vm *vm, size_t index, const char *text);
 int vm_reg_set_empty_list(graphion_vm *vm, uint8_t reg);
 int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg);
 int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg);
+int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg);
+int vm_dict_set_reg(graphion_vm *vm, uint8_t dict_reg, const char *key, uint8_t value_reg);
+int vm_dict_set_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg, uint8_t value_reg);
+int vm_dict_get_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg);
 
 int vm_write_bytes(FILE *output, const char *bytes, size_t len);
 int vm_write_bytes_sink(const graphion_output_sink *sink, const char *bytes, size_t len);
