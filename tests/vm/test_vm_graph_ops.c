@@ -377,22 +377,25 @@ int test_vm_frontier_primitives(void) {
   if (rc != 0) {
     return 1;
   }
-  rc = graphion_vm_run(&vm);
-  if (rc != 0) {
+  if (!vm.frontier_fastpath || vm.weighted_sum_fastpath || vm.arith_only_fastpath) {
     return 2;
   }
-  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
     return 3;
+  }
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+    return 4;
   }
   if (TEST_REG_I(vm, 0) != 0 || TEST_REG_I(vm, 1) != 2 || TEST_REG_I(vm, 2) != 2 || TEST_REG_I(vm, 3) != 2 ||
       TEST_REG_I(vm, 4) != 2 || TEST_REG_I(vm, 5) != 7) {
-    return 4;
-  }
-  if (vm.frontier_input_len != 2U || vm.frontier_output_len != 0U) {
     return 5;
   }
-  if (vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
+  if (vm.frontier_input_len != 2U || vm.frontier_output_len != 0U) {
     return 6;
+  }
+  if (vm.frontier_input[0] != 2U || vm.frontier_input[1] != 5U) {
+    return 7;
   }
   return 0;
 }
@@ -436,7 +439,7 @@ int test_vm_frontier_errors(void) {
     return 4;
   }
   rc = graphion_vm_run(&vm);
-  if (rc != GVM_ERR_INVALID_FRONTIER_VALUE) {
+  if (rc != GVM_ERR_FRONTIER_OVERFLOW) {
     return 5;
   }
   if (vm.frontier_output_len != 0U) {
@@ -577,15 +580,18 @@ int test_vm_weighted_graph_opcodes(void) {
   if (rc != 0) {
     return 2;
   }
-  rc = graphion_vm_run(&vm);
-  if (rc != 0) {
+  if (!vm.weighted_sum_fastpath || vm.frontier_fastpath || vm.arith_only_fastpath) {
     return 3;
   }
-  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
+  rc = graphion_vm_run(&vm);
+  if (rc != 0) {
     return 4;
   }
-  if (TEST_REG_I(vm, 1) != 13 || TEST_REG_I(vm, 3) != 27) {
+  if (!vm.halted || vm.pc != (sizeof(program) / sizeof(program[0]))) {
     return 5;
+  }
+  if (TEST_REG_I(vm, 1) != 13 || TEST_REG_I(vm, 3) != 27) {
+    return 6;
   }
   return 0;
 }
@@ -858,10 +864,24 @@ int test_vm_fastpath_shape_cache_load_flags(void) {
   graphion_vm vm2;
   graphion_vm vm3;
   graphion_vm vm4;
+  graphion_vm vm5;
+  graphion_vm vm6;
+  graphion_vm vm7;
+  graphion_vm vm8;
   const graphion_insn program_fast[] = {
       {GVM_OP_MOV_IMM, 0, 0, 7},
       {GVM_OP_ADD, 0, 0, 0},
       {GVM_OP_HALT, 0, 0, 0},
+  };
+  const graphion_insn program_weighted[] = {
+      {GVM_OP_MOV_IMM, 0, 0, 0},
+      {GVM_OP_NEIGHBOR_WEIGHT_SUM, 0, 1, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  const graphion_insn program_frontier[] = {
+      {GVM_OP_FRONTIER_CLEAR, 0U, 0U, 0},
+      {GVM_OP_FRONTIER_FILTER_LT_IMM, 1U, 0U, 7},
+      {GVM_OP_HALT, 0U, 0U, 0},
   };
   const graphion_insn program_generic[] = {
       {GVM_OP_MOV_IMM, 0, 0, 0},
@@ -873,6 +893,10 @@ int test_vm_fastpath_shape_cache_load_flags(void) {
   graphion_vm_init(&vm2);
   graphion_vm_init(&vm3);
   graphion_vm_init(&vm4);
+  graphion_vm_init(&vm5);
+  graphion_vm_init(&vm6);
+  graphion_vm_init(&vm7);
+  graphion_vm_init(&vm8);
 
   if (graphion_vm_load(&vm1, program_fast, sizeof(program_fast) / sizeof(program_fast[0])) != 0) {
     return 1;
@@ -900,6 +924,34 @@ int test_vm_fastpath_shape_cache_load_flags(void) {
   }
   if (vm4.arith_only_fastpath || vm4.arith_only_halt_terminated) {
     return 8;
+  }
+
+  if (graphion_vm_load(&vm5, program_weighted, sizeof(program_weighted) / sizeof(program_weighted[0])) != 0) {
+    return 9;
+  }
+  if (!vm5.weighted_sum_fastpath || vm5.frontier_fastpath || vm5.arith_only_fastpath) {
+    return 10;
+  }
+
+  if (graphion_vm_load(&vm6, program_weighted, sizeof(program_weighted) / sizeof(program_weighted[0])) != 0) {
+    return 11;
+  }
+  if (!vm6.weighted_sum_fastpath || vm6.frontier_fastpath || vm6.arith_only_fastpath) {
+    return 12;
+  }
+
+  if (graphion_vm_load(&vm7, program_frontier, sizeof(program_frontier) / sizeof(program_frontier[0])) != 0) {
+    return 13;
+  }
+  if (!vm7.frontier_fastpath || vm7.weighted_sum_fastpath || vm7.arith_only_fastpath) {
+    return 14;
+  }
+
+  if (graphion_vm_load(&vm8, program_frontier, sizeof(program_frontier) / sizeof(program_frontier[0])) != 0) {
+    return 15;
+  }
+  if (!vm8.frontier_fastpath || vm8.weighted_sum_fastpath || vm8.arith_only_fastpath) {
+    return 16;
   }
 
   return 0;
