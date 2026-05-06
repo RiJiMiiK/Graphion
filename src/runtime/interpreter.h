@@ -11,13 +11,15 @@ enum {
   GRAPHION_RUNTIME_GLOBAL_INITIAL_CAPACITY = 16,
   GRAPHION_RUNTIME_NAME_MAX = 64,
   GRAPHION_RUNTIME_CONST_MAX = 256,
-  GRAPHION_RUNTIME_PROGRAM_MAX = 512
+  GRAPHION_RUNTIME_PROGRAM_MAX = 512,
+  GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX = 256
 };
 
 typedef struct {
   unsigned int line;
   unsigned int column;
   const char *message;
+  char message_storage[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
 } graphion_runtime_diagnostic;
 
 enum {
