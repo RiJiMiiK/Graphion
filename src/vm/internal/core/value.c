@@ -68,6 +68,11 @@ static graphion_vm_dict *vm_dict_create(void) {
   return dict;
 }
 
+static graphion_csr_graph *vm_graph_create_empty(void) {
+  graphion_csr_graph *graph = (graphion_csr_graph *)calloc(1U, sizeof(*graph));
+  return graph;
+}
+
 static void vm_value_clear(graphion_vm_value *value) {
   if (value == NULL) {
     return;
@@ -132,13 +137,14 @@ static int vm_value_is_list_storage_kind(uint8_t kind) {
 }
 
 static int vm_value_is_compound_kind(uint8_t kind) {
-  return vm_value_is_list_storage_kind(kind) || kind == GVM_VALUE_DICT;
+  return vm_value_is_list_storage_kind(kind) || kind == GVM_VALUE_DICT || kind == GVM_VALUE_GRAPH_REF;
 }
 
 void vm_value_dispose_owned(graphion_vm_value *value) {
   size_t i;
   graphion_vm_list *list;
   graphion_vm_dict *dict;
+  graphion_csr_graph *graph;
 
   if (value == NULL) {
     return;
@@ -164,6 +170,9 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
       free(dict->entries);
       free(dict);
     }
+  } else if (value->kind == GVM_VALUE_GRAPH_REF) {
+    graph = (graphion_csr_graph *)value->as.ref_value;
+    free(graph);
   }
   vm_value_clear(value);
 }
@@ -174,6 +183,8 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   graphion_vm_list *dst_list;
   graphion_vm_dict *src_dict;
   graphion_vm_dict *dst_dict;
+  graphion_csr_graph *src_graph;
+  graphion_csr_graph *dst_graph;
 
   if (dst == NULL || src == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -223,6 +234,20 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
     }
     dst->kind = src->kind;
     dst->as.ref_value = dst_list;
+    return GVM_OK;
+  }
+
+  if (src->kind == GVM_VALUE_GRAPH_REF) {
+    src_graph = (graphion_csr_graph *)src->as.ref_value;
+    dst_graph = vm_graph_create_empty();
+    if (dst_graph == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    if (src_graph != NULL) {
+      *dst_graph = *src_graph;
+    }
+    dst->kind = GVM_VALUE_GRAPH_REF;
+    dst->as.ref_value = dst_graph;
     return GVM_OK;
   }
 
@@ -796,6 +821,21 @@ int vm_set_contains_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg) {
   return GVM_OK;
 }
 
+int vm_reg_set_empty_graph(graphion_vm *vm, uint8_t reg) {
+  graphion_csr_graph *graph;
+  if (vm == NULL || !is_valid_reg(reg)) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  graph = vm_graph_create_empty();
+  if (graph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, reg);
+  vm->regs[reg].kind = GVM_VALUE_GRAPH_REF;
+  vm->regs[reg].as.ref_value = graph;
+  return GVM_OK;
+}
+
 int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg) {
   graphion_vm_dict *dict;
   if (vm == NULL || !is_valid_reg(reg)) {
@@ -1067,6 +1107,9 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
     case GVM_VALUE_BITS:
       *len_out = (size_t)vm_value_get_bits_width(value) + 3U;
       return GVM_OK;
+    case GVM_VALUE_GRAPH_REF:
+      *len_out = 8U;
+      return GVM_OK;
     case GVM_VALUE_LIST:
     case GVM_VALUE_TUPLE:
       total = 3U;
@@ -1299,6 +1342,8 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
       return vm_write_tuple_inline(output, value);
     case GVM_VALUE_SET:
       return vm_write_set_inline(output, value);
+    case GVM_VALUE_GRAPH_REF:
+      return vm_write_bytes_sink(output, "graph()", 7U);
     case GVM_VALUE_DICT:
       return vm_write_dict_inline(output, value);
     default:

@@ -25,6 +25,7 @@ This branch is for active work on non-scalar language types.
   - especially relevant for graph-oriented membership, uniqueness, and frontier-like value sets
 - [ ] first-class `graph` values in `.gion`
   - distinct from backend-only VM/runtime support
+  - [x] create an empty graph with `graph Name;`
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
 - [ ] `path` or `walk` value type

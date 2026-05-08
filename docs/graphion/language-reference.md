@@ -20,6 +20,7 @@ Current supported top-level statements:
 
 - assignment
 - compound assignment
+- graph declaration
 - `if` / `elif` / `else`
 - `match`
 - `print(...)`
@@ -29,6 +30,7 @@ Examples:
 ```gion
 count = 42
 count += 1
+graph G;
 
 if true:
     count += 1
@@ -42,7 +44,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, and `set`.
+Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, and `graph`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -129,6 +131,7 @@ These names are currently reserved and cannot be assigned:
 - `len`
 - `contains`
 - `set`
+- `graph`
 - `if`
 - `elif`
 - `else`
@@ -153,6 +156,7 @@ Graphion currently supports literals for:
 - `dict`
 - `tuple`
 - `set`
+- `graph`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -167,6 +171,19 @@ ratio = 7 / 2
 weights = {"a": 1}
 weights["b"] = 2
 ```
+
+Graph declaration:
+
+```gion
+graph G;
+```
+
+Current graph declaration rules:
+
+- the shape is `graph Name;`
+- `Name` must be a valid identifier
+- the declaration creates an empty graph value
+- the semicolon is required
 
 Compound assignment:
 

@@ -56,6 +56,7 @@ int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg);
 int vm_reg_set_empty_set(graphion_vm *vm, uint8_t reg);
 int vm_set_add_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg);
 int vm_set_contains_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg);
+int vm_reg_set_empty_graph(graphion_vm *vm, uint8_t reg);
 int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg);
 int vm_dict_set_reg(graphion_vm *vm, uint8_t dict_reg, const char *key, uint8_t value_reg);
 int vm_dict_set_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg, uint8_t value_reg);

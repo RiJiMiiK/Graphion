@@ -24,6 +24,7 @@ Graphion currently exposes these value kinds:
 - `dict`
 - `tuple`
 - `set`
+- `graph`
 
 ## Built-In Numeric Constants
 
@@ -165,6 +166,19 @@ Current `set` literals:
 - may contain nested container values
 - currently reject trailing commas
 
+### Graphs
+
+```gion
+graph G;
+```
+
+Current `graph` declarations:
+
+- use `graph Name;`
+- create an empty first-class graph value
+- require a valid identifier after `graph`
+- require the trailing semicolon
+
 ## Type Notes
 
 ### Numeric Values
@@ -285,6 +299,19 @@ Current set rules:
 - printing preserves first-insertion order for deterministic output
 - `set()` is the empty set
 - trailing commas are currently rejected
+
+### Graphs
+
+`graph` values are first-class graph objects in `.gion`.
+
+Current graph support is intentionally minimal:
+
+- declaration with `graph Name;`
+- empty graph values with zero nodes and zero edges
+- storage in variables
+- printing as `graph()`
+
+Graph mutation and graph algorithms from `.gion` will be added in later steps.
 
 ### Bits
 

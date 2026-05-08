@@ -178,7 +178,8 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   size_t statement_end = *index;
   int rc;
 
-  if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5]))) {
+  if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5])) &&
+      !(strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]))) {
     rc = collect_assignment_statement_text(lines,
                                            count,
                                            *index,

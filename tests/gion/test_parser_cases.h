@@ -56,6 +56,8 @@
   X(gion_set_literals_and_prints)                      \
   X(gion_set_runtime_errors)                           \
   X(gion_set_syntax_errors)                            \
+  X(gion_empty_graph_declaration)                      \
+  X(gion_graph_declaration_syntax_errors)              \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \

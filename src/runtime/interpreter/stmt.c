@@ -387,6 +387,50 @@ int parse_print(const char *line_text,
   return program_emit(program, GVM_OP_PRINT_REG, expr.reg_index, 0U, 0, line, diagnostic);
 }
 
+int parse_graph_declaration(const char *line_text,
+                            graphion_runtime_program *program,
+                            unsigned int line,
+                            graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = line_text;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  size_t target_index = 0U;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "graph", 5U) != 0 || is_ident_char(cursor[5])) {
+    return fail(diagnostic, line, 1U, "expected 'graph'", GINT_ERR_PARSE);
+  }
+  cursor += 5;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected graph name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ';') {
+    return fail(diagnostic, line, 1U, "expected ';' after graph declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph declaration", GINT_ERR_PARSE);
+  }
+  rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, GVM_OP_GRAPH_NEW, 0U, 0U, 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+}
+
 int seed_program_from_scope(graphion_runtime_program *program,
                             const graphion_runtime_scope *scope,
                             unsigned int line,
@@ -419,6 +463,8 @@ int parse_statement_line(const char *line_text,
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
+  } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {
+    rc = parse_graph_declaration(line_cursor, program, line, diagnostic);
   } else {
     rc = parse_assignment(line_cursor, program, line, diagnostic);
   }
