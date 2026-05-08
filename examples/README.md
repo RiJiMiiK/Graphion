@@ -31,10 +31,16 @@ Files:
 - `10_sets.gion`
   - set literals, duplicate removal, membership with `contains(...)`, equality, printing, and `len(...)`
 - `11_graphs.gion`
-  - first-class graph declarations with `graph Name;`, node blocks, and undirected edges
+  - first-class graph declarations with `graph Name;`, node blocks, undirected edges, and directed edges
 
 Run any example with:
 
 ```powershell
 .\build\Release\graphion.exe .\examples\01_scalars_and_print.gion
+```
+
+Use `-d` to print debug warnings before execution:
+
+```powershell
+.\build\Release\graphion.exe -d .\examples\11_graphs.gion
 ```

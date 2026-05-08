@@ -185,6 +185,10 @@ graph H:
 graph I:
     1 - 2
     3 - 2
+
+graph J:
+    1 -> 2
+    3 <-> 4
 ```
 
 Current graph declaration rules:
@@ -193,11 +197,15 @@ Current graph declaration rules:
 - the node-block shape is `graph Name:` followed by an indented block
 - `Name` must be a valid identifier
 - `graph Name;` creates an empty graph value
-- graph node blocks create graph values with nodes and optional undirected edges
+- graph node blocks create graph values with nodes and optional edges
 - node entries may be identifiers, string names, or non-negative integer IDs
-- edge entries use `node - node`
+- undirected edge entries use `node - node`
+- directed edge entries use `node -> node`
+- bidirectional directed edge entries use `node <-> node`
+- graphs that use directed edge syntax cannot also use undirected `node - node` entries
 - missing edge endpoint nodes are created before the edge is created
 - explicit integer IDs are reserved first and cannot be duplicated
+- explicit numeric IDs with gaps emit a warning after generated named-node IDs are assigned
 - named nodes receive generated IDs after explicit IDs are reserved
 - the semicolon is required for empty declarations
 - the colon is required for node-block declarations
@@ -601,7 +609,7 @@ Rules:
 - the matched expression is evaluated once, then branches are tested from top to bottom
 - the first matching branch wins
 - incompatible case types do not raise an error during execution; they simply do not match
-- if the matched expression is a scalar literal and a case can never match it, Graphion emits a pre-execution warning unless warnings are disabled
+- if the matched expression is a scalar literal and a case can never match it, Graphion can emit a pre-execution warning in debug mode
 
 Grouped cases:
 
@@ -632,21 +640,20 @@ match value:
         print("y")
 ```
 
-## Comments And Directives
+## Comments And Debug Warnings
 
 Graphion currently supports two comment forms:
 
 - `#` for line comments
 - `/* ... */` for block comments
 
-At the top of a file, `#` also supports a reserved Graphion directive form:
+Warnings are not controlled by comments. The CLI prints warnings only in debug mode:
 
-```gion
-# graphion: warnings=off
+```powershell
+.\build\Release\graphion.exe -d .\examples\11_graphs.gion
 ```
 
-When this directive appears before the first real statement, pre-execution warnings are suppressed for the file. It
-does not suppress parse errors or runtime errors.
+Without `-d`, the program runs normally and warnings are not printed to the terminal.
 
 ### Line Comments
 

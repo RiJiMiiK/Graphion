@@ -79,5 +79,9 @@ int collect_match_warnings(const runtime_source_line *lines,
                            size_t count,
                            graphion_runtime_warning_report *report,
                            graphion_runtime_diagnostic *diagnostic);
+int collect_graph_warnings(const runtime_source_line *lines,
+                           size_t count,
+                           graphion_runtime_warning_report *report,
+                           graphion_runtime_diagnostic *diagnostic);
 
 #endif

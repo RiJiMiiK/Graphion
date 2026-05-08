@@ -60,6 +60,8 @@
   X(gion_graph_node_block_declaration)                 \
   X(gion_graph_explicit_ids_have_priority)             \
   X(gion_graph_undirected_edge_declaration)            \
+  X(gion_graph_directed_edge_declaration)              \
+  X(gion_graph_numeric_id_gap_warnings)                \
   X(gion_graph_declaration_syntax_errors)              \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
@@ -72,8 +74,8 @@
   X(gion_unexpected_indentation_errors)                \
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \
-  X(gion_warning_directives)                           \
-  X(gion_warning_directives_from_path)                 \
+  X(gion_warning_comments_are_ignored)                 \
+  X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
   X(gion_match_control_flow)                           \

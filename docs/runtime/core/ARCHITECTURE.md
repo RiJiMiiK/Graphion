@@ -167,7 +167,7 @@ Implemented today at the user-language level:
 - `if / elif / else`
 - ternary expressions
 - `match`
-- comments and top-of-file warning directives
+- comments and debug-mode warnings
 - `bits` literals and bitwise operators
 - scalar builtins and constants
 

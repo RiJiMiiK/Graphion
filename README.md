@@ -54,6 +54,12 @@ Run the main executable on any example:
 .\build\Release\graphion.exe .\examples\01_scalars_and_print.gion
 ```
 
+Use `-d` to print debug warnings before execution:
+
+```powershell
+.\build\Release\graphion.exe -d .\examples\11_graphs.gion
+```
+
 Start with the examples index:
 
 - [examples/README.md](examples/README.md)

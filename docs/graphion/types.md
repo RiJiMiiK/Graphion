@@ -179,6 +179,10 @@ graph H:
 graph I:
     1 - 2
     3 - 2
+
+graph J:
+    1 -> 2
+    3 <-> 4
 ```
 
 Current `graph` declarations:
@@ -197,7 +201,11 @@ Current graph node block entries:
 - may mix names and integer IDs in the same block
 - reject duplicate explicit integer IDs
 - may define undirected edges with `node - node`
+- may define directed edges with `node -> node`
+- may define bidirectional directed edges with `node <-> node`
+- cannot mix `node - node` with directed edge syntax in the same graph
 - create missing endpoint nodes before creating the edge
+- warn when explicit numeric IDs have gaps after generated named-node IDs are assigned
 
 ## Type Notes
 
@@ -337,7 +345,7 @@ Current graph support is intentionally minimal:
 - printing node-only graphs as `graph(nodes=N)`
 - printing graph values with edges as `graph(nodes=N, edges=M)`
 
-Directed edges, graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
+Graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
 
 ### Bits
 

@@ -14,3 +14,9 @@ graph Graphe_non_oriente:
     3 - 2
 
 print(Graphe_non_oriente)
+
+graph Graphe_oriente:
+    1 -> 2
+    3 <-> 4
+
+print(Graphe_oriente)

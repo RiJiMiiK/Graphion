@@ -8,6 +8,7 @@
 typedef struct {
   uint32_t from;
   uint32_t to;
+  int bidirectional;
 } runtime_graph_edge;
 
 typedef struct {
@@ -23,6 +24,8 @@ typedef struct {
   size_t edge_count;
   uint32_t max_id;
   int has_nodes;
+  int has_directed_edges;
+  int has_undirected_edges;
 } runtime_graph_builder;
 
 static int graph_header_ends_with_colon(const char *text) {
@@ -249,6 +252,8 @@ static int parse_graph_block_line(const char *text,
   uint32_t left = 0U;
   uint32_t right = 0U;
   int has_edge = graph_block_line_has_edge(text);
+  int bidirectional = 0;
+  int directed_syntax = 0;
   int rc;
 
   if (text == NULL || builder == NULL) {
@@ -269,10 +274,34 @@ static int parse_graph_block_line(const char *text,
   if (*cursor == '\0' && !has_edge) {
     return GINT_OK;
   }
-  if (*cursor != '-') {
+  if (*cursor == '-') {
+    cursor++;
+    if (*cursor == '>') {
+      directed_syntax = 1;
+      bidirectional = 0;
+      cursor++;
+    } else {
+      directed_syntax = 0;
+      bidirectional = 1;
+    }
+  } else if (cursor[0] == '<' && cursor[1] == '-' && cursor[2] == '>') {
+    directed_syntax = 1;
+    bidirectional = 1;
+    cursor += 3;
+  } else {
     return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph node", GINT_ERR_PARSE);
   }
-  cursor++;
+  if (directed_syntax) {
+    if (builder->has_undirected_edges) {
+      return fail(diagnostic, line, 1U, "directed graph cannot use undirected '-' edges", GINT_ERR_PARSE);
+    }
+    builder->has_directed_edges = 1;
+  } else {
+    if (builder->has_directed_edges) {
+      return fail(diagnostic, line, 1U, "directed graph cannot use undirected '-' edges", GINT_ERR_PARSE);
+    }
+    builder->has_undirected_edges = 1;
+  }
   rc = parse_graph_node_ref(&cursor, builder, 0, !reserve_only, &right, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -289,6 +318,7 @@ static int parse_graph_block_line(const char *text,
   }
   builder->edges[builder->edge_count].from = left;
   builder->edges[builder->edge_count].to = right;
+  builder->edges[builder->edge_count].bidirectional = bidirectional;
   builder->edge_count += 1U;
   return GINT_OK;
 }
@@ -335,6 +365,7 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   uint32_t *offsets = NULL;
   uint32_t *neighbors = NULL;
   size_t node_count;
+  size_t visible_node_count = 0U;
   size_t adjacency_count;
   size_t i;
 
@@ -342,7 +373,15 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   node_count = builder->has_nodes ? (size_t)builder->max_id + 1U : 0U;
-  adjacency_count = builder->edge_count * 2U;
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i]) {
+      visible_node_count += 1U;
+    }
+  }
+  adjacency_count = 0U;
+  for (i = 0U; i < builder->edge_count; ++i) {
+    adjacency_count += builder->edges[i].bidirectional ? 2U : 1U;
+  }
   graph = (graphion_csr_graph *)calloc(1U, sizeof(*graph));
   if (graph == NULL) {
     return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
@@ -363,7 +402,9 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
     }
     for (i = 0U; i < builder->edge_count; ++i) {
       offsets[builder->edges[i].from + 1U] += 1U;
-      offsets[builder->edges[i].to + 1U] += 1U;
+      if (builder->edges[i].bidirectional) {
+        offsets[builder->edges[i].to + 1U] += 1U;
+      }
     }
     for (i = 1U; i <= node_count; ++i) {
       offsets[i] += offsets[i - 1U];
@@ -381,7 +422,9 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
         const uint32_t from = builder->edges[i].from;
         const uint32_t to = builder->edges[i].to;
         neighbors[cursor[from]++] = to;
-        neighbors[cursor[to]++] = from;
+        if (builder->edges[i].bidirectional) {
+          neighbors[cursor[to]++] = from;
+        }
       }
       free(cursor);
     }
@@ -394,6 +437,11 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   graph->edge_attrs = NULL;
   vm_value_set_none(value_out);
   value_out->kind = GVM_VALUE_GRAPH_REF;
+  value_out->reserved[0] = builder->has_directed_edges ? 1U : 0U;
+  value_out->reserved[1] = (uint8_t)(visible_node_count & 0xFFU);
+  value_out->reserved[2] = (uint8_t)((visible_node_count >> 8U) & 0xFFU);
+  value_out->reserved[3] = (uint8_t)(builder->edge_count & 0xFFU);
+  value_out->reserved[4] = (uint8_t)((builder->edge_count >> 8U) & 0xFFU);
   value_out->as.ref_value = graph;
   return GINT_OK;
 }

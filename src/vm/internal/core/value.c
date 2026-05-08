@@ -98,6 +98,33 @@ static graphion_csr_graph *vm_graph_create_nodes(size_t node_count) {
   return graph;
 }
 
+static size_t vm_graph_visible_node_count(const graphion_vm_value *value, const graphion_csr_graph *graph) {
+  size_t count;
+  if (value == NULL) {
+    return 0U;
+  }
+  count = (size_t)value->reserved[1] | ((size_t)value->reserved[2] << 8U);
+  if (count != 0U) {
+    return count;
+  }
+  return graph != NULL ? graph->node_count : 0U;
+}
+
+static size_t vm_graph_visible_edge_count(const graphion_vm_value *value, const graphion_csr_graph *graph) {
+  size_t count;
+  if (value == NULL) {
+    return 0U;
+  }
+  count = (size_t)value->reserved[3] | ((size_t)value->reserved[4] << 8U);
+  if (count != 0U) {
+    return count;
+  }
+  if (graph == NULL) {
+    return 0U;
+  }
+  return value->reserved[0] != 0U ? graph->edge_count : graph->edge_count / 2U;
+}
+
 static void vm_value_clear(graphion_vm_value *value) {
   if (value == NULL) {
     return;
@@ -294,6 +321,7 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
       }
     }
     dst->kind = GVM_VALUE_GRAPH_REF;
+    memcpy(dst->reserved, src->reserved, sizeof(dst->reserved));
     dst->as.ref_value = dst_graph;
     return GVM_OK;
   }
@@ -886,6 +914,8 @@ int vm_reg_set_graph_node_count(graphion_vm *vm, uint8_t reg, size_t node_count)
   }
   vm_free_owned_reg_string(vm, reg);
   vm->regs[reg].kind = GVM_VALUE_GRAPH_REF;
+  vm->regs[reg].reserved[1] = (uint8_t)(node_count & 0xFFU);
+  vm->regs[reg].reserved[2] = (uint8_t)((node_count >> 8U) & 0xFFU);
   vm->regs[reg].as.ref_value = graph;
   return GVM_OK;
 }
@@ -1164,15 +1194,17 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
     case GVM_VALUE_GRAPH_REF:
       {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
-        if (graph != NULL && graph->node_count > 0U) {
-          if (graph->edge_count > 0U) {
+        const size_t visible_nodes = vm_graph_visible_node_count(value, graph);
+        if (graph != NULL && visible_nodes > 0U) {
+          const size_t visible_edges = vm_graph_visible_edge_count(value, graph);
+          if (visible_edges > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),
                                "graph(nodes=%zu, edges=%zu)\n",
-                               graph->node_count,
-                               graph->edge_count / 2U);
+                               visible_nodes,
+                               visible_edges);
           } else {
-            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)\n", graph->node_count);
+            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)\n", visible_nodes);
           }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
@@ -1418,15 +1450,17 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
     case GVM_VALUE_GRAPH_REF:
       {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
-        if (graph != NULL && graph->node_count > 0U) {
-          if (graph->edge_count > 0U) {
+        const size_t visible_nodes = vm_graph_visible_node_count(value, graph);
+        if (graph != NULL && visible_nodes > 0U) {
+          const size_t visible_edges = vm_graph_visible_edge_count(value, graph);
+          if (visible_edges > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),
                                "graph(nodes=%zu, edges=%zu)",
-                               graph->node_count,
-                               graph->edge_count / 2U);
+                               visible_nodes,
+                               visible_edges);
           } else {
-            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)", graph->node_count);
+            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)", visible_nodes);
           }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
