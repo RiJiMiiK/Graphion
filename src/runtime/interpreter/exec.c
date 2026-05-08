@@ -2,6 +2,168 @@
 
 #include "runtime/interpreter/exec_internal.h"
 
+static int graph_header_ends_with_colon(const char *text) {
+  const char *cursor = text;
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "graph", 5U) != 0 || is_ident_char(cursor[5])) {
+    return 0;
+  }
+  while (*cursor != '\0') {
+    cursor++;
+  }
+  while (cursor > text && (cursor[-1] == ' ' || cursor[-1] == '\t' || cursor[-1] == '\r')) {
+    cursor--;
+  }
+  return cursor > text && cursor[-1] == ':';
+}
+
+static int parse_graph_node_line(const char *text,
+                                 int64_t *explicit_id_out,
+                                 int *has_explicit_id_out,
+                                 unsigned int line,
+                                 graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  char *end = NULL;
+  int64_t id;
+
+  if (text == NULL || explicit_id_out == NULL || has_explicit_id_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(&cursor);
+  *has_explicit_id_out = 0;
+  *explicit_id_out = 0;
+
+  if (*cursor == '"') {
+    cursor++;
+    while (*cursor != '\0' && *cursor != '"') {
+      cursor++;
+    }
+    if (*cursor != '"') {
+      return fail(diagnostic, line, 1U, "unterminated string literal", GINT_ERR_PARSE);
+    }
+    cursor++;
+    skip_spaces(&cursor);
+    if (*cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph node", GINT_ERR_PARSE);
+    }
+    return GINT_OK;
+  }
+
+  if (*cursor == '-' || (*cursor >= '0' && *cursor <= '9')) {
+    id = strtoll(cursor, &end, 10);
+    if (end == cursor) {
+      return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
+    }
+    if (id < 0) {
+      return fail(diagnostic, line, 1U, "graph node id must be non-negative", GINT_ERR_PARSE);
+    }
+    cursor = end;
+    skip_spaces(&cursor);
+    if (*cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph node", GINT_ERR_PARSE);
+    }
+    *has_explicit_id_out = 1;
+    *explicit_id_out = id;
+    return GINT_OK;
+  }
+
+  if (is_ident_start_char(*cursor)) {
+    cursor++;
+    while (is_ident_char(*cursor)) {
+      cursor++;
+    }
+    skip_spaces(&cursor);
+    if (*cursor != '\0') {
+      return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph node", GINT_ERR_PARSE);
+    }
+    return GINT_OK;
+  }
+
+  return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
+}
+
+static int collect_graph_node_count(const runtime_source_line *lines,
+                                    size_t count,
+                                    size_t start_index,
+                                    unsigned int current_indent,
+                                    size_t *end_index_out,
+                                    size_t *node_count_out,
+                                    unsigned int line,
+                                    graphion_runtime_diagnostic *diagnostic) {
+  unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t body_start;
+  size_t body_end;
+  unsigned int body_indent;
+  size_t named_count = 0U;
+  size_t explicit_count = 0U;
+  size_t i;
+
+  if (lines == NULL || end_index_out == NULL || node_count_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  memset(used_ids, 0, sizeof(used_ids));
+
+  body_start = find_next_nonblank_line(lines, count, start_index + 1U);
+  if (body_start >= count || lines[body_start].indent <= current_indent) {
+    return fail(diagnostic, line, 1U, "expected indented graph node block", GINT_ERR_PARSE);
+  }
+  body_indent = lines[body_start].indent;
+  body_end = scan_block_end(lines, count, body_start, body_indent);
+
+  for (i = body_start; i < body_end; ++i) {
+    int has_explicit_id = 0;
+    int64_t explicit_id = 0;
+    int rc;
+
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    rc = parse_graph_node_line(line_content(&lines[i]),
+                               &explicit_id,
+                               &has_explicit_id,
+                               lines[i].line,
+                               diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (has_explicit_id) {
+      if ((uint64_t)explicit_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+        return fail(diagnostic, lines[i].line, 1U, "graph node id is too large", GINT_ERR_CAPACITY);
+      }
+      if (used_ids[(size_t)explicit_id]) {
+        return fail(diagnostic, lines[i].line, 1U, "duplicate graph node id", GINT_ERR_PARSE);
+      }
+      used_ids[(size_t)explicit_id] = 1U;
+      explicit_count += 1U;
+    } else {
+      named_count += 1U;
+    }
+  }
+
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX && named_count > 0U; ++i) {
+    if (!used_ids[i]) {
+      used_ids[i] = 1U;
+      named_count -= 1U;
+    }
+  }
+  if (named_count > 0U) {
+    return fail(diagnostic, line, 1U, "too many graph nodes", GINT_ERR_CAPACITY);
+  }
+  for (i = GRAPHION_RUNTIME_PROGRAM_MAX; i > 0U; --i) {
+    if (used_ids[i - 1U]) {
+      *node_count_out = i;
+      *end_index_out = body_end - 1U;
+      return GINT_OK;
+    }
+  }
+  *node_count_out = explicit_count;
+  *end_index_out = body_end - 1U;
+  return GINT_OK;
+}
+
 static int collect_assignment_statement_text(const runtime_source_line *lines,
                                              size_t count,
                                              size_t start_index,
@@ -176,10 +338,24 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   const char *statement_source = line_content(&lines[*index]);
   graphion_runtime_program program;
   size_t statement_end = *index;
+  size_t graph_node_count = 0U;
   int rc;
 
-  if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5])) &&
-      !(strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]))) {
+  if (strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]) &&
+      graph_header_ends_with_colon(statement_source)) {
+    rc = collect_graph_node_count(lines,
+                                  count,
+                                  *index,
+                                  lines[*index].indent,
+                                  &statement_end,
+                                  &graph_node_count,
+                                  lines[*index].line,
+                                  diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  } else if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5])) &&
+             !(strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]))) {
     rc = collect_assignment_statement_text(lines,
                                            count,
                                            *index,
@@ -198,7 +374,16 @@ static int execute_statement_source_line(const runtime_source_line *lines,
     graphion_runtime_program_dispose(&program);
     return rc;
   }
-  rc = parse_statement_line(statement_source, scope, &program, lines[*index].line, diagnostic);
+  if (strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]) &&
+      graph_header_ends_with_colon(statement_source)) {
+    rc = parse_graph_declaration_with_node_count(statement_source,
+                                                 graph_node_count,
+                                                 &program,
+                                                 lines[*index].line,
+                                                 diagnostic);
+  } else {
+    rc = parse_statement_line(statement_source, scope, &program, lines[*index].line, diagnostic);
+  }
   if (rc != GINT_OK) {
     graphion_runtime_program_dispose(&program);
     return rc;

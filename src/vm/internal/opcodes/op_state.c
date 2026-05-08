@@ -335,5 +335,8 @@ int op_graph_new(graphion_vm *vm, const graphion_insn *in) {
   if (!is_valid_reg(in->a)) {
     return GVM_ERR_INVALID_REG;
   }
-  return vm_reg_set_empty_graph(vm, in->a);
+  if (in->imm < 0) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  return vm_reg_set_graph_node_count(vm, in->a, (size_t)in->imm);
 }

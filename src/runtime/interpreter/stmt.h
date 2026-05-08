@@ -14,6 +14,11 @@ int parse_print(const char *line_text,
                 graphion_runtime_program *program,
                 unsigned int line,
                 graphion_runtime_diagnostic *diagnostic);
+int parse_graph_declaration_with_node_count(const char *line_text,
+                                            size_t node_count,
+                                            graphion_runtime_program *program,
+                                            unsigned int line,
+                                            graphion_runtime_diagnostic *diagnostic);
 int seed_program_from_scope(graphion_runtime_program *program,
                             const graphion_runtime_scope *scope,
                             unsigned int line,

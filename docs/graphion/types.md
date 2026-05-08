@@ -170,14 +170,28 @@ Current `set` literals:
 
 ```gion
 graph G;
+
+graph H:
+    Alice
+    2
+    "Bob"
 ```
 
 Current `graph` declarations:
 
 - use `graph Name;`
 - create an empty first-class graph value
+- use `graph Name:` followed by an indented node block to create a graph with nodes
 - require a valid identifier after `graph`
-- require the trailing semicolon
+- require either the trailing semicolon for an empty graph or the trailing colon for a node block
+
+Current graph node block entries:
+
+- may be identifiers, such as `Alice`
+- may be string names, such as `"Bob"`
+- may be non-negative integer IDs, such as `2`
+- may mix names and integer IDs in the same block
+- reject duplicate explicit integer IDs
 
 ## Type Notes
 
@@ -307,11 +321,16 @@ Current set rules:
 Current graph support is intentionally minimal:
 
 - declaration with `graph Name;`
+- declaration with `graph Name:` and an indented node block
 - empty graph values with zero nodes and zero edges
+- node-only graph values with zero edges
+- explicit integer node IDs reserve their ID first
+- named nodes receive generated IDs after explicit IDs are reserved
 - storage in variables
 - printing as `graph()`
+- printing node-only graphs as `graph(nodes=N)`
 
-Graph mutation and graph algorithms from `.gion` will be added in later steps.
+Graph edges, graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
 
 ### Bits
 

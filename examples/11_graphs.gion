@@ -1,0 +1,10 @@
+graph Nom_du_graph;
+
+print(Nom_du_graph)
+
+graph Graphe_avec_noeuds:
+    Alice
+    2
+    "Bob"
+
+print(Graphe_avec_noeuds)

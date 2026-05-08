@@ -1,3 +1,0 @@
-graph Nom_du_graph;
-
-print(Nom_du_graph)

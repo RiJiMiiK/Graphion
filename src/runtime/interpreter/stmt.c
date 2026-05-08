@@ -387,13 +387,15 @@ int parse_print(const char *line_text,
   return program_emit(program, GVM_OP_PRINT_REG, expr.reg_index, 0U, 0, line, diagnostic);
 }
 
-int parse_graph_declaration(const char *line_text,
-                            graphion_runtime_program *program,
-                            unsigned int line,
-                            graphion_runtime_diagnostic *diagnostic) {
+int parse_graph_declaration_with_node_count(const char *line_text,
+                                            size_t node_count,
+                                            graphion_runtime_program *program,
+                                            unsigned int line,
+                                            graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = line_text;
   char target[GRAPHION_RUNTIME_NAME_MAX];
   size_t target_index = 0U;
+  int block_declaration = 0;
   int rc;
 
   skip_spaces(&cursor);
@@ -412,8 +414,10 @@ int parse_graph_declaration(const char *line_text,
     return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
   }
   skip_spaces(&cursor);
-  if (*cursor != ';') {
-    return fail(diagnostic, line, 1U, "expected ';' after graph declaration", GINT_ERR_PARSE);
+  if (*cursor == ':') {
+    block_declaration = 1;
+  } else if (*cursor != ';') {
+    return fail(diagnostic, line, 1U, "expected ';' or ':' after graph declaration", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
@@ -424,11 +428,24 @@ int parse_graph_declaration(const char *line_text,
   if (rc != GINT_OK) {
     return rc;
   }
-  rc = program_emit(program, GVM_OP_GRAPH_NEW, 0U, 0U, 0, line, diagnostic);
+  if (!block_declaration && node_count != 0U) {
+    return fail(diagnostic, line, 1U, "graph node block requires ':'", GINT_ERR_PARSE);
+  }
+  if (node_count > (size_t)INT32_MAX) {
+    return fail(diagnostic, line, 1U, "too many graph nodes", GINT_ERR_CAPACITY);
+  }
+  rc = program_emit(program, GVM_OP_GRAPH_NEW, 0U, 0U, (int32_t)node_count, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
   return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+}
+
+static int parse_graph_declaration(const char *line_text,
+                                   graphion_runtime_program *program,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic) {
+  return parse_graph_declaration_with_node_count(line_text, 0U, program, line, diagnostic);
 }
 
 int seed_program_from_scope(graphion_runtime_program *program,

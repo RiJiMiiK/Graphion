@@ -176,14 +176,25 @@ Graph declaration:
 
 ```gion
 graph G;
+
+graph H:
+    Alice
+    2
+    "Bob"
 ```
 
 Current graph declaration rules:
 
-- the shape is `graph Name;`
+- the empty shape is `graph Name;`
+- the node-block shape is `graph Name:` followed by an indented block
 - `Name` must be a valid identifier
-- the declaration creates an empty graph value
-- the semicolon is required
+- `graph Name;` creates an empty graph value
+- graph node blocks currently create node-only graph values with zero edges
+- node entries may be identifiers, string names, or non-negative integer IDs
+- explicit integer IDs are reserved first and cannot be duplicated
+- named nodes receive generated IDs after explicit IDs are reserved
+- the semicolon is required for empty declarations
+- the colon is required for node-block declarations
 
 Compound assignment:
 

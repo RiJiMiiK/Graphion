@@ -73,6 +73,31 @@ static graphion_csr_graph *vm_graph_create_empty(void) {
   return graph;
 }
 
+static graphion_csr_graph *vm_graph_create_nodes(size_t node_count) {
+  graphion_csr_graph *graph;
+  uint32_t *offsets;
+
+  graph = vm_graph_create_empty();
+  if (graph == NULL) {
+    return NULL;
+  }
+  if (node_count == 0U) {
+    return graph;
+  }
+  offsets = (uint32_t *)calloc(node_count + 1U, sizeof(*offsets));
+  if (offsets == NULL) {
+    free(graph);
+    return NULL;
+  }
+  graph->node_count = node_count;
+  graph->edge_count = 0U;
+  graph->offsets = offsets;
+  graph->neighbors = NULL;
+  graph->weights = NULL;
+  graph->edge_attrs = NULL;
+  return graph;
+}
+
 static void vm_value_clear(graphion_vm_value *value) {
   if (value == NULL) {
     return;
@@ -172,6 +197,12 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
     }
   } else if (value->kind == GVM_VALUE_GRAPH_REF) {
     graph = (graphion_csr_graph *)value->as.ref_value;
+    if (graph != NULL) {
+      free((void *)graph->offsets);
+      free((void *)graph->neighbors);
+      free((void *)graph->weights);
+      free((void *)graph->edge_attrs);
+    }
     free(graph);
   }
   vm_value_clear(value);
@@ -238,13 +269,29 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   }
 
   if (src->kind == GVM_VALUE_GRAPH_REF) {
+    size_t offset_count;
     src_graph = (graphion_csr_graph *)src->as.ref_value;
-    dst_graph = vm_graph_create_empty();
+    dst_graph = vm_graph_create_nodes(src_graph != NULL ? src_graph->node_count : 0U);
     if (dst_graph == NULL) {
       return GVM_ERR_INVALID_ARG;
     }
     if (src_graph != NULL) {
-      *dst_graph = *src_graph;
+      dst_graph->edge_count = src_graph->edge_count;
+      if (src_graph->edge_count > 0U) {
+        uint32_t *neighbors = (uint32_t *)calloc(src_graph->edge_count, sizeof(*neighbors));
+        if (neighbors == NULL) {
+          vm_value_clear(dst);
+          free((void *)dst_graph->offsets);
+          free(dst_graph);
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(neighbors, src_graph->neighbors, src_graph->edge_count * sizeof(*neighbors));
+        dst_graph->neighbors = neighbors;
+      }
+      offset_count = src_graph->node_count + 1U;
+      if (src_graph->offsets != NULL && dst_graph->offsets != NULL && offset_count > 0U) {
+        memcpy((void *)dst_graph->offsets, src_graph->offsets, offset_count * sizeof(*dst_graph->offsets));
+      }
     }
     dst->kind = GVM_VALUE_GRAPH_REF;
     dst->as.ref_value = dst_graph;
@@ -822,11 +869,18 @@ int vm_set_contains_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg) {
 }
 
 int vm_reg_set_empty_graph(graphion_vm *vm, uint8_t reg) {
+  return vm_reg_set_graph_node_count(vm, reg, 0U);
+}
+
+int vm_reg_set_graph_node_count(graphion_vm *vm, uint8_t reg, size_t node_count) {
   graphion_csr_graph *graph;
   if (vm == NULL || !is_valid_reg(reg)) {
     return GVM_ERR_INVALID_ARG;
   }
-  graph = vm_graph_create_empty();
+  if (node_count > (size_t)UINT32_MAX) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  graph = vm_graph_create_nodes(node_count);
   if (graph == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
@@ -1108,7 +1162,18 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
       *len_out = (size_t)vm_value_get_bits_width(value) + 3U;
       return GVM_OK;
     case GVM_VALUE_GRAPH_REF:
-      *len_out = 8U;
+      {
+        const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
+        if (graph != NULL && graph->node_count > 0U) {
+          written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)\n", graph->node_count);
+          if (written < 0 || (size_t)written >= sizeof(buffer)) {
+            return GVM_ERR_OUTPUT_UNBOUND;
+          }
+          *len_out = (size_t)written;
+          return GVM_OK;
+        }
+        *len_out = 8U;
+      }
       return GVM_OK;
     case GVM_VALUE_LIST:
     case GVM_VALUE_TUPLE:
@@ -1343,7 +1408,17 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
     case GVM_VALUE_SET:
       return vm_write_set_inline(output, value);
     case GVM_VALUE_GRAPH_REF:
-      return vm_write_bytes_sink(output, "graph()", 7U);
+      {
+        const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
+        if (graph != NULL && graph->node_count > 0U) {
+          written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)", graph->node_count);
+          if (written < 0 || (size_t)written >= sizeof(buffer)) {
+            return GVM_ERR_OUTPUT_UNBOUND;
+          }
+          return vm_write_bytes_sink(output, buffer, (size_t)written);
+        }
+        return vm_write_bytes_sink(output, "graph()", 7U);
+      }
     case GVM_VALUE_DICT:
       return vm_write_dict_inline(output, value);
     default:
