@@ -178,8 +178,9 @@ Graph declaration:
 graph G;
 
 graph H:
-    Alice
-    2
+    defaults node {"label": "unknown", "score": 0}
+    Alice {"label": "start", "score": 1}
+    2 {"score": 2}
     "Bob"
 
 graph I:
@@ -199,6 +200,12 @@ Current graph declaration rules:
 - `graph Name;` creates an empty graph value
 - graph node blocks create graph values with nodes and optional edges
 - node entries may be identifiers, string names, or non-negative integer IDs
+- node entries may attach attributes with `node {"key": value}`
+- node attributes are `dict` values and their values may use any supported Graphion value type
+- `defaults node {"key": value}` declares node attribute defaults for the graph
+- with node defaults, node entries may omit attributes or override only some keys
+- without node defaults, either no node has attributes or every node must define attributes with the same keys
+- node attributes cannot introduce keys outside the declared node defaults
 - undirected edge entries use `node - node`
 - directed edge entries use `node -> node`
 - bidirectional directed edge entries use `node <-> node`

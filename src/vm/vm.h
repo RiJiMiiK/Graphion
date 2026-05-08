@@ -219,6 +219,12 @@ typedef struct {
 } graphion_vm_value;
 
 typedef struct {
+  graphion_csr_graph csr;
+  graphion_vm_value *node_attrs;
+  size_t node_attr_count;
+} graphion_graph_value;
+
+typedef struct {
   uint8_t op;
   uint8_t a;
   uint8_t b;

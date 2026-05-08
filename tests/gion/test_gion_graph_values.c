@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "test_parser_helpers.h"
+#include "vm/internal/core/value.h"
 
 int test_gion_empty_graph_declaration(void) {
   const char *source =
@@ -145,6 +146,121 @@ int test_gion_graph_explicit_ids_have_priority(void) {
   remove(path);
   if (strcmp(output, "graph(nodes=2)\n") != 0) {
     return finish_scope_test(&scope, 6);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_graph_node_attributes(void) {
+  const char *source =
+      "graph G:\n"
+      "    Alice {\"label\": \"start\", \"score\": 1}\n"
+      "    2 {\"label\": \"middle\", \"score\": [true, 3]}\n"
+      "    \"Bob\" {\"score\": 3, \"label\": \"end\"}\n"
+      "print(G)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *graph_value;
+  const graphion_graph_value *graph_data;
+  size_t attr_len = 0U;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_node_attributes.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  graph_value = graphion_runtime_scope_find(&scope, "G");
+  if (graph_value == NULL || graph_value->kind != GVM_VALUE_GRAPH_REF || graph_value->reserved[5] != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
+  if (graph_data == NULL || graph_data->csr.node_count != 3U || graph_data->node_attrs == NULL ||
+      graph_data->node_attr_count != 3U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (graph_data->node_attrs[0].kind != GVM_VALUE_DICT || graph_data->node_attrs[1].kind != GVM_VALUE_DICT ||
+      graph_data->node_attrs[2].kind != GVM_VALUE_DICT) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!vm_value_dict_length(&graph_data->node_attrs[0], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  remove(path);
+  if (strcmp(output, "graph(nodes=3, node_attrs=2)\n") != 0) {
+    return finish_scope_test(&scope, 8);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_graph_node_attribute_defaults(void) {
+  const char *source =
+      "graph G:\n"
+      "    defaults node {\"label\": \"unknown\", \"score\": 0}\n"
+      "    Alice {\"label\": \"start\"}\n"
+      "    2 {\"score\": 2}\n"
+      "    \"Bob\"\n"
+      "print(G)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *graph_value;
+  const graphion_graph_value *graph_data;
+  size_t attr_len = 0U;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_node_attribute_defaults.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  graph_value = graphion_runtime_scope_find(&scope, "G");
+  if (graph_value == NULL || graph_value->kind != GVM_VALUE_GRAPH_REF || graph_value->reserved[5] != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
+  if (graph_data == NULL || graph_data->node_attrs == NULL || graph_data->node_attr_count != 3U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!vm_value_dict_length(&graph_data->node_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&graph_data->node_attrs[1], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&graph_data->node_attrs[2], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  remove(path);
+  if (strcmp(output, "graph(nodes=3, node_attrs=2)\n") != 0) {
+    return finish_scope_test(&scope, 7);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -358,6 +474,21 @@ int test_gion_graph_declaration_syntax_errors(void) {
       {"graph G:\n    1\n    1\n", GINT_ERR_PARSE, "duplicate graph node id"},
       {"graph G:\n    ?\n", GINT_ERR_PARSE, "expected graph node name or id"},
       {"graph G:\n    alpha extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    alpha {\"a\": 1,}\n", GINT_ERR_PARSE, "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    alpha [1]\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    alpha {\"a\": 1}\n    beta {\"b\": 2}\n",
+       GINT_ERR_PARSE,
+       "graph node attributes must use the same keys"},
+      {"graph G:\n    alpha {\"a\": 1}\n    beta\n",
+       GINT_ERR_PARSE,
+       "graph node attributes must use the same keys"},
+      {"graph G:\n    defaults node {\"a\": 0}\n    alpha {\"b\": 1}\n",
+       GINT_ERR_PARSE,
+       "graph node attributes must use declared default keys"},
+      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    alpha\n",
+       GINT_ERR_PARSE,
+       "duplicate graph node attribute defaults"},
+      {"graph G:\n    defaults edge {\"weight\": 1}\n    alpha\n", GINT_ERR_PARSE, "expected 'node' after defaults"},
       {"graph G:\n    1 -\n", GINT_ERR_PARSE, "expected graph node name or id"},
       {"graph G:\n    1 - 2 extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph edge"},
       {"graph G:\n    1 -> 2\n    2 - 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},

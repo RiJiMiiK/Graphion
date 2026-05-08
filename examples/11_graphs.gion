@@ -3,8 +3,9 @@ graph Nom_du_graph;
 print(Nom_du_graph)
 
 graph Graphe_avec_noeuds:
-    Alice
-    2
+    defaults node {"label": "unknown", "score": 0}
+    Alice {"label": "start", "score": 1}
+    2 {"score": 2}
     "Bob"
 
 print(Graphe_avec_noeuds)

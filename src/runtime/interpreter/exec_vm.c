@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "runtime/interpreter/exec_internal.h"
+#include "vm/internal/core/value.h"
 
 static int scope_sync_to_program(graphion_runtime_scope *scope,
                                  const graphion_runtime_program *program,
@@ -158,9 +159,10 @@ static int execute_condition_program(const graphion_runtime_program *program,
     graphion_vm_dispose(&vm);
     return fail_for_vm_runtime_error(diagnostic, line, 1U, rc);
   }
-  *value_out = vm.regs[reg_index];
-  if (value_out->kind == GVM_VALUE_STRING) {
-    value_out->as.string_value = NULL;
+  rc = vm_value_clone(value_out, &vm.regs[reg_index]);
+  if (rc != GVM_OK) {
+    graphion_vm_dispose(&vm);
+    return fail(diagnostic, line, 1U, "failed to clone expression value", GINT_ERR_CAPACITY);
   }
   graphion_vm_dispose(&vm);
   return GINT_OK;
@@ -202,9 +204,17 @@ int evaluate_expression_text_to_value(const char *expression_text,
     return fail(diagnostic, line, 1U, "unexpected trailing tokens after expression", GINT_ERR_PARSE);
   }
   if (expr.kind == EXPR_RESULT_LITERAL) {
-    *value_out = program.const_pool[expr.const_index];
+    rc = vm_value_clone(value_out, &program.const_pool[expr.const_index]);
+    graphion_runtime_program_dispose(&program);
+    if (rc != GVM_OK) {
+      return fail(diagnostic, line, 1U, "failed to clone expression value", GINT_ERR_CAPACITY);
+    }
   } else if (expr.kind == EXPR_RESULT_GLOBAL) {
-    *value_out = scope->globals[expr.global_index];
+    rc = vm_value_clone(value_out, &scope->globals[expr.global_index]);
+    graphion_runtime_program_dispose(&program);
+    if (rc != GVM_OK) {
+      return fail(diagnostic, line, 1U, "failed to clone expression value", GINT_ERR_CAPACITY);
+    }
   } else {
     rc = program_emit(&program, GVM_OP_HALT, 0U, 0U, 0, line, diagnostic);
     if (rc != GINT_OK) {
@@ -215,7 +225,6 @@ int evaluate_expression_text_to_value(const char *expression_text,
     graphion_runtime_program_dispose(&program);
     return rc;
   }
-  graphion_runtime_program_dispose(&program);
   return GINT_OK;
 }
 
@@ -234,12 +243,15 @@ int evaluate_condition_text(const char *condition_text,
   }
   if (value.kind == GVM_VALUE_BOOL) {
     *result_out = value.as.bool_value != 0;
+    vm_value_dispose_owned(&value);
     return GINT_OK;
   }
   if (value.kind == GVM_VALUE_INT && (value.as.int_value == 0 || value.as.int_value == 1)) {
     *result_out = value.as.int_value != 0;
+    vm_value_dispose_owned(&value);
     return GINT_OK;
   }
+  vm_value_dispose_owned(&value);
   return fail(diagnostic, line, 1U, "if condition must be boolean or 0/1", GINT_ERR_RUN);
 }
 

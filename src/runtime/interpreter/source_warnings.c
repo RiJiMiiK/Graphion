@@ -168,48 +168,70 @@ static void add_graph_warning_name(char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAP
   *name_count += 1U;
 }
 
+static void collect_one_graph_ref_for_warning(const char **cursor,
+                                              unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX],
+                                              char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAPHION_RUNTIME_NAME_MAX],
+                                              size_t *name_count) {
+  if (cursor == NULL || *cursor == NULL) {
+    return;
+  }
+  skip_spaces(cursor);
+  if (**cursor == '"') {
+    const char *name = *cursor + 1;
+    size_t name_len = 0U;
+    while (name[name_len] != '\0' && name[name_len] != '"') {
+      name_len++;
+    }
+    if (name[name_len] == '"') {
+      add_graph_warning_name(names, name_count, name, name_len);
+      *cursor = name + name_len + 1U;
+    }
+    return;
+  }
+  if (**cursor >= '0' && **cursor <= '9') {
+    char *end = NULL;
+    const long id = strtol(*cursor, &end, 10);
+    if (end != *cursor && (*end == '\0' || !is_ident_char(*end)) && id >= 0 &&
+        (unsigned long)id < GRAPHION_RUNTIME_PROGRAM_MAX) {
+      used_ids[(size_t)id] = 1U;
+    }
+    if (end != NULL && end > *cursor) {
+      *cursor = end;
+    }
+    return;
+  }
+  if (is_ident_start_char(**cursor)) {
+    const char *name = *cursor;
+    size_t name_len = 0U;
+    while (is_ident_char(name[name_len])) {
+      name_len++;
+    }
+    add_graph_warning_name(names, name_count, name, name_len);
+    *cursor = name + name_len;
+  }
+}
+
 static void collect_graph_refs_from_graph_line(const char *text,
                                                unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX],
                                                char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAPHION_RUNTIME_NAME_MAX],
                                                size_t *name_count) {
   const char *cursor = text;
 
-  while (cursor != NULL && *cursor != '\0') {
-    if (*cursor == '"') {
-      const char *name = cursor + 1;
-      size_t name_len = 0U;
-      while (name[name_len] != '\0' && name[name_len] != '"') {
-        name_len++;
-      }
-      if (name[name_len] == '"') {
-        add_graph_warning_name(names, name_count, name, name_len);
-        cursor = name + name_len + 1U;
-      } else {
-        cursor++;
-      }
-      continue;
-    }
-    if (*cursor >= '0' && *cursor <= '9' && (cursor == text || !is_ident_char(cursor[-1]))) {
-      char *end = NULL;
-      const long id = strtol(cursor, &end, 10);
-      if (end != cursor && (*end == '\0' || !is_ident_char(*end)) && id >= 0 &&
-          (unsigned long)id < GRAPHION_RUNTIME_PROGRAM_MAX) {
-        used_ids[(size_t)id] = 1U;
-      }
-      cursor = end != NULL && end > cursor ? end : cursor + 1;
-      continue;
-    }
-    if (is_ident_start_char(*cursor)) {
-      const char *name = cursor;
-      size_t name_len = 0U;
-      while (is_ident_char(name[name_len])) {
-        name_len++;
-      }
-      add_graph_warning_name(names, name_count, name, name_len);
-      cursor = name + name_len;
-      continue;
-    }
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "defaults", 8U) == 0 && !is_ident_char(cursor[8])) {
+    return;
+  }
+  collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
+  skip_spaces(&cursor);
+  if (*cursor == '-') {
     cursor++;
+    if (*cursor == '>') {
+      cursor++;
+    }
+    collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
+  } else if (cursor[0] == '<' && cursor[1] == '-' && cursor[2] == '>') {
+    cursor += 3;
+    collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
   }
 }
 

@@ -172,8 +172,9 @@ Current `set` literals:
 graph G;
 
 graph H:
-    Alice
-    2
+    defaults node {"label": "unknown", "score": 0}
+    Alice {"label": "start", "score": 1}
+    2 {"score": 2}
     "Bob"
 
 graph I:
@@ -199,6 +200,12 @@ Current graph node block entries:
 - may be string names, such as `"Bob"`
 - may be non-negative integer IDs, such as `2`
 - may mix names and integer IDs in the same block
+- may attach node attributes with `node {"key": value}`
+- store node attributes as dict values whose entries may contain any supported Graphion value type
+- may declare node attribute defaults with `defaults node {"key": value}`
+- use node defaults for nodes that omit attributes or omit specific keys
+- require all node attributes to share the same keys when no node defaults are declared
+- reject node attribute keys outside the declared node defaults
 - reject duplicate explicit integer IDs
 - may define undirected edges with `node - node`
 - may define directed edges with `node -> node`

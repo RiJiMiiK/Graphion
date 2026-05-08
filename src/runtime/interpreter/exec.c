@@ -18,6 +18,9 @@ typedef struct {
 
 typedef struct {
   unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX];
+  unsigned char has_node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
+  graphion_vm_value node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
+  graphion_vm_value node_attr_defaults;
   runtime_graph_named_node named_nodes[GRAPHION_RUNTIME_PROGRAM_MAX];
   size_t named_node_count;
   runtime_graph_edge edges[GRAPHION_RUNTIME_PROGRAM_MAX];
@@ -26,6 +29,7 @@ typedef struct {
   int has_nodes;
   int has_directed_edges;
   int has_undirected_edges;
+  int has_node_attr_defaults;
 } runtime_graph_builder;
 
 static int graph_header_ends_with_colon(const char *text) {
@@ -44,10 +48,32 @@ static int graph_header_ends_with_colon(const char *text) {
 }
 
 static void runtime_graph_builder_init(runtime_graph_builder *builder) {
+  size_t i;
   if (builder == NULL) {
     return;
   }
   memset(builder, 0, sizeof(*builder));
+  vm_value_set_none(&builder->node_attr_defaults);
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    vm_value_set_none(&builder->node_attrs[i]);
+  }
+}
+
+static void runtime_graph_builder_dispose(runtime_graph_builder *builder) {
+  size_t i;
+  if (builder == NULL) {
+    return;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->has_node_attrs[i]) {
+      vm_value_dispose_owned(&builder->node_attrs[i]);
+      builder->has_node_attrs[i] = 0U;
+    }
+  }
+  if (builder->has_node_attr_defaults) {
+    vm_value_dispose_owned(&builder->node_attr_defaults);
+    builder->has_node_attr_defaults = 0;
+  }
 }
 
 static int runtime_graph_mark_id(runtime_graph_builder *builder,
@@ -211,41 +237,224 @@ static int parse_graph_node_ref(const char **cursor,
 
 static int graph_block_line_has_edge(const char *text) {
   const char *cursor = text;
-  int in_string = 0;
-  int saw_left = 0;
 
   if (text == NULL) {
     return 0;
   }
   skip_spaces(&cursor);
-  while (*cursor != '\0') {
-    if (in_string) {
-      if (*cursor == '"') {
-        in_string = 0;
-      }
+  if (*cursor == '"') {
+    cursor++;
+    while (*cursor != '\0' && *cursor != '"') {
       cursor++;
-      continue;
     }
     if (*cursor == '"') {
-      in_string = 1;
-      saw_left = 1;
       cursor++;
+    }
+  } else {
+    while (*cursor != '\0' && !(*cursor == ' ' || *cursor == '\t' || *cursor == '\r')) {
+      cursor++;
+    }
+  }
+  skip_spaces(&cursor);
+  return *cursor == '-' || (cursor[0] == '<' && cursor[1] == '-' && cursor[2] == '>');
+}
+
+static int runtime_graph_set_node_attrs(runtime_graph_builder *builder,
+                                        uint32_t node_id,
+                                        const graphion_vm_value *attrs,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || attrs == NULL || (size_t)node_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (attrs->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "graph node attributes must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, attrs);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone graph node attributes", GINT_ERR_CAPACITY);
+  }
+  if (builder->has_node_attrs[node_id]) {
+    vm_value_dispose_owned(&builder->node_attrs[node_id]);
+  }
+  builder->node_attrs[node_id] = cloned;
+  builder->has_node_attrs[node_id] = 1U;
+  return GINT_OK;
+}
+
+static int runtime_graph_set_node_attr_defaults(runtime_graph_builder *builder,
+                                                const graphion_vm_value *defaults,
+                                                unsigned int line,
+                                                graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || defaults == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->has_node_attr_defaults) {
+    return fail(diagnostic, line, 1U, "duplicate graph node attribute defaults", GINT_ERR_PARSE);
+  }
+  if (defaults->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "graph node attribute defaults must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, defaults);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone graph node attribute defaults", GINT_ERR_CAPACITY);
+  }
+  builder->node_attr_defaults = cloned;
+  builder->has_node_attr_defaults = 1;
+  return GINT_OK;
+}
+
+static int graph_node_attr_keys_match(const runtime_graph_builder *builder, size_t reference_id, size_t node_id) {
+  if (builder == NULL || reference_id >= GRAPHION_RUNTIME_PROGRAM_MAX || node_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return 0;
+  }
+  if (!builder->has_node_attrs[reference_id] && !builder->has_node_attrs[node_id]) {
+    return 1;
+  }
+  if (!builder->has_node_attrs[reference_id] || !builder->has_node_attrs[node_id]) {
+    return 0;
+  }
+  return vm_value_dict_keys_equal(&builder->node_attrs[reference_id], &builder->node_attrs[node_id]);
+}
+
+static int apply_graph_node_attr_defaults(runtime_graph_builder *builder,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (!builder->has_node_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (!builder->used_ids[i]) {
       continue;
     }
-    if (*cursor == '-' && saw_left) {
-      return 1;
+    if (!builder->has_node_attrs[i]) {
+      const int rc = runtime_graph_set_node_attrs(builder,
+                                                  (uint32_t)i,
+                                                  &builder->node_attr_defaults,
+                                                  line,
+                                                  diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    } else {
+      int rc;
+      if (!vm_value_dict_keys_subset(&builder->node_attrs[i], &builder->node_attr_defaults)) {
+        return fail(diagnostic, line, 1U, "graph node attributes must use declared default keys", GINT_ERR_PARSE);
+      }
+      rc = vm_value_dict_merge_defaults(&builder->node_attrs[i], &builder->node_attr_defaults);
+      if (rc != GVM_OK) {
+        return fail(diagnostic, line, 1U, "failed to apply graph node attribute defaults", GINT_ERR_CAPACITY);
+      }
     }
-    if (*cursor != ' ' && *cursor != '\t' && *cursor != '\r') {
-      saw_left = 1;
-    }
-    cursor++;
   }
-  return 0;
+  return GINT_OK;
+}
+
+static int validate_graph_node_attr_schema(const runtime_graph_builder *builder,
+                                           unsigned int line,
+                                           graphion_runtime_diagnostic *diagnostic) {
+  size_t reference_id = GRAPHION_RUNTIME_PROGRAM_MAX;
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i]) {
+      reference_id = i;
+      break;
+    }
+  }
+  if (reference_id == GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return GINT_OK;
+  }
+  for (i = reference_id + 1U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i] && !graph_node_attr_keys_match(builder, reference_id, i)) {
+      return fail(diagnostic, line, 1U, "graph node attributes must use the same keys", GINT_ERR_PARSE);
+    }
+  }
+  return GINT_OK;
+}
+
+static int parse_graph_node_attrs(const char *text,
+                                  runtime_graph_builder *builder,
+                                  uint32_t node_id,
+                                  graphion_runtime_scope *scope,
+                                  unsigned int line,
+                                  graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value attrs;
+  int rc;
+
+  vm_value_set_none(&attrs);
+  rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &attrs);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = runtime_graph_set_node_attrs(builder, node_id, &attrs, line, diagnostic);
+  vm_value_dispose_owned(&attrs);
+  return rc;
+}
+
+static int graph_block_line_is_defaults(const char *text) {
+  const char *cursor = text;
+
+  if (text == NULL) {
+    return 0;
+  }
+  skip_spaces(&cursor);
+  return strncmp(cursor, "defaults", 8U) == 0 && !is_ident_char(cursor[8]);
+}
+
+static int parse_graph_node_attr_defaults_line(const char *text,
+                                               runtime_graph_builder *builder,
+                                               graphion_runtime_scope *scope,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  graphion_vm_value defaults;
+  int rc;
+
+  if (text == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "defaults", 8U) != 0 || is_ident_char(cursor[8])) {
+    return fail(diagnostic, line, 1U, "expected 'defaults node'", GINT_ERR_PARSE);
+  }
+  cursor += 8;
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "node", 4U) != 0 || is_ident_char(cursor[4])) {
+    return fail(diagnostic, line, 1U, "expected 'node' after defaults", GINT_ERR_PARSE);
+  }
+  cursor += 4;
+  skip_spaces(&cursor);
+  vm_value_set_none(&defaults);
+  rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = runtime_graph_set_node_attr_defaults(builder, &defaults, line, diagnostic);
+  vm_value_dispose_owned(&defaults);
+  return rc;
 }
 
 static int parse_graph_block_line(const char *text,
                                   runtime_graph_builder *builder,
                                   int reserve_only,
+                                  graphion_runtime_scope *scope,
                                   unsigned int line,
                                   graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = text;
@@ -271,6 +480,12 @@ static int parse_graph_block_line(const char *text,
     return rc;
   }
   skip_spaces(&cursor);
+  if (*cursor == '{' && !has_edge) {
+    if (reserve_only) {
+      return GINT_OK;
+    }
+    return parse_graph_node_attrs(cursor, builder, left, scope, line, diagnostic);
+  }
   if (*cursor == '\0' && !has_edge) {
     return GINT_OK;
   }
@@ -361,11 +576,13 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
                                      graphion_vm_value *value_out,
                                      unsigned int line,
                                      graphion_runtime_diagnostic *diagnostic) {
+  graphion_graph_value *graph_value = NULL;
   graphion_csr_graph *graph = NULL;
   uint32_t *offsets = NULL;
   uint32_t *neighbors = NULL;
   size_t node_count;
   size_t visible_node_count = 0U;
+  size_t visible_node_attr_key_count = 0U;
   size_t adjacency_count;
   size_t i;
 
@@ -382,22 +599,62 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   for (i = 0U; i < builder->edge_count; ++i) {
     adjacency_count += builder->edges[i].bidirectional ? 2U : 1U;
   }
-  graph = (graphion_csr_graph *)calloc(1U, sizeof(*graph));
-  if (graph == NULL) {
+  graph_value = (graphion_graph_value *)calloc(1U, sizeof(*graph_value));
+  if (graph_value == NULL) {
     return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
   }
+  graph = &graph_value->csr;
   if (node_count > 0U) {
     offsets = (uint32_t *)calloc(node_count + 1U, sizeof(*offsets));
     if (offsets == NULL) {
-      free(graph);
+      free(graph_value);
       return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    graph->offsets = offsets;
+  }
+  if (node_count > 0U) {
+    graph_value->node_attrs = (graphion_vm_value *)calloc(node_count, sizeof(*graph_value->node_attrs));
+    if (graph_value->node_attrs == NULL) {
+      free((void *)graph->offsets);
+      free(graph_value);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    graph_value->node_attr_count = node_count;
+    for (i = 0U; i < node_count; ++i) {
+      vm_value_set_none(&graph_value->node_attrs[i]);
+    }
+    for (i = 0U; i < node_count; ++i) {
+      if (builder->has_node_attrs[i]) {
+        const int rc = vm_value_clone(&graph_value->node_attrs[i], &builder->node_attrs[i]);
+        if (rc != GVM_OK) {
+          graphion_vm_value cleanup;
+          vm_value_set_none(&cleanup);
+          cleanup.kind = GVM_VALUE_GRAPH_REF;
+          cleanup.as.ref_value = graph_value;
+          vm_value_dispose_owned(&cleanup);
+          return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+        }
+      }
+    }
+  }
+  if (builder->has_node_attr_defaults) {
+    (void)vm_value_dict_length(&builder->node_attr_defaults, &visible_node_attr_key_count);
+  } else {
+    for (i = 0U; i < node_count; ++i) {
+      if (builder->has_node_attrs[i]) {
+        (void)vm_value_dict_length(&builder->node_attrs[i], &visible_node_attr_key_count);
+        break;
+      }
     }
   }
   if (adjacency_count > 0U) {
     neighbors = (uint32_t *)calloc(adjacency_count, sizeof(*neighbors));
     if (neighbors == NULL) {
-      free(offsets);
-      free(graph);
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_GRAPH_REF;
+      cleanup.as.ref_value = graph_value;
+      vm_value_dispose_owned(&cleanup);
       return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
     }
     for (i = 0U; i < builder->edge_count; ++i) {
@@ -413,8 +670,13 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
       uint32_t *cursor = (uint32_t *)calloc(node_count, sizeof(*cursor));
       if (cursor == NULL) {
         free(neighbors);
-        free(offsets);
-        free(graph);
+        {
+          graphion_vm_value cleanup;
+          vm_value_set_none(&cleanup);
+          cleanup.kind = GVM_VALUE_GRAPH_REF;
+          cleanup.as.ref_value = graph_value;
+          vm_value_dispose_owned(&cleanup);
+        }
         return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
       }
       memcpy(cursor, offsets, node_count * sizeof(*cursor));
@@ -431,7 +693,6 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   }
   graph->node_count = node_count;
   graph->edge_count = adjacency_count;
-  graph->offsets = offsets;
   graph->neighbors = neighbors;
   graph->weights = NULL;
   graph->edge_attrs = NULL;
@@ -442,7 +703,9 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   value_out->reserved[2] = (uint8_t)((visible_node_count >> 8U) & 0xFFU);
   value_out->reserved[3] = (uint8_t)(builder->edge_count & 0xFFU);
   value_out->reserved[4] = (uint8_t)((builder->edge_count >> 8U) & 0xFFU);
-  value_out->as.ref_value = graph;
+  value_out->reserved[5] = (uint8_t)(visible_node_attr_key_count & 0xFFU);
+  value_out->reserved[6] = (uint8_t)((visible_node_attr_key_count >> 8U) & 0xFFU);
+  value_out->as.ref_value = graph_value;
   return GINT_OK;
 }
 
@@ -452,6 +715,7 @@ static int collect_graph_block(const runtime_source_line *lines,
                                unsigned int current_indent,
                                size_t *end_index_out,
                                runtime_graph_builder *builder,
+                               graphion_runtime_scope *scope,
                                unsigned int line,
                                graphion_runtime_diagnostic *diagnostic) {
   size_t body_start;
@@ -480,7 +744,10 @@ static int collect_graph_block(const runtime_source_line *lines,
     if (lines[i].indent != body_indent) {
       return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
     }
-    rc = parse_graph_block_line(line_content(&lines[i]), builder, 1, lines[i].line, diagnostic);
+    if (!graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
+    rc = parse_graph_node_attr_defaults_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -492,7 +759,43 @@ static int collect_graph_block(const runtime_source_line *lines,
     if (line_is_blank(&lines[i])) {
       continue;
     }
-    rc = parse_graph_block_line(line_content(&lines[i]), builder, 0, lines[i].line, diagnostic);
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    if (graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
+    rc = parse_graph_block_line(line_content(&lines[i]), builder, 1, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+
+  for (i = body_start; i < body_end; ++i) {
+    int rc;
+
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    if (graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
+    rc = parse_graph_block_line(line_content(&lines[i]), builder, 0, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = apply_graph_node_attr_defaults(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = validate_graph_node_attr_schema(builder, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -734,9 +1037,11 @@ static int execute_statement_source_line(const runtime_source_line *lines,
                              lines[*index].indent,
                              &statement_end,
                              &graph_builder,
+                             scope,
                              lines[*index].line,
                              diagnostic);
     if (rc != GINT_OK) {
+      runtime_graph_builder_dispose(&graph_builder);
       return rc;
     }
   } else if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5])) &&
@@ -756,6 +1061,7 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   }
   if (graph_block_declaration) {
     rc = execute_graph_block_declaration(statement_source, &graph_builder, scope, lines[*index].line, diagnostic);
+    runtime_graph_builder_dispose(&graph_builder);
     if (rc != GINT_OK) {
       return rc;
     }
