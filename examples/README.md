@@ -28,6 +28,8 @@ Files:
   - dict literals with `string` keys, nested dict values, lookup, equality, printing, and `len(...)`
 - `09_tuples.gion`
   - tuple literals, indexing, equality, printing, and `len(...)`
+- `10_sets.gion`
+  - set literals, duplicate removal, membership with `contains(...)`, equality, printing, and `len(...)`
 
 Run any example with:
 

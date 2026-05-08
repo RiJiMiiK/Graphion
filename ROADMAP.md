@@ -21,7 +21,7 @@ This branch is for active work on non-scalar language types.
   - tests, docs, and examples
 - [x] `tuple`
   - useful for fixed-size structured returns if `list` is too loose semantically
-- [ ] `set`
+- [x] `set`
   - especially relevant for graph-oriented membership, uniqueness, and frontier-like value sets
 - [ ] first-class `graph` values in `.gion`
   - distinct from backend-only VM/runtime support

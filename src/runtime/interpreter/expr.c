@@ -117,7 +117,12 @@ static int parse_primary_expression(const char **cursor,
   int rc;
 
   skip_spaces(cursor);
-  if ((rc = try_parse_direct_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
+  if (strncmp(*cursor, "set", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+    rc = parse_set_literal(cursor, program, &lhs, base_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  } else if ((rc = try_parse_direct_builtin(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
     if (rc < 0) {
       return rc;
     }

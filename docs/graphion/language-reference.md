@@ -42,7 +42,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list`, `dict`, and `tuple`.
+Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, and `set`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -127,6 +127,8 @@ These names are currently reserved and cannot be assigned:
 - `trunc`
 - `sign`
 - `len`
+- `contains`
+- `set`
 - `if`
 - `elif`
 - `else`
@@ -150,6 +152,7 @@ Graphion currently supports literals for:
 - `list`
 - `dict`
 - `tuple`
+- `set`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -234,6 +237,24 @@ Current tuple rules:
 - indexes must evaluate to `int`
 - negative indexes are rejected
 - out-of-range indexes are runtime errors
+
+### Set Membership
+
+Graphion supports set membership with `contains(set_expr, value_expr)`:
+
+```gion
+frontier = set(1, 2, 2, "a")
+print(contains(frontier, 2))
+print(contains(frontier, 3))
+```
+
+Current set rules:
+
+- set literals use `set(...)`
+- duplicate elements are removed
+- `set()` is the empty set
+- equality between sets ignores insertion order
+- `contains(...)` requires the first argument to evaluate to `set`
 
 ## Control Flow
 
@@ -725,6 +746,7 @@ Current builtin functions:
 - `fract(x)`
 - `sign(x)`
 - `len(x)`
+- `contains(set, value)`
 
 See [Builtins](builtins.md).
 

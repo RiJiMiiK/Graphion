@@ -15,6 +15,7 @@
   X(vm_dict_opcodes)                                   \
   X(vm_dict_set_key_opcode)                            \
   X(vm_tuple_opcodes)                                  \
+  X(vm_set_opcodes)                                    \
   X(vm_print_scalar_opcodes)                           \
   X(vm_print_reg_opcode)                               \
   X(vm_numeric_arithmetic_opcodes)                     \

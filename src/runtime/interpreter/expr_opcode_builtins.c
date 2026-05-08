@@ -154,6 +154,7 @@ int try_parse_opcode_builtin(const char **cursor,
       {"hypot", GVM_OP_HYPOT},
       {"copysign", GVM_OP_COPYSIGN},
       {"log", GVM_OP_LOG},
+      {"contains", GVM_OP_SET_CONTAINS},
   };
   size_t i;
 

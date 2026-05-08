@@ -73,7 +73,8 @@ Unless a builtin says otherwise:
 | `trunc(x)` | drop fractional part | same numeric family | toward zero |
 | `fract(x)` | fractional part | `float` | defined as `x - floor(x)` |
 | `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
-| `len(x)` | string length | `int` | strings only |
+| `len(x)` | container or string length | `int` | strings, lists, dicts, tuples, and sets |
+| `contains(set, value)` | set membership | `bool` | first argument must be a set |
 
 ## `print(...)`
 
@@ -1009,13 +1010,14 @@ The result type is currently `int`.
 
 ### `len(x)`
 
-Returns the length of a string, list, dict, or tuple expression.
+Returns the length of a string, list, dict, tuple, or set expression.
 
 ```gion
 print(len("graphion"))
 print(len([1, 2, 3]))
 print(len({"a": 1, "b": 2}))
 print(len((1, 2)))
+print(len(set(1, 2, 2)))
 ```
 
 Expected output:
@@ -1023,6 +1025,7 @@ Expected output:
 ```text
 8
 3
+2
 2
 2
 ```
@@ -1033,10 +1036,37 @@ Accepted input:
 - list expressions
 - dict expressions
 - tuple expressions
+- set expressions
 
 Result type:
 
 - `int`
+
+### `contains(set, value)`
+
+Returns whether a set contains a value.
+
+```gion
+frontier = set(1, 2, "a")
+print(contains(frontier, 2))
+print(contains(frontier, 3))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Accepted input:
+
+- first argument: `set`
+- second argument: any currently comparable value
+
+Result type:
+
+- `bool`
 
 ## Error Summary
 

@@ -23,6 +23,7 @@ Graphion currently exposes these value kinds:
 - `list`
 - `dict`
 - `tuple`
+- `set`
 
 ## Built-In Numeric Constants
 
@@ -149,6 +150,21 @@ Current `tuple` literals:
 - currently require at least two elements
 - currently reject trailing commas
 
+### Sets
+
+```gion
+frontier = set(1, 2, 2, "a")
+empty = set()
+```
+
+Current `set` literals:
+
+- use `set(...)`
+- use commas between elements
+- remove duplicate elements during construction
+- may contain nested container values
+- currently reject trailing commas
+
 ## Type Notes
 
 ### Numeric Values
@@ -248,6 +264,27 @@ Current tuple rules:
 - indexes must be `int`
 - indexes must be non-negative
 - out-of-range access is a runtime error
+
+### Sets
+
+`set` values are non-scalar containers of unique values.
+
+Current set support includes:
+
+- literal construction with `set(...)`
+- duplicate removal during construction
+- membership checks with `contains(set_expr, value_expr)`
+- equality and inequality with other sets
+- nested set values
+- `len(x)`
+- printing as `set(...)`
+
+Current set rules:
+
+- sets are compared without considering insertion order
+- printing preserves first-insertion order for deterministic output
+- `set()` is the empty set
+- trailing commas are currently rejected
 
 ### Bits
 

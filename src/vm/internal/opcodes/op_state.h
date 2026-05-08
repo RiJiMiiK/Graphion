@@ -26,5 +26,8 @@ int op_dict_get(graphion_vm *vm, const graphion_insn *in);
 int op_dict_set_key(graphion_vm *vm, const graphion_insn *in);
 int op_tuple_new(graphion_vm *vm, const graphion_insn *in);
 int op_tuple_append(graphion_vm *vm, const graphion_insn *in);
+int op_set_new(graphion_vm *vm, const graphion_insn *in);
+int op_set_add(graphion_vm *vm, const graphion_insn *in);
+int op_set_contains(graphion_vm *vm, const graphion_insn *in);
 
 #endif

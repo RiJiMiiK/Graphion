@@ -320,6 +320,15 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_TUPLE_APPEND:
         rc = op_tuple_append(vm, &in);
         break;
+      case GVM_OP_SET_NEW:
+        rc = op_set_new(vm, &in);
+        break;
+      case GVM_OP_SET_ADD:
+        rc = op_set_add(vm, &in);
+        break;
+      case GVM_OP_SET_CONTAINS:
+        rc = op_set_contains(vm, &in);
+        break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);
         break;

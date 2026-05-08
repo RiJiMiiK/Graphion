@@ -594,6 +594,92 @@ int test_vm_tuple_opcodes(void) {
   return finish_vm_test(&vm, 0);
 }
 
+int test_vm_set_opcodes(void) {
+  char path[512];
+  char output[64];
+  graphion_vm vm;
+  graphion_vm_value const_pool[3];
+  graphion_vm_value globals[1];
+  const graphion_insn program[] = {
+      {GVM_OP_SET_NEW, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 0},
+      {GVM_OP_SET_ADD, 0, 1, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 1},
+      {GVM_OP_SET_ADD, 0, 1, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 0},
+      {GVM_OP_SET_ADD, 0, 1, 0},
+      {GVM_OP_STORE_GLOBAL, 0, 0, 0},
+      {GVM_OP_PRINT_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_GLOBAL, 0, 0, 0},
+      {GVM_OP_LOAD_CONST, 1, 0, 2},
+      {GVM_OP_SET_CONTAINS, 0, 1, 0},
+      {GVM_OP_LOAD_GLOBAL, 2, 0, 0},
+      {GVM_OP_LEN, 2, 0, 0},
+      {GVM_OP_HALT, 0, 0, 0},
+  };
+  FILE *fp = NULL;
+  size_t read_len;
+  int rc;
+
+  test_set_value_int(&const_pool[0], 1);
+  test_set_value_string(&const_pool[1], "x");
+  test_set_value_string(&const_pool[2], "x");
+  globals[0].kind = GVM_VALUE_NONE;
+
+  graphion_vm_init(&vm);
+  graphion_vm_bind_constants(&vm, const_pool, 3U);
+  graphion_vm_bind_globals(&vm, globals, 1U);
+  fp = test_open_temp_output_vm(path, sizeof(path), "vm_set_output.txt");
+  if (fp == NULL) {
+    return finish_vm_test(&vm, 1);
+  }
+  graphion_vm_bind_output(&vm, fp);
+  rc = graphion_vm_load(&vm, program, sizeof(program) / sizeof(program[0]));
+  if (rc != 0) {
+    fclose(fp);
+    remove(path);
+    return finish_vm_test(&vm, 2);
+  }
+  rc = graphion_vm_run(&vm);
+  fclose(fp);
+  if (rc != 0) {
+    remove(path);
+    return finish_vm_test(&vm, 3);
+  }
+  if (globals[0].kind != GVM_VALUE_SET) {
+    remove(path);
+    return finish_vm_test(&vm, 4);
+  }
+  if (vm.regs[0].kind != GVM_VALUE_BOOL || vm.regs[0].as.bool_value != 1) {
+    remove(path);
+    return finish_vm_test(&vm, 5);
+  }
+  if (vm.regs[2].kind != GVM_VALUE_INT || vm.regs[2].as.int_value != 2) {
+    remove(path);
+    return finish_vm_test(&vm, 6);
+  }
+  fp = NULL;
+#if defined(_MSC_VER)
+  if (fopen_s(&fp, path, "rb") != 0) {
+    fp = NULL;
+  }
+#else
+  fp = fopen(path, "rb");
+#endif
+  if (fp == NULL) {
+    remove(path);
+    return finish_vm_test(&vm, 7);
+  }
+  read_len = fread(output, 1U, sizeof(output) - 1U, fp);
+  fclose(fp);
+  output[read_len] = '\0';
+  remove(path);
+  if (strcmp(output, "set(1, \"x\")\n") != 0) {
+    return finish_vm_test(&vm, 8);
+  }
+  return finish_vm_test(&vm, 0);
+}
+
 int test_vm_print_scalar_opcodes(void) {
   char path[512];
   graphion_vm vm;

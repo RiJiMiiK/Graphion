@@ -12,7 +12,7 @@ static int is_scalar_builtin_name(const char *name) {
       "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
       "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
-      "round",     "trunc",    "sign",      "len"
+      "round",     "trunc",    "sign",      "len",      "contains"
   };
   size_t i;
 
@@ -139,6 +139,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "pi") == 0 || strcmp(name, "tau") == 0 || strcmp(name, "phi") == 0 ||
          strcmp(name, "e") == 0 ||
          strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0 ||
+         strcmp(name, "set") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

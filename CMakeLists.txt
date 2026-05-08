@@ -163,6 +163,7 @@ if(GRAPHION_ENABLE_TESTS)
     tests/gion/test_gion_lists.c
     tests/gion/test_gion_dicts.c
     tests/gion/test_gion_tuples.c
+    tests/gion/test_gion_sets.c
     tests/gion/test_gion_errors_misc.c
     tests/gion/test_gion_control_flow.c
     tests/gion/test_gion_operators.c
