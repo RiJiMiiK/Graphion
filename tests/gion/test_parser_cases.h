@@ -58,6 +58,8 @@
   X(gion_set_syntax_errors)                            \
   X(gion_empty_graph_declaration)                      \
   X(gion_graph_node_block_declaration)                 \
+  X(gion_graph_explicit_ids_have_priority)             \
+  X(gion_graph_undirected_edge_declaration)            \
   X(gion_graph_declaration_syntax_errors)              \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \

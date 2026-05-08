@@ -8,3 +8,9 @@ graph Graphe_avec_noeuds:
     "Bob"
 
 print(Graphe_avec_noeuds)
+
+graph Graphe_non_oriente:
+    1 - 2
+    3 - 2
+
+print(Graphe_non_oriente)

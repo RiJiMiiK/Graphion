@@ -175,6 +175,10 @@ graph H:
     Alice
     2
     "Bob"
+
+graph I:
+    1 - 2
+    3 - 2
 ```
 
 Current `graph` declarations:
@@ -192,6 +196,8 @@ Current graph node block entries:
 - may be non-negative integer IDs, such as `2`
 - may mix names and integer IDs in the same block
 - reject duplicate explicit integer IDs
+- may define undirected edges with `node - node`
+- create missing endpoint nodes before creating the edge
 
 ## Type Notes
 
@@ -323,14 +329,15 @@ Current graph support is intentionally minimal:
 - declaration with `graph Name;`
 - declaration with `graph Name:` and an indented node block
 - empty graph values with zero nodes and zero edges
-- node-only graph values with zero edges
+- node-only and edge-bearing graph values
 - explicit integer node IDs reserve their ID first
 - named nodes receive generated IDs after explicit IDs are reserved
 - storage in variables
 - printing as `graph()`
 - printing node-only graphs as `graph(nodes=N)`
+- printing graph values with edges as `graph(nodes=N, edges=M)`
 
-Graph edges, graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
+Directed edges, graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
 
 ### Bits
 

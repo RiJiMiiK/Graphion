@@ -1165,7 +1165,15 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
       {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
         if (graph != NULL && graph->node_count > 0U) {
-          written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)\n", graph->node_count);
+          if (graph->edge_count > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu)\n",
+                               graph->node_count,
+                               graph->edge_count / 2U);
+          } else {
+            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)\n", graph->node_count);
+          }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
           }
@@ -1411,7 +1419,15 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
       {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
         if (graph != NULL && graph->node_count > 0U) {
-          written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)", graph->node_count);
+          if (graph->edge_count > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu)",
+                               graph->node_count,
+                               graph->edge_count / 2U);
+          } else {
+            written = snprintf(buffer, sizeof(buffer), "graph(nodes=%zu)", graph->node_count);
+          }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
           }

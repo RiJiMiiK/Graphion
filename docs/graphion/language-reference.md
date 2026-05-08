@@ -181,6 +181,10 @@ graph H:
     Alice
     2
     "Bob"
+
+graph I:
+    1 - 2
+    3 - 2
 ```
 
 Current graph declaration rules:
@@ -189,8 +193,10 @@ Current graph declaration rules:
 - the node-block shape is `graph Name:` followed by an indented block
 - `Name` must be a valid identifier
 - `graph Name;` creates an empty graph value
-- graph node blocks currently create node-only graph values with zero edges
+- graph node blocks create graph values with nodes and optional undirected edges
 - node entries may be identifiers, string names, or non-negative integer IDs
+- edge entries use `node - node`
+- missing edge endpoint nodes are created before the edge is created
 - explicit integer IDs are reserved first and cannot be duplicated
 - named nodes receive generated IDs after explicit IDs are reserved
 - the semicolon is required for empty declarations
