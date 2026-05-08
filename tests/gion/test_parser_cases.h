@@ -50,6 +50,9 @@
   X(gion_dict_literals_and_prints)                     \
   X(gion_dict_runtime_errors)                          \
   X(gion_dict_syntax_errors)                           \
+  X(gion_tuple_literals_and_prints)                    \
+  X(gion_tuple_runtime_errors)                         \
+  X(gion_tuple_syntax_errors)                          \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \

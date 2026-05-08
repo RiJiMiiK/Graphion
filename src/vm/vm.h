@@ -131,6 +131,8 @@ typedef enum {
   GVM_OP_DICT_SET = 123,
   GVM_OP_DICT_GET = 124,
   GVM_OP_DICT_SET_KEY = 125,
+  GVM_OP_TUPLE_NEW = 126,
+  GVM_OP_TUPLE_APPEND = 127,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -195,7 +197,8 @@ typedef enum {
   GVM_VALUE_INT_SEQUENCE_REF = 7,
   GVM_VALUE_BITS = 8,
   GVM_VALUE_LIST = 9,
-  GVM_VALUE_DICT = 10
+  GVM_VALUE_DICT = 10,
+  GVM_VALUE_TUPLE = 11
 } graphion_vm_value_kind;
 
 typedef struct {

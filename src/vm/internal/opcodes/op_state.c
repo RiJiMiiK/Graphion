@@ -79,7 +79,8 @@ int op_mov(graphion_vm *vm, const graphion_insn *in) {
   if (vm->regs[in->b].kind == GVM_VALUE_STRING && vm->regs[in->b].as.string_value != NULL) {
     return vm_reg_set_string_copy(vm, in->a, vm->regs[in->b].as.string_value);
   }
-  if (vm->regs[in->b].kind == GVM_VALUE_LIST || vm->regs[in->b].kind == GVM_VALUE_DICT) {
+  if (vm->regs[in->b].kind == GVM_VALUE_LIST || vm->regs[in->b].kind == GVM_VALUE_DICT ||
+      vm->regs[in->b].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->regs[in->b]);
     if (rc != GVM_OK) {
       return rc;
@@ -109,7 +110,8 @@ int op_load_const(graphion_vm *vm, const graphion_insn *in) {
     return vm_reg_set_string_copy(vm, in->a, vm->const_pool[(size_t)in->imm].as.string_value);
   }
   if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_LIST ||
-      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT) {
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT ||
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -139,7 +141,8 @@ int op_load_global(graphion_vm *vm, const graphion_insn *in) {
     return vm_reg_set_string_copy(vm, in->a, vm->globals[(size_t)in->imm].as.string_value);
   }
   if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_LIST ||
-      vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT) {
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT ||
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -167,7 +170,8 @@ int op_store_global(graphion_vm *vm, const graphion_insn *in) {
   if (vm->regs[in->a].kind == GVM_VALUE_STRING && vm->regs[in->a].as.string_value != NULL) {
     return vm_global_set_string_copy(vm, (size_t)in->imm, vm->regs[in->a].as.string_value);
   }
-  if (vm->regs[in->a].kind == GVM_VALUE_LIST || vm->regs[in->a].kind == GVM_VALUE_DICT) {
+  if (vm->regs[in->a].kind == GVM_VALUE_LIST || vm->regs[in->a].kind == GVM_VALUE_DICT ||
+      vm->regs[in->a].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->regs[in->a]);
     if (rc != GVM_OK) {
       return rc;
@@ -200,7 +204,8 @@ int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
     return vm_global_set_string_copy(vm, (size_t)in->b, vm->const_pool[(size_t)in->imm].as.string_value);
   }
   if (vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_LIST ||
-      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT) {
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT ||
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -227,7 +232,8 @@ int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
     return vm_global_set_string_copy(vm, (size_t)in->b, vm->globals[(size_t)in->imm].as.string_value);
   }
   if (vm->globals[(size_t)in->imm].kind == GVM_VALUE_LIST ||
-      vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT) {
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT ||
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_TUPLE) {
     int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -287,4 +293,15 @@ int op_dict_set_key(graphion_vm *vm, const graphion_insn *in) {
     return GVM_ERR_INVALID_REG;
   }
   return vm_dict_set_element(vm, in->a, in->b, (uint8_t)in->imm);
+}
+
+int op_tuple_new(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  return vm_reg_set_empty_tuple(vm, in->a);
+}
+
+int op_tuple_append(graphion_vm *vm, const graphion_insn *in) {
+  return vm_tuple_append_reg(vm, in->a, in->b);
 }

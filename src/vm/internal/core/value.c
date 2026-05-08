@@ -123,6 +123,10 @@ void vm_value_copy(graphion_vm_value *dst, const graphion_vm_value *src) {
 static int vm_list_append_value(graphion_vm_list *list, const graphion_vm_value *src);
 int vm_dict_get_element(graphion_vm *vm, uint8_t dict_reg, uint8_t key_reg);
 
+static int vm_value_is_sequence_kind(uint8_t kind) {
+  return kind == GVM_VALUE_LIST || kind == GVM_VALUE_TUPLE;
+}
+
 void vm_value_dispose_owned(graphion_vm_value *value) {
   size_t i;
   graphion_vm_list *list;
@@ -133,7 +137,7 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
   }
   if (value->kind == GVM_VALUE_STRING && value->as.string_value != NULL) {
     free((void *)value->as.string_value);
-  } else if (value->kind == GVM_VALUE_LIST) {
+  } else if (vm_value_is_sequence_kind(value->kind)) {
     list = (graphion_vm_list *)value->as.ref_value;
     if (list != NULL) {
       for (i = 0U; i < list->count; ++i) {
@@ -177,12 +181,12 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
     dst->as.string_value = copy;
     return GVM_OK;
   }
-  if (src->kind != GVM_VALUE_LIST && src->kind != GVM_VALUE_DICT) {
+  if (!vm_value_is_sequence_kind(src->kind) && src->kind != GVM_VALUE_DICT) {
     *dst = *src;
     return GVM_OK;
   }
 
-  if (src->kind == GVM_VALUE_LIST) {
+  if (vm_value_is_sequence_kind(src->kind)) {
     src_list = (graphion_vm_list *)src->as.ref_value;
     dst_list = vm_list_create();
     if (dst_list == NULL) {
@@ -209,7 +213,7 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
       }
       dst_list->count = src_list->count;
     }
-    dst->kind = GVM_VALUE_LIST;
+    dst->kind = src->kind;
     dst->as.ref_value = dst_list;
     return GVM_OK;
   }
@@ -297,6 +301,16 @@ int vm_value_list_length(const graphion_vm_value *value, size_t *len_out) {
   }
   list = (graphion_vm_list *)value->as.ref_value;
   *len_out = list != NULL ? list->count : 0U;
+  return 1;
+}
+
+int vm_value_tuple_length(const graphion_vm_value *value, size_t *len_out) {
+  graphion_vm_list *tuple;
+  if (value == NULL || len_out == NULL || value->kind != GVM_VALUE_TUPLE) {
+    return 0;
+  }
+  tuple = (graphion_vm_list *)value->as.ref_value;
+  *len_out = tuple != NULL ? tuple->count : 0U;
   return 1;
 }
 
@@ -415,7 +429,7 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
     *equal_out = 1;
     return GVM_OK;
   }
-  if (lhs->kind != GVM_VALUE_LIST || rhs->kind != GVM_VALUE_LIST) {
+  if (!vm_value_is_sequence_kind(lhs->kind) || !vm_value_is_sequence_kind(rhs->kind) || lhs->kind != rhs->kind) {
     *compatible_out = 0;
     return GVM_OK;
   }
@@ -485,7 +499,7 @@ static void vm_release_reg_compound(graphion_vm *vm, uint8_t reg) {
   if (vm == NULL || !is_valid_reg(reg)) {
     return;
   }
-  if (vm->regs[reg].kind == GVM_VALUE_LIST || vm->regs[reg].kind == GVM_VALUE_DICT) {
+  if (vm_value_is_sequence_kind(vm->regs[reg].kind) || vm->regs[reg].kind == GVM_VALUE_DICT) {
     vm_value_dispose_owned(&vm->regs[reg]);
   } else {
     vm_value_clear(&vm->regs[reg]);
@@ -525,7 +539,7 @@ void vm_release_global_value(graphion_vm *vm, size_t index) {
     vm_value_clear(&vm->globals[index]);
     return;
   }
-  if (vm->globals[index].kind == GVM_VALUE_LIST || vm->globals[index].kind == GVM_VALUE_DICT) {
+  if (vm_value_is_sequence_kind(vm->globals[index].kind) || vm->globals[index].kind == GVM_VALUE_DICT) {
     vm_value_dispose_owned(&vm->globals[index]);
   } else {
     vm_value_clear(&vm->globals[index]);
@@ -585,6 +599,21 @@ int vm_reg_set_empty_list(graphion_vm *vm, uint8_t reg) {
   return GVM_OK;
 }
 
+int vm_reg_set_empty_tuple(graphion_vm *vm, uint8_t reg) {
+  graphion_vm_list *tuple;
+  if (vm == NULL || !is_valid_reg(reg)) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  tuple = vm_list_create();
+  if (tuple == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, reg);
+  vm->regs[reg].kind = GVM_VALUE_TUPLE;
+  vm->regs[reg].as.ref_value = tuple;
+  return GVM_OK;
+}
+
 static int vm_list_append_value(graphion_vm_list *list, const graphion_vm_value *src) {
   graphion_vm_value cloned;
 
@@ -614,11 +643,23 @@ int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg) {
   if (vm == NULL || !is_valid_reg(list_reg) || !is_valid_reg(value_reg)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (vm->regs[list_reg].kind != GVM_VALUE_LIST) {
+  if (!vm_value_is_sequence_kind(vm->regs[list_reg].kind)) {
     return GVM_ERR_TYPE_MISMATCH;
   }
   list = (graphion_vm_list *)vm->regs[list_reg].as.ref_value;
   return vm_list_append_value(list, &vm->regs[value_reg]);
+}
+
+int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg) {
+  graphion_vm_list *tuple;
+  if (vm == NULL || !is_valid_reg(tuple_reg) || !is_valid_reg(value_reg)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[tuple_reg].kind != GVM_VALUE_TUPLE) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  tuple = (graphion_vm_list *)vm->regs[tuple_reg].as.ref_value;
+  return vm_list_append_value(tuple, &vm->regs[value_reg]);
 }
 
 int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg) {
@@ -727,7 +768,7 @@ int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg) {
   if (vm->regs[list_reg].kind == GVM_VALUE_DICT) {
     return vm_dict_get_element(vm, list_reg, index_reg);
   }
-  if (vm->regs[list_reg].kind != GVM_VALUE_LIST) {
+  if (!vm_value_is_sequence_kind(vm->regs[list_reg].kind)) {
     return GVM_ERR_TYPE_MISMATCH;
   }
   if (!vm_value_get_int(&vm->regs[index_reg], &index_value)) {
@@ -893,6 +934,7 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
       *len_out = (size_t)vm_value_get_bits_width(value) + 3U;
       return GVM_OK;
     case GVM_VALUE_LIST:
+    case GVM_VALUE_TUPLE:
       total = 3U;
       list = (graphion_vm_list *)value->as.ref_value;
       if (list == NULL || list->count == 0U) {
@@ -968,6 +1010,29 @@ static int vm_write_list_inline(const graphion_output_sink *output, const graphi
     }
   }
   return vm_write_bytes_sink(output, "]", 1U);
+}
+
+static int vm_write_tuple_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
+  size_t i;
+  graphion_vm_list *tuple;
+  int rc;
+
+  if (vm_write_bytes_sink(output, "(", 1U) != GVM_OK) {
+    return GVM_ERR_OUTPUT_UNBOUND;
+  }
+  tuple = (graphion_vm_list *)value->as.ref_value;
+  if (tuple != NULL) {
+    for (i = 0U; i < tuple->count; ++i) {
+      if (i > 0U && vm_write_bytes_sink(output, ", ", 2U) != GVM_OK) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      rc = vm_write_value_sink_inline_ex(output, &tuple->items[i], 1);
+      if (rc != GVM_OK) {
+        return rc;
+      }
+    }
+  }
+  return vm_write_bytes_sink(output, ")", 1U);
 }
 
 static int vm_write_dict_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
@@ -1049,6 +1114,8 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
       return vm_write_bytes_sink(output, buffer, len);
     case GVM_VALUE_LIST:
       return vm_write_list_inline(output, value);
+    case GVM_VALUE_TUPLE:
+      return vm_write_tuple_inline(output, value);
     case GVM_VALUE_DICT:
       return vm_write_dict_inline(output, value);
     default:

@@ -42,7 +42,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list` and `dict`.
+Graphion currently exposes scalar values plus `list`, `dict`, and `tuple`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -149,6 +149,7 @@ Graphion currently supports literals for:
 - `bits`
 - `list`
 - `dict`
+- `tuple`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -216,6 +217,23 @@ Current dictionary assignment notes:
 
 - `dict_expr[key_expr] = value_expr` updates an existing key or creates a new one
 - only simple `=` assignment is currently supported on indexed dictionary targets
+
+Graphion also supports tuple indexing with the same `[...]` syntax:
+
+```gion
+pair = (10, 20)
+second = pair[1]
+print(second)
+```
+
+Current tuple rules:
+
+- the left-hand side must evaluate to `tuple`
+- tuple literals currently require at least two elements
+- `(expr)` remains a grouped expression
+- indexes must evaluate to `int`
+- negative indexes are rejected
+- out-of-range indexes are runtime errors
 
 ## Control Flow
 

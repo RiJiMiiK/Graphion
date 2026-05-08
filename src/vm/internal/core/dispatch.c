@@ -314,6 +314,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_DICT_SET_KEY:
         rc = op_dict_set_key(vm, &in);
         break;
+      case GVM_OP_TUPLE_NEW:
+        rc = op_tuple_new(vm, &in);
+        break;
+      case GVM_OP_TUPLE_APPEND:
+        rc = op_tuple_append(vm, &in);
+        break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);
         break;

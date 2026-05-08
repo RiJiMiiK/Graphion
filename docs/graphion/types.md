@@ -22,6 +22,7 @@ Graphion currently exposes these value kinds:
 - `bits`
 - `list`
 - `dict`
+- `tuple`
 
 ## Built-In Numeric Constants
 
@@ -132,6 +133,22 @@ Current `dict` literals:
 - may contain nested `dict` and `list` values
 - currently reject trailing commas
 
+### Tuples
+
+```gion
+pair = (1, 2)
+mixed = (pair, "graphion", true)
+```
+
+Current `tuple` literals:
+
+- start with `(`
+- end with `)`
+- use commas between elements
+- may contain nested tuples
+- currently require at least two elements
+- currently reject trailing commas
+
 ## Type Notes
 
 ### Numeric Values
@@ -210,6 +227,27 @@ Current dict key rules:
 - literal keys must be `string` literals
 - lookup keys must evaluate to `string`
 - missing keys are runtime errors
+
+### Tuples
+
+`tuple` values are ordered non-scalar containers with fixed size semantics.
+
+Current tuple support includes:
+
+- literal construction with `( ... )`
+- indexing with `tuple_expr[index_expr]`
+- equality and inequality with other tuples
+- nested tuple values
+- `len(x)`
+- printing as parenthesized values
+
+Current tuple rules:
+
+- tuples currently require at least two elements
+- `(expr)` remains a grouped expression, not a tuple
+- indexes must be `int`
+- indexes must be non-negative
+- out-of-range access is a runtime error
 
 ### Bits
 

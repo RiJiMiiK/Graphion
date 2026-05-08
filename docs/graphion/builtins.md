@@ -1009,23 +1009,30 @@ The result type is currently `int`.
 
 ### `len(x)`
 
-Returns the length of a string expression.
+Returns the length of a string, list, dict, or tuple expression.
 
 ```gion
 print(len("graphion"))
-print(len("graph" + "ion"))
+print(len([1, 2, 3]))
+print(len({"a": 1, "b": 2}))
+print(len((1, 2)))
 ```
 
 Expected output:
 
 ```text
 8
-8
+3
+2
+2
 ```
 
 Accepted input:
 
-- string expressions only
+- string expressions
+- list expressions
+- dict expressions
+- tuple expressions
 
 Result type:
 

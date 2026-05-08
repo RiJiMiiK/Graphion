@@ -967,6 +967,14 @@ int op_len(graphion_vm *vm, const graphion_insn *in) {
     vm_value_set_int(&vm->regs[in->a], (int64_t)len);
     return GVM_OK;
   }
+  if (vm->regs[in->a].kind == GVM_VALUE_TUPLE) {
+    if (!vm_value_tuple_length(&vm->regs[in->a], &len)) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    vm_free_owned_reg_string(vm, in->a);
+    vm_value_set_int(&vm->regs[in->a], (int64_t)len);
+    return GVM_OK;
+  }
   if (vm->regs[in->a].kind != GVM_VALUE_STRING) {
     return GVM_ERR_TYPE_MISMATCH;
   }

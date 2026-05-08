@@ -19,7 +19,7 @@ This branch is for active work on non-scalar language types.
   - runtime / VM representation
   - basic operations such as lookup, equality, printing, and `len`
   - tests, docs, and examples
-- [ ] `tuple`
+- [x] `tuple`
   - useful for fixed-size structured returns if `list` is too loose semantically
 - [ ] `set`
   - especially relevant for graph-oriented membership, uniqueness, and frontier-like value sets

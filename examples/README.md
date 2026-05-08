@@ -26,6 +26,8 @@ Files:
   - list literals, nested lists, indexing, equality, printing, and `len(...)`
 - `08_dicts.gion`
   - dict literals with `string` keys, nested dict values, lookup, equality, printing, and `len(...)`
+- `09_tuples.gion`
+  - tuple literals, indexing, equality, printing, and `len(...)`
 
 Run any example with:
 

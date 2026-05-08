@@ -51,6 +51,60 @@ static int parse_additive_expression(const char **cursor,
                                      unsigned int line,
                                      graphion_runtime_diagnostic *diagnostic);
 
+static int parenthesized_form_is_tuple(const char *cursor, int *is_tuple_out, int *is_empty_out) {
+  const char *scan;
+  int depth = 0;
+  int in_string = 0;
+
+  if (cursor == NULL || is_tuple_out == NULL || is_empty_out == NULL || *cursor != '(') {
+    return 0;
+  }
+  *is_tuple_out = 0;
+  *is_empty_out = 0;
+
+  scan = cursor + 1;
+  skip_spaces(&scan);
+  if (*scan == ')') {
+    *is_empty_out = 1;
+    return 1;
+  }
+
+  scan = cursor + 1;
+  while (*scan != '\0') {
+    if (in_string) {
+      if (*scan == '"') {
+        in_string = 0;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == '"') {
+      in_string = 1;
+      scan++;
+      continue;
+    }
+    if (*scan == '(') {
+      depth++;
+      scan++;
+      continue;
+    }
+    if (*scan == ')') {
+      if (depth == 0) {
+        return 1;
+      }
+      depth--;
+      scan++;
+      continue;
+    }
+    if (*scan == ',' && depth == 0) {
+      *is_tuple_out = 1;
+      return 1;
+    }
+    scan++;
+  }
+  return 1;
+}
+
 static int parse_primary_expression(const char **cursor,
                                     graphion_runtime_program *program,
                                     parsed_expr_result *result_out,
@@ -58,6 +112,8 @@ static int parse_primary_expression(const char **cursor,
                                     unsigned int line,
                                     graphion_runtime_diagnostic *diagnostic) {
   parsed_expr_result lhs;
+  int is_tuple_form = 0;
+  int is_empty_tuple = 0;
   int rc;
 
   skip_spaces(cursor);
@@ -74,16 +130,29 @@ static int parse_primary_expression(const char **cursor,
       return rc;
     }
   } else if (**cursor == '(') {
-    (*cursor)++;
-    rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
-    if (rc != GINT_OK) {
-      return rc;
+    if (!parenthesized_form_is_tuple(*cursor, &is_tuple_form, &is_empty_tuple)) {
+      return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
     }
-    skip_spaces(cursor);
-    if (**cursor != ')') {
-      return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+    if (is_empty_tuple) {
+      return fail(diagnostic, line, 1U, "empty tuple literal is not supported", GINT_ERR_PARSE);
     }
-    (*cursor)++;
+    if (is_tuple_form) {
+      rc = parse_tuple_literal(cursor, program, &lhs, base_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    } else {
+      (*cursor)++;
+      rc = parse_expression(cursor, program, &lhs, base_reg, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+      skip_spaces(cursor);
+      if (**cursor != ')') {
+        return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+      }
+      (*cursor)++;
+    }
   } else if (**cursor == '[') {
     rc = parse_list_literal(cursor, program, &lhs, base_reg, line, diagnostic);
     if (rc != GINT_OK) {

@@ -359,10 +359,10 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = -\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = -(1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"value = 1 + (2 * 3\n", GINT_ERR_PARSE, "expected ')' after expression"},
-      {"value = ()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = ()\n", GINT_ERR_PARSE, "empty tuple literal is not supported"},
       {"print(1 + )\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print((1 + 2)\n", GINT_ERR_PARSE, "expected ')' after print argument"},
-      {"print(()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"print(()\n", GINT_ERR_PARSE, "empty tuple literal is not supported"},
       {"print(1 + 2\n", GINT_ERR_PARSE, "expected ')' after print argument"},
       {"print(1 + 2 3)\n", GINT_ERR_PARSE, "expected ')' after print argument"},
   };
