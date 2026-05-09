@@ -177,11 +177,14 @@ Graph declaration:
 ```gion
 graph G;
 
+alice = "Alice"
+bob = "Bob"
+
 graph H:
     defaults node {"label": "unknown", "score": 0}
-    Alice {"label": "start", "score": 1}
+    alice {"label": "start", "score": 1}
     2 {"score": 2}
-    "Bob"
+    bob
 
 graph I:
     defaults edge {"kind": "normal", "weight": 1}
@@ -201,7 +204,8 @@ Current graph declaration rules:
 - `Name` must be a valid identifier
 - `graph Name;` creates an empty graph value
 - graph node blocks create graph values with nodes and optional edges
-- node entries may be identifiers, string names, or non-negative integer IDs
+- node entries may be string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- string node names must use quotes, such as `"Alice"`; an unquoted identifier is resolved as a variable
 - node entries may attach attributes with `node {"key": value}`
 - node attributes are `dict` values and their values may use any supported Graphion value type
 - `defaults node {"key": value}` declares node attribute defaults for the graph

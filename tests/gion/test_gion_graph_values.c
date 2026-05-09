@@ -52,10 +52,12 @@ int test_gion_empty_graph_declaration(void) {
 
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
+      "alpha = \"alpha\"\n"
+      "beta = \"named beta\"\n"
       "graph G:\n"
       "    alpha\n"
       "    2\n"
-      "    \"named beta\"\n"
+      "    beta\n"
       "print(G)\n";
   char path[512];
   char output[64];
@@ -106,7 +108,7 @@ int test_gion_graph_node_block_declaration(void) {
 int test_gion_graph_explicit_ids_have_priority(void) {
   const char *source =
       "graph G:\n"
-      "    alpha\n"
+      "    \"alpha\"\n"
       "    0\n"
       "print(G)\n";
   char path[512];
@@ -152,10 +154,12 @@ int test_gion_graph_explicit_ids_have_priority(void) {
 
 int test_gion_graph_node_attributes(void) {
   const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
       "graph G:\n"
-      "    Alice {\"label\": \"start\", \"score\": 1}\n"
+      "    alice {\"label\": \"start\", \"score\": 1}\n"
       "    2 {\"label\": \"middle\", \"score\": [true, 3]}\n"
-      "    \"Bob\" {\"score\": 3, \"label\": \"end\"}\n"
+      "    bob {\"score\": 3, \"label\": \"end\"}\n"
       "print(G)\n";
   char path[512];
   char output[128];
@@ -211,11 +215,13 @@ int test_gion_graph_node_attributes(void) {
 
 int test_gion_graph_node_attribute_defaults(void) {
   const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
       "graph G:\n"
       "    defaults node {\"label\": \"unknown\", \"score\": 0}\n"
-      "    Alice {\"label\": \"start\"}\n"
+      "    alice {\"label\": \"start\"}\n"
       "    2 {\"score\": 2}\n"
-      "    \"Bob\"\n"
+      "    bob\n"
       "print(G)\n";
   char path[512];
   char output[128];
@@ -477,7 +483,7 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   }
 
   rc = graphion_collect_source_warnings("graph G:\n"
-                                        "    Alice\n"
+                                        "    \"Alice\"\n"
                                         "    2\n"
                                         "    \"Bob\"\n",
                                         &report,
@@ -490,7 +496,7 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   }
 
   rc = graphion_collect_source_warnings("graph G:\n"
-                                        "    Alice\n"
+                                        "    \"Alice\"\n"
                                         "    3\n"
                                         "    \"Bob\"\n",
                                         &report,
@@ -533,19 +539,21 @@ int test_gion_graph_declaration_syntax_errors(void) {
       {"graph G:\n    -1\n", GINT_ERR_PARSE, "graph node id must be non-negative"},
       {"graph G:\n    1\n    1\n", GINT_ERR_PARSE, "duplicate graph node id"},
       {"graph G:\n    ?\n", GINT_ERR_PARSE, "expected graph node name or id"},
-      {"graph G:\n    alpha extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
-      {"graph G:\n    alpha {\"a\": 1,}\n", GINT_ERR_PARSE, "trailing comma is not allowed in dict literal"},
-      {"graph G:\n    alpha [1]\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
-      {"graph G:\n    alpha {\"a\": 1}\n    beta {\"b\": 2}\n",
+      {"graph G:\n    alpha\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown graph node variable"},
+      {"flag = true\ngraph G:\n    flag\n", GINT_ERR_PARSE, "graph node variable must be int or string"},
+      {"graph G:\n    \"alpha\" extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    \"alpha\" {\"a\": 1,}\n", GINT_ERR_PARSE, "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    \"alpha\" [1]\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    \"alpha\" {\"a\": 1}\n    \"beta\" {\"b\": 2}\n",
        GINT_ERR_PARSE,
        "graph node attributes must use the same keys"},
-      {"graph G:\n    alpha {\"a\": 1}\n    beta\n",
+      {"graph G:\n    \"alpha\" {\"a\": 1}\n    \"beta\"\n",
        GINT_ERR_PARSE,
        "graph node attributes must use the same keys"},
-      {"graph G:\n    defaults node {\"a\": 0}\n    alpha {\"b\": 1}\n",
+      {"graph G:\n    defaults node {\"a\": 0}\n    \"alpha\" {\"b\": 1}\n",
        GINT_ERR_PARSE,
        "graph node attributes must use declared default keys"},
-      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    alpha\n",
+      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    \"alpha\"\n",
        GINT_ERR_PARSE,
        "duplicate graph node attribute defaults"},
       {"graph G:\n    defaults edge {\"weight\": \"heavy\"}\n    1 - 2\n",

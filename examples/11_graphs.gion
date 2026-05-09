@@ -2,11 +2,14 @@ graph Nom_du_graph;
 
 print(Nom_du_graph)
 
+alice = "Alice"
+bob = "Bob"
+
 graph Graphe_avec_noeuds:
     defaults node {"label": "unknown", "score": 0}
-    Alice {"label": "start", "score": 1}
+    alice {"label": "start", "score": 1}
     2 {"score": 2}
-    "Bob"
+    bob
 
 print(Graphe_avec_noeuds)
 

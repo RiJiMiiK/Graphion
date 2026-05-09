@@ -171,11 +171,14 @@ Current `set` literals:
 ```gion
 graph G;
 
+alice = "Alice"
+bob = "Bob"
+
 graph H:
     defaults node {"label": "unknown", "score": 0}
-    Alice {"label": "start", "score": 1}
+    alice {"label": "start", "score": 1}
     2 {"score": 2}
-    "Bob"
+    bob
 
 graph I:
     defaults edge {"kind": "normal", "weight": 1}
@@ -198,9 +201,10 @@ Current `graph` declarations:
 
 Current graph node block entries:
 
-- may be identifiers, such as `Alice`
-- may be string names, such as `"Bob"`
+- may be string literals, such as `"Alice"`
 - may be non-negative integer IDs, such as `2`
+- may be variables that contain a `string` node name or an `int` node ID
+- treat unquoted identifiers as variables, so literal string node names must use quotes
 - may mix names and integer IDs in the same block
 - may attach node attributes with `node {"key": value}`
 - store node attributes as dict values whose entries may contain any supported Graphion value type

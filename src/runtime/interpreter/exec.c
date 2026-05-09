@@ -176,8 +176,40 @@ static int runtime_graph_add_named_node(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int runtime_graph_id_from_value(runtime_graph_builder *builder,
+                                       const graphion_runtime_value *value,
+                                       int fail_if_existing_id,
+                                       int assign_named_ids,
+                                       uint32_t *id_out,
+                                       unsigned int line,
+                                       graphion_runtime_diagnostic *diagnostic) {
+  if (builder == NULL || value == NULL || id_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (value->kind == GVM_VALUE_INT) {
+    if (value->as.int_value < 0) {
+      return fail(diagnostic, line, 1U, "graph node id must be non-negative", GINT_ERR_PARSE);
+    }
+    if ((uint64_t)value->as.int_value >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+      return fail(diagnostic, line, 1U, "graph node id is too large", GINT_ERR_CAPACITY);
+    }
+    *id_out = (uint32_t)value->as.int_value;
+    return runtime_graph_mark_id(builder, *id_out, fail_if_existing_id, line, diagnostic);
+  }
+  if (value->kind == GVM_VALUE_STRING) {
+    const char *name = value->as.string_value != NULL ? value->as.string_value : "";
+    if (!assign_named_ids) {
+      *id_out = 0U;
+      return GINT_OK;
+    }
+    return runtime_graph_add_named_node(builder, name, id_out, line, diagnostic);
+  }
+  return fail(diagnostic, line, 1U, "graph node variable must be int or string", GINT_ERR_PARSE);
+}
+
 static int parse_graph_node_ref(const char **cursor,
                                 runtime_graph_builder *builder,
+                                const graphion_runtime_scope *scope,
                                 int fail_if_existing_id,
                                 int assign_named_ids,
                                 uint32_t *id_out,
@@ -231,6 +263,7 @@ static int parse_graph_node_ref(const char **cursor,
   }
 
   if (is_ident_start_char(**cursor)) {
+    const graphion_runtime_value *value;
     size_t len = 0U;
     while (is_ident_char((*cursor)[len])) {
       len++;
@@ -241,11 +274,11 @@ static int parse_graph_node_ref(const char **cursor,
     memcpy(name, *cursor, len);
     name[len] = '\0';
     *cursor += len;
-    if (!assign_named_ids) {
-      *id_out = 0U;
-      return GINT_OK;
+    value = graphion_runtime_scope_find(scope, name);
+    if (value == NULL) {
+      return fail(diagnostic, line, 1U, "unknown graph node variable", GINT_ERR_UNKNOWN_VARIABLE);
     }
-    return runtime_graph_add_named_node(builder, name, id_out, line, diagnostic);
+    return runtime_graph_id_from_value(builder, value, fail_if_existing_id, assign_named_ids, id_out, line, diagnostic);
   }
 
   return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
@@ -703,12 +736,13 @@ static int parse_graph_block_line(const char *text,
   int rc;
 
   vm_value_set_none(&edge_attrs);
-  if (text == NULL || builder == NULL) {
+  if (text == NULL || builder == NULL || scope == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
 
   rc = parse_graph_node_ref(&cursor,
                             builder,
+                            scope,
                             reserve_only && !has_edge ? 1 : 0,
                             !reserve_only,
                             &left,
@@ -755,7 +789,7 @@ static int parse_graph_block_line(const char *text,
     }
     builder->has_undirected_edges = 1;
   }
-  rc = parse_graph_node_ref(&cursor, builder, 0, !reserve_only, &right, line, diagnostic);
+  rc = parse_graph_node_ref(&cursor, builder, scope, 0, !reserve_only, &right, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
