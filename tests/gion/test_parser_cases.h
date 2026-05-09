@@ -62,6 +62,7 @@
   X(gion_graph_node_attributes)                        \
   X(gion_graph_node_attribute_defaults)                \
   X(gion_graph_undirected_edge_declaration)            \
+  X(gion_graph_edge_attributes)                        \
   X(gion_graph_directed_edge_declaration)              \
   X(gion_graph_numeric_id_gap_warnings)                \
   X(gion_graph_declaration_syntax_errors)              \

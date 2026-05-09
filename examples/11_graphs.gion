@@ -10,14 +10,19 @@ graph Graphe_avec_noeuds:
 
 print(Graphe_avec_noeuds)
 
+poids_arete = 15
+attrs_arete = {"kind": "shortcut", "weight": 2.5}
+
 graph Graphe_non_oriente:
-    1 - 2
-    3 - 2
+    defaults edge {"kind": "normal", "weight": 1}
+    1-2 poids_arete
+    3 - 2 attrs_arete
 
 print(Graphe_non_oriente)
 
 graph Graphe_oriente:
-    1 -> 2
-    3 <-> 4
+    defaults edge {"kind": "directed", "weight": 1}
+    1 -> 2 {"weight": 1}
+    3 <-> 4 {"kind": "bidirectional"}
 
 print(Graphe_oriente)

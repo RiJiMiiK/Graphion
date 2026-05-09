@@ -37,6 +37,7 @@ int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out);
 int vm_value_dict_keys_equal(const graphion_vm_value *lhs, const graphion_vm_value *rhs);
 int vm_value_dict_keys_subset(const graphion_vm_value *value, const graphion_vm_value *allowed);
 int vm_value_dict_merge_defaults(graphion_vm_value *value, const graphion_vm_value *defaults);
+int vm_value_dict_key_kind(const graphion_vm_value *value, const char *key, uint8_t *kind_out, int *found_out);
 int vm_value_tuple_length(const graphion_vm_value *value, size_t *len_out);
 int vm_value_set_length(const graphion_vm_value *value, size_t *len_out);
 uint8_t vm_value_get_bits_width(const graphion_vm_value *value);

@@ -9,6 +9,8 @@ typedef struct {
   uint32_t from;
   uint32_t to;
   int bidirectional;
+  int has_attrs;
+  graphion_vm_value attrs;
 } runtime_graph_edge;
 
 typedef struct {
@@ -21,6 +23,7 @@ typedef struct {
   unsigned char has_node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
   graphion_vm_value node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
   graphion_vm_value node_attr_defaults;
+  graphion_vm_value edge_attr_defaults;
   runtime_graph_named_node named_nodes[GRAPHION_RUNTIME_PROGRAM_MAX];
   size_t named_node_count;
   runtime_graph_edge edges[GRAPHION_RUNTIME_PROGRAM_MAX];
@@ -30,6 +33,7 @@ typedef struct {
   int has_directed_edges;
   int has_undirected_edges;
   int has_node_attr_defaults;
+  int has_edge_attr_defaults;
 } runtime_graph_builder;
 
 static int graph_header_ends_with_colon(const char *text) {
@@ -54,8 +58,10 @@ static void runtime_graph_builder_init(runtime_graph_builder *builder) {
   }
   memset(builder, 0, sizeof(*builder));
   vm_value_set_none(&builder->node_attr_defaults);
+  vm_value_set_none(&builder->edge_attr_defaults);
   for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
     vm_value_set_none(&builder->node_attrs[i]);
+    vm_value_set_none(&builder->edges[i].attrs);
   }
 }
 
@@ -73,6 +79,16 @@ static void runtime_graph_builder_dispose(runtime_graph_builder *builder) {
   if (builder->has_node_attr_defaults) {
     vm_value_dispose_owned(&builder->node_attr_defaults);
     builder->has_node_attr_defaults = 0;
+  }
+  if (builder->has_edge_attr_defaults) {
+    vm_value_dispose_owned(&builder->edge_attr_defaults);
+    builder->has_edge_attr_defaults = 0;
+  }
+  for (i = 0U; i < builder->edge_count; ++i) {
+    if (builder->edges[i].has_attrs) {
+      vm_value_dispose_owned(&builder->edges[i].attrs);
+      builder->edges[i].has_attrs = 0;
+    }
   }
 }
 
@@ -251,13 +267,18 @@ static int graph_block_line_has_edge(const char *text) {
       cursor++;
     }
   } else {
-    while (*cursor != '\0' && !(*cursor == ' ' || *cursor == '\t' || *cursor == '\r')) {
+    while (*cursor != '\0' && *cursor != '-' && *cursor != '<' &&
+           !(*cursor == ' ' || *cursor == '\t' || *cursor == '\r')) {
       cursor++;
     }
   }
   skip_spaces(&cursor);
   return *cursor == '-' || (cursor[0] == '<' && cursor[1] == '-' && cursor[2] == '>');
 }
+
+static int validate_graph_edge_attrs(const graphion_vm_value *attrs,
+                                     unsigned int line,
+                                     graphion_runtime_diagnostic *diagnostic);
 
 static int runtime_graph_set_node_attrs(runtime_graph_builder *builder,
                                         uint32_t node_id,
@@ -312,6 +333,61 @@ static int runtime_graph_set_node_attr_defaults(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int runtime_graph_set_edge_attr_defaults(runtime_graph_builder *builder,
+                                                const graphion_vm_value *defaults,
+                                                unsigned int line,
+                                                graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || defaults == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->has_edge_attr_defaults) {
+    return fail(diagnostic, line, 1U, "duplicate graph edge attribute defaults", GINT_ERR_PARSE);
+  }
+  rc = validate_graph_edge_attrs(defaults, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, defaults);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone graph edge attribute defaults", GINT_ERR_CAPACITY);
+  }
+  builder->edge_attr_defaults = cloned;
+  builder->has_edge_attr_defaults = 1;
+  return GINT_OK;
+}
+
+static int runtime_graph_set_edge_attrs(runtime_graph_builder *builder,
+                                        size_t edge_index,
+                                        const graphion_vm_value *attrs,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || attrs == NULL || edge_index >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  rc = validate_graph_edge_attrs(attrs, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, attrs);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone graph edge attributes", GINT_ERR_CAPACITY);
+  }
+  if (builder->edges[edge_index].has_attrs) {
+    vm_value_dispose_owned(&builder->edges[edge_index].attrs);
+  }
+  builder->edges[edge_index].attrs = cloned;
+  builder->edges[edge_index].has_attrs = 1;
+  return GINT_OK;
+}
+
 static int graph_node_attr_keys_match(const runtime_graph_builder *builder, size_t reference_id, size_t node_id) {
   if (builder == NULL || reference_id >= GRAPHION_RUNTIME_PROGRAM_MAX || node_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
     return 0;
@@ -363,6 +439,37 @@ static int apply_graph_node_attr_defaults(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int apply_graph_edge_attr_defaults(runtime_graph_builder *builder,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (!builder->has_edge_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->edge_count; ++i) {
+    if (!builder->edges[i].has_attrs) {
+      const int rc = runtime_graph_set_edge_attrs(builder, i, &builder->edge_attr_defaults, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    } else {
+      int rc;
+      if (!vm_value_dict_keys_subset(&builder->edges[i].attrs, &builder->edge_attr_defaults)) {
+        return fail(diagnostic, line, 1U, "graph edge attributes must use declared default keys", GINT_ERR_PARSE);
+      }
+      rc = vm_value_dict_merge_defaults(&builder->edges[i].attrs, &builder->edge_attr_defaults);
+      if (rc != GVM_OK) {
+        return fail(diagnostic, line, 1U, "failed to apply graph edge attribute defaults", GINT_ERR_CAPACITY);
+      }
+    }
+  }
+  return GINT_OK;
+}
+
 static int validate_graph_node_attr_schema(const runtime_graph_builder *builder,
                                            unsigned int line,
                                            graphion_runtime_diagnostic *diagnostic) {
@@ -384,6 +491,48 @@ static int validate_graph_node_attr_schema(const runtime_graph_builder *builder,
   for (i = reference_id + 1U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
     if (builder->used_ids[i] && !graph_node_attr_keys_match(builder, reference_id, i)) {
       return fail(diagnostic, line, 1U, "graph node attributes must use the same keys", GINT_ERR_PARSE);
+    }
+  }
+  return GINT_OK;
+}
+
+static int graph_edge_attr_keys_match(const runtime_graph_builder *builder, size_t reference_index, size_t edge_index) {
+  if (builder == NULL || reference_index >= builder->edge_count || edge_index >= builder->edge_count) {
+    return 0;
+  }
+  if (!builder->edges[reference_index].has_attrs && !builder->edges[edge_index].has_attrs) {
+    return 1;
+  }
+  if (!builder->edges[reference_index].has_attrs || !builder->edges[edge_index].has_attrs) {
+    return 0;
+  }
+  return vm_value_dict_keys_equal(&builder->edges[reference_index].attrs, &builder->edges[edge_index].attrs);
+}
+
+static int validate_graph_edge_attr_schema(const runtime_graph_builder *builder,
+                                           unsigned int line,
+                                           graphion_runtime_diagnostic *diagnostic) {
+  size_t reference_index = GRAPHION_RUNTIME_PROGRAM_MAX;
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->edge_count == 0U || builder->has_edge_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->edge_count; ++i) {
+    if (builder->edges[i].has_attrs) {
+      reference_index = i;
+      break;
+    }
+  }
+  if (reference_index == GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->edge_count; ++i) {
+    if (!graph_edge_attr_keys_match(builder, reference_index, i)) {
+      return fail(diagnostic, line, 1U, "graph edge attributes must use the same keys", GINT_ERR_PARSE);
     }
   }
   return GINT_OK;
@@ -418,11 +567,11 @@ static int graph_block_line_is_defaults(const char *text) {
   return strncmp(cursor, "defaults", 8U) == 0 && !is_ident_char(cursor[8]);
 }
 
-static int parse_graph_node_attr_defaults_line(const char *text,
-                                               runtime_graph_builder *builder,
-                                               graphion_runtime_scope *scope,
-                                               unsigned int line,
-                                               graphion_runtime_diagnostic *diagnostic) {
+static int parse_graph_attr_defaults_line(const char *text,
+                                          runtime_graph_builder *builder,
+                                          graphion_runtime_scope *scope,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = text;
   graphion_vm_value defaults;
   int rc;
@@ -436,19 +585,105 @@ static int parse_graph_node_attr_defaults_line(const char *text,
   }
   cursor += 8;
   skip_spaces(&cursor);
-  if (strncmp(cursor, "node", 4U) != 0 || is_ident_char(cursor[4])) {
-    return fail(diagnostic, line, 1U, "expected 'node' after defaults", GINT_ERR_PARSE);
+  if (strncmp(cursor, "node", 4U) == 0 && !is_ident_char(cursor[4])) {
+    cursor += 4;
+    skip_spaces(&cursor);
+    vm_value_set_none(&defaults);
+    rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = runtime_graph_set_node_attr_defaults(builder, &defaults, line, diagnostic);
+    vm_value_dispose_owned(&defaults);
+    return rc;
   }
-  cursor += 4;
-  skip_spaces(&cursor);
-  vm_value_set_none(&defaults);
-  rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+  if (strncmp(cursor, "edge", 4U) == 0 && !is_ident_char(cursor[4])) {
+    cursor += 4;
+    skip_spaces(&cursor);
+    vm_value_set_none(&defaults);
+    rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = runtime_graph_set_edge_attr_defaults(builder, &defaults, line, diagnostic);
+    vm_value_dispose_owned(&defaults);
+    return rc;
+  }
+  return fail(diagnostic, line, 1U, "expected 'node' or 'edge' after defaults", GINT_ERR_PARSE);
+}
+
+static int validate_graph_edge_attrs(const graphion_vm_value *attrs,
+                                     unsigned int line,
+                                     graphion_runtime_diagnostic *diagnostic) {
+  uint8_t weight_kind = GVM_VALUE_NONE;
+  int has_weight = 0;
+
+  if (attrs == NULL || attrs->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "graph edge attributes must be a dict literal", GINT_ERR_PARSE);
+  }
+  if (!vm_value_dict_key_kind(attrs, "weight", &weight_kind, &has_weight)) {
+    return fail(diagnostic, line, 1U, "invalid graph edge attributes", GINT_ERR_PARSE);
+  }
+  if (has_weight && weight_kind != GVM_VALUE_INT && weight_kind != GVM_VALUE_FLOAT) {
+    return fail(diagnostic, line, 1U, "graph edge weight must be int or float", GINT_ERR_PARSE);
+  }
+  return GINT_OK;
+}
+
+static int parse_graph_edge_attrs(const char *text,
+                                  graphion_runtime_scope *scope,
+                                  unsigned int line,
+                                  graphion_runtime_diagnostic *diagnostic,
+                                  graphion_vm_value *attrs_out) {
+  char weight_expression[512];
+  const char *expression_text = text;
+  graphion_vm_value expression_value;
+  int rc;
+
+  if (text == NULL || scope == NULL || attrs_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(&expression_text);
+  vm_value_set_none(attrs_out);
+  vm_value_set_none(&expression_value);
+  rc = evaluate_expression_text_to_value(expression_text, strlen(expression_text), scope, line, diagnostic, &expression_value);
   if (rc != GINT_OK) {
     return rc;
   }
-  rc = runtime_graph_set_node_attr_defaults(builder, &defaults, line, diagnostic);
-  vm_value_dispose_owned(&defaults);
-  return rc;
+  if (expression_value.kind == GVM_VALUE_DICT) {
+    rc = vm_value_clone(attrs_out, &expression_value);
+    vm_value_dispose_owned(&expression_value);
+    if (rc != GVM_OK) {
+      return fail(diagnostic, line, 1U, "failed to clone graph edge attributes", GINT_ERR_CAPACITY);
+    }
+    rc = validate_graph_edge_attrs(attrs_out, line, diagnostic);
+    if (rc != GINT_OK) {
+      vm_value_dispose_owned(attrs_out);
+      return rc;
+    }
+    return GINT_OK;
+  }
+  if (expression_value.kind != GVM_VALUE_INT && expression_value.kind != GVM_VALUE_FLOAT) {
+    vm_value_dispose_owned(&expression_value);
+    return fail(diagnostic, line, 1U, "graph edge weight expression must be int, float, or dict", GINT_ERR_PARSE);
+  }
+  vm_value_dispose_owned(&expression_value);
+  {
+    const int written = snprintf(weight_expression, sizeof(weight_expression), "{\"weight\": %s}", expression_text);
+    if (written < 0 || (size_t)written >= sizeof(weight_expression)) {
+      return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+    }
+  }
+  rc = evaluate_expression_text_to_value(weight_expression, strlen(weight_expression), scope, line, diagnostic, attrs_out);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = validate_graph_edge_attrs(attrs_out, line, diagnostic);
+  if (rc != GINT_OK) {
+    vm_value_dispose_owned(attrs_out);
+    return rc;
+  }
+  return GINT_OK;
 }
 
 static int parse_graph_block_line(const char *text,
@@ -463,8 +698,11 @@ static int parse_graph_block_line(const char *text,
   int has_edge = graph_block_line_has_edge(text);
   int bidirectional = 0;
   int directed_syntax = 0;
+  graphion_vm_value edge_attrs;
+  int has_edge_attrs = 0;
   int rc;
 
+  vm_value_set_none(&edge_attrs);
   if (text == NULL || builder == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
@@ -523,17 +761,36 @@ static int parse_graph_block_line(const char *text,
   }
   skip_spaces(&cursor);
   if (*cursor != '\0') {
+    if (reserve_only) {
+      return GINT_OK;
+    }
+    rc = parse_graph_edge_attrs(cursor, scope, line, diagnostic, &edge_attrs);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    has_edge_attrs = 1;
+    cursor += strlen(cursor);
+    skip_spaces(&cursor);
+  }
+  if (*cursor != '\0') {
+    vm_value_dispose_owned(&edge_attrs);
     return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph edge", GINT_ERR_PARSE);
   }
   if (reserve_only) {
+    vm_value_dispose_owned(&edge_attrs);
     return GINT_OK;
   }
   if (builder->edge_count >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    vm_value_dispose_owned(&edge_attrs);
     return fail(diagnostic, line, 1U, "too many graph edges", GINT_ERR_CAPACITY);
   }
   builder->edges[builder->edge_count].from = left;
   builder->edges[builder->edge_count].to = right;
   builder->edges[builder->edge_count].bidirectional = bidirectional;
+  builder->edges[builder->edge_count].has_attrs = has_edge_attrs;
+  if (has_edge_attrs) {
+    builder->edges[builder->edge_count].attrs = edge_attrs;
+  }
   builder->edge_count += 1U;
   return GINT_OK;
 }
@@ -583,6 +840,7 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   size_t node_count;
   size_t visible_node_count = 0U;
   size_t visible_node_attr_key_count = 0U;
+  size_t visible_edge_attr_key_count = 0U;
   size_t adjacency_count;
   size_t i;
 
@@ -691,6 +949,35 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
       free(cursor);
     }
   }
+  if (builder->edge_count > 0U) {
+    graph_value->edge_attrs = (graphion_vm_value *)calloc(builder->edge_count, sizeof(*graph_value->edge_attrs));
+    if (graph_value->edge_attrs == NULL) {
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_GRAPH_REF;
+      cleanup.as.ref_value = graph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    graph_value->edge_attr_count = builder->edge_count;
+    for (i = 0U; i < builder->edge_count; ++i) {
+      vm_value_set_none(&graph_value->edge_attrs[i]);
+      if (builder->edges[i].has_attrs) {
+        const int rc = vm_value_clone(&graph_value->edge_attrs[i], &builder->edges[i].attrs);
+        if (rc != GVM_OK) {
+          graphion_vm_value cleanup;
+          vm_value_set_none(&cleanup);
+          cleanup.kind = GVM_VALUE_GRAPH_REF;
+          cleanup.as.ref_value = graph_value;
+          vm_value_dispose_owned(&cleanup);
+          return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+        }
+        if (visible_edge_attr_key_count == 0U) {
+          (void)vm_value_dict_length(&builder->edges[i].attrs, &visible_edge_attr_key_count);
+        }
+      }
+    }
+  }
   graph->node_count = node_count;
   graph->edge_count = adjacency_count;
   graph->neighbors = neighbors;
@@ -706,6 +993,7 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   value_out->reserved[5] = (uint8_t)(visible_node_attr_key_count & 0xFFU);
   value_out->reserved[6] = (uint8_t)((visible_node_attr_key_count >> 8U) & 0xFFU);
   value_out->as.ref_value = graph_value;
+  (void)visible_edge_attr_key_count;
   return GINT_OK;
 }
 
@@ -747,7 +1035,7 @@ static int collect_graph_block(const runtime_source_line *lines,
     if (!graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
     }
-    rc = parse_graph_node_attr_defaults_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
+    rc = parse_graph_attr_defaults_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -795,7 +1083,19 @@ static int collect_graph_block(const runtime_source_line *lines,
     }
   }
   {
+    const int rc = apply_graph_edge_attr_defaults(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
     const int rc = validate_graph_node_attr_schema(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = validate_graph_edge_attr_schema(builder, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

@@ -132,6 +132,24 @@ static size_t vm_graph_visible_node_attr_key_count(const graphion_vm_value *valu
   return (size_t)value->reserved[5] | ((size_t)value->reserved[6] << 8U);
 }
 
+static size_t vm_graph_visible_edge_attr_key_count(const graphion_vm_value *value) {
+  const graphion_graph_value *graph_value;
+  size_t i;
+  size_t len = 0U;
+
+  if (value == NULL || value->kind != GVM_VALUE_GRAPH_REF || value->as.ref_value == NULL) {
+    return 0U;
+  }
+  graph_value = (const graphion_graph_value *)value->as.ref_value;
+  for (i = 0U; i < graph_value->edge_attr_count; ++i) {
+    if (graph_value->edge_attrs[i].kind == GVM_VALUE_DICT &&
+        vm_value_dict_length(&graph_value->edge_attrs[i], &len) && len > 0U) {
+      return len;
+    }
+  }
+  return 0U;
+}
+
 static void vm_value_clear(graphion_vm_value *value) {
   if (value == NULL) {
     return;
@@ -241,6 +259,12 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
         }
         free(graph_value->node_attrs);
       }
+      if (graph_value->edge_attrs != NULL) {
+        for (i = 0U; i < graph_value->edge_attr_count; ++i) {
+          vm_value_dispose_owned(&graph_value->edge_attrs[i]);
+        }
+        free(graph_value->edge_attrs);
+      }
       free((void *)graph->offsets);
       free((void *)graph->neighbors);
       free((void *)graph->weights);
@@ -349,6 +373,30 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
         dst_graph_value->node_attr_count = src_graph_value->node_attr_count;
         for (i = 0U; i < src_graph_value->node_attr_count; ++i) {
           int rc = vm_value_clone(&dst_graph_value->node_attrs[i], &src_graph_value->node_attrs[i]);
+          if (rc != GVM_OK) {
+            graphion_vm_value cleanup;
+            vm_value_clear(&cleanup);
+            cleanup.kind = GVM_VALUE_GRAPH_REF;
+            cleanup.as.ref_value = dst_graph;
+            vm_value_dispose_owned(&cleanup);
+            return rc;
+          }
+        }
+      }
+      if (src_graph_value->edge_attrs != NULL && src_graph_value->edge_attr_count > 0U) {
+        dst_graph_value->edge_attrs =
+            (graphion_vm_value *)calloc(src_graph_value->edge_attr_count, sizeof(*dst_graph_value->edge_attrs));
+        if (dst_graph_value->edge_attrs == NULL) {
+          graphion_vm_value cleanup;
+          vm_value_clear(&cleanup);
+          cleanup.kind = GVM_VALUE_GRAPH_REF;
+          cleanup.as.ref_value = dst_graph;
+          vm_value_dispose_owned(&cleanup);
+          return GVM_ERR_INVALID_ARG;
+        }
+        dst_graph_value->edge_attr_count = src_graph_value->edge_attr_count;
+        for (i = 0U; i < src_graph_value->edge_attr_count; ++i) {
+          int rc = vm_value_clone(&dst_graph_value->edge_attrs[i], &src_graph_value->edge_attrs[i]);
           if (rc != GVM_OK) {
             graphion_vm_value cleanup;
             vm_value_clear(&cleanup);
@@ -582,6 +630,33 @@ int vm_value_dict_merge_defaults(graphion_vm_value *value, const graphion_vm_val
     }
   }
   return GVM_OK;
+}
+
+int vm_value_dict_key_kind(const graphion_vm_value *value, const char *key, uint8_t *kind_out, int *found_out) {
+  graphion_vm_dict *dict;
+  size_t index;
+
+  if (kind_out != NULL) {
+    *kind_out = GVM_VALUE_NONE;
+  }
+  if (found_out != NULL) {
+    *found_out = 0;
+  }
+  if (value == NULL || key == NULL || value->kind != GVM_VALUE_DICT) {
+    return 0;
+  }
+  dict = (graphion_vm_dict *)value->as.ref_value;
+  index = vm_dict_find_index(dict, key);
+  if (index == (size_t)-1) {
+    return 1;
+  }
+  if (kind_out != NULL) {
+    *kind_out = dict->entries[index].value.kind;
+  }
+  if (found_out != NULL) {
+    *found_out = 1;
+  }
+  return 1;
 }
 
 int vm_values_deep_equal(const graphion_vm_value *lhs,
@@ -1338,15 +1413,31 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
         const size_t visible_nodes = vm_graph_visible_node_count(value, graph);
         const size_t visible_node_attr_keys = vm_graph_visible_node_attr_key_count(value);
+        const size_t visible_edge_attr_keys = vm_graph_visible_edge_attr_key_count(value);
         if (graph != NULL && visible_nodes > 0U) {
           const size_t visible_edges = vm_graph_visible_edge_count(value, graph);
-          if (visible_edges > 0U && visible_node_attr_keys > 0U) {
+          if (visible_edges > 0U && visible_node_attr_keys > 0U && visible_edge_attr_keys > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu, node_attrs=%zu, edge_attrs=%zu)\n",
+                               visible_nodes,
+                               visible_edges,
+                               visible_node_attr_keys,
+                               visible_edge_attr_keys);
+          } else if (visible_edges > 0U && visible_node_attr_keys > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),
                                "graph(nodes=%zu, edges=%zu, node_attrs=%zu)\n",
                                visible_nodes,
                                visible_edges,
                                visible_node_attr_keys);
+          } else if (visible_edges > 0U && visible_edge_attr_keys > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu, edge_attrs=%zu)\n",
+                               visible_nodes,
+                               visible_edges,
+                               visible_edge_attr_keys);
           } else if (visible_edges > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),
@@ -1608,15 +1699,31 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;
         const size_t visible_nodes = vm_graph_visible_node_count(value, graph);
         const size_t visible_node_attr_keys = vm_graph_visible_node_attr_key_count(value);
+        const size_t visible_edge_attr_keys = vm_graph_visible_edge_attr_key_count(value);
         if (graph != NULL && visible_nodes > 0U) {
           const size_t visible_edges = vm_graph_visible_edge_count(value, graph);
-          if (visible_edges > 0U && visible_node_attr_keys > 0U) {
+          if (visible_edges > 0U && visible_node_attr_keys > 0U && visible_edge_attr_keys > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu, node_attrs=%zu, edge_attrs=%zu)",
+                               visible_nodes,
+                               visible_edges,
+                               visible_node_attr_keys,
+                               visible_edge_attr_keys);
+          } else if (visible_edges > 0U && visible_node_attr_keys > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),
                                "graph(nodes=%zu, edges=%zu, node_attrs=%zu)",
                                visible_nodes,
                                visible_edges,
                                visible_node_attr_keys);
+          } else if (visible_edges > 0U && visible_edge_attr_keys > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "graph(nodes=%zu, edges=%zu, edge_attrs=%zu)",
+                               visible_nodes,
+                               visible_edges,
+                               visible_edge_attr_keys);
           } else if (visible_edges > 0U) {
             written = snprintf(buffer,
                                sizeof(buffer),

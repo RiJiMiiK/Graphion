@@ -31,7 +31,7 @@ Files:
 - `10_sets.gion`
   - set literals, duplicate removal, membership with `contains(...)`, equality, printing, and `len(...)`
 - `11_graphs.gion`
-  - first-class graph declarations with `graph Name;`, node blocks, node attributes, undirected edges, and directed edges
+  - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected edges, and directed edges
 
 Run any example with:
 

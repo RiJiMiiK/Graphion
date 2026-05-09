@@ -178,12 +178,14 @@ graph H:
     "Bob"
 
 graph I:
-    1 - 2
-    3 - 2
+    defaults edge {"kind": "normal", "weight": 1}
+    1-2 15
+    3 - 2 {"kind": "shortcut", "weight": 2.5}
 
 graph J:
-    1 -> 2
-    3 <-> 4
+    defaults edge {"kind": "directed", "weight": 1}
+    1 -> 2 {"weight": 1}
+    3 <-> 4 {"kind": "bidirectional"}
 ```
 
 Current `graph` declarations:
@@ -210,6 +212,14 @@ Current graph node block entries:
 - may define undirected edges with `node - node`
 - may define directed edges with `node -> node`
 - may define bidirectional directed edges with `node <-> node`
+- may attach edge attributes with `edge {"key": value}`
+- may use the compact edge weight form `node - node 15`
+- may use variables or expressions after an edge when they evaluate to `int`, `float`, or `dict`
+- may declare edge attribute defaults with `defaults edge {"key": value}`
+- use edge defaults for edges that omit attributes or omit specific keys
+- require all edge attributes to share the same keys when no edge defaults are declared
+- reject edge attribute keys outside the declared edge defaults
+- reserve `weight` as an edge attribute key whose value must be `int` or `float`
 - cannot mix `node - node` with directed edge syntax in the same graph
 - create missing endpoint nodes before creating the edge
 - warn when explicit numeric IDs have gaps after generated named-node IDs are assigned

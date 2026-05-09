@@ -222,6 +222,8 @@ typedef struct {
   graphion_csr_graph csr;
   graphion_vm_value *node_attrs;
   size_t node_attr_count;
+  graphion_vm_value *edge_attrs;
+  size_t edge_attr_count;
 } graphion_graph_value;
 
 typedef struct {

@@ -323,6 +323,66 @@ int test_gion_graph_undirected_edge_declaration(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_edge_attributes(void) {
+  const char *source =
+      "w = 15\n"
+      "attrs = {\"kind\": \"path\", \"weight\": 2.5}\n"
+      "graph G:\n"
+      "    defaults edge {\"kind\": \"normal\", \"weight\": 1}\n"
+      "    1-2 w\n"
+      "    2 - 3 attrs\n"
+      "print(G)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *graph_value;
+  const graphion_graph_value *graph_data;
+  size_t attr_len = 0U;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_edge_attributes.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  graph_value = graphion_runtime_scope_find(&scope, "G");
+  if (graph_value == NULL || graph_value->kind != GVM_VALUE_GRAPH_REF) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
+  if (graph_data == NULL || graph_data->edge_attrs == NULL || graph_data->edge_attr_count != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (graph_data->edge_attrs[0].kind != GVM_VALUE_DICT || graph_data->edge_attrs[1].kind != GVM_VALUE_DICT) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!vm_value_dict_length(&graph_data->edge_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&graph_data->edge_attrs[1], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  remove(path);
+  if (strcmp(output, "graph(nodes=3, edges=2, edge_attrs=2)\n") != 0) {
+    return finish_scope_test(&scope, 8);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_directed_edge_declaration(void) {
   const char *source =
       "graph G:\n"
@@ -488,9 +548,33 @@ int test_gion_graph_declaration_syntax_errors(void) {
       {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    alpha\n",
        GINT_ERR_PARSE,
        "duplicate graph node attribute defaults"},
-      {"graph G:\n    defaults edge {\"weight\": 1}\n    alpha\n", GINT_ERR_PARSE, "expected 'node' after defaults"},
+      {"graph G:\n    defaults edge {\"weight\": \"heavy\"}\n    1 - 2\n",
+       GINT_ERR_PARSE,
+       "graph edge weight must be int or float"},
+      {"graph G:\n    defaults edge {\"weight\": 1}\n    defaults edge {\"weight\": 2}\n    1 - 2\n",
+       GINT_ERR_PARSE,
+       "duplicate graph edge attribute defaults"},
+      {"graph G:\n    defaults edge {\"weight\": 1}\n    1 - 2 {\"kind\": \"path\"}\n",
+       GINT_ERR_PARSE,
+       "graph edge attributes must use declared default keys"},
+      {"graph G:\n    defaults other {\"weight\": 1}\n    1 - 2\n",
+       GINT_ERR_PARSE,
+       "expected 'node' or 'edge' after defaults"},
+      {"graph G:\n    1 - 2 {\"weight\": \"heavy\"}\n", GINT_ERR_PARSE, "graph edge weight must be int or float"},
+      {"text = \"heavy\"\ngraph G:\n    1 - 2 text\n",
+       GINT_ERR_PARSE,
+       "graph edge weight expression must be int, float, or dict"},
+      {"graph G:\n    1 - 2 {\"weight\": 1}\n    2 - 3\n",
+       GINT_ERR_PARSE,
+       "graph edge attributes must use the same keys"},
+      {"graph G:\n    1 - 2 {\"weight\": 1}\n    2 - 3 {\"kind\": \"path\"}\n",
+       GINT_ERR_PARSE,
+       "graph edge attributes must use the same keys"},
+      {"graph G:\n    1 - 2 {\"kind\": \"path\",}\n",
+       GINT_ERR_PARSE,
+       "trailing comma is not allowed in dict literal"},
       {"graph G:\n    1 -\n", GINT_ERR_PARSE, "expected graph node name or id"},
-      {"graph G:\n    1 - 2 extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph edge"},
+      {"graph G:\n    1 - 2 extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
       {"graph G:\n    1 -> 2\n    2 - 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
       {"graph G:\n    1 - 2\n    2 -> 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
   };
