@@ -111,9 +111,16 @@ static size_t vm_graph_visible_node_count(const graphion_vm_value *value, const 
 }
 
 static size_t vm_graph_visible_edge_count(const graphion_vm_value *value, const graphion_csr_graph *graph) {
+  const graphion_graph_value *graph_value;
   size_t count;
   if (value == NULL) {
     return 0U;
+  }
+  if (value->kind == GVM_VALUE_GRAPH_REF && value->as.ref_value != NULL) {
+    graph_value = (const graphion_graph_value *)value->as.ref_value;
+    if (graph_value->edge_count > 0U) {
+      return graph_value->edge_count;
+    }
   }
   count = (size_t)value->reserved[3] | ((size_t)value->reserved[4] << 8U);
   if (count != 0U) {
@@ -265,6 +272,7 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
         }
         free(graph_value->edge_attrs);
       }
+      free(graph_value->edges);
       free((void *)graph->offsets);
       free((void *)graph->neighbors);
       free((void *)graph->weights);
@@ -406,6 +414,20 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
             return rc;
           }
         }
+      }
+      if (src_graph_value->edges != NULL && src_graph_value->edge_count > 0U) {
+        dst_graph_value->edges =
+            (graphion_graph_edge_value *)calloc(src_graph_value->edge_count, sizeof(*dst_graph_value->edges));
+        if (dst_graph_value->edges == NULL) {
+          graphion_vm_value cleanup;
+          vm_value_clear(&cleanup);
+          cleanup.kind = GVM_VALUE_GRAPH_REF;
+          cleanup.as.ref_value = dst_graph;
+          vm_value_dispose_owned(&cleanup);
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(dst_graph_value->edges, src_graph_value->edges, src_graph_value->edge_count * sizeof(*dst_graph_value->edges));
+        dst_graph_value->edge_count = src_graph_value->edge_count;
       }
     }
     dst->kind = GVM_VALUE_GRAPH_REF;

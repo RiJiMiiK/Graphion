@@ -219,7 +219,17 @@ typedef struct {
 } graphion_vm_value;
 
 typedef struct {
+  uint32_t from;
+  uint32_t to;
+  uint8_t directed;
+  uint8_t bidirectional;
+  uint8_t reserved[2];
+} graphion_graph_edge_value;
+
+typedef struct {
   graphion_csr_graph csr;
+  graphion_graph_edge_value *edges;
+  size_t edge_count;
   graphion_vm_value *node_attrs;
   size_t node_attr_count;
   graphion_vm_value *edge_attrs;

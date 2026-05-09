@@ -8,6 +8,7 @@
 typedef struct {
   uint32_t from;
   uint32_t to;
+  int directed;
   int bidirectional;
   int has_attrs;
   graphion_vm_value attrs;
@@ -820,6 +821,7 @@ static int parse_graph_block_line(const char *text,
   }
   builder->edges[builder->edge_count].from = left;
   builder->edges[builder->edge_count].to = right;
+  builder->edges[builder->edge_count].directed = directed_syntax;
   builder->edges[builder->edge_count].bidirectional = bidirectional;
   builder->edges[builder->edge_count].has_attrs = has_edge_attrs;
   if (has_edge_attrs) {
@@ -984,6 +986,22 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
     }
   }
   if (builder->edge_count > 0U) {
+    graph_value->edges = (graphion_graph_edge_value *)calloc(builder->edge_count, sizeof(*graph_value->edges));
+    if (graph_value->edges == NULL) {
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_GRAPH_REF;
+      cleanup.as.ref_value = graph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    graph_value->edge_count = builder->edge_count;
+    for (i = 0U; i < builder->edge_count; ++i) {
+      graph_value->edges[i].from = builder->edges[i].from;
+      graph_value->edges[i].to = builder->edges[i].to;
+      graph_value->edges[i].directed = builder->edges[i].directed ? 1U : 0U;
+      graph_value->edges[i].bidirectional = builder->edges[i].bidirectional ? 1U : 0U;
+    }
     graph_value->edge_attrs = (graphion_vm_value *)calloc(builder->edge_count, sizeof(*graph_value->edge_attrs));
     if (graph_value->edge_attrs == NULL) {
       graphion_vm_value cleanup;

@@ -282,7 +282,8 @@ int test_gion_graph_undirected_edge_declaration(void) {
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *graph_value;
-  const graphion_csr_graph *graph;
+  const graphion_graph_value *graph_data;
+  const graphion_csr_graph *adjacency;
   FILE *fp = NULL;
   int rc;
 
@@ -302,29 +303,36 @@ int test_gion_graph_undirected_edge_declaration(void) {
     remove(path);
     return finish_scope_test(&scope, 3);
   }
-  graph = (const graphion_csr_graph *)graph_value->as.ref_value;
-  if (graph == NULL || graph->node_count != 4U || graph->edge_count != 4U ||
-      graph->offsets == NULL || graph->neighbors == NULL) {
+  graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
+  adjacency = graph_data != NULL ? &graph_data->csr : NULL;
+  if (graph_data == NULL || graph_data->edge_count != 2U || graph_data->edges == NULL ||
+      adjacency == NULL || adjacency->node_count != 4U || adjacency->edge_count != 4U ||
+      adjacency->offsets == NULL || adjacency->neighbors == NULL) {
     remove(path);
     return finish_scope_test(&scope, 4);
   }
-  if (graph->offsets[0] != 0U || graph->offsets[1] != 0U || graph->offsets[2] != 1U ||
-      graph->offsets[3] != 3U || graph->offsets[4] != 4U) {
+  if (!graph_data->edges[0].bidirectional || !graph_data->edges[1].bidirectional ||
+      graph_data->edges[0].directed || graph_data->edges[1].directed) {
     remove(path);
     return finish_scope_test(&scope, 5);
   }
-  if (graph->neighbors[0] != 2U || graph->neighbors[1] != 1U ||
-      graph->neighbors[2] != 3U || graph->neighbors[3] != 2U) {
+  if (adjacency->offsets[0] != 0U || adjacency->offsets[1] != 0U || adjacency->offsets[2] != 1U ||
+      adjacency->offsets[3] != 3U || adjacency->offsets[4] != 4U) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (adjacency->neighbors[0] != 2U || adjacency->neighbors[1] != 1U ||
+      adjacency->neighbors[2] != 3U || adjacency->neighbors[3] != 2U) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
   remove(path);
   if (strcmp(output, "graph(nodes=3, edges=2)\n") != 0) {
-    return finish_scope_test(&scope, 8);
+    return finish_scope_test(&scope, 9);
   }
   return finish_scope_test(&scope, 0);
 }
@@ -365,7 +373,8 @@ int test_gion_graph_edge_attributes(void) {
     return finish_scope_test(&scope, 3);
   }
   graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
-  if (graph_data == NULL || graph_data->edge_attrs == NULL || graph_data->edge_attr_count != 2U) {
+  if (graph_data == NULL || graph_data->edge_count != 2U || graph_data->edges == NULL ||
+      graph_data->edge_attrs == NULL || graph_data->edge_attr_count != 2U) {
     remove(path);
     return finish_scope_test(&scope, 4);
   }
@@ -400,7 +409,8 @@ int test_gion_graph_directed_edge_declaration(void) {
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *graph_value;
-  const graphion_csr_graph *graph;
+  const graphion_graph_value *graph_data;
+  const graphion_csr_graph *adjacency;
   FILE *fp = NULL;
   int rc;
 
@@ -420,28 +430,35 @@ int test_gion_graph_directed_edge_declaration(void) {
     remove(path);
     return finish_scope_test(&scope, 3);
   }
-  graph = (const graphion_csr_graph *)graph_value->as.ref_value;
-  if (graph == NULL || graph->node_count != 5U || graph->edge_count != 3U ||
-      graph->offsets == NULL || graph->neighbors == NULL) {
+  graph_data = (const graphion_graph_value *)graph_value->as.ref_value;
+  adjacency = graph_data != NULL ? &graph_data->csr : NULL;
+  if (graph_data == NULL || graph_data->edge_count != 2U || graph_data->edges == NULL ||
+      adjacency == NULL || adjacency->node_count != 5U || adjacency->edge_count != 3U ||
+      adjacency->offsets == NULL || adjacency->neighbors == NULL) {
     remove(path);
     return finish_scope_test(&scope, 4);
   }
-  if (graph->offsets[0] != 0U || graph->offsets[1] != 0U || graph->offsets[2] != 1U ||
-      graph->offsets[3] != 1U || graph->offsets[4] != 2U || graph->offsets[5] != 3U) {
+  if (!graph_data->edges[0].directed || graph_data->edges[0].bidirectional ||
+      !graph_data->edges[1].directed || !graph_data->edges[1].bidirectional) {
     remove(path);
     return finish_scope_test(&scope, 5);
   }
-  if (graph->neighbors[0] != 2U || graph->neighbors[1] != 4U || graph->neighbors[2] != 3U) {
+  if (adjacency->offsets[0] != 0U || adjacency->offsets[1] != 0U || adjacency->offsets[2] != 1U ||
+      adjacency->offsets[3] != 1U || adjacency->offsets[4] != 2U || adjacency->offsets[5] != 3U) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
-  if (!test_read_file_text(path, output, sizeof(output))) {
+  if (adjacency->neighbors[0] != 2U || adjacency->neighbors[1] != 4U || adjacency->neighbors[2] != 3U) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
   remove(path);
   if (strcmp(output, "graph(nodes=4, edges=2)\n") != 0) {
-    return finish_scope_test(&scope, 8);
+    return finish_scope_test(&scope, 9);
   }
   return finish_scope_test(&scope, 0);
 }

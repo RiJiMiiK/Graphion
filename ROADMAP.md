@@ -26,6 +26,40 @@ This branch is for active work on non-scalar language types.
 - [ ] first-class `graph` values in `.gion`
   - distinct from backend-only VM/runtime support
   - [x] create an empty graph with `graph Name;`
+  - [x] create graph values with node blocks
+  - [x] support string node names with quoted literals
+  - [x] support node variables that resolve to `string` names or integer IDs
+  - [x] support explicit numeric node IDs without creating implicit gap nodes
+  - [x] support undirected edges with `node - node`
+  - [x] support directed edges with `node -> node`
+  - [x] support bidirectional directed edges with `node <-> node`
+  - [x] reject mixing directed syntax with undirected `-` edges in the same graph
+  - [x] create missing endpoint nodes when an edge references them
+  - [x] support node attributes as dict values
+  - [x] support `defaults node` and enforce a shared node attribute schema
+  - [x] support edge attributes as dict values
+  - [x] support compact edge weights with reserved numeric `weight`
+  - [x] support edge attribute expressions that evaluate to `int`, `float`, or `dict`
+  - [x] support `defaults edge` and enforce a shared edge attribute schema
+  - [x] print useful graph summaries
+  - [x] cover graph declarations, attrs, edges, warnings, docs, and examples
+  - [ ] add `.gion` graph inspection operations
+    - node count
+    - edge count
+    - directedness / orientation information
+  - [ ] add `.gion` graph attribute lookup operations
+    - node attributes
+    - edge attributes
+    - reserved edge `weight`
+  - [ ] add basic graph membership/query operations
+    - node exists
+    - edge exists
+    - neighbors / adjacency
+  - [ ] decide the first mutation surface after initialization
+    - add node
+    - add edge
+    - update node attributes
+    - update edge attributes
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
 - [ ] `path` or `walk` value type
