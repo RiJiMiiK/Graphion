@@ -63,6 +63,22 @@ This branch is for active work on non-scalar language types.
     - update node attributes
     - update edge attributes
     - update reserved edge `weight`
+  - [ ] add graph removal mutation after initialization
+    - remove node
+    - remove edge
+    - define how node removal affects incident edges and attributes
+  - [ ] add graph listing/query operations
+    - list nodes / node IDs
+    - list edges
+    - expose enough graph contents to inspect a value without knowing names or IDs ahead of time
+  - [ ] clarify directed adjacency semantics
+    - define whether `neighbors(...)` means outgoing-only, incoming+outgoing, or orientation-aware
+    - add explicit directed helpers if needed, such as successors / predecessors
+  - [ ] harden graph mutation error coverage
+    - unknown attribute keys
+    - invalid `weight` types
+    - missing nodes / edges
+    - partial attribute patches before a full schema-backed value exists
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
 - [ ] `path` or `walk` value type
