@@ -2,6 +2,9 @@
 
 This page documents the builtins currently available in Graphion.
 
+Graphion also has graph mutation statements such as `add_node(G, node)` and `add_edge(G, from, to)`.
+They are documented on the [Language Reference](language-reference.md) page because they mutate a named graph variable rather than returning a standalone value.
+
 ## Shared Rules
 
 Unless a builtin says otherwise:

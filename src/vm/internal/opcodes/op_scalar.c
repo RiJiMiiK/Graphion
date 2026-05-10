@@ -1079,6 +1079,203 @@ static int graph_node_id_from_value(const graphion_graph_value *graph,
   return GVM_ERR_TYPE_MISMATCH;
 }
 
+static char *graph_strdup_text(const char *text) {
+  size_t len;
+  char *copy;
+
+  if (text == NULL) {
+    return NULL;
+  }
+  len = strlen(text);
+  copy = (char *)malloc(len + 1U);
+  if (copy == NULL) {
+    return NULL;
+  }
+  memcpy(copy, text, len + 1U);
+  return copy;
+}
+
+static int graph_node_id_exists(const graphion_graph_value *graph, uint32_t id) {
+  size_t i;
+
+  if (graph == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < graph->node_count; ++i) {
+    if (graph->nodes[i].id == id) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int graph_next_free_node_id(const graphion_graph_value *graph, uint32_t *id_out) {
+  uint32_t id;
+
+  if (graph == NULL || id_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  for (id = 0U; id < UINT32_MAX; ++id) {
+    if (!graph_node_id_exists(graph, id)) {
+      *id_out = id;
+      return GVM_OK;
+    }
+  }
+  return GVM_ERR_INVALID_ARG;
+}
+
+static int graph_rebuild_adjacency(graphion_graph_value *graph) {
+  graphion_csr_graph *csr;
+  uint32_t *offsets = NULL;
+  uint32_t *neighbors = NULL;
+  uint32_t *cursor = NULL;
+  size_t node_count = 0U;
+  size_t adjacency_count = 0U;
+  size_t i;
+
+  if (graph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  csr = &graph->csr;
+  for (i = 0U; i < graph->node_count; ++i) {
+    const size_t candidate = (size_t)graph->nodes[i].id + 1U;
+    if (candidate > node_count) {
+      node_count = candidate;
+    }
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    adjacency_count += graph->edges[i].bidirectional ? 2U : 1U;
+  }
+  if (node_count > 0U) {
+    offsets = (uint32_t *)calloc(node_count + 1U, sizeof(*offsets));
+    if (offsets == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+  }
+  if (adjacency_count > 0U) {
+    neighbors = (uint32_t *)calloc(adjacency_count, sizeof(*neighbors));
+    cursor = (uint32_t *)calloc(node_count, sizeof(*cursor));
+    if (neighbors == NULL || cursor == NULL) {
+      free(offsets);
+      free(neighbors);
+      free(cursor);
+      return GVM_ERR_INVALID_ARG;
+    }
+    for (i = 0U; i < graph->edge_count; ++i) {
+      offsets[graph->edges[i].from + 1U] += 1U;
+      if (graph->edges[i].bidirectional) {
+        offsets[graph->edges[i].to + 1U] += 1U;
+      }
+    }
+    for (i = 1U; i <= node_count; ++i) {
+      offsets[i] += offsets[i - 1U];
+    }
+    memcpy(cursor, offsets, node_count * sizeof(*cursor));
+    for (i = 0U; i < graph->edge_count; ++i) {
+      const uint32_t from = graph->edges[i].from;
+      const uint32_t to = graph->edges[i].to;
+      neighbors[cursor[from]++] = to;
+      if (graph->edges[i].bidirectional) {
+        neighbors[cursor[to]++] = from;
+      }
+    }
+    free(cursor);
+  }
+  free((void *)csr->offsets);
+  free((void *)csr->neighbors);
+  csr->node_count = node_count;
+  csr->edge_count = adjacency_count;
+  csr->offsets = offsets;
+  csr->neighbors = neighbors;
+  csr->weights = NULL;
+  csr->edge_attrs = NULL;
+  return GVM_OK;
+}
+
+static int graph_add_node_id(graphion_graph_value *graph, uint32_t id, const char *name) {
+  graphion_graph_node_value *nodes;
+  graphion_vm_value *attrs;
+
+  if (graph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (graph_node_id_exists(graph, id)) {
+    return GVM_OK;
+  }
+  nodes = (graphion_graph_node_value *)realloc(graph->nodes, (graph->node_count + 1U) * sizeof(*nodes));
+  if (nodes == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  graph->nodes = nodes;
+  graph->nodes[graph->node_count].id = id;
+  graph->nodes[graph->node_count].name = NULL;
+  if (name != NULL) {
+    graph->nodes[graph->node_count].name = graph_strdup_text(name);
+    if (graph->nodes[graph->node_count].name == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+  }
+  graph->node_count += 1U;
+  if ((size_t)id >= graph->node_attr_count) {
+    size_t i;
+    attrs = (graphion_vm_value *)realloc(graph->node_attrs, ((size_t)id + 1U) * sizeof(*attrs));
+    if (attrs == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    graph->node_attrs = attrs;
+    for (i = graph->node_attr_count; i <= (size_t)id; ++i) {
+      memset(&graph->node_attrs[i], 0, sizeof(graph->node_attrs[i]));
+      graph->node_attrs[i].kind = GVM_VALUE_NONE;
+    }
+    graph->node_attr_count = (size_t)id + 1U;
+  }
+  return graph_rebuild_adjacency(graph);
+}
+
+static int graph_node_id_from_value_or_add(graphion_graph_value *graph,
+                                           const graphion_vm_value *value,
+                                           uint32_t *id_out) {
+  uint32_t id;
+  int rc;
+
+  if (graph == NULL || value == NULL || id_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  rc = graph_node_id_from_value(graph, value, id_out);
+  if (rc == GVM_OK) {
+    return GVM_OK;
+  }
+  if (rc != GVM_ERR_INVALID_NODE_ID) {
+    return rc;
+  }
+  if (value->kind == GVM_VALUE_INT) {
+    if (value->as.int_value < 0 || value->as.int_value > UINT32_MAX) {
+      return GVM_ERR_INVALID_NODE_ID;
+    }
+    id = (uint32_t)value->as.int_value;
+    rc = graph_add_node_id(graph, id, NULL);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    *id_out = id;
+    return GVM_OK;
+  }
+  if (value->kind == GVM_VALUE_STRING) {
+    const char *name = value->as.string_value != NULL ? value->as.string_value : "";
+    rc = graph_next_free_node_id(graph, &id);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    rc = graph_add_node_id(graph, id, name);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    *id_out = id;
+    return GVM_OK;
+  }
+  return GVM_ERR_TYPE_MISMATCH;
+}
+
 static int graph_edge_index_from_ids(const graphion_graph_value *graph,
                                      uint32_t from,
                                      uint32_t to,
@@ -1115,6 +1312,16 @@ static int graph_clone_result_into_target(graphion_vm *vm, uint8_t target, const
   vm_value_dispose_owned(&vm->regs[target]);
   vm->regs[target] = cloned;
   return GVM_OK;
+}
+
+static void graph_update_visible_counts(graphion_vm_value *value, const graphion_graph_value *graph) {
+  if (value == NULL || graph == NULL) {
+    return;
+  }
+  value->reserved[1] = (uint8_t)(graph->node_count & 0xFFU);
+  value->reserved[2] = (uint8_t)((graph->node_count >> 8U) & 0xFFU);
+  value->reserved[3] = (uint8_t)(graph->edge_count & 0xFFU);
+  value->reserved[4] = (uint8_t)((graph->edge_count >> 8U) & 0xFFU);
 }
 
 int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
@@ -1416,6 +1623,94 @@ int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in) {
   }
   free(ids);
   return GVM_OK;
+}
+
+int op_graph_add_node(graphion_vm *vm, const graphion_insn *in) {
+  graphion_graph_value *graph;
+  uint32_t node_id;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_GRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  graph = (graphion_graph_value *)vm->regs[in->a].as.ref_value;
+  if (graph->node_attr_count > 0U) {
+    size_t i;
+    for (i = 0U; i < graph->node_attr_count; ++i) {
+      if (graph->node_attrs[i].kind != GVM_VALUE_NONE) {
+        return GVM_ERR_TYPE_MISMATCH;
+      }
+    }
+  }
+  rc = graph_node_id_from_value_or_add(graph, &vm->regs[in->b], &node_id);
+  (void)node_id;
+  if (rc == GVM_OK) {
+    graph_update_visible_counts(&vm->regs[in->a], graph);
+  }
+  return rc;
+}
+
+int op_graph_add_edge(graphion_vm *vm, const graphion_insn *in) {
+  graphion_graph_edge_value *edges;
+  graphion_graph_value *graph;
+  uint32_t from;
+  uint32_t to;
+  size_t edge_index;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_GRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  graph = (graphion_graph_value *)vm->regs[in->a].as.ref_value;
+  if (graph_has_directed_edges(graph)) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (graph->edge_attr_count > 0U) {
+    size_t i;
+    for (i = 0U; i < graph->edge_attr_count; ++i) {
+      if (graph->edge_attrs[i].kind != GVM_VALUE_NONE) {
+        return GVM_ERR_TYPE_MISMATCH;
+      }
+    }
+  }
+  rc = graph_node_id_from_value_or_add(graph, &vm->regs[in->b], &from);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value_or_add(graph, &vm->regs[(uint8_t)in->imm], &to);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_edge_index_from_ids(graph, from, to, &edge_index);
+  if (rc == GVM_OK) {
+    return GVM_OK;
+  }
+  if (rc != GVM_ERR_MISSING_KEY) {
+    return rc;
+  }
+  edges = (graphion_graph_edge_value *)realloc(graph->edges, (graph->edge_count + 1U) * sizeof(*edges));
+  if (edges == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  graph->edges = edges;
+  graph->edges[graph->edge_count].from = from;
+  graph->edges[graph->edge_count].to = to;
+  graph->edges[graph->edge_count].directed = 0U;
+  graph->edges[graph->edge_count].bidirectional = 1U;
+  graph->edges[graph->edge_count].reserved[0] = 0U;
+  graph->edges[graph->edge_count].reserved[1] = 0U;
+  graph->edge_count += 1U;
+  rc = graph_rebuild_adjacency(graph);
+  if (rc == GVM_OK) {
+    graph_update_visible_counts(&vm->regs[in->a], graph);
+  }
+  return rc;
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

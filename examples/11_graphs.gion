@@ -51,3 +51,12 @@ print(edge_count(Graphe_oriente))
 print(is_directed(Graphe_oriente))
 print(is_weighted(Graphe_oriente))
 print(orientation(Graphe_oriente))
+
+graph Graphe_mutable;
+add_node(Graphe_mutable, "Alice")
+add_edge(Graphe_mutable, "Alice", 2)
+add_node(Graphe_mutable, "Bob")
+add_edge(Graphe_mutable, "Bob", "Alice")
+
+print(Graphe_mutable)
+print(neighbors(Graphe_mutable, "Alice"))

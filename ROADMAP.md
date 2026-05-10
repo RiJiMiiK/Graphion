@@ -56,11 +56,13 @@ This branch is for active work on non-scalar language types.
     - node exists
     - edge exists
     - neighbors / adjacency
-  - [ ] decide the first mutation surface after initialization
+  - [x] decide and add the first mutation surface after initialization
     - add node
     - add edge
+  - [ ] add graph attribute mutation after initialization
     - update node attributes
     - update edge attributes
+    - update reserved edge `weight`
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
 - [ ] `path` or `walk` value type

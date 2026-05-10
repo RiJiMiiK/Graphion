@@ -24,6 +24,7 @@ Current supported top-level statements:
 - `if` / `elif` / `else`
 - `match`
 - `print(...)`
+- graph mutation with `add_node(...)` and `add_edge(...)`
 
 Examples:
 
@@ -230,6 +231,25 @@ Current graph declaration rules:
 - named nodes receive generated IDs after explicit IDs are reserved
 - the semicolon is required for empty declarations
 - the colon is required for node-block declarations
+
+Graph mutation statements:
+
+```gion
+graph G;
+
+add_node(G, "Alice")
+add_edge(G, "Alice", 2)
+```
+
+Current graph mutation rules:
+
+- `add_node(graph_variable, node)` mutates the named graph variable in place
+- `add_edge(graph_variable, from, to)` mutates the named graph variable in place
+- `node`, `from`, and `to` may be integer IDs or string node names
+- `add_edge(...)` creates missing endpoint nodes before adding the edge
+- `add_edge(...)` currently creates undirected edges
+- adding an existing node or edge is a no-op
+- structural mutation currently supports graphs without node or edge attribute schemas
 
 Compound assignment:
 
@@ -820,6 +840,8 @@ Current builtin functions:
 - `has_node(graph, node)`
 - `has_edge(graph, from, to)`
 - `neighbors(graph, node)`
+- `add_node(graph, node)` as a statement
+- `add_edge(graph, from, to)` as a statement
 
 See [Builtins](builtins.md).
 

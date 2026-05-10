@@ -668,6 +668,85 @@ int test_gion_graph_membership_query_builtins(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_structure_mutation_statements(void) {
+  const char *source =
+      "graph G;\n"
+      "add_node(G, \"Alice\")\n"
+      "add_edge(G, \"Alice\", 2)\n"
+      "add_edge(G, 2, \"Alice\")\n"
+      "add_node(G, 2)\n"
+      "add_node(G, \"Bob\")\n"
+      "add_edge(G, \"Bob\", \"Alice\")\n"
+      "print(node_count(G))\n"
+      "print(edge_count(G))\n"
+      "print(has_node(G, \"Bob\"))\n"
+      "print(has_edge(G, 2, \"Alice\"))\n"
+      "print(neighbors(G, \"Alice\"))\n"
+      "print(G)\n";
+  const char *expected =
+      "3\n"
+      "2\n"
+      "true\n"
+      "true\n"
+      "[2, 1]\n"
+      "graph(nodes=3, edges=2)\n";
+  const char *source_non_empty =
+      "graph H:\n"
+      "    \"A\"\n"
+      "add_node(H, \"B\")\n"
+      "add_edge(H, \"A\", \"B\")\n"
+      "print(node_count(H))\n"
+      "print(edge_count(H))\n";
+  const char *expected_non_empty =
+      "2\n"
+      "1\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_structure_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_structure_mutation_non_empty.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 5);
+  }
+  rc = graphion_interpret_source_with_output(source_non_empty, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  remove(path);
+  if (strcmp(output, expected_non_empty) != 0) {
+    return finish_scope_test(&scope, 8);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;
