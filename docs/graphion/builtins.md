@@ -7,6 +7,9 @@ Graphion also has graph mutation statements such as `add_node(G, node)`, `add_ed
 and `set_edge_weight(...)`.
 They are documented on the [Language Reference](language-reference.md) page because they mutate a named graph variable rather than returning a standalone value.
 
+Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(graph)` for
+inspecting graph contents without knowing node names or IDs ahead of time.
+
 ## Shared Rules
 
 Unless a builtin says otherwise:
@@ -85,6 +88,9 @@ Unless a builtin says otherwise:
 | `is_directed(graph)` | whether a graph has directed syntax | `bool` | `->` and `<->` make this true |
 | `is_weighted(graph)` | whether a graph has edge weights | `bool` | true when any edge has `weight` |
 | `orientation(graph)` | graph orientation summary | `string` | `empty`, `undirected`, or `directed` |
+| `node_ids(graph)` | present node IDs | `list` | IDs remain stable and can have gaps |
+| `nodes(graph)` | present node descriptors | `list` | each item is a dict with `id` and optional `name` |
+| `edges(graph)` | logical edge descriptors | `list` | each item has `from`, `to`, `directed`, and `bidirectional` |
 | `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
 | `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
 | `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
@@ -1219,6 +1225,84 @@ Accepted input:
 Result type:
 
 - `string`
+
+### `node_ids(graph)`
+
+Returns a list of present numeric node IDs.
+
+```gion
+graph G:
+    "Alice"
+    10
+
+print(node_ids(G))
+```
+
+Expected output:
+
+```text
+[0, 10]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `nodes(graph)`
+
+Returns a list of node descriptor dictionaries. Named nodes include `name`; numeric-only nodes only include `id`.
+
+```gion
+graph G:
+    "Alice"
+    10
+
+print(nodes(G))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "name": "Alice"}, {"id": 10}]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `dict`
+
+### `edges(graph)`
+
+Returns a list of logical edge descriptor dictionaries with `from`, `to`, `directed`, and `bidirectional`.
+
+```gion
+graph G:
+    1 -> 2
+    2 <-> 3
+
+print(edges(G))
+```
+
+Expected output:
+
+```text
+[{"from": 1, "to": 2, "directed": true, "bidirectional": false}, {"from": 2, "to": 3, "directed": true, "bidirectional": true}]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `dict`
 
 ### `node_attrs(graph, node)`
 

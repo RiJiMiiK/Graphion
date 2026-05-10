@@ -54,7 +54,10 @@
   X("edge_count", GVM_OP_GRAPH_EDGE_COUNT)     \
   X("is_directed", GVM_OP_GRAPH_IS_DIRECTED) \
   X("is_weighted", GVM_OP_GRAPH_IS_WEIGHTED) \
-  X("orientation", GVM_OP_GRAPH_ORIENTATION)
+  X("orientation", GVM_OP_GRAPH_ORIENTATION) \
+  X("node_ids", GVM_OP_GRAPH_NODE_IDS)       \
+  X("nodes", GVM_OP_GRAPH_NODES)             \
+  X("edges", GVM_OP_GRAPH_EDGES)
 
 #define GRAPHION_BINARY_DIRECT_BUILTINS(X) \
   X("min", GVM_OP_MIN)                     \

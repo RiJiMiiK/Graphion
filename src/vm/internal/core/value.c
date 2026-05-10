@@ -551,6 +551,22 @@ int vm_value_list_length(const graphion_vm_value *value, size_t *len_out) {
   return 1;
 }
 
+int vm_value_set_empty_list_value(graphion_vm_value *value) {
+  graphion_vm_list *list;
+
+  if (value == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  list = vm_list_create();
+  if (list == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_value_dispose_owned(value);
+  value->kind = GVM_VALUE_LIST;
+  value->as.ref_value = list;
+  return GVM_OK;
+}
+
 int vm_value_tuple_length(const graphion_vm_value *value, size_t *len_out) {
   graphion_vm_list *tuple;
   if (value == NULL || len_out == NULL || value->kind != GVM_VALUE_TUPLE) {
@@ -579,6 +595,22 @@ int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out) {
   dict = (graphion_vm_dict *)value->as.ref_value;
   *len_out = dict != NULL ? dict->count : 0U;
   return 1;
+}
+
+int vm_value_set_empty_dict_value(graphion_vm_value *value) {
+  graphion_vm_dict *dict;
+
+  if (value == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  dict = vm_dict_create();
+  if (dict == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_value_dispose_owned(value);
+  value->kind = GVM_VALUE_DICT;
+  value->as.ref_value = dict;
+  return GVM_OK;
 }
 
 int vm_value_dict_keys_equal(const graphion_vm_value *lhs, const graphion_vm_value *rhs) {
@@ -1136,6 +1168,19 @@ static int vm_list_append_value(graphion_vm_list *list, const graphion_vm_value 
   }
   list->items[list->count++] = cloned;
   return GVM_OK;
+}
+
+int vm_value_list_append_clone(graphion_vm_value *list_value, const graphion_vm_value *item) {
+  graphion_vm_list *list;
+
+  if (list_value == NULL || item == NULL || list_value->kind != GVM_VALUE_LIST) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  list = (graphion_vm_list *)list_value->as.ref_value;
+  if (list == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  return vm_list_append_value(list, item);
 }
 
 int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg) {

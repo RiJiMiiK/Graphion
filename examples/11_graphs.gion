@@ -51,6 +51,9 @@ print(edge_count(Graphe_oriente))
 print(is_directed(Graphe_oriente))
 print(is_weighted(Graphe_oriente))
 print(orientation(Graphe_oriente))
+print(node_ids(Graphe_oriente))
+print(nodes(Graphe_oriente))
+print(edges(Graphe_oriente))
 
 graph Graphe_mutable;
 add_node(Graphe_mutable, "Alice")

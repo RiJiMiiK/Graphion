@@ -67,7 +67,7 @@ This branch is for active work on non-scalar language types.
     - remove node
     - remove edge
     - define how node removal affects incident edges and attributes
-  - [ ] add graph listing/query operations
+  - [x] add graph listing/query operations
     - list nodes / node IDs
     - list edges
     - expose enough graph contents to inspect a value without knowing names or IDs ahead of time

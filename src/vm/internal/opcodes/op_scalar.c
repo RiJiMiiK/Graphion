@@ -1833,6 +1833,148 @@ int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int graph_dict_set_int(graphion_vm_value *dict, const char *key, int64_t value) {
+  graphion_vm_value item;
+
+  memset(&item, 0, sizeof(item));
+  item.kind = GVM_VALUE_NONE;
+  vm_value_set_int(&item, value);
+  return vm_value_dict_set_clone(dict, key, &item);
+}
+
+static int graph_dict_set_bool(graphion_vm_value *dict, const char *key, int value) {
+  graphion_vm_value item;
+
+  memset(&item, 0, sizeof(item));
+  item.kind = GVM_VALUE_NONE;
+  vm_value_set_bool(&item, value);
+  return vm_value_dict_set_clone(dict, key, &item);
+}
+
+static int graph_dict_set_string(graphion_vm_value *dict, const char *key, const char *value) {
+  graphion_vm temp;
+  int rc;
+
+  graphion_vm_init(&temp);
+  rc = vm_reg_set_string_copy(&temp, 0U, value != NULL ? value : "");
+  if (rc == GVM_OK) {
+    rc = vm_value_dict_set_clone(dict, key, &temp.regs[0]);
+  }
+  graphion_vm_dispose(&temp);
+  return rc;
+}
+
+int op_graph_node_ids(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  size_t i;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  rc = vm_reg_set_empty_list(vm, in->a);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < graph->node_count; ++i) {
+    rc = vm_list_append_int(vm, in->a, (int64_t)graph->nodes[i].id);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+  }
+  return GVM_OK;
+}
+
+int op_graph_nodes(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  graphion_vm_value list;
+  size_t i;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  memset(&list, 0, sizeof(list));
+  list.kind = GVM_VALUE_NONE;
+  rc = vm_value_set_empty_list_value(&list);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < graph->node_count; ++i) {
+    graphion_vm_value node;
+    memset(&node, 0, sizeof(node));
+    node.kind = GVM_VALUE_NONE;
+    rc = vm_value_set_empty_dict_value(&node);
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_int(&node, "id", (int64_t)graph->nodes[i].id);
+    }
+    if (rc == GVM_OK && graph->nodes[i].name != NULL) {
+      rc = graph_dict_set_string(&node, "name", graph->nodes[i].name);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_list_append_clone(&list, &node);
+    }
+    vm_value_dispose_owned(&node);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&list);
+      return rc;
+    }
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = list;
+  return GVM_OK;
+}
+
+int op_graph_edges(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  graphion_vm_value list;
+  size_t i;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  memset(&list, 0, sizeof(list));
+  list.kind = GVM_VALUE_NONE;
+  rc = vm_value_set_empty_list_value(&list);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    graphion_vm_value edge;
+    memset(&edge, 0, sizeof(edge));
+    edge.kind = GVM_VALUE_NONE;
+    rc = vm_value_set_empty_dict_value(&edge);
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_int(&edge, "from", (int64_t)graph->edges[i].from);
+    }
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_int(&edge, "to", (int64_t)graph->edges[i].to);
+    }
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_bool(&edge, "directed", graph->edges[i].directed ? 1 : 0);
+    }
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_bool(&edge, "bidirectional", graph->edges[i].bidirectional ? 1 : 0);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_list_append_clone(&list, &edge);
+    }
+    vm_value_dispose_owned(&edge);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&list);
+      return rc;
+    }
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = list;
+  return GVM_OK;
+}
+
 int op_graph_add_node(graphion_vm *vm, const graphion_insn *in) {
   graphion_graph_value *graph;
   uint32_t node_id;

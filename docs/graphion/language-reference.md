@@ -270,6 +270,23 @@ Current graph mutation rules:
 - edge `weight` values must be `int` or `float`
 - attribute mutation preserves the shared-key schema once a schema exists
 
+Graph listing and query builtins:
+
+```gion
+print(node_ids(G))
+print(nodes(G))
+print(edges(G))
+print(has_node(G, "Alice"))
+print(has_edge(G, "Alice", 2))
+print(neighbors(G, "Alice"))
+```
+
+- `node_ids(graph)` returns a list of present numeric node IDs
+- `nodes(graph)` returns node dictionaries such as `{"id": 0, "name": "Alice"}`
+- numeric-only nodes omit the `name` key in `nodes(...)`
+- `edges(graph)` returns edge dictionaries with `from`, `to`, `directed`, and `bidirectional`
+- bidirectional `<->` edges appear as one logical edge in `edges(...)`
+
 Compound assignment:
 
 ```gion
@@ -853,6 +870,9 @@ Current builtin functions:
 - `is_directed(graph)`
 - `is_weighted(graph)`
 - `orientation(graph)`
+- `node_ids(graph)`
+- `nodes(graph)`
+- `edges(graph)`
 - `node_attrs(graph, node)`
 - `edge_attrs(graph, from, to)`
 - `edge_weight(graph, from, to)`

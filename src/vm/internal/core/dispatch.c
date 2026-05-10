@@ -305,6 +305,15 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_NEIGHBORS:
         rc = op_graph_neighbors(vm, &in);
         break;
+      case GVM_OP_GRAPH_NODE_IDS:
+        rc = op_graph_node_ids(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NODES:
+        rc = op_graph_nodes(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGES:
+        rc = op_graph_edges(vm, &in);
+        break;
       case GVM_OP_GRAPH_ADD_NODE:
         rc = op_graph_add_node(vm, &in);
         break;

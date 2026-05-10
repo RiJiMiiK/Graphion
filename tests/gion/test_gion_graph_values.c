@@ -668,6 +668,55 @@ int test_gion_graph_membership_query_builtins(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_listing_query_builtins(void) {
+  const char *source =
+      "graph G:\n"
+      "    \"Alice\"\n"
+      "    \"Bob\"\n"
+      "    10\n"
+      "    \"Alice\" -> \"Bob\"\n"
+      "    \"Bob\" <-> 10\n"
+      "print(node_ids(G))\n"
+      "print(nodes(G))\n"
+      "print(edges(G))\n"
+      "remove_edge(G, \"Bob\", 10)\n"
+      "print(edges(G))\n";
+  const char *expected =
+      "[0, 1, 10]\n"
+      "[{\"id\": 0, \"name\": \"Alice\"}, {\"id\": 1, \"name\": \"Bob\"}, {\"id\": 10}]\n"
+      "[{\"from\": 0, \"to\": 1, \"directed\": true, \"bidirectional\": false}, "
+      "{\"from\": 1, \"to\": 10, \"directed\": true, \"bidirectional\": true}]\n"
+      "[{\"from\": 0, \"to\": 1, \"directed\": true, \"bidirectional\": false}, "
+      "{\"from\": 10, \"to\": 1, \"directed\": true, \"bidirectional\": false}]\n";
+  char path[512];
+  char output[768];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_listing_query_builtins.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_structure_mutation_statements(void) {
   const char *source =
       "graph G;\n"

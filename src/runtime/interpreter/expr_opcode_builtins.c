@@ -153,6 +153,9 @@ int try_parse_opcode_builtin(const char **cursor,
       {"is_directed", GVM_OP_GRAPH_IS_DIRECTED},
       {"is_weighted", GVM_OP_GRAPH_IS_WEIGHTED},
       {"orientation", GVM_OP_GRAPH_ORIENTATION},
+      {"node_ids", GVM_OP_GRAPH_NODE_IDS},
+      {"nodes", GVM_OP_GRAPH_NODES},
+      {"edges", GVM_OP_GRAPH_EDGES},
   };
   static const expr_named_builtin_entry binary_builtins[] = {
       {"atan2", GVM_OP_ATAN2},

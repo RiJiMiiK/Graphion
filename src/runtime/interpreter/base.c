@@ -14,7 +14,7 @@ static int is_scalar_builtin_name(const char *name) {
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
       "round",      "trunc",       "sign",      "len",         "contains", "node_count",
       "edge_count", "is_directed", "is_weighted", "orientation", "node_attrs", "edge_attrs",
-      "edge_weight", "has_node", "has_edge", "neighbors", "add_node", "add_edge",
+      "edge_weight", "has_node", "has_edge", "neighbors", "node_ids", "nodes", "edges", "add_node", "add_edge",
       "set_node_attrs", "set_edge_attrs", "set_edge_weight", "remove_node", "remove_edge"
   };
   size_t i;
