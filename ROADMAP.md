@@ -48,7 +48,7 @@ This branch is for active work on non-scalar language types.
     - edge count
     - directedness / orientation information
     - weightedness information
-  - [ ] add `.gion` graph attribute lookup operations
+  - [x] add `.gion` graph attribute lookup operations
     - node attributes
     - edge attributes
     - reserved edge `weight`

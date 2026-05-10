@@ -177,6 +177,20 @@ static int runtime_graph_add_named_node(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static const char *runtime_graph_name_for_id(const runtime_graph_builder *builder, uint32_t id) {
+  size_t i;
+
+  if (builder == NULL) {
+    return NULL;
+  }
+  for (i = 0U; i < builder->named_node_count; ++i) {
+    if (builder->named_nodes[i].id == id) {
+      return builder->named_nodes[i].name;
+    }
+  }
+  return NULL;
+}
+
 static int runtime_graph_id_from_value(runtime_graph_builder *builder,
                                        const graphion_runtime_value *value,
                                        int fail_if_existing_id,
@@ -907,10 +921,45 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
     graph->offsets = offsets;
   }
   if (node_count > 0U) {
+    size_t node_index = 0U;
+
+    if (visible_node_count > 0U) {
+      graph_value->nodes = (graphion_graph_node_value *)calloc(visible_node_count, sizeof(*graph_value->nodes));
+      if (graph_value->nodes == NULL) {
+        free((void *)graph->offsets);
+        free(graph_value);
+        return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+      }
+      graph_value->node_count = visible_node_count;
+      for (i = 0U; i < node_count; ++i) {
+        if (builder->used_ids[i]) {
+          const char *name = runtime_graph_name_for_id(builder, (uint32_t)i);
+          graph_value->nodes[node_index].id = (uint32_t)i;
+          if (name != NULL) {
+            const size_t name_len = strlen(name);
+            char *copy = (char *)malloc(name_len + 1U);
+            if (copy == NULL) {
+              graphion_vm_value cleanup;
+              vm_value_set_none(&cleanup);
+              cleanup.kind = GVM_VALUE_GRAPH_REF;
+              cleanup.as.ref_value = graph_value;
+              vm_value_dispose_owned(&cleanup);
+              return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+            }
+            memcpy(copy, name, name_len + 1U);
+            graph_value->nodes[node_index].name = copy;
+          }
+          node_index += 1U;
+        }
+      }
+    }
     graph_value->node_attrs = (graphion_vm_value *)calloc(node_count, sizeof(*graph_value->node_attrs));
     if (graph_value->node_attrs == NULL) {
-      free((void *)graph->offsets);
-      free(graph_value);
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_GRAPH_REF;
+      cleanup.as.ref_value = graph_value;
+      vm_value_dispose_owned(&cleanup);
       return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
     }
     graph_value->node_attr_count = node_count;

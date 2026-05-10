@@ -80,6 +80,9 @@ Unless a builtin says otherwise:
 | `is_directed(graph)` | whether a graph has directed syntax | `bool` | `->` and `<->` make this true |
 | `is_weighted(graph)` | whether a graph has edge weights | `bool` | true when any edge has `weight` |
 | `orientation(graph)` | graph orientation summary | `string` | `empty`, `undirected`, or `directed` |
+| `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
+| `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
+| `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
 
 ## `print(...)`
 
@@ -1208,6 +1211,94 @@ Accepted input:
 Result type:
 
 - `string`
+
+### `node_attrs(graph, node)`
+
+Returns the attribute dictionary attached to a node. The `node` argument can be either an integer node ID or a string node name.
+
+```gion
+alice = "Alice"
+
+graph G:
+    defaults node {"label": "unknown", "score": 0}
+    alice {"label": "start"}
+
+print(node_attrs(G, alice)["label"])
+```
+
+Expected output:
+
+```text
+start
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `dict`
+
+### `edge_attrs(graph, from, to)`
+
+Returns the attribute dictionary attached to one logical edge. For undirected edges and `<->` edges, the lookup works in either endpoint order.
+
+```gion
+graph G:
+    defaults edge {"kind": "normal", "weight": 1}
+    1 - 2 {"weight": 3}
+
+print(edge_attrs(G, 2, 1)["kind"])
+```
+
+Expected output:
+
+```text
+normal
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `dict`
+
+### `edge_weight(graph, from, to)`
+
+Returns the reserved `weight` attribute for one logical edge. This is equivalent to `edge_attrs(graph, from, to)["weight"]`, but makes weighted graph code easier to read.
+
+```gion
+graph G:
+    1 - 2 15
+
+print(edge_weight(G, 1, 2))
+```
+
+Expected output:
+
+```text
+15
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `int` or `float`
+
+Current runtime notes:
+
+- missing nodes are runtime errors
+- missing edges are runtime errors
+- an existing edge without `weight` is a missing-key runtime error
 
 ## Error Summary
 

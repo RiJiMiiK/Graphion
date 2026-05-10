@@ -260,6 +260,12 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
     graph = (graphion_csr_graph *)value->as.ref_value;
     if (graph != NULL) {
       graph_value = (graphion_graph_value *)value->as.ref_value;
+      if (graph_value->nodes != NULL) {
+        for (i = 0U; i < graph_value->node_count; ++i) {
+          free((void *)graph_value->nodes[i].name);
+        }
+        free(graph_value->nodes);
+      }
       if (graph_value->node_attrs != NULL) {
         for (i = 0U; i < graph_value->node_attr_count; ++i) {
           vm_value_dispose_owned(&graph_value->node_attrs[i]);
@@ -388,6 +394,29 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
             cleanup.as.ref_value = dst_graph;
             vm_value_dispose_owned(&cleanup);
             return rc;
+          }
+        }
+      }
+      if (src_graph_value->nodes != NULL && src_graph_value->node_count > 0U) {
+        dst_graph_value->nodes =
+            (graphion_graph_node_value *)calloc(src_graph_value->node_count, sizeof(*dst_graph_value->nodes));
+        if (dst_graph_value->nodes == NULL) {
+          vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_GRAPH_REF, {0}, {.ref_value = dst_graph}});
+          return GVM_ERR_INVALID_ARG;
+        }
+        dst_graph_value->node_count = src_graph_value->node_count;
+        for (i = 0U; i < src_graph_value->node_count; ++i) {
+          dst_graph_value->nodes[i].id = src_graph_value->nodes[i].id;
+          if (src_graph_value->nodes[i].name != NULL) {
+            dst_graph_value->nodes[i].name = vm_strdup_text(src_graph_value->nodes[i].name);
+            if (dst_graph_value->nodes[i].name == NULL) {
+              graphion_vm_value cleanup;
+              vm_value_clear(&cleanup);
+              cleanup.kind = GVM_VALUE_GRAPH_REF;
+              cleanup.as.ref_value = dst_graph;
+              vm_value_dispose_owned(&cleanup);
+              return GVM_ERR_INVALID_ARG;
+            }
           }
         }
       }
@@ -679,6 +708,24 @@ int vm_value_dict_key_kind(const graphion_vm_value *value, const char *key, uint
     *found_out = 1;
   }
   return 1;
+}
+
+int vm_value_dict_get_clone(const graphion_vm_value *value, const char *key, graphion_vm_value *out) {
+  graphion_vm_dict *dict;
+  size_t index;
+
+  if (out != NULL) {
+    vm_value_clear(out);
+  }
+  if (value == NULL || key == NULL || out == NULL || value->kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  dict = (graphion_vm_dict *)value->as.ref_value;
+  index = vm_dict_find_index(dict, key);
+  if (index == (size_t)-1) {
+    return GVM_ERR_MISSING_KEY;
+  }
+  return vm_value_clone(out, &dict->entries[index].value);
 }
 
 int vm_values_deep_equal(const graphion_vm_value *lhs,

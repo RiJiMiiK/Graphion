@@ -814,6 +814,9 @@ Current builtin functions:
 - `is_directed(graph)`
 - `is_weighted(graph)`
 - `orientation(graph)`
+- `node_attrs(graph, node)`
+- `edge_attrs(graph, from, to)`
+- `edge_weight(graph, from, to)`
 
 See [Builtins](builtins.md).
 

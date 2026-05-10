@@ -160,6 +160,7 @@ int try_parse_opcode_builtin(const char **cursor,
       {"copysign", GVM_OP_COPYSIGN},
       {"log", GVM_OP_LOG},
       {"contains", GVM_OP_SET_CONTAINS},
+      {"node_attrs", GVM_OP_GRAPH_NODE_ATTRS},
   };
   size_t i;
 

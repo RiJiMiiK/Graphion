@@ -64,11 +64,14 @@
   X("copysign", GVM_OP_COPYSIGN)           \
   X("fdim", GVM_OP_FDIM)                   \
   X("remainder", GVM_OP_REMAINDER)         \
-  X("log", GVM_OP_LOG)
+  X("log", GVM_OP_LOG)                     \
+  X("node_attrs", GVM_OP_GRAPH_NODE_ATTRS)
 
 #define GRAPHION_TERNARY_DIRECT_BUILTINS(X) \
   X("clamp", GVM_OP_CLAMP)                  \
-  X("fma", GVM_OP_FMA)
+  X("fma", GVM_OP_FMA)                      \
+  X("edge_attrs", GVM_OP_GRAPH_EDGE_ATTRS)  \
+  X("edge_weight", GVM_OP_GRAPH_EDGE_WEIGHT)
 
 #define GRAPHION_SPECIAL_BUILTIN_NAMES(X) \
   X("log10")                              \

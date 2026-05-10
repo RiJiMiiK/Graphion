@@ -142,6 +142,9 @@ typedef enum {
   GVM_OP_GRAPH_IS_DIRECTED = 134,
   GVM_OP_GRAPH_ORIENTATION = 135,
   GVM_OP_GRAPH_IS_WEIGHTED = 136,
+  GVM_OP_GRAPH_NODE_ATTRS = 137,
+  GVM_OP_GRAPH_EDGE_ATTRS = 138,
+  GVM_OP_GRAPH_EDGE_WEIGHT = 139,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -232,7 +235,14 @@ typedef struct {
 } graphion_graph_edge_value;
 
 typedef struct {
+  uint32_t id;
+  const char *name;
+} graphion_graph_node_value;
+
+typedef struct {
   graphion_csr_graph csr;
+  graphion_graph_node_value *nodes;
+  size_t node_count;
   graphion_graph_edge_value *edges;
   size_t edge_count;
   graphion_vm_value *node_attrs;

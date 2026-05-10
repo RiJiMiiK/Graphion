@@ -1045,6 +1045,78 @@ static int graph_has_weighted_edges(const graphion_graph_value *graph) {
   return 0;
 }
 
+static int graph_node_id_from_value(const graphion_graph_value *graph,
+                                    const graphion_vm_value *value,
+                                    uint32_t *id_out) {
+  size_t i;
+
+  if (graph == NULL || value == NULL || id_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (value->kind == GVM_VALUE_INT) {
+    const int64_t id = value->as.int_value;
+    if (id < 0 || id > UINT32_MAX) {
+      return GVM_ERR_INVALID_NODE_ID;
+    }
+    for (i = 0U; i < graph->node_count; ++i) {
+      if (graph->nodes[i].id == (uint32_t)id) {
+        *id_out = (uint32_t)id;
+        return GVM_OK;
+      }
+    }
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  if (value->kind == GVM_VALUE_STRING) {
+    const char *name = value->as.string_value != NULL ? value->as.string_value : "";
+    for (i = 0U; i < graph->node_count; ++i) {
+      if (graph->nodes[i].name != NULL && strcmp(graph->nodes[i].name, name) == 0) {
+        *id_out = graph->nodes[i].id;
+        return GVM_OK;
+      }
+    }
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  return GVM_ERR_TYPE_MISMATCH;
+}
+
+static int graph_edge_index_from_ids(const graphion_graph_value *graph,
+                                     uint32_t from,
+                                     uint32_t to,
+                                     size_t *index_out) {
+  size_t i;
+
+  if (graph == NULL || index_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    const graphion_graph_edge_value *edge = &graph->edges[i];
+    if (edge->from == from && edge->to == to) {
+      *index_out = i;
+      return GVM_OK;
+    }
+    if (edge->bidirectional && edge->from == to && edge->to == from) {
+      *index_out = i;
+      return GVM_OK;
+    }
+  }
+  return GVM_ERR_MISSING_KEY;
+}
+
+static int graph_clone_result_into_target(graphion_vm *vm, uint8_t target, const graphion_vm_value *value) {
+  graphion_vm_value cloned;
+  int rc;
+
+  memset(&cloned, 0, sizeof(cloned));
+  cloned.kind = GVM_VALUE_NONE;
+  rc = vm_value_clone(&cloned, value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm_value_dispose_owned(&vm->regs[target]);
+  vm->regs[target] = cloned;
+  return GVM_OK;
+}
+
 int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
   const graphion_graph_value *graph;
   size_t count;
@@ -1055,7 +1127,7 @@ int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
     return rc;
   }
   count = graph_visible_node_count(&vm->regs[in->a], graph);
-  vm_free_owned_reg_string(vm, in->a);
+  vm_value_dispose_owned(&vm->regs[in->a]);
   vm_value_set_int(&vm->regs[in->a], (int64_t)count);
   return GVM_OK;
 }
@@ -1068,7 +1140,7 @@ int op_graph_edge_count(graphion_vm *vm, const graphion_insn *in) {
   if (rc != GVM_OK) {
     return rc;
   }
-  vm_free_owned_reg_string(vm, in->a);
+  vm_value_dispose_owned(&vm->regs[in->a]);
   vm_value_set_int(&vm->regs[in->a], (int64_t)graph->edge_count);
   return GVM_OK;
 }
@@ -1083,7 +1155,7 @@ int op_graph_is_directed(graphion_vm *vm, const graphion_insn *in) {
     return rc;
   }
   is_directed = graph_has_directed_edges(graph);
-  vm_free_owned_reg_string(vm, in->a);
+  vm_value_dispose_owned(&vm->regs[in->a]);
   vm_value_set_bool(&vm->regs[in->a], is_directed);
   return GVM_OK;
 }
@@ -1098,7 +1170,7 @@ int op_graph_is_weighted(graphion_vm *vm, const graphion_insn *in) {
     return rc;
   }
   is_weighted = graph_has_weighted_edges(graph);
-  vm_free_owned_reg_string(vm, in->a);
+  vm_value_dispose_owned(&vm->regs[in->a]);
   vm_value_set_bool(&vm->regs[in->a], is_weighted);
   return GVM_OK;
 }
@@ -1119,7 +1191,108 @@ int op_graph_orientation(graphion_vm *vm, const graphion_insn *in) {
   } else {
     orientation = "undirected";
   }
+  vm_value_dispose_owned(&vm->regs[in->a]);
   return vm_reg_set_string_copy(vm, in->a, orientation);
+}
+
+int op_graph_node_attrs(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  uint32_t node_id;
+  int rc;
+
+  if (!is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &node_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (graph->node_attrs == NULL || (size_t)node_id >= graph->node_attr_count ||
+      graph->node_attrs[node_id].kind == GVM_VALUE_NONE) {
+    vm_value_dispose_owned(&vm->regs[in->a]);
+    return vm_reg_set_empty_dict(vm, in->a);
+  }
+  return graph_clone_result_into_target(vm, in->a, &graph->node_attrs[node_id]);
+}
+
+int op_graph_edge_attrs(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  uint32_t from;
+  uint32_t to;
+  size_t edge_index;
+  int rc;
+
+  if (!is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &from);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[(uint8_t)in->imm], &to);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_edge_index_from_ids(graph, from, to, &edge_index);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (graph->edge_attrs == NULL || edge_index >= graph->edge_attr_count ||
+      graph->edge_attrs[edge_index].kind == GVM_VALUE_NONE) {
+    vm_value_dispose_owned(&vm->regs[in->a]);
+    return vm_reg_set_empty_dict(vm, in->a);
+  }
+  return graph_clone_result_into_target(vm, in->a, &graph->edge_attrs[edge_index]);
+}
+
+int op_graph_edge_weight(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  graphion_vm_value weight;
+  uint32_t from;
+  uint32_t to;
+  size_t edge_index;
+  int rc;
+
+  if (!is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &from);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[(uint8_t)in->imm], &to);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_edge_index_from_ids(graph, from, to, &edge_index);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (graph->edge_attrs == NULL || edge_index >= graph->edge_attr_count ||
+      graph->edge_attrs[edge_index].kind == GVM_VALUE_NONE) {
+    return GVM_ERR_MISSING_KEY;
+  }
+  memset(&weight, 0, sizeof(weight));
+  weight.kind = GVM_VALUE_NONE;
+  rc = vm_value_dict_get_clone(&graph->edge_attrs[edge_index], "weight", &weight);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = weight;
+  return GVM_OK;
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

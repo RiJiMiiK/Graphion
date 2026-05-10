@@ -13,7 +13,8 @@ static int is_scalar_builtin_name(const char *name) {
       "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
       "round",      "trunc",       "sign",      "len",         "contains", "node_count",
-      "edge_count", "is_directed", "is_weighted", "orientation"
+      "edge_count", "is_directed", "is_weighted", "orientation", "node_attrs", "edge_attrs",
+      "edge_weight"
   };
   size_t i;
 

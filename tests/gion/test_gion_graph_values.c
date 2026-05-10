@@ -550,6 +550,62 @@ int test_gion_graph_inspection_builtins(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_attribute_lookup_builtins(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "graph G:\n"
+      "    defaults node {\"label\": \"unknown\", \"score\": 0}\n"
+      "    alice {\"label\": \"start\"}\n"
+      "    2 {\"score\": 2}\n"
+      "    bob\n"
+      "    defaults edge {\"kind\": \"normal\", \"weight\": 1}\n"
+      "    alice - 2 {\"weight\": 3}\n"
+      "    2 - bob\n"
+      "print(node_attrs(G, alice)[\"label\"])\n"
+      "print(node_attrs(G, 2)[\"label\"])\n"
+      "print(node_attrs(G, bob)[\"score\"])\n"
+      "print(edge_attrs(G, alice, 2)[\"kind\"])\n"
+      "print(edge_weight(G, alice, 2))\n"
+      "print(edge_weight(G, 2, alice))\n"
+      "print(edge_attrs(G, 2, bob)[\"weight\"])\n";
+  const char *expected =
+      "start\n"
+      "unknown\n"
+      "0\n"
+      "normal\n"
+      "3\n"
+      "3\n"
+      "1\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_attribute_lookup_builtins.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

@@ -18,6 +18,11 @@ static const direct_builtin_spec binary_direct_builtins[] = {
     GRAPHION_BINARY_DIRECT_BUILTINS(GRAPHION_DIRECT_SPEC_ENTRY)
 };
 
+static const direct_builtin_spec graph_ternary_direct_builtins[] = {
+    {"edge_attrs", GVM_OP_GRAPH_EDGE_ATTRS},
+    {"edge_weight", GVM_OP_GRAPH_EDGE_WEIGHT},
+};
+
 #undef GRAPHION_DIRECT_SPEC_ENTRY
 
 static int matches_direct_builtin_name(const char *cursor, const char *name) {
@@ -56,6 +61,24 @@ static int fail_expected_binary_builtin_separator(graphion_runtime_diagnostic *d
 static int fail_expected_binary_builtin_close(graphion_runtime_diagnostic *diagnostic,
                                               unsigned int line,
                                               const char *name) {
+  static char message[128];
+
+  snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+  return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+}
+
+static int fail_expected_ternary_builtin_separator(graphion_runtime_diagnostic *diagnostic,
+                                                   unsigned int line,
+                                                   const char *name) {
+  static char message[128];
+
+  snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
+  return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+}
+
+static int fail_expected_ternary_builtin_close(graphion_runtime_diagnostic *diagnostic,
+                                               unsigned int line,
+                                               const char *name) {
   static char message[128];
 
   snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
@@ -182,6 +205,85 @@ static int try_parse_binary_direct_builtin(const direct_builtin_spec *specs,
   return 0;
 }
 
+static int try_parse_ternary_direct_builtin(const direct_builtin_spec *specs,
+                                            size_t count,
+                                            const char **cursor,
+                                            graphion_runtime_program *program,
+                                            parsed_expr_result *result_out,
+                                            uint8_t base_reg,
+                                            unsigned int line,
+                                            graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  for (i = 0U; i < count; ++i) {
+    parsed_expr_result first;
+    parsed_expr_result second;
+    parsed_expr_result third;
+    const uint8_t target_reg = base_reg;
+    const uint8_t second_reg = (uint8_t)(base_reg + 1U);
+    const uint8_t third_reg = (uint8_t)(base_reg + 2U);
+    const char *after_name;
+    int rc;
+
+    if (!matches_direct_builtin_name(*cursor, specs[i].name)) {
+      continue;
+    }
+    after_name = *cursor + strlen(specs[i].name);
+    skip_spaces(&after_name);
+    if (*after_name != '(') {
+      return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
+    }
+    *cursor = after_name + 1;
+    rc = parse_expression(cursor, program, &first, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ',') {
+      return fail_expected_ternary_builtin_separator(diagnostic, line, specs[i].name);
+    }
+    (*cursor)++;
+    rc = parse_expression(cursor, program, &second, second_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ',') {
+      return fail_expected_ternary_builtin_separator(diagnostic, line, specs[i].name);
+    }
+    (*cursor)++;
+    rc = parse_expression(cursor, program, &third, third_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(cursor);
+    if (**cursor != ')') {
+      return fail_expected_ternary_builtin_close(diagnostic, line, specs[i].name);
+    }
+    (*cursor)++;
+    rc = ensure_expr_in_reg(program, &first, target_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &second, second_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &third, third_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, specs[i].opcode, target_reg, second_reg, third_reg, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    set_result_reg(result_out, target_reg);
+    return 1;
+  }
+
+  return 0;
+}
+
 int try_parse_direct_builtin(const char **cursor,
                              graphion_runtime_program *program,
                              parsed_expr_result *result_out,
@@ -201,12 +303,24 @@ int try_parse_direct_builtin(const char **cursor,
   if (rc != 0) {
     return rc;
   }
-  return try_parse_binary_direct_builtin(binary_direct_builtins,
-                                         sizeof(binary_direct_builtins) / sizeof(binary_direct_builtins[0]),
-                                         cursor,
-                                         program,
-                                         result_out,
-                                         base_reg,
-                                         line,
-                                         diagnostic);
+  rc = try_parse_binary_direct_builtin(binary_direct_builtins,
+                                       sizeof(binary_direct_builtins) / sizeof(binary_direct_builtins[0]),
+                                       cursor,
+                                       program,
+                                       result_out,
+                                       base_reg,
+                                       line,
+                                       diagnostic);
+  if (rc != 0) {
+    return rc;
+  }
+  return try_parse_ternary_direct_builtin(graph_ternary_direct_builtins,
+                                          sizeof(graph_ternary_direct_builtins) /
+                                              sizeof(graph_ternary_direct_builtins[0]),
+                                          cursor,
+                                          program,
+                                          result_out,
+                                          base_reg,
+                                          line,
+                                          diagnostic);
 }
