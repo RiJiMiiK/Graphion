@@ -296,6 +296,15 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_EDGE_WEIGHT:
         rc = op_graph_edge_weight(vm, &in);
         break;
+      case GVM_OP_GRAPH_HAS_NODE:
+        rc = op_graph_has_node(vm, &in);
+        break;
+      case GVM_OP_GRAPH_HAS_EDGE:
+        rc = op_graph_has_edge(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NEIGHBORS:
+        rc = op_graph_neighbors(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;

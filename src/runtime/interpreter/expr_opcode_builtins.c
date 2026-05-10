@@ -161,6 +161,8 @@ int try_parse_opcode_builtin(const char **cursor,
       {"log", GVM_OP_LOG},
       {"contains", GVM_OP_SET_CONTAINS},
       {"node_attrs", GVM_OP_GRAPH_NODE_ATTRS},
+      {"has_node", GVM_OP_GRAPH_HAS_NODE},
+      {"neighbors", GVM_OP_GRAPH_NEIGHBORS},
   };
   size_t i;
 

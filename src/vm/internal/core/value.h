@@ -55,6 +55,7 @@ int vm_reg_set_string_copy(graphion_vm *vm, uint8_t reg, const char *text);
 int vm_global_set_string_copy(graphion_vm *vm, size_t index, const char *text);
 int vm_reg_set_empty_list(graphion_vm *vm, uint8_t reg);
 int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg);
+int vm_list_append_int(graphion_vm *vm, uint8_t list_reg, int64_t value);
 int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg);
 int vm_reg_set_empty_tuple(graphion_vm *vm, uint8_t reg);
 int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg);

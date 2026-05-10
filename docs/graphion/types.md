@@ -367,8 +367,9 @@ Current graph support is intentionally minimal:
 - printing graph values with edges as `graph(nodes=N, edges=M)`
 - inspection with `node_count(graph)`, `edge_count(graph)`, `is_directed(graph)`, `is_weighted(graph)`, and `orientation(graph)`
 - attribute lookup with `node_attrs(graph, node)`, `edge_attrs(graph, from, to)`, and `edge_weight(graph, from, to)`
+- basic queries with `has_node(graph, node)`, `has_edge(graph, from, to)`, and `neighbors(graph, node)`
 
-Graph mutation, broader graph queries, and graph algorithms from `.gion` will be added in later steps.
+Graph mutation and graph algorithms from `.gion` will be added in later steps.
 
 ### Bits
 

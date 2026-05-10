@@ -52,7 +52,7 @@ This branch is for active work on non-scalar language types.
     - node attributes
     - edge attributes
     - reserved edge `weight`
-  - [ ] add basic graph membership/query operations
+  - [x] add basic graph membership/query operations
     - node exists
     - edge exists
     - neighbors / adjacency

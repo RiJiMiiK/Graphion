@@ -83,6 +83,9 @@ Unless a builtin says otherwise:
 | `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
 | `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
 | `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
+| `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
+| `has_edge(graph, from, to)` | whether an edge exists | `bool` | respects directed edge orientation |
+| `neighbors(graph, node)` | outgoing neighbor IDs | `list` | undirected edges appear in both directions |
 
 ## `print(...)`
 
@@ -1299,6 +1302,95 @@ Current runtime notes:
 - missing nodes are runtime errors
 - missing edges are runtime errors
 - an existing edge without `weight` is a missing-key runtime error
+
+### `has_node(graph, node)`
+
+Returns whether a node exists in a graph. The `node` argument can be either an integer node ID or a string node name.
+
+```gion
+graph G:
+    "Alice"
+    2
+
+print(has_node(G, "Alice"))
+print(has_node(G, 99))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `bool`
+
+### `has_edge(graph, from, to)`
+
+Returns whether one logical edge exists between two nodes. Directed `->` edges only match in their declared direction. Undirected `-` edges and bidirectional `<->` edges match in both endpoint orders.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 4
+
+print(has_edge(G, 1, 2))
+print(has_edge(G, 2, 1))
+print(has_edge(G, 4, 3))
+```
+
+Expected output:
+
+```text
+true
+false
+true
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `bool`
+
+### `neighbors(graph, node)`
+
+Returns the neighbor node IDs reachable from a node.
+
+For undirected graphs, neighbors are the usual adjacent nodes. For directed graphs, `neighbors(graph, node)` returns outgoing neighbors, so only nodes reachable from `node` through the stored edge direction are included.
+
+```gion
+graph G:
+    1 - 2
+    2 - 3
+
+print(neighbors(G, 2))
+```
+
+Expected output:
+
+```text
+[1, 3]
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
 
 ## Error Summary
 

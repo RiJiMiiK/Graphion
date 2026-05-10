@@ -1102,6 +1102,21 @@ int vm_list_append_reg(graphion_vm *vm, uint8_t list_reg, uint8_t value_reg) {
   return vm_list_append_value(list, &vm->regs[value_reg]);
 }
 
+int vm_list_append_int(graphion_vm *vm, uint8_t list_reg, int64_t value) {
+  graphion_vm_value item;
+  graphion_vm_list *list;
+
+  if (vm == NULL || !is_valid_reg(list_reg)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[list_reg].kind != GVM_VALUE_LIST) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  list = (graphion_vm_list *)vm->regs[list_reg].as.ref_value;
+  vm_value_set_int(&item, value);
+  return vm_list_append_value(list, &item);
+}
+
 int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg) {
   graphion_vm_list *tuple;
   if (vm == NULL || !is_valid_reg(tuple_reg) || !is_valid_reg(value_reg)) {

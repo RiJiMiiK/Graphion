@@ -65,13 +65,16 @@
   X("fdim", GVM_OP_FDIM)                   \
   X("remainder", GVM_OP_REMAINDER)         \
   X("log", GVM_OP_LOG)                     \
-  X("node_attrs", GVM_OP_GRAPH_NODE_ATTRS)
+  X("node_attrs", GVM_OP_GRAPH_NODE_ATTRS) \
+  X("has_node", GVM_OP_GRAPH_HAS_NODE)     \
+  X("neighbors", GVM_OP_GRAPH_NEIGHBORS)
 
 #define GRAPHION_TERNARY_DIRECT_BUILTINS(X) \
   X("clamp", GVM_OP_CLAMP)                  \
   X("fma", GVM_OP_FMA)                      \
   X("edge_attrs", GVM_OP_GRAPH_EDGE_ATTRS)  \
-  X("edge_weight", GVM_OP_GRAPH_EDGE_WEIGHT)
+  X("edge_weight", GVM_OP_GRAPH_EDGE_WEIGHT) \
+  X("has_edge", GVM_OP_GRAPH_HAS_EDGE)
 
 #define GRAPHION_SPECIAL_BUILTIN_NAMES(X) \
   X("log10")                              \

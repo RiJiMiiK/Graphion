@@ -21,6 +21,7 @@ static const direct_builtin_spec binary_direct_builtins[] = {
 static const direct_builtin_spec graph_ternary_direct_builtins[] = {
     {"edge_attrs", GVM_OP_GRAPH_EDGE_ATTRS},
     {"edge_weight", GVM_OP_GRAPH_EDGE_WEIGHT},
+    {"has_edge", GVM_OP_GRAPH_HAS_EDGE},
 };
 
 #undef GRAPHION_DIRECT_SPEC_ENTRY

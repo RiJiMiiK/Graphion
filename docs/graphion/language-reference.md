@@ -817,6 +817,9 @@ Current builtin functions:
 - `node_attrs(graph, node)`
 - `edge_attrs(graph, from, to)`
 - `edge_weight(graph, from, to)`
+- `has_node(graph, node)`
+- `has_edge(graph, from, to)`
+- `neighbors(graph, node)`
 
 See [Builtins](builtins.md).
 
