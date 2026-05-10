@@ -43,10 +43,11 @@ This branch is for active work on non-scalar language types.
   - [x] support `defaults edge` and enforce a shared edge attribute schema
   - [x] print useful graph summaries
   - [x] cover graph declarations, attrs, edges, warnings, docs, and examples
-  - [ ] add `.gion` graph inspection operations
+  - [x] add `.gion` graph inspection operations
     - node count
     - edge count
     - directedness / orientation information
+    - weightedness information
   - [ ] add `.gion` graph attribute lookup operations
     - node attributes
     - edge attributes

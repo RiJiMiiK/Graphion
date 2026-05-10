@@ -365,6 +365,7 @@ Current graph support is intentionally minimal:
 - printing as `graph()`
 - printing node-only graphs as `graph(nodes=N)`
 - printing graph values with edges as `graph(nodes=N, edges=M)`
+- inspection with `node_count(graph)`, `edge_count(graph)`, `is_directed(graph)`, `is_weighted(graph)`, and `orientation(graph)`
 
 Graph mutation, name lookup, and graph algorithms from `.gion` will be added in later steps.
 

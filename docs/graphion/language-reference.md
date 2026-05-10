@@ -809,6 +809,11 @@ Current builtin functions:
 - `sign(x)`
 - `len(x)`
 - `contains(set, value)`
+- `node_count(graph)`
+- `edge_count(graph)`
+- `is_directed(graph)`
+- `is_weighted(graph)`
+- `orientation(graph)`
 
 See [Builtins](builtins.md).
 

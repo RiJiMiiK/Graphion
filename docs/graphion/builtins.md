@@ -75,6 +75,11 @@ Unless a builtin says otherwise:
 | `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
 | `len(x)` | container or string length | `int` | strings, lists, dicts, tuples, and sets |
 | `contains(set, value)` | set membership | `bool` | first argument must be a set |
+| `node_count(graph)` | number of logical nodes in a graph | `int` | counts present nodes, not ID gaps |
+| `edge_count(graph)` | number of logical edges in a graph | `int` | `<->` counts as one edge |
+| `is_directed(graph)` | whether a graph has directed syntax | `bool` | `->` and `<->` make this true |
+| `is_weighted(graph)` | whether a graph has edge weights | `bool` | true when any edge has `weight` |
+| `orientation(graph)` | graph orientation summary | `string` | `empty`, `undirected`, or `directed` |
 
 ## `print(...)`
 
@@ -1067,6 +1072,142 @@ Accepted input:
 Result type:
 
 - `bool`
+
+## Graphs
+
+### `node_count(graph)`
+
+Returns the number of logical nodes currently present in a graph.
+
+```gion
+graph G:
+    1 - 2
+    3 - 2
+
+print(node_count(G))
+```
+
+Expected output:
+
+```text
+3
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `int`
+
+### `edge_count(graph)`
+
+Returns the number of logical edges currently present in a graph. Bidirectional edges count as one logical edge.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 4
+
+print(edge_count(G))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `int`
+
+### `is_directed(graph)`
+
+Returns whether the graph uses directed edge syntax.
+
+```gion
+graph G:
+    1 -> 2
+
+print(is_directed(G))
+```
+
+Expected output:
+
+```text
+true
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `bool`
+
+### `is_weighted(graph)`
+
+Returns whether at least one logical edge has the reserved `weight` attribute. This includes weights provided through `defaults edge`.
+
+```gion
+graph G:
+    defaults edge {"weight": 1}
+    1 - 2
+
+print(is_weighted(G))
+```
+
+Expected output:
+
+```text
+true
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `bool`
+
+### `orientation(graph)`
+
+Returns a string describing the graph's current global orientation state.
+
+```gion
+graph G:
+    1 - 2
+
+print(orientation(G))
+```
+
+Expected output:
+
+```text
+undirected
+```
+
+Current return values:
+
+- `empty` when the graph has no edges
+- `undirected` when the graph uses `node - node` edges
+- `directed` when the graph uses `node -> node` or `node <-> node` edges
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `string`
 
 ## Error Summary
 

@@ -994,6 +994,134 @@ int op_len(graphion_vm *vm, const graphion_insn *in) {
   return GVM_OK;
 }
 
+static int graph_reg_value(const graphion_vm *vm, const graphion_insn *in, const graphion_graph_value **graph_out) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_GRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  *graph_out = (const graphion_graph_value *)vm->regs[in->a].as.ref_value;
+  return GVM_OK;
+}
+
+static size_t graph_visible_node_count(const graphion_vm_value *value, const graphion_graph_value *graph) {
+  size_t count;
+
+  count = (size_t)value->reserved[1] | ((size_t)value->reserved[2] << 8U);
+  if (count != 0U) {
+    return count;
+  }
+  return graph != NULL ? graph->csr.node_count : 0U;
+}
+
+static int graph_has_directed_edges(const graphion_graph_value *graph) {
+  size_t i;
+
+  if (graph == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    if (graph->edges[i].directed) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int graph_has_weighted_edges(const graphion_graph_value *graph) {
+  size_t i;
+
+  if (graph == NULL || graph->edge_attrs == NULL) {
+    return 0;
+  }
+  for (i = 0U; i < graph->edge_attr_count; ++i) {
+    uint8_t kind = GVM_VALUE_NONE;
+    int found = 0;
+    if (vm_value_dict_key_kind(&graph->edge_attrs[i], "weight", &kind, &found) && found) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  size_t count;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = graph_visible_node_count(&vm->regs[in->a], graph);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
+  return GVM_OK;
+}
+
+int op_graph_edge_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)graph->edge_count);
+  return GVM_OK;
+}
+
+int op_graph_is_directed(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  int is_directed;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  is_directed = graph_has_directed_edges(graph);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], is_directed);
+  return GVM_OK;
+}
+
+int op_graph_is_weighted(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  int is_weighted;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  is_weighted = graph_has_weighted_edges(graph);
+  vm_free_owned_reg_string(vm, in->a);
+  vm_value_set_bool(&vm->regs[in->a], is_weighted);
+  return GVM_OK;
+}
+
+int op_graph_orientation(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_graph_value *graph;
+  const char *orientation;
+  int rc;
+
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (graph->edge_count == 0U) {
+    orientation = "empty";
+  } else if (graph_has_directed_edges(graph)) {
+    orientation = "directed";
+  } else {
+    orientation = "undirected";
+  }
+  return vm_reg_set_string_copy(vm, in->a, orientation);
+}
+
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {
   int64_t value;
   int64_t result;

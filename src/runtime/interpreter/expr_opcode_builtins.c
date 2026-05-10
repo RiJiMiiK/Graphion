@@ -148,6 +148,11 @@ int try_parse_opcode_builtin(const char **cursor,
       {"len", GVM_OP_LEN},           {"degrees", GVM_OP_DEGREES},
       {"radians", GVM_OP_RADIANS},   {"isnan", GVM_OP_ISNAN},
       {"isinf", GVM_OP_ISINF},       {"isfinite", GVM_OP_ISFINITE},
+      {"node_count", GVM_OP_GRAPH_NODE_COUNT},
+      {"edge_count", GVM_OP_GRAPH_EDGE_COUNT},
+      {"is_directed", GVM_OP_GRAPH_IS_DIRECTED},
+      {"is_weighted", GVM_OP_GRAPH_IS_WEIGHTED},
+      {"orientation", GVM_OP_GRAPH_ORIENTATION},
   };
   static const expr_named_builtin_entry binary_builtins[] = {
       {"atan2", GVM_OP_ATAN2},

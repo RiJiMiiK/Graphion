@@ -463,6 +463,93 @@ int test_gion_graph_directed_edge_declaration(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_inspection_builtins(void) {
+  const char *source =
+      "graph Empty;\n"
+      "graph Nodes:\n"
+      "    \"Alice\"\n"
+      "    2\n"
+      "graph Undirected:\n"
+      "    1 - 2\n"
+      "    3 - 2\n"
+      "graph Weighted:\n"
+      "    defaults edge {\"weight\": 1}\n"
+      "    1 - 2\n"
+      "graph Directed:\n"
+      "    1 -> 2\n"
+      "    3 <-> 4\n"
+      "print(node_count(Empty))\n"
+      "print(edge_count(Empty))\n"
+      "print(is_directed(Empty))\n"
+      "print(is_weighted(Empty))\n"
+      "print(orientation(Empty))\n"
+      "print(node_count(Nodes))\n"
+      "print(edge_count(Nodes))\n"
+      "print(is_weighted(Nodes))\n"
+      "print(orientation(Nodes))\n"
+      "print(node_count(Undirected))\n"
+      "print(edge_count(Undirected))\n"
+      "print(is_directed(Undirected))\n"
+      "print(is_weighted(Undirected))\n"
+      "print(orientation(Undirected))\n"
+      "print(edge_count(Weighted))\n"
+      "print(is_weighted(Weighted))\n"
+      "print(node_count(Directed))\n"
+      "print(edge_count(Directed))\n"
+      "print(is_directed(Directed))\n"
+      "print(is_weighted(Directed))\n"
+      "print(orientation(Directed))\n";
+  const char *expected =
+      "0\n"
+      "0\n"
+      "false\n"
+      "false\n"
+      "empty\n"
+      "2\n"
+      "0\n"
+      "false\n"
+      "empty\n"
+      "3\n"
+      "2\n"
+      "false\n"
+      "false\n"
+      "undirected\n"
+      "1\n"
+      "true\n"
+      "4\n"
+      "2\n"
+      "true\n"
+      "false\n"
+      "directed\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_inspection_builtins.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

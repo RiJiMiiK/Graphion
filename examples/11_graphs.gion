@@ -22,6 +22,11 @@ graph Graphe_non_oriente:
     3 - 2 attrs_arete
 
 print(Graphe_non_oriente)
+print(node_count(Graphe_non_oriente))
+print(edge_count(Graphe_non_oriente))
+print(is_directed(Graphe_non_oriente))
+print(is_weighted(Graphe_non_oriente))
+print(orientation(Graphe_non_oriente))
 
 graph Graphe_oriente:
     defaults edge {"kind": "directed", "weight": 1}
@@ -29,3 +34,8 @@ graph Graphe_oriente:
     3 <-> 4 {"kind": "bidirectional"}
 
 print(Graphe_oriente)
+print(node_count(Graphe_oriente))
+print(edge_count(Graphe_oriente))
+print(is_directed(Graphe_oriente))
+print(is_weighted(Graphe_oriente))
+print(orientation(Graphe_oriente))

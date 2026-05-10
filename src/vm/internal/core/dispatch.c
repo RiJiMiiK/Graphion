@@ -272,6 +272,21 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_LEN:
         rc = op_len(vm, &in);
         break;
+      case GVM_OP_GRAPH_NODE_COUNT:
+        rc = op_graph_node_count(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGE_COUNT:
+        rc = op_graph_edge_count(vm, &in);
+        break;
+      case GVM_OP_GRAPH_IS_DIRECTED:
+        rc = op_graph_is_directed(vm, &in);
+        break;
+      case GVM_OP_GRAPH_IS_WEIGHTED:
+        rc = op_graph_is_weighted(vm, &in);
+        break;
+      case GVM_OP_GRAPH_ORIENTATION:
+        rc = op_graph_orientation(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;

@@ -12,7 +12,8 @@ static int is_scalar_builtin_name(const char *name) {
       "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
       "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
-      "round",     "trunc",    "sign",      "len",      "contains"
+      "round",      "trunc",       "sign",      "len",         "contains", "node_count",
+      "edge_count", "is_directed", "is_weighted", "orientation"
   };
   size_t i;
 
