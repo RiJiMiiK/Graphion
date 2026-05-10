@@ -68,6 +68,7 @@
   X(gion_graph_attribute_lookup_builtins)              \
   X(gion_graph_membership_query_builtins)              \
   X(gion_graph_structure_mutation_statements)          \
+  X(gion_graph_attribute_mutation_statements)          \
   X(gion_graph_numeric_id_gap_warnings)                \
   X(gion_graph_declaration_syntax_errors)              \
   X(gion_print_syntax_errors)                          \

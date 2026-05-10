@@ -728,6 +728,54 @@ int vm_value_dict_get_clone(const graphion_vm_value *value, const char *key, gra
   return vm_value_clone(out, &dict->entries[index].value);
 }
 
+int vm_value_dict_set_clone(graphion_vm_value *value, const char *key, const graphion_vm_value *src) {
+  graphion_vm vm;
+  int rc;
+
+  if (value == NULL || key == NULL || src == NULL || value->kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  graphion_vm_init(&vm);
+  vm.regs[0] = *value;
+  rc = vm_value_clone(&vm.regs[1], src);
+  if (rc == GVM_OK) {
+    rc = vm_dict_set_reg(&vm, 0U, key, 1U);
+  }
+  *value = vm.regs[0];
+  vm.regs[0].kind = GVM_VALUE_NONE;
+  graphion_vm_dispose(&vm);
+  return rc;
+}
+
+int vm_value_dict_patch_existing(graphion_vm_value *value, const graphion_vm_value *patch) {
+  graphion_vm_dict *dict;
+  graphion_vm_dict *patch_dict;
+  size_t patch_count;
+  size_t i;
+
+  if (value == NULL || patch == NULL || value->kind != GVM_VALUE_DICT || patch->kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  dict = (graphion_vm_dict *)value->as.ref_value;
+  patch_dict = (graphion_vm_dict *)patch->as.ref_value;
+  patch_count = patch_dict != NULL ? patch_dict->count : 0U;
+  for (i = 0U; i < patch_count; ++i) {
+    const char *key = patch_dict->entries[i].key != NULL ? patch_dict->entries[i].key : "";
+    if (vm_dict_find_index(dict, key) == (size_t)-1) {
+      return GVM_ERR_MISSING_KEY;
+    }
+  }
+  for (i = 0U; i < patch_count; ++i) {
+    const char *key = patch_dict->entries[i].key != NULL ? patch_dict->entries[i].key : "";
+    const int rc = vm_value_dict_set_clone(value, key, &patch_dict->entries[i].value);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+    dict = (graphion_vm_dict *)value->as.ref_value;
+  }
+  return GVM_OK;
+}
+
 int vm_values_deep_equal(const graphion_vm_value *lhs,
                          const graphion_vm_value *rhs,
                          int *compatible_out,

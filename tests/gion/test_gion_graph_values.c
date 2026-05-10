@@ -747,6 +747,62 @@ int test_gion_graph_structure_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_attribute_mutation_statements(void) {
+  const char *source =
+      "graph G;\n"
+      "add_edge(G, \"Alice\", 2)\n"
+      "set_node_attrs(G, \"Alice\", {\"label\": \"start\", \"score\": 1})\n"
+      "set_node_attrs(G, 2, {\"label\": \"end\", \"score\": 2})\n"
+      "set_node_attrs(G, \"Alice\", {\"score\": 10})\n"
+      "set_edge_attrs(G, \"Alice\", 2, {\"kind\": \"path\", \"weight\": 3})\n"
+      "set_edge_weight(G, 2, \"Alice\", 4.5)\n"
+      "set_edge_attrs(G, \"Alice\", 2, {\"weight\": 5})\n"
+      "set_edge_attrs(G, \"Alice\", 2, {\"kind\": \"shortcut\"})\n"
+      "print(node_attrs(G, \"Alice\")[\"label\"])\n"
+      "print(node_attrs(G, \"Alice\")[\"score\"])\n"
+      "print(node_attrs(G, 2)[\"score\"])\n"
+      "print(edge_attrs(G, \"Alice\", 2)[\"kind\"])\n"
+      "print(edge_weight(G, \"Alice\", 2))\n"
+      "set_edge_attrs(G, \"Alice\", 2, {\"kind\": \"direct\", \"weight\": 7})\n"
+      "print(edge_attrs(G, 2, \"Alice\")[\"kind\"])\n"
+      "print(edge_weight(G, 2, \"Alice\"))\n";
+  const char *expected =
+      "start\n"
+      "10\n"
+      "2\n"
+      "shortcut\n"
+      "5\n"
+      "direct\n"
+      "7\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_attribute_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

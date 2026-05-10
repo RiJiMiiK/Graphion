@@ -31,7 +31,7 @@ Files:
 - `10_sets.gion`
   - set literals, duplicate removal, membership with `contains(...)`, equality, printing, and `len(...)`
 - `11_graphs.gion`
-  - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected/directed edges, graph inspection builtins, graph attribute lookup builtins, basic membership/neighbor queries, and structural graph mutation
+  - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected/directed edges, graph inspection builtins, graph attribute lookup builtins, basic membership/neighbor queries, structural graph mutation, and graph attribute mutation
 
 Run any example with:
 

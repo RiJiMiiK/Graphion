@@ -311,6 +311,15 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_ADD_EDGE:
         rc = op_graph_add_edge(vm, &in);
         break;
+      case GVM_OP_GRAPH_SET_NODE_ATTRS:
+        rc = op_graph_set_node_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_SET_EDGE_ATTRS:
+        rc = op_graph_set_edge_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_SET_EDGE_WEIGHT:
+        rc = op_graph_set_edge_weight(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;

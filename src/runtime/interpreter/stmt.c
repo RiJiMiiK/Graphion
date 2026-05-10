@@ -542,6 +542,98 @@ static int parse_graph_mutation_statement(const char *line_text,
   return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
 }
 
+static int parse_graph_attr_mutation_statement(const char *line_text,
+                                               graphion_runtime_program *program,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+    int arg_count;
+  } specs[] = {
+      {"set_node_attrs", 14U, GVM_OP_GRAPH_SET_NODE_ATTRS, 2},
+      {"set_edge_attrs", 14U, GVM_OP_GRAPH_SET_EDGE_ATTRS, 3},
+      {"set_edge_weight", 15U, GVM_OP_GRAPH_SET_EDGE_WEIGHT, 3},
+  };
+  parsed_expr_result args[4];
+  const char *name = NULL;
+  const char *cursor = line_text;
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_opcode opcode = GVM_OP_NOP;
+  int graph_index;
+  int arg_count = 0;
+  size_t i;
+  int rc;
+
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      arg_count = specs[i].arg_count;
+      break;
+    }
+  }
+  if (name == NULL) {
+    return fail(diagnostic, line, 1U, "expected graph attribute mutation statement", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '(') {
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  graph_index = program_find_global_index(program, graph_name);
+  if (graph_index < 0) {
+    return fail(diagnostic, line, 1U, "unknown graph variable", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  for (i = 0U; i < (size_t)arg_count; ++i) {
+    skip_spaces(&cursor);
+    if (*cursor != ',') {
+      char message[128];
+      snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    }
+    cursor++;
+    rc = parse_expression(&cursor, program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ')') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, opcode, 0U, 1U, arg_count >= 2 ? 2 : 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+}
+
 int seed_program_from_scope(graphion_runtime_program *program,
                             const graphion_runtime_scope *scope,
                             unsigned int line,
@@ -579,6 +671,10 @@ int parse_statement_line(const char *line_text,
   } else if ((strncmp(line_cursor, "add_node", 8U) == 0 && !is_ident_char(line_cursor[8])) ||
              (strncmp(line_cursor, "add_edge", 8U) == 0 && !is_ident_char(line_cursor[8]))) {
     rc = parse_graph_mutation_statement(line_cursor, program, line, diagnostic);
+  } else if ((strncmp(line_cursor, "set_node_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
+             (strncmp(line_cursor, "set_edge_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
+             (strncmp(line_cursor, "set_edge_weight", 15U) == 0 && !is_ident_char(line_cursor[15]))) {
+    rc = parse_graph_attr_mutation_statement(line_cursor, program, line, diagnostic);
   } else {
     rc = parse_assignment(line_cursor, program, line, diagnostic);
   }

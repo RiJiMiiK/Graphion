@@ -239,6 +239,11 @@ graph G;
 
 add_node(G, "Alice")
 add_edge(G, "Alice", 2)
+set_node_attrs(G, "Alice", {"label": "start", "score": 1})
+set_node_attrs(G, "Alice", {"score": 10})
+set_edge_attrs(G, "Alice", 2, {"kind": "path", "weight": 3})
+set_edge_attrs(G, "Alice", 2, {"kind": "shortcut"})
+set_edge_weight(G, "Alice", 2, 7)
 ```
 
 Current graph mutation rules:
@@ -249,7 +254,14 @@ Current graph mutation rules:
 - `add_edge(...)` creates missing endpoint nodes before adding the edge
 - `add_edge(...)` currently creates undirected edges
 - adding an existing node or edge is a no-op
-- structural mutation currently supports graphs without node or edge attribute schemas
+- `set_node_attrs(graph_variable, node, attrs)` applies a full or partial dictionary patch to node attributes
+- `set_edge_attrs(graph_variable, from, to, attrs)` applies a full or partial dictionary patch to edge attributes
+- `set_edge_weight(graph_variable, from, to, weight)` updates the reserved numeric `weight` key
+- `set_*_attrs(...)` can establish the initial node or edge attribute schema
+- partial `set_*_attrs(...)` patches require the target node or edge to already have an attribute dictionary containing every patched key
+- if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
+- edge `weight` values must be `int` or `float`
+- attribute mutation preserves the shared-key schema once a schema exists
 
 Compound assignment:
 
@@ -842,6 +854,9 @@ Current builtin functions:
 - `neighbors(graph, node)`
 - `add_node(graph, node)` as a statement
 - `add_edge(graph, from, to)` as a statement
+- `set_node_attrs(graph, node, attrs)` as a statement
+- `set_edge_attrs(graph, from, to, attrs)` as a statement
+- `set_edge_weight(graph, from, to, weight)` as a statement
 
 See [Builtins](builtins.md).
 
