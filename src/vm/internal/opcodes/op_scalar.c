@@ -1423,6 +1423,115 @@ static int graph_ensure_edge_attr_capacity(graphion_graph_value *graph) {
   return GVM_OK;
 }
 
+static int graph_delete_edge_at(graphion_graph_value *graph, size_t edge_index) {
+  if (graph == NULL || edge_index >= graph->edge_count) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (graph->edge_attrs != NULL && edge_index < graph->edge_attr_count) {
+    vm_value_dispose_owned(&graph->edge_attrs[edge_index]);
+    if (edge_index + 1U < graph->edge_attr_count) {
+      memmove(&graph->edge_attrs[edge_index],
+              &graph->edge_attrs[edge_index + 1U],
+              (graph->edge_attr_count - edge_index - 1U) * sizeof(*graph->edge_attrs));
+    }
+    graph->edge_attr_count -= 1U;
+    if (graph->edge_attr_count < graph->edge_count) {
+      memset(&graph->edge_attrs[graph->edge_attr_count], 0, sizeof(*graph->edge_attrs));
+      graph->edge_attrs[graph->edge_attr_count].kind = GVM_VALUE_NONE;
+    }
+  }
+  if (edge_index + 1U < graph->edge_count) {
+    memmove(&graph->edges[edge_index],
+            &graph->edges[edge_index + 1U],
+            (graph->edge_count - edge_index - 1U) * sizeof(*graph->edges));
+  }
+  graph->edge_count -= 1U;
+  return graph_rebuild_adjacency(graph);
+}
+
+static int graph_remove_edge_direction(graphion_graph_value *graph, uint32_t from, uint32_t to) {
+  size_t i;
+
+  if (graph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  for (i = 0U; i < graph->edge_count; ++i) {
+    graphion_graph_edge_value *edge = &graph->edges[i];
+    if (edge->from == from && edge->to == to) {
+      if (edge->directed && edge->bidirectional) {
+        edge->from = to;
+        edge->to = from;
+        edge->bidirectional = 0U;
+        return graph_rebuild_adjacency(graph);
+      }
+      return graph_delete_edge_at(graph, i);
+    }
+    if (edge->bidirectional && edge->from == to && edge->to == from) {
+      if (edge->directed) {
+        edge->bidirectional = 0U;
+        return graph_rebuild_adjacency(graph);
+      }
+      return graph_delete_edge_at(graph, i);
+    }
+  }
+  return GVM_ERR_MISSING_KEY;
+}
+
+static int graph_remove_node_id(graphion_graph_value *graph, uint32_t node_id) {
+  size_t node_index;
+  size_t write_index;
+  size_t i;
+  int found = 0;
+
+  if (graph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  node_index = 0U;
+  for (i = 0U; i < graph->node_count; ++i) {
+    if (graph->nodes[i].id == node_id) {
+      node_index = i;
+      found = 1;
+      break;
+    }
+  }
+  if (!found) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  free((void *)graph->nodes[node_index].name);
+  if (node_index + 1U < graph->node_count) {
+    memmove(&graph->nodes[node_index],
+            &graph->nodes[node_index + 1U],
+            (graph->node_count - node_index - 1U) * sizeof(*graph->nodes));
+  }
+  graph->node_count -= 1U;
+  if (graph->node_attrs != NULL && (size_t)node_id < graph->node_attr_count) {
+    vm_value_dispose_owned(&graph->node_attrs[node_id]);
+  }
+  write_index = 0U;
+  for (i = 0U; i < graph->edge_count; ++i) {
+    if (graph->edges[i].from == node_id || graph->edges[i].to == node_id) {
+      if (graph->edge_attrs != NULL && i < graph->edge_attr_count) {
+        vm_value_dispose_owned(&graph->edge_attrs[i]);
+      }
+      continue;
+    }
+    if (write_index != i) {
+      graph->edges[write_index] = graph->edges[i];
+      if (graph->edge_attrs != NULL && i < graph->edge_attr_count) {
+        graph->edge_attrs[write_index] = graph->edge_attrs[i];
+        memset(&graph->edge_attrs[i], 0, sizeof(*graph->edge_attrs));
+        graph->edge_attrs[i].kind = GVM_VALUE_NONE;
+      }
+    }
+    write_index++;
+  }
+  graph->edge_count = write_index;
+  if (graph->edge_attrs != NULL) {
+    graph->edge_attr_count = write_index;
+  }
+  return graph_rebuild_adjacency(graph);
+}
+
 int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
   const graphion_graph_value *graph;
   size_t count;
@@ -1959,6 +2068,57 @@ int op_graph_set_edge_weight(graphion_vm *vm, const graphion_insn *in) {
     }
   }
   return vm_value_dict_set_clone(&graph->edge_attrs[edge_index], "weight", &vm->regs[3]);
+}
+
+int op_graph_remove_node(graphion_vm *vm, const graphion_insn *in) {
+  graphion_graph_value *graph;
+  uint32_t node_id;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_GRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  graph = (graphion_graph_value *)vm->regs[in->a].as.ref_value;
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &node_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_remove_node_id(graph, node_id);
+  if (rc == GVM_OK) {
+    graph_update_visible_counts(&vm->regs[in->a], graph);
+  }
+  return rc;
+}
+
+int op_graph_remove_edge(graphion_vm *vm, const graphion_insn *in) {
+  graphion_graph_value *graph;
+  uint32_t from;
+  uint32_t to;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_GRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  graph = (graphion_graph_value *)vm->regs[in->a].as.ref_value;
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &from);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[(uint8_t)in->imm], &to);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_remove_edge_direction(graph, from, to);
+  if (rc == GVM_OK) {
+    graph_update_visible_counts(&vm->regs[in->a], graph);
+  }
+  return rc;
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

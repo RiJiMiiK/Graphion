@@ -244,16 +244,23 @@ set_node_attrs(G, "Alice", {"score": 10})
 set_edge_attrs(G, "Alice", 2, {"kind": "path", "weight": 3})
 set_edge_attrs(G, "Alice", 2, {"kind": "shortcut"})
 set_edge_weight(G, "Alice", 2, 7)
+remove_edge(G, "Alice", 2)
+remove_node(G, "Alice")
 ```
 
 Current graph mutation rules:
 
 - `add_node(graph_variable, node)` mutates the named graph variable in place
 - `add_edge(graph_variable, from, to)` mutates the named graph variable in place
+- `remove_node(graph_variable, node)` removes a node and all incident edges
+- `remove_edge(graph_variable, from, to)` removes one edge direction
 - `node`, `from`, and `to` may be integer IDs or string node names
 - `add_edge(...)` creates missing endpoint nodes before adding the edge
 - `add_edge(...)` currently creates undirected edges
 - adding an existing node or edge is a no-op
+- removing a missing node or edge is a runtime error
+- removing a direction from a bidirectional directed edge keeps the reverse direction
+- node removal keeps other node IDs stable and can leave numeric ID gaps
 - `set_node_attrs(graph_variable, node, attrs)` applies a full or partial dictionary patch to node attributes
 - `set_edge_attrs(graph_variable, from, to, attrs)` applies a full or partial dictionary patch to edge attributes
 - `set_edge_weight(graph_variable, from, to, weight)` updates the reserved numeric `weight` key
@@ -854,6 +861,8 @@ Current builtin functions:
 - `neighbors(graph, node)`
 - `add_node(graph, node)` as a statement
 - `add_edge(graph, from, to)` as a statement
+- `remove_node(graph, node)` as a statement
+- `remove_edge(graph, from, to)` as a statement
 - `set_node_attrs(graph, node, attrs)` as a statement
 - `set_edge_attrs(graph, from, to, attrs)` as a statement
 - `set_edge_weight(graph, from, to, weight)` as a statement

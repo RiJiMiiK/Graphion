@@ -452,21 +452,45 @@ static int parse_graph_mutation_statement(const char *line_text,
                                           graphion_runtime_program *program,
                                           unsigned int line,
                                           graphion_runtime_diagnostic *diagnostic) {
-  const int is_add_node = strncmp(line_text, "add_node", 8U) == 0 && !is_ident_char(line_text[8]);
-  const int is_add_edge = strncmp(line_text, "add_edge", 8U) == 0 && !is_ident_char(line_text[8]);
-  const char *cursor = line_text + 8;
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+    int endpoint_count;
+  } specs[] = {
+      {"add_node", 8U, GVM_OP_GRAPH_ADD_NODE, 1},
+      {"add_edge", 8U, GVM_OP_GRAPH_ADD_EDGE, 2},
+      {"remove_node", 11U, GVM_OP_GRAPH_REMOVE_NODE, 1},
+      {"remove_edge", 11U, GVM_OP_GRAPH_REMOVE_EDGE, 2},
+  };
+  const char *name = NULL;
+  const char *cursor = line_text;
   char graph_name[GRAPHION_RUNTIME_NAME_MAX];
   parsed_expr_result first;
   parsed_expr_result second;
+  graphion_opcode opcode = GVM_OP_NOP;
   int graph_index;
+  int endpoint_count = 0;
+  size_t i;
   int rc;
 
-  if (!is_add_node && !is_add_edge) {
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      endpoint_count = specs[i].endpoint_count;
+      break;
+    }
+  }
+  if (name == NULL) {
     return fail(diagnostic, line, 1U, "expected graph mutation statement", GINT_ERR_PARSE);
   }
   skip_spaces(&cursor);
   if (*cursor != '(') {
-    return fail(diagnostic, line, 1U, is_add_node ? "expected '(' after add_node" : "expected '(' after add_edge", GINT_ERR_PARSE);
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
@@ -479,7 +503,9 @@ static int parse_graph_mutation_statement(const char *line_text,
   }
   skip_spaces(&cursor);
   if (*cursor != ',') {
-    return fail(diagnostic, line, 1U, is_add_node ? "expected ',' after add_node graph" : "expected ',' after add_edge graph", GINT_ERR_PARSE);
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' after %s graph", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &first, 1U, line, diagnostic);
@@ -491,27 +517,33 @@ static int parse_graph_mutation_statement(const char *line_text,
     return rc;
   }
   skip_spaces(&cursor);
-  if (is_add_node) {
+  if (endpoint_count == 1) {
     if (*cursor != ')') {
-      return fail(diagnostic, line, 1U, "expected ')' after add_node arguments", GINT_ERR_PARSE);
+      char message[128];
+      snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
     }
     cursor++;
     skip_spaces(&cursor);
     if (*cursor != '\0') {
-      return fail(diagnostic, line, 1U, "unexpected trailing tokens after add_node", GINT_ERR_PARSE);
+      char message[128];
+      snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
     }
     rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
-    rc = program_emit(program, GVM_OP_GRAPH_ADD_NODE, 0U, 1U, 0, line, diagnostic);
+    rc = program_emit(program, opcode, 0U, 1U, 0, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
     return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   }
   if (*cursor != ',') {
-    return fail(diagnostic, line, 1U, "expected ',' between add_edge endpoints", GINT_ERR_PARSE);
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' between %s endpoints", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &second, 2U, line, diagnostic);
@@ -524,18 +556,22 @@ static int parse_graph_mutation_statement(const char *line_text,
   }
   skip_spaces(&cursor);
   if (*cursor != ')') {
-    return fail(diagnostic, line, 1U, "expected ')' after add_edge arguments", GINT_ERR_PARSE);
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after add_edge", GINT_ERR_PARSE);
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
-  rc = program_emit(program, GVM_OP_GRAPH_ADD_EDGE, 0U, 1U, 2, line, diagnostic);
+  rc = program_emit(program, opcode, 0U, 1U, 2, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -669,7 +705,9 @@ int parse_statement_line(const char *line_text,
   } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_graph_declaration(line_cursor, program, line, diagnostic);
   } else if ((strncmp(line_cursor, "add_node", 8U) == 0 && !is_ident_char(line_cursor[8])) ||
-             (strncmp(line_cursor, "add_edge", 8U) == 0 && !is_ident_char(line_cursor[8]))) {
+             (strncmp(line_cursor, "add_edge", 8U) == 0 && !is_ident_char(line_cursor[8])) ||
+             (strncmp(line_cursor, "remove_node", 11U) == 0 && !is_ident_char(line_cursor[11])) ||
+             (strncmp(line_cursor, "remove_edge", 11U) == 0 && !is_ident_char(line_cursor[11]))) {
     rc = parse_graph_mutation_statement(line_cursor, program, line, diagnostic);
   } else if ((strncmp(line_cursor, "set_node_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
              (strncmp(line_cursor, "set_edge_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||

@@ -803,6 +803,67 @@ int test_gion_graph_attribute_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_removal_mutation_statements(void) {
+  const char *source =
+      "graph G:\n"
+      "    1 <-> 2 {\"weight\": 8, \"kind\": \"both\"}\n"
+      "    2 -> 3 {\"weight\": 5, \"kind\": \"tail\"}\n"
+      "print(edge_count(G))\n"
+      "print(has_edge(G, 1, 2))\n"
+      "print(has_edge(G, 2, 1))\n"
+      "remove_edge(G, 1, 2)\n"
+      "print(edge_count(G))\n"
+      "print(has_edge(G, 1, 2))\n"
+      "print(has_edge(G, 2, 1))\n"
+      "print(edge_weight(G, 2, 1))\n"
+      "remove_node(G, 2)\n"
+      "print(node_count(G))\n"
+      "print(edge_count(G))\n"
+      "print(has_node(G, 1))\n"
+      "print(has_node(G, 2))\n"
+      "print(has_node(G, 3))\n";
+  const char *expected =
+      "2\n"
+      "true\n"
+      "true\n"
+      "2\n"
+      "false\n"
+      "true\n"
+      "8\n"
+      "2\n"
+      "0\n"
+      "true\n"
+      "false\n"
+      "true\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_graph_removal_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

@@ -63,7 +63,7 @@ This branch is for active work on non-scalar language types.
     - update node attributes
     - update edge attributes
     - update reserved edge `weight`
-  - [ ] add graph removal mutation after initialization
+  - [x] add graph removal mutation after initialization
     - remove node
     - remove edge
     - define how node removal affects incident edges and attributes

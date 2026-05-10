@@ -71,3 +71,13 @@ print(neighbors(Graphe_mutable, "Alice"))
 print(node_attrs(Graphe_mutable, "Alice")["score"])
 print(edge_attrs(Graphe_mutable, "Bob", "Alice")["kind"])
 print(edge_weight(Graphe_mutable, "Alice", 2))
+
+graph Graphe_suppression:
+    1 <-> 2 {"weight": 8, "kind": "both"}
+    2 -> 3 {"weight": 5, "kind": "tail"}
+remove_edge(Graphe_suppression, 1, 2)
+print(has_edge(Graphe_suppression, 1, 2))
+print(has_edge(Graphe_suppression, 2, 1))
+print(edge_weight(Graphe_suppression, 2, 1))
+remove_node(Graphe_suppression, 2)
+print(Graphe_suppression)
