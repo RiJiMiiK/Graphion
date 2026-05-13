@@ -239,14 +239,26 @@ Hypergraph declaration:
 
 ```gion
 hypergraph H;
+
+label = "Alice"
+
+hypergraph HG:
+    label
+    2
+    "Bob"
 ```
 
 Current hypergraph declaration rules:
 
 - the empty shape is `hypergraph Name;`
+- the vertex-block shape is `hypergraph Name:` followed by an indented block
 - `Name` must be a valid identifier
 - `hypergraph Name;` creates an empty first-class hypergraph value
+- hypergraph vertex blocks create hypergraph values with vertices and no hyperedges yet
+- vertex entries may be string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- string vertex names must use quotes, such as `"Alice"`; an unquoted identifier is resolved as a variable
 - empty hypergraphs print as `hypergraph()`
+- vertex-only hypergraphs print as `hypergraph(vertices=N)`
 - hyperedge blocks and hypergraph query/mutation operations will be added later
 
 Graph mutation statements:

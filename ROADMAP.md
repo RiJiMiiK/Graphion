@@ -82,6 +82,7 @@ This branch is for active work on non-scalar language types.
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
   - [x] create an empty hypergraph with `hypergraph Name;`
+  - [x] create hypergraph values with vertex blocks
 - [ ] `path` or `walk` value type
   - useful if traversal results should become first-class language values
 - [ ] `record` / `struct`

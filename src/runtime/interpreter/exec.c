@@ -52,6 +52,21 @@ static int graph_header_ends_with_colon(const char *text) {
   return cursor > text && cursor[-1] == ':';
 }
 
+static int hypergraph_header_ends_with_colon(const char *text) {
+  const char *cursor = text;
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "hypergraph", 10U) != 0 || is_ident_char(cursor[10])) {
+    return 0;
+  }
+  while (*cursor != '\0') {
+    cursor++;
+  }
+  while (cursor > text && (cursor[-1] == ' ' || cursor[-1] == '\t' || cursor[-1] == '\r')) {
+    cursor--;
+  }
+  return cursor > text && cursor[-1] == ':';
+}
+
 static void runtime_graph_builder_init(runtime_graph_builder *builder) {
   size_t i;
   if (builder == NULL) {
@@ -879,6 +894,40 @@ static int parse_graph_name_from_header(const char *text,
   return GINT_OK;
 }
 
+static int parse_hypergraph_name_from_header(const char *text,
+                                             char target[GRAPHION_RUNTIME_NAME_MAX],
+                                             unsigned int line,
+                                             graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "hypergraph", 10U) != 0 || is_ident_char(cursor[10])) {
+    return fail(diagnostic, line, 1U, "expected 'hypergraph'", GINT_ERR_PARSE);
+  }
+  cursor += 10;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected hypergraph name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    return fail(diagnostic, line, 1U, "expected ':' after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  return GINT_OK;
+}
+
 static int build_runtime_graph_value(const runtime_graph_builder *builder,
                                      graphion_vm_value *value_out,
                                      unsigned int line,
@@ -1098,6 +1147,111 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int parse_hypergraph_vertex_line(const char *text,
+                                        runtime_graph_builder *builder,
+                                        int reserve_only,
+                                        graphion_runtime_scope *scope,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  uint32_t vertex_id = 0U;
+  int rc;
+
+  if (text == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  rc = parse_graph_node_ref(&cursor, builder, scope, reserve_only ? 1 : 0, !reserve_only, &vertex_id, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph vertex", GINT_ERR_PARSE);
+  }
+  (void)vertex_id;
+  return GINT_OK;
+}
+
+static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
+                                          graphion_vm_value *value_out,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  graphion_hypergraph_value *hypergraph_value = NULL;
+  graphion_hypergraph *hypergraph = NULL;
+  uint32_t *offsets = NULL;
+  size_t dense_vertex_count;
+  size_t visible_vertex_count = 0U;
+  size_t i;
+
+  if (builder == NULL || value_out == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  dense_vertex_count = builder->has_nodes ? (size_t)builder->max_id + 1U : 0U;
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i]) {
+      visible_vertex_count += 1U;
+    }
+  }
+  hypergraph_value = (graphion_hypergraph_value *)calloc(1U, sizeof(*hypergraph_value));
+  if (hypergraph_value == NULL) {
+    return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+  }
+  hypergraph = &hypergraph_value->hypergraph;
+  if (dense_vertex_count > 0U) {
+    size_t vertex_index = 0U;
+    offsets = (uint32_t *)calloc(dense_vertex_count + 1U, sizeof(*offsets));
+    if (offsets == NULL) {
+      free(hypergraph_value);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    hypergraph->node_offsets = offsets;
+    hypergraph_value->vertices =
+        (graphion_graph_node_value *)calloc(visible_vertex_count, sizeof(*hypergraph_value->vertices));
+    if (hypergraph_value->vertices == NULL) {
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+      cleanup.as.ref_value = hypergraph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    hypergraph_value->vertex_count = visible_vertex_count;
+    for (i = 0U; i < dense_vertex_count; ++i) {
+      if (builder->used_ids[i]) {
+        const char *name = runtime_graph_name_for_id(builder, (uint32_t)i);
+        hypergraph_value->vertices[vertex_index].id = (uint32_t)i;
+        if (name != NULL) {
+          const size_t name_len = strlen(name);
+          char *copy = (char *)malloc(name_len + 1U);
+          if (copy == NULL) {
+            graphion_vm_value cleanup;
+            vm_value_set_none(&cleanup);
+            cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+            cleanup.as.ref_value = hypergraph_value;
+            vm_value_dispose_owned(&cleanup);
+            return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+          }
+          memcpy(copy, name, name_len + 1U);
+          hypergraph_value->vertices[vertex_index].name = copy;
+        }
+        vertex_index += 1U;
+      }
+    }
+  }
+  hypergraph->node_count = dense_vertex_count;
+  hypergraph->hyperedge_count = 0U;
+  hypergraph->incidence_count = 0U;
+  hypergraph->node_hyperedges = NULL;
+  hypergraph->hyperedge_offsets = NULL;
+  hypergraph->hyperedge_nodes = NULL;
+  vm_value_set_none(value_out);
+  value_out->kind = GVM_VALUE_HYPERGRAPH_REF;
+  value_out->reserved[1] = (uint8_t)(visible_vertex_count & 0xFFU);
+  value_out->reserved[2] = (uint8_t)((visible_vertex_count >> 8U) & 0xFFU);
+  value_out->as.ref_value = hypergraph_value;
+  return GINT_OK;
+}
+
 static int collect_graph_block(const runtime_source_line *lines,
                                size_t count,
                                size_t start_index,
@@ -1205,6 +1359,65 @@ static int collect_graph_block(const runtime_source_line *lines,
   return GINT_OK;
 }
 
+static int collect_hypergraph_block(const runtime_source_line *lines,
+                                    size_t count,
+                                    size_t start_index,
+                                    unsigned int current_indent,
+                                    size_t *end_index_out,
+                                    runtime_graph_builder *builder,
+                                    graphion_runtime_scope *scope,
+                                    unsigned int line,
+                                    graphion_runtime_diagnostic *diagnostic) {
+  size_t body_start;
+  size_t body_end;
+  unsigned int body_indent;
+  size_t i;
+
+  if (lines == NULL || end_index_out == NULL || builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  runtime_graph_builder_init(builder);
+
+  body_start = find_next_nonblank_line(lines, count, start_index + 1U);
+  if (body_start >= count || lines[body_start].indent <= current_indent) {
+    return fail(diagnostic, line, 1U, "expected indented hypergraph vertex block", GINT_ERR_PARSE);
+  }
+  body_indent = lines[body_start].indent;
+  body_end = scan_block_end(lines, count, body_start, body_indent);
+
+  for (i = body_start; i < body_end; ++i) {
+    int rc;
+
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 1, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+
+  for (i = body_start; i < body_end; ++i) {
+    int rc;
+
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 0, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  *end_index_out = body_end - 1U;
+  return GINT_OK;
+}
+
 static int execute_graph_block_declaration(const char *statement_source,
                                            const runtime_graph_builder *builder,
                                            graphion_runtime_scope *scope,
@@ -1241,12 +1454,59 @@ static int execute_graph_block_declaration(const char *statement_source,
   runtime_free_string(&scope->owned_string_values[target_index]);
   if (scope->globals[target_index].kind == GVM_VALUE_LIST || scope->globals[target_index].kind == GVM_VALUE_DICT ||
       scope->globals[target_index].kind == GVM_VALUE_TUPLE || scope->globals[target_index].kind == GVM_VALUE_SET ||
-      scope->globals[target_index].kind == GVM_VALUE_GRAPH_REF) {
+      scope->globals[target_index].kind == GVM_VALUE_GRAPH_REF ||
+      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF) {
     vm_value_dispose_owned(&scope->globals[target_index]);
   } else {
     vm_value_set_none(&scope->globals[target_index]);
   }
   scope->globals[target_index] = graph_value;
+  return GINT_OK;
+}
+
+static int execute_hypergraph_block_declaration(const char *statement_source,
+                                                const runtime_graph_builder *builder,
+                                                graphion_runtime_scope *scope,
+                                                unsigned int line,
+                                                graphion_runtime_diagnostic *diagnostic) {
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_vm_value hypergraph_value;
+  int existing;
+  size_t target_index;
+  int rc;
+
+  vm_value_set_none(&hypergraph_value);
+  rc = parse_hypergraph_name_from_header(statement_source, target, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = build_runtime_hypergraph_value(builder, &hypergraph_value, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  existing = scope_find_global_index(scope, target);
+  if (existing >= 0) {
+    target_index = (size_t)existing;
+  } else {
+    rc = graphion_runtime_scope_reserve_globals(scope, scope->global_count + 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      vm_value_dispose_owned(&hypergraph_value);
+      return rc;
+    }
+    target_index = scope->global_count;
+    copy_name(scope->global_names[target_index], target);
+    scope->global_count += 1U;
+  }
+  runtime_free_string(&scope->owned_string_values[target_index]);
+  if (scope->globals[target_index].kind == GVM_VALUE_LIST || scope->globals[target_index].kind == GVM_VALUE_DICT ||
+      scope->globals[target_index].kind == GVM_VALUE_TUPLE || scope->globals[target_index].kind == GVM_VALUE_SET ||
+      scope->globals[target_index].kind == GVM_VALUE_GRAPH_REF ||
+      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF) {
+    vm_value_dispose_owned(&scope->globals[target_index]);
+  } else {
+    vm_value_set_none(&scope->globals[target_index]);
+  }
+  scope->globals[target_index] = hypergraph_value;
   return GINT_OK;
 }
 
@@ -1426,6 +1686,7 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   size_t statement_end = *index;
   runtime_graph_builder graph_builder;
   int graph_block_declaration = 0;
+  int hypergraph_block_declaration = 0;
   int rc;
 
   runtime_graph_builder_init(&graph_builder);
@@ -1441,6 +1702,22 @@ static int execute_statement_source_line(const runtime_source_line *lines,
                              scope,
                              lines[*index].line,
                              diagnostic);
+    if (rc != GINT_OK) {
+      runtime_graph_builder_dispose(&graph_builder);
+      return rc;
+    }
+  } else if (strncmp(statement_source, "hypergraph", 10U) == 0 && !is_ident_char(statement_source[10]) &&
+             hypergraph_header_ends_with_colon(statement_source)) {
+    hypergraph_block_declaration = 1;
+    rc = collect_hypergraph_block(lines,
+                                  count,
+                                  *index,
+                                  lines[*index].indent,
+                                  &statement_end,
+                                  &graph_builder,
+                                  scope,
+                                  lines[*index].line,
+                                  diagnostic);
     if (rc != GINT_OK) {
       runtime_graph_builder_dispose(&graph_builder);
       return rc;
@@ -1470,6 +1747,15 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   }
   if (graph_block_declaration) {
     rc = execute_graph_block_declaration(statement_source, &graph_builder, scope, lines[*index].line, diagnostic);
+    runtime_graph_builder_dispose(&graph_builder);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    *index = statement_end + 1U;
+    return GINT_OK;
+  }
+  if (hypergraph_block_declaration) {
+    rc = execute_hypergraph_block_declaration(statement_source, &graph_builder, scope, lines[*index].line, diagnostic);
     runtime_graph_builder_dispose(&graph_builder);
     if (rc != GINT_OK) {
       return rc;

@@ -96,6 +96,66 @@ int test_gion_empty_hypergraph_declaration(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_vertex_block_declaration(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "hypergraph H:\n"
+      "    alice\n"
+      "    2\n"
+      "    bob\n"
+      "print(H)\n";
+  char path[512];
+  char output[64];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *hypergraph_value;
+  const graphion_hypergraph *hypergraph;
+  const graphion_hypergraph_value *value;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_vertex_block_declaration.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  hypergraph_value = graphion_runtime_scope_find(&scope, "H");
+  if (hypergraph_value == NULL || hypergraph_value->kind != GVM_VALUE_HYPERGRAPH_REF) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  hypergraph = (const graphion_hypergraph *)hypergraph_value->as.ref_value;
+  value = (const graphion_hypergraph_value *)hypergraph_value->as.ref_value;
+  if (hypergraph == NULL || hypergraph->node_count != 3U || hypergraph->hyperedge_count != 0U ||
+      hypergraph->incidence_count != 0U || hypergraph->node_offsets == NULL) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (value == NULL || value->vertex_count != 3U || value->vertices == NULL ||
+      value->vertices[0].id != 0U || strcmp(value->vertices[0].name, "Alice") != 0 ||
+      value->vertices[1].id != 1U || strcmp(value->vertices[1].name, "Bob") != 0 ||
+      value->vertices[2].id != 2U || value->vertices[2].name != NULL) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  remove(path);
+  if (strcmp(output, "hypergraph(vertices=3)\n") != 0) {
+    return finish_scope_test(&scope, 7);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

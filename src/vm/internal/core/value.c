@@ -74,7 +74,8 @@ static graphion_csr_graph *vm_graph_create_empty(void) {
 }
 
 static graphion_hypergraph *vm_hypergraph_create_empty(void) {
-  return (graphion_hypergraph *)calloc(1U, sizeof(graphion_hypergraph));
+  graphion_hypergraph_value *hypergraph = (graphion_hypergraph_value *)calloc(1U, sizeof(*hypergraph));
+  return hypergraph != NULL ? &hypergraph->hypergraph : NULL;
 }
 
 static graphion_csr_graph *vm_graph_create_nodes(size_t node_count) {
@@ -237,6 +238,7 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
   graphion_csr_graph *graph;
   graphion_graph_value *graph_value;
   graphion_hypergraph *hypergraph;
+  graphion_hypergraph_value *hypergraph_value;
 
   if (value == NULL) {
     return;
@@ -294,6 +296,13 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
   } else if (value->kind == GVM_VALUE_HYPERGRAPH_REF) {
     hypergraph = (graphion_hypergraph *)value->as.ref_value;
     if (hypergraph != NULL) {
+      hypergraph_value = (graphion_hypergraph_value *)value->as.ref_value;
+      if (hypergraph_value->vertices != NULL) {
+        for (i = 0U; i < hypergraph_value->vertex_count; ++i) {
+          free((void *)hypergraph_value->vertices[i].name);
+        }
+        free(hypergraph_value->vertices);
+      }
       free((void *)hypergraph->node_offsets);
       free((void *)hypergraph->node_hyperedges);
       free((void *)hypergraph->hyperedge_offsets);
@@ -316,6 +325,8 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   graphion_graph_value *dst_graph_value;
   graphion_hypergraph *src_hypergraph;
   graphion_hypergraph *dst_hypergraph;
+  graphion_hypergraph_value *src_hypergraph_value;
+  graphion_hypergraph_value *dst_hypergraph_value;
 
   if (dst == NULL || src == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -488,6 +499,8 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
       return GVM_ERR_INVALID_ARG;
     }
     src_hypergraph = (graphion_hypergraph *)src->as.ref_value;
+    src_hypergraph_value = (graphion_hypergraph_value *)src->as.ref_value;
+    dst_hypergraph_value = (graphion_hypergraph_value *)dst_hypergraph;
     if (src_hypergraph != NULL) {
       dst_hypergraph->node_count = src_hypergraph->node_count;
       dst_hypergraph->hyperedge_count = src_hypergraph->hyperedge_count;
@@ -529,6 +542,26 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
         }
         memcpy(copy, src_hypergraph->hyperedge_nodes, src_hypergraph->incidence_count * sizeof(*copy));
         dst_hypergraph->hyperedge_nodes = copy;
+      }
+      if (src_hypergraph_value->vertices != NULL && src_hypergraph_value->vertex_count > 0U) {
+        dst_hypergraph_value->vertices =
+            (graphion_graph_node_value *)calloc(src_hypergraph_value->vertex_count,
+                                                sizeof(*dst_hypergraph_value->vertices));
+        if (dst_hypergraph_value->vertices == NULL) {
+          vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_HYPERGRAPH_REF, {0}, {.ref_value = dst_hypergraph}});
+          return GVM_ERR_INVALID_ARG;
+        }
+        dst_hypergraph_value->vertex_count = src_hypergraph_value->vertex_count;
+        for (i = 0U; i < src_hypergraph_value->vertex_count; ++i) {
+          dst_hypergraph_value->vertices[i].id = src_hypergraph_value->vertices[i].id;
+          if (src_hypergraph_value->vertices[i].name != NULL) {
+            dst_hypergraph_value->vertices[i].name = vm_strdup_text(src_hypergraph_value->vertices[i].name);
+            if (dst_hypergraph_value->vertices[i].name == NULL) {
+              vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_HYPERGRAPH_REF, {0}, {.ref_value = dst_hypergraph}});
+              return GVM_ERR_INVALID_ARG;
+            }
+          }
+        }
       }
     }
     dst->kind = GVM_VALUE_HYPERGRAPH_REF;
@@ -1729,12 +1762,20 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
     case GVM_VALUE_HYPERGRAPH_REF:
       {
         const graphion_hypergraph *hypergraph = (const graphion_hypergraph *)value->as.ref_value;
+        const size_t visible_vertices = (size_t)value->reserved[1] | ((size_t)value->reserved[2] << 8U);
         if (hypergraph != NULL && (hypergraph->node_count > 0U || hypergraph->hyperedge_count > 0U)) {
-          written = snprintf(buffer,
-                             sizeof(buffer),
-                             "hypergraph(nodes=%zu, hyperedges=%zu)\n",
-                             hypergraph->node_count,
-                             hypergraph->hyperedge_count);
+          if (hypergraph->hyperedge_count > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "hypergraph(vertices=%zu, hyperedges=%zu)\n",
+                               visible_vertices != 0U ? visible_vertices : hypergraph->node_count,
+                               hypergraph->hyperedge_count);
+          } else {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "hypergraph(vertices=%zu)\n",
+                               visible_vertices != 0U ? visible_vertices : hypergraph->node_count);
+          }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
           }
@@ -2031,12 +2072,20 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
     case GVM_VALUE_HYPERGRAPH_REF:
       {
         const graphion_hypergraph *hypergraph = (const graphion_hypergraph *)value->as.ref_value;
+        const size_t visible_vertices = (size_t)value->reserved[1] | ((size_t)value->reserved[2] << 8U);
         if (hypergraph != NULL && (hypergraph->node_count > 0U || hypergraph->hyperedge_count > 0U)) {
-          written = snprintf(buffer,
-                             sizeof(buffer),
-                             "hypergraph(nodes=%zu, hyperedges=%zu)",
-                             hypergraph->node_count,
-                             hypergraph->hyperedge_count);
+          if (hypergraph->hyperedge_count > 0U) {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "hypergraph(vertices=%zu, hyperedges=%zu)",
+                               visible_vertices != 0U ? visible_vertices : hypergraph->node_count,
+                               hypergraph->hyperedge_count);
+          } else {
+            written = snprintf(buffer,
+                               sizeof(buffer),
+                               "hypergraph(vertices=%zu)",
+                               visible_vertices != 0U ? visible_vertices : hypergraph->node_count);
+          }
           if (written < 0 || (size_t)written >= sizeof(buffer)) {
             return GVM_ERR_OUTPUT_UNBOUND;
           }

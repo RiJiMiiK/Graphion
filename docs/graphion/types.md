@@ -234,9 +234,15 @@ Current `hypergraph` declarations:
 
 - use `hypergraph Name;`
 - create an empty first-class hypergraph value
+- use `hypergraph Name:` followed by an indented vertex block to create a hypergraph with vertices
 - require a valid identifier after `hypergraph`
-- require the trailing semicolon
+- require either the trailing semicolon for an empty hypergraph or the trailing colon for a vertex block
+- accept vertex entries as string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- treat unquoted identifiers as variables, so literal string vertex names must use quotes
+- may mix names and integer IDs in the same block
+- reject duplicate explicit integer IDs
 - print empty hypergraphs as `hypergraph()`
+- print vertex-only hypergraphs as `hypergraph(vertices=N)`
 - will gain hyperedge blocks and hypergraph-specific operations in later steps
 
 ## Type Notes
@@ -393,9 +399,12 @@ Graph algorithms from `.gion` will be added in later steps.
 Current hypergraph support is intentionally minimal:
 
 - declaration with `hypergraph Name;`
+- declaration with `hypergraph Name:` and an indented vertex block
 - empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
+- vertex-only hypergraph values with zero hyperedges and zero incidences
 - storage in variables
 - printing as `hypergraph()`
+- printing vertex-only hypergraphs as `hypergraph(vertices=N)`
 
 Hyperedge initialization and hypergraph operations will be added in later steps.
 

@@ -1,3 +1,13 @@
 hypergraph Nom_du_hypergraph;
 
 print(Nom_du_hypergraph)
+
+alice = "Alice"
+bob = "Bob"
+
+hypergraph Hypergraph_avec_vertices:
+    alice
+    2
+    bob
+
+print(Hypergraph_avec_vertices)

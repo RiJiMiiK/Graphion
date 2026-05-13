@@ -268,6 +268,12 @@ typedef struct {
 } graphion_graph_value;
 
 typedef struct {
+  graphion_hypergraph hypergraph;
+  graphion_graph_node_value *vertices;
+  size_t vertex_count;
+} graphion_hypergraph_value;
+
+typedef struct {
   uint8_t op;
   uint8_t a;
   uint8_t b;

@@ -33,7 +33,7 @@ Files:
 - `11_graphs.gion`
   - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected/directed edges, graph inspection/listing builtins, graph attribute lookup builtins, basic membership/neighbor queries, structural graph mutation including removal, and graph attribute mutation
 - `12_hypergraphs.gion`
-  - first-class empty hypergraph declarations with `hypergraph Name;`
+  - first-class hypergraph declarations with `hypergraph Name;` and vertex blocks
 
 Run any example with:
 
