@@ -156,6 +156,64 @@ int test_gion_hypergraph_vertex_block_declaration(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_vertex_attributes(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+      "    alice {\"label\": \"start\", \"score\": 1}\n"
+      "    2 {\"score\": 2}\n"
+      "    bob\n"
+      "print(H)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *hypergraph_value;
+  const graphion_hypergraph_value *value;
+  size_t attr_len = 0U;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_vertex_attributes.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  hypergraph_value = graphion_runtime_scope_find(&scope, "H");
+  if (hypergraph_value == NULL || hypergraph_value->kind != GVM_VALUE_HYPERGRAPH_REF) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  value = (const graphion_hypergraph_value *)hypergraph_value->as.ref_value;
+  if (value == NULL || value->vertex_attrs == NULL || value->vertex_attr_count != 3U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!vm_value_dict_length(&value->vertex_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->vertex_attrs[1], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->vertex_attrs[2], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
+  remove(path);
+  if (strcmp(output, "hypergraph(vertices=3, vertex_attrs=2)\n") != 0) {
+    return finish_scope_test(&scope, 7);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

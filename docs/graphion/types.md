@@ -240,9 +240,16 @@ Current `hypergraph` declarations:
 - accept vertex entries as string literals, non-negative integer IDs, or variables that contain a `string` or `int`
 - treat unquoted identifiers as variables, so literal string vertex names must use quotes
 - may mix names and integer IDs in the same block
+- may attach vertex attributes with `vertex {"key": value}`
+- store vertex attributes as dict values whose entries may contain any supported Graphion value type
+- may declare vertex attribute defaults with `defaults vertex {"key": value}`
+- use vertex defaults for vertices that omit attributes or omit specific keys
+- require all vertex attributes to share the same keys when no vertex defaults are declared
+- reject vertex attribute keys outside the declared vertex defaults
 - reject duplicate explicit integer IDs
 - print empty hypergraphs as `hypergraph()`
 - print vertex-only hypergraphs as `hypergraph(vertices=N)`
+- print vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
 - will gain hyperedge blocks and hypergraph-specific operations in later steps
 
 ## Type Notes
@@ -402,9 +409,11 @@ Current hypergraph support is intentionally minimal:
 - declaration with `hypergraph Name:` and an indented vertex block
 - empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
 - vertex-only hypergraph values with zero hyperedges and zero incidences
+- vertex attributes with shared-key schema rules and optional `defaults vertex`
 - storage in variables
 - printing as `hypergraph()`
 - printing vertex-only hypergraphs as `hypergraph(vertices=N)`
+- printing vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
 
 Hyperedge initialization and hypergraph operations will be added in later steps.
 

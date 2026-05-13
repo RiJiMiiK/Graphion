@@ -396,6 +396,59 @@ static int runtime_graph_set_node_attr_defaults(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int runtime_hypergraph_set_vertex_attrs(runtime_graph_builder *builder,
+                                               uint32_t vertex_id,
+                                               const graphion_vm_value *attrs,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || attrs == NULL || (size_t)vertex_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (attrs->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "hypergraph vertex attributes must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, attrs);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone hypergraph vertex attributes", GINT_ERR_CAPACITY);
+  }
+  if (builder->has_node_attrs[vertex_id]) {
+    vm_value_dispose_owned(&builder->node_attrs[vertex_id]);
+  }
+  builder->node_attrs[vertex_id] = cloned;
+  builder->has_node_attrs[vertex_id] = 1U;
+  return GINT_OK;
+}
+
+static int runtime_hypergraph_set_vertex_attr_defaults(runtime_graph_builder *builder,
+                                                       const graphion_vm_value *defaults,
+                                                       unsigned int line,
+                                                       graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || defaults == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->has_node_attr_defaults) {
+    return fail(diagnostic, line, 1U, "duplicate hypergraph vertex attribute defaults", GINT_ERR_PARSE);
+  }
+  if (defaults->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "hypergraph vertex attribute defaults must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, defaults);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone hypergraph vertex attribute defaults", GINT_ERR_CAPACITY);
+  }
+  builder->node_attr_defaults = cloned;
+  builder->has_node_attr_defaults = 1;
+  return GINT_OK;
+}
+
 static int runtime_graph_set_edge_attr_defaults(runtime_graph_builder *builder,
                                                 const graphion_vm_value *defaults,
                                                 unsigned int line,
@@ -559,6 +612,73 @@ static int validate_graph_node_attr_schema(const runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int apply_hypergraph_vertex_attr_defaults(runtime_graph_builder *builder,
+                                                 unsigned int line,
+                                                 graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (!builder->has_node_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (!builder->used_ids[i]) {
+      continue;
+    }
+    if (!builder->has_node_attrs[i]) {
+      const int rc = runtime_hypergraph_set_vertex_attrs(builder,
+                                                         (uint32_t)i,
+                                                         &builder->node_attr_defaults,
+                                                         line,
+                                                         diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    } else {
+      int rc;
+      if (!vm_value_dict_keys_subset(&builder->node_attrs[i], &builder->node_attr_defaults)) {
+        return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use declared default keys", GINT_ERR_PARSE);
+      }
+      rc = vm_value_dict_merge_defaults(&builder->node_attrs[i], &builder->node_attr_defaults);
+      if (rc != GVM_OK) {
+        return fail(diagnostic, line, 1U, "failed to apply hypergraph vertex attribute defaults", GINT_ERR_CAPACITY);
+      }
+    }
+  }
+  return GINT_OK;
+}
+
+static int validate_hypergraph_vertex_attr_schema(const runtime_graph_builder *builder,
+                                                  unsigned int line,
+                                                  graphion_runtime_diagnostic *diagnostic) {
+  size_t reference_id = GRAPHION_RUNTIME_PROGRAM_MAX;
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->has_node_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i]) {
+      reference_id = i;
+      break;
+    }
+  }
+  if (reference_id == GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return GINT_OK;
+  }
+  for (i = reference_id + 1U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    if (builder->used_ids[i] && !graph_node_attr_keys_match(builder, reference_id, i)) {
+      return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use the same keys", GINT_ERR_PARSE);
+    }
+  }
+  return GINT_OK;
+}
+
 static int graph_edge_attr_keys_match(const runtime_graph_builder *builder, size_t reference_index, size_t edge_index) {
   if (builder == NULL || reference_index >= builder->edge_count || edge_index >= builder->edge_count) {
     return 0;
@@ -617,6 +737,58 @@ static int parse_graph_node_attrs(const char *text,
   }
   rc = runtime_graph_set_node_attrs(builder, node_id, &attrs, line, diagnostic);
   vm_value_dispose_owned(&attrs);
+  return rc;
+}
+
+static int parse_hypergraph_vertex_attrs(const char *text,
+                                         runtime_graph_builder *builder,
+                                         uint32_t vertex_id,
+                                         graphion_runtime_scope *scope,
+                                         unsigned int line,
+                                         graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value attrs;
+  int rc;
+
+  vm_value_set_none(&attrs);
+  rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &attrs);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = runtime_hypergraph_set_vertex_attrs(builder, vertex_id, &attrs, line, diagnostic);
+  vm_value_dispose_owned(&attrs);
+  return rc;
+}
+
+static int parse_hypergraph_attr_defaults_line(const char *text,
+                                               runtime_graph_builder *builder,
+                                               graphion_runtime_scope *scope,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  graphion_vm_value defaults;
+  int rc;
+
+  if (text == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "defaults", 8U) != 0 || is_ident_char(cursor[8])) {
+    return fail(diagnostic, line, 1U, "expected 'defaults vertex'", GINT_ERR_PARSE);
+  }
+  cursor += 8;
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "vertex", 6U) != 0 || is_ident_char(cursor[6])) {
+    return fail(diagnostic, line, 1U, "expected 'vertex' after defaults", GINT_ERR_PARSE);
+  }
+  cursor += 6;
+  skip_spaces(&cursor);
+  vm_value_set_none(&defaults);
+  rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = runtime_hypergraph_set_vertex_attr_defaults(builder, &defaults, line, diagnostic);
+  vm_value_dispose_owned(&defaults);
   return rc;
 }
 
@@ -1165,6 +1337,12 @@ static int parse_hypergraph_vertex_line(const char *text,
     return rc;
   }
   skip_spaces(&cursor);
+  if (*cursor == '{') {
+    if (reserve_only) {
+      return GINT_OK;
+    }
+    return parse_hypergraph_vertex_attrs(cursor, builder, vertex_id, scope, line, diagnostic);
+  }
   if (*cursor != '\0') {
     return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph vertex", GINT_ERR_PARSE);
   }
@@ -1181,6 +1359,7 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   uint32_t *offsets = NULL;
   size_t dense_vertex_count;
   size_t visible_vertex_count = 0U;
+  size_t visible_vertex_attr_key_count = 0U;
   size_t i;
 
   if (builder == NULL || value_out == NULL) {
@@ -1237,6 +1416,40 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
         vertex_index += 1U;
       }
     }
+    hypergraph_value->vertex_attrs = (graphion_vm_value *)calloc(dense_vertex_count, sizeof(*hypergraph_value->vertex_attrs));
+    if (hypergraph_value->vertex_attrs == NULL) {
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+      cleanup.as.ref_value = hypergraph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    hypergraph_value->vertex_attr_count = dense_vertex_count;
+    for (i = 0U; i < dense_vertex_count; ++i) {
+      vm_value_set_none(&hypergraph_value->vertex_attrs[i]);
+      if (builder->has_node_attrs[i]) {
+        const int rc = vm_value_clone(&hypergraph_value->vertex_attrs[i], &builder->node_attrs[i]);
+        if (rc != GVM_OK) {
+          graphion_vm_value cleanup;
+          vm_value_set_none(&cleanup);
+          cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+          cleanup.as.ref_value = hypergraph_value;
+          vm_value_dispose_owned(&cleanup);
+          return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+        }
+      }
+    }
+  }
+  if (builder->has_node_attr_defaults) {
+    (void)vm_value_dict_length(&builder->node_attr_defaults, &visible_vertex_attr_key_count);
+  } else {
+    for (i = 0U; i < dense_vertex_count; ++i) {
+      if (builder->has_node_attrs[i]) {
+        (void)vm_value_dict_length(&builder->node_attrs[i], &visible_vertex_attr_key_count);
+        break;
+      }
+    }
   }
   hypergraph->node_count = dense_vertex_count;
   hypergraph->hyperedge_count = 0U;
@@ -1248,6 +1461,8 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   value_out->kind = GVM_VALUE_HYPERGRAPH_REF;
   value_out->reserved[1] = (uint8_t)(visible_vertex_count & 0xFFU);
   value_out->reserved[2] = (uint8_t)((visible_vertex_count >> 8U) & 0xFFU);
+  value_out->reserved[5] = (uint8_t)(visible_vertex_attr_key_count & 0xFFU);
+  value_out->reserved[6] = (uint8_t)((visible_vertex_attr_key_count >> 8U) & 0xFFU);
   value_out->as.ref_value = hypergraph_value;
   return GINT_OK;
 }
@@ -1394,6 +1609,27 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
     if (lines[i].indent != body_indent) {
       return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
     }
+    if (!graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
+    rc = parse_hypergraph_attr_defaults_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+
+  for (i = body_start; i < body_end; ++i) {
+    int rc;
+
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    if (graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
     rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 1, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -1409,7 +1645,22 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
     if (lines[i].indent != body_indent) {
       return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
     }
+    if (graph_block_line_is_defaults(line_content(&lines[i]))) {
+      continue;
+    }
     rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 0, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = apply_hypergraph_vertex_attr_defaults(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = validate_hypergraph_vertex_attr_schema(builder, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

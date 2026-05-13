@@ -271,6 +271,8 @@ typedef struct {
   graphion_hypergraph hypergraph;
   graphion_graph_node_value *vertices;
   size_t vertex_count;
+  graphion_vm_value *vertex_attrs;
+  size_t vertex_attr_count;
 } graphion_hypergraph_value;
 
 typedef struct {

@@ -243,9 +243,10 @@ hypergraph H;
 label = "Alice"
 
 hypergraph HG:
+    defaults vertex {"label": "unknown", "score": 0}
     label
-    2
-    "Bob"
+    2 {"label": "explicit id", "score": 2}
+    "Bob" {"score": 1}
 ```
 
 Current hypergraph declaration rules:
@@ -257,8 +258,15 @@ Current hypergraph declaration rules:
 - hypergraph vertex blocks create hypergraph values with vertices and no hyperedges yet
 - vertex entries may be string literals, non-negative integer IDs, or variables that contain a `string` or `int`
 - string vertex names must use quotes, such as `"Alice"`; an unquoted identifier is resolved as a variable
+- vertex entries may attach attributes with `vertex {"key": value}`
+- vertex attributes are `dict` values and their values may use any supported Graphion value type
+- `defaults vertex {"key": value}` declares vertex attribute defaults for the hypergraph
+- with vertex defaults, vertex entries may omit attributes or override only some keys
+- without vertex defaults, either no vertex has attributes or every vertex must define attributes with the same keys
+- vertex attributes cannot introduce keys outside the declared vertex defaults
 - empty hypergraphs print as `hypergraph()`
 - vertex-only hypergraphs print as `hypergraph(vertices=N)`
+- vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
 - hyperedge blocks and hypergraph query/mutation operations will be added later
 
 Graph mutation statements:

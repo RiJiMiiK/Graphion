@@ -6,8 +6,9 @@ alice = "Alice"
 bob = "Bob"
 
 hypergraph Hypergraph_avec_vertices:
+    defaults vertex {"label": "unknown", "score": 0}
     alice
-    2
-    bob
+    2 {"label": "explicit id", "score": 2}
+    bob {"score": 1}
 
 print(Hypergraph_avec_vertices)
