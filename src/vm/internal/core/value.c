@@ -73,6 +73,10 @@ static graphion_csr_graph *vm_graph_create_empty(void) {
   return graph != NULL ? &graph->csr : NULL;
 }
 
+static graphion_hypergraph *vm_hypergraph_create_empty(void) {
+  return (graphion_hypergraph *)calloc(1U, sizeof(graphion_hypergraph));
+}
+
 static graphion_csr_graph *vm_graph_create_nodes(size_t node_count) {
   graphion_csr_graph *graph;
   uint32_t *offsets;
@@ -222,7 +226,8 @@ static int vm_value_is_list_storage_kind(uint8_t kind) {
 }
 
 static int vm_value_is_compound_kind(uint8_t kind) {
-  return vm_value_is_list_storage_kind(kind) || kind == GVM_VALUE_DICT || kind == GVM_VALUE_GRAPH_REF;
+  return vm_value_is_list_storage_kind(kind) || kind == GVM_VALUE_DICT || kind == GVM_VALUE_GRAPH_REF ||
+         kind == GVM_VALUE_HYPERGRAPH_REF;
 }
 
 void vm_value_dispose_owned(graphion_vm_value *value) {
@@ -231,6 +236,7 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
   graphion_vm_dict *dict;
   graphion_csr_graph *graph;
   graphion_graph_value *graph_value;
+  graphion_hypergraph *hypergraph;
 
   if (value == NULL) {
     return;
@@ -285,6 +291,15 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
       free((void *)graph->edge_attrs);
     }
     free(graph);
+  } else if (value->kind == GVM_VALUE_HYPERGRAPH_REF) {
+    hypergraph = (graphion_hypergraph *)value->as.ref_value;
+    if (hypergraph != NULL) {
+      free((void *)hypergraph->node_offsets);
+      free((void *)hypergraph->node_hyperedges);
+      free((void *)hypergraph->hyperedge_offsets);
+      free((void *)hypergraph->hyperedge_nodes);
+      free(hypergraph);
+    }
   }
   vm_value_clear(value);
 }
@@ -299,6 +314,8 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   graphion_csr_graph *dst_graph;
   graphion_graph_value *src_graph_value;
   graphion_graph_value *dst_graph_value;
+  graphion_hypergraph *src_hypergraph;
+  graphion_hypergraph *dst_hypergraph;
 
   if (dst == NULL || src == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -462,6 +479,61 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
     dst->kind = GVM_VALUE_GRAPH_REF;
     memcpy(dst->reserved, src->reserved, sizeof(dst->reserved));
     dst->as.ref_value = dst_graph;
+    return GVM_OK;
+  }
+
+  if (src->kind == GVM_VALUE_HYPERGRAPH_REF) {
+    dst_hypergraph = vm_hypergraph_create_empty();
+    if (dst_hypergraph == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    src_hypergraph = (graphion_hypergraph *)src->as.ref_value;
+    if (src_hypergraph != NULL) {
+      dst_hypergraph->node_count = src_hypergraph->node_count;
+      dst_hypergraph->hyperedge_count = src_hypergraph->hyperedge_count;
+      dst_hypergraph->incidence_count = src_hypergraph->incidence_count;
+      if (src_hypergraph->node_offsets != NULL && src_hypergraph->node_count > 0U) {
+        const size_t count = src_hypergraph->node_count + 1U;
+        uint32_t *copy = (uint32_t *)calloc(count, sizeof(*copy));
+        if (copy == NULL) {
+          free(dst_hypergraph);
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(copy, src_hypergraph->node_offsets, count * sizeof(*copy));
+        dst_hypergraph->node_offsets = copy;
+      }
+      if (src_hypergraph->node_hyperedges != NULL && src_hypergraph->incidence_count > 0U) {
+        uint32_t *copy = (uint32_t *)calloc(src_hypergraph->incidence_count, sizeof(*copy));
+        if (copy == NULL) {
+          vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_HYPERGRAPH_REF, {0}, {.ref_value = dst_hypergraph}});
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(copy, src_hypergraph->node_hyperedges, src_hypergraph->incidence_count * sizeof(*copy));
+        dst_hypergraph->node_hyperedges = copy;
+      }
+      if (src_hypergraph->hyperedge_offsets != NULL && src_hypergraph->hyperedge_count > 0U) {
+        const size_t count = src_hypergraph->hyperedge_count + 1U;
+        uint32_t *copy = (uint32_t *)calloc(count, sizeof(*copy));
+        if (copy == NULL) {
+          vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_HYPERGRAPH_REF, {0}, {.ref_value = dst_hypergraph}});
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(copy, src_hypergraph->hyperedge_offsets, count * sizeof(*copy));
+        dst_hypergraph->hyperedge_offsets = copy;
+      }
+      if (src_hypergraph->hyperedge_nodes != NULL && src_hypergraph->incidence_count > 0U) {
+        uint32_t *copy = (uint32_t *)calloc(src_hypergraph->incidence_count, sizeof(*copy));
+        if (copy == NULL) {
+          vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_HYPERGRAPH_REF, {0}, {.ref_value = dst_hypergraph}});
+          return GVM_ERR_INVALID_ARG;
+        }
+        memcpy(copy, src_hypergraph->hyperedge_nodes, src_hypergraph->incidence_count * sizeof(*copy));
+        dst_hypergraph->hyperedge_nodes = copy;
+      }
+    }
+    dst->kind = GVM_VALUE_HYPERGRAPH_REF;
+    memcpy(dst->reserved, src->reserved, sizeof(dst->reserved));
+    dst->as.ref_value = dst_hypergraph;
     return GVM_OK;
   }
 
@@ -1314,6 +1386,21 @@ int vm_reg_set_graph_node_count(graphion_vm *vm, uint8_t reg, size_t node_count)
   return GVM_OK;
 }
 
+int vm_reg_set_empty_hypergraph(graphion_vm *vm, uint8_t reg) {
+  graphion_hypergraph *hypergraph;
+  if (vm == NULL || !is_valid_reg(reg)) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  hypergraph = vm_hypergraph_create_empty();
+  if (hypergraph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  vm_free_owned_reg_string(vm, reg);
+  vm->regs[reg].kind = GVM_VALUE_HYPERGRAPH_REF;
+  vm->regs[reg].as.ref_value = hypergraph;
+  return GVM_OK;
+}
+
 int vm_reg_set_empty_dict(graphion_vm *vm, uint8_t reg) {
   graphion_vm_dict *dict;
   if (vm == NULL || !is_valid_reg(reg)) {
@@ -1639,6 +1726,24 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
         *len_out = 8U;
       }
       return GVM_OK;
+    case GVM_VALUE_HYPERGRAPH_REF:
+      {
+        const graphion_hypergraph *hypergraph = (const graphion_hypergraph *)value->as.ref_value;
+        if (hypergraph != NULL && (hypergraph->node_count > 0U || hypergraph->hyperedge_count > 0U)) {
+          written = snprintf(buffer,
+                             sizeof(buffer),
+                             "hypergraph(nodes=%zu, hyperedges=%zu)\n",
+                             hypergraph->node_count,
+                             hypergraph->hyperedge_count);
+          if (written < 0 || (size_t)written >= sizeof(buffer)) {
+            return GVM_ERR_OUTPUT_UNBOUND;
+          }
+          *len_out = (size_t)written;
+          return GVM_OK;
+        }
+        *len_out = 13U;
+      }
+      return GVM_OK;
     case GVM_VALUE_LIST:
     case GVM_VALUE_TUPLE:
       total = 3U;
@@ -1922,6 +2027,22 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
           return vm_write_bytes_sink(output, buffer, (size_t)written);
         }
         return vm_write_bytes_sink(output, "graph()", 7U);
+      }
+    case GVM_VALUE_HYPERGRAPH_REF:
+      {
+        const graphion_hypergraph *hypergraph = (const graphion_hypergraph *)value->as.ref_value;
+        if (hypergraph != NULL && (hypergraph->node_count > 0U || hypergraph->hyperedge_count > 0U)) {
+          written = snprintf(buffer,
+                             sizeof(buffer),
+                             "hypergraph(nodes=%zu, hyperedges=%zu)",
+                             hypergraph->node_count,
+                             hypergraph->hyperedge_count);
+          if (written < 0 || (size_t)written >= sizeof(buffer)) {
+            return GVM_ERR_OUTPUT_UNBOUND;
+          }
+          return vm_write_bytes_sink(output, buffer, (size_t)written);
+        }
+        return vm_write_bytes_sink(output, "hypergraph()", 12U);
       }
     case GVM_VALUE_DICT:
       return vm_write_dict_inline(output, value);

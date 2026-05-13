@@ -32,6 +32,8 @@ Files:
   - set literals, duplicate removal, membership with `contains(...)`, equality, printing, and `len(...)`
 - `11_graphs.gion`
   - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected/directed edges, graph inspection/listing builtins, graph attribute lookup builtins, basic membership/neighbor queries, structural graph mutation including removal, and graph attribute mutation
+- `12_hypergraphs.gion`
+  - first-class empty hypergraph declarations with `hypergraph Name;`
 
 Run any example with:
 

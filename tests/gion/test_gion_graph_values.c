@@ -50,6 +50,52 @@ int test_gion_empty_graph_declaration(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_empty_hypergraph_declaration(void) {
+  const char *source =
+      "hypergraph Nom_du_hypergraph;\n"
+      "print(Nom_du_hypergraph)\n";
+  char path[512];
+  char output[64];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *hypergraph_value;
+  const graphion_hypergraph *hypergraph;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_empty_hypergraph_declaration.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  hypergraph_value = graphion_runtime_scope_find(&scope, "Nom_du_hypergraph");
+  if (hypergraph_value == NULL || hypergraph_value->kind != GVM_VALUE_HYPERGRAPH_REF) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  hypergraph = (const graphion_hypergraph *)hypergraph_value->as.ref_value;
+  if (hypergraph == NULL || hypergraph->node_count != 0U || hypergraph->hyperedge_count != 0U ||
+      hypergraph->incidence_count != 0U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  remove(path);
+  if (strcmp(output, "hypergraph()\n") != 0) {
+    return finish_scope_test(&scope, 6);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

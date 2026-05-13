@@ -25,6 +25,7 @@ Graphion currently exposes these value kinds:
 - `tuple`
 - `set`
 - `graph`
+- `hypergraph`
 
 ## Built-In Numeric Constants
 
@@ -170,6 +171,7 @@ Current `set` literals:
 
 ```gion
 graph G;
+hypergraph HG;
 
 alice = "Alice"
 bob = "Bob"
@@ -227,6 +229,15 @@ Current graph node block entries:
 - cannot mix `node - node` with directed edge syntax in the same graph
 - create missing endpoint nodes before creating the edge
 - warn when explicit numeric IDs have gaps after generated named-node IDs are assigned
+
+Current `hypergraph` declarations:
+
+- use `hypergraph Name;`
+- create an empty first-class hypergraph value
+- require a valid identifier after `hypergraph`
+- require the trailing semicolon
+- print empty hypergraphs as `hypergraph()`
+- will gain hyperedge blocks and hypergraph-specific operations in later steps
 
 ## Type Notes
 
@@ -374,6 +385,19 @@ Current graph support is intentionally minimal:
 - added nodes and edges receive declared defaults before later partial attribute patches
 
 Graph algorithms from `.gion` will be added in later steps.
+
+### Hypergraphs
+
+`hypergraph` values are first-class hypergraph objects in `.gion`.
+
+Current hypergraph support is intentionally minimal:
+
+- declaration with `hypergraph Name;`
+- empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
+- storage in variables
+- printing as `hypergraph()`
+
+Hyperedge initialization and hypergraph operations will be added in later steps.
 
 ### Bits
 

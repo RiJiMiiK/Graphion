@@ -57,6 +57,7 @@
   X(gion_set_runtime_errors)                           \
   X(gion_set_syntax_errors)                            \
   X(gion_empty_graph_declaration)                      \
+  X(gion_empty_hypergraph_declaration)                 \
   X(gion_graph_node_block_declaration)                 \
   X(gion_graph_explicit_ids_have_priority)             \
   X(gion_graph_node_attributes)                        \

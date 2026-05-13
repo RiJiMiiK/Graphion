@@ -21,6 +21,7 @@ Current supported top-level statements:
 - assignment
 - compound assignment
 - graph declaration
+- hypergraph declaration
 - `if` / `elif` / `else`
 - `match`
 - `print(...)`
@@ -32,6 +33,7 @@ Examples:
 count = 42
 count += 1
 graph G;
+hypergraph H;
 
 if true:
     count += 1
@@ -45,7 +47,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, and `graph`.
+Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, `graph`, and `hypergraph`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -177,6 +179,7 @@ Graph declaration:
 
 ```gion
 graph G;
+hypergraph HG;
 
 alice = "Alice"
 bob = "Bob"
@@ -231,6 +234,20 @@ Current graph declaration rules:
 - named nodes receive generated IDs after explicit IDs are reserved
 - the semicolon is required for empty declarations
 - the colon is required for node-block declarations
+
+Hypergraph declaration:
+
+```gion
+hypergraph H;
+```
+
+Current hypergraph declaration rules:
+
+- the empty shape is `hypergraph Name;`
+- `Name` must be a valid identifier
+- `hypergraph Name;` creates an empty first-class hypergraph value
+- empty hypergraphs print as `hypergraph()`
+- hyperedge blocks and hypergraph query/mutation operations will be added later
 
 Graph mutation statements:
 

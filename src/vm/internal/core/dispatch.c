@@ -401,6 +401,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_NEW:
         rc = op_graph_new(vm, &in);
         break;
+      case GVM_OP_HYPERGRAPH_NEW:
+        rc = op_hypergraph_new(vm, &in);
+        break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);
         break;

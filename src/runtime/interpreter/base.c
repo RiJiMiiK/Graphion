@@ -144,6 +144,7 @@ int is_reserved_name(const char *name) {
          strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0 ||
          strcmp(name, "set") == 0 ||
          strcmp(name, "graph") == 0 ||
+         strcmp(name, "hypergraph") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

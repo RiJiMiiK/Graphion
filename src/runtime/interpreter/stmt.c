@@ -448,6 +448,50 @@ static int parse_graph_declaration(const char *line_text,
   return parse_graph_declaration_with_node_count(line_text, 0U, program, line, diagnostic);
 }
 
+static int parse_hypergraph_declaration(const char *line_text,
+                                        graphion_runtime_program *program,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = line_text;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  size_t target_index = 0U;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "hypergraph", 10U) != 0 || is_ident_char(cursor[10])) {
+    return fail(diagnostic, line, 1U, "expected 'hypergraph'", GINT_ERR_PARSE);
+  }
+  cursor += 10;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected hypergraph name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ';') {
+    return fail(diagnostic, line, 1U, "expected ';' after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, GVM_OP_HYPERGRAPH_NEW, 0U, 0U, 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+}
+
 static int parse_graph_mutation_statement(const char *line_text,
                                           graphion_runtime_program *program,
                                           unsigned int line,
@@ -702,6 +746,8 @@ int parse_statement_line(const char *line_text,
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
+  } else if (strncmp(line_cursor, "hypergraph", 10U) == 0 && !is_ident_char(line_cursor[10])) {
+    rc = parse_hypergraph_declaration(line_cursor, program, line, diagnostic);
   } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_graph_declaration(line_cursor, program, line, diagnostic);
   } else if ((strncmp(line_cursor, "add_node", 8U) == 0 && !is_ident_char(line_cursor[8])) ||

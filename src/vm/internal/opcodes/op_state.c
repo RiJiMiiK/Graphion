@@ -81,7 +81,7 @@ int op_mov(graphion_vm *vm, const graphion_insn *in) {
   }
   if (vm->regs[in->b].kind == GVM_VALUE_LIST || vm->regs[in->b].kind == GVM_VALUE_DICT ||
       vm->regs[in->b].kind == GVM_VALUE_TUPLE || vm->regs[in->b].kind == GVM_VALUE_SET ||
-      vm->regs[in->b].kind == GVM_VALUE_GRAPH_REF) {
+      vm->regs[in->b].kind == GVM_VALUE_GRAPH_REF || vm->regs[in->b].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->regs[in->b]);
     if (rc != GVM_OK) {
       return rc;
@@ -114,7 +114,8 @@ int op_load_const(graphion_vm *vm, const graphion_insn *in) {
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT ||
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_TUPLE ||
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_SET ||
-      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF) {
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF ||
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -147,7 +148,8 @@ int op_load_global(graphion_vm *vm, const graphion_insn *in) {
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT ||
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_TUPLE ||
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_SET ||
-      vm->globals[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF) {
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF ||
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -177,7 +179,7 @@ int op_store_global(graphion_vm *vm, const graphion_insn *in) {
   }
   if (vm->regs[in->a].kind == GVM_VALUE_LIST || vm->regs[in->a].kind == GVM_VALUE_DICT ||
       vm->regs[in->a].kind == GVM_VALUE_TUPLE || vm->regs[in->a].kind == GVM_VALUE_SET ||
-      vm->regs[in->a].kind == GVM_VALUE_GRAPH_REF) {
+      vm->regs[in->a].kind == GVM_VALUE_GRAPH_REF || vm->regs[in->a].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->regs[in->a]);
     if (rc != GVM_OK) {
       return rc;
@@ -213,7 +215,8 @@ int op_store_const_global(graphion_vm *vm, const graphion_insn *in) {
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_DICT ||
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_TUPLE ||
       vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_SET ||
-      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF) {
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF ||
+      vm->const_pool[(size_t)in->imm].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->const_pool[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -243,7 +246,8 @@ int op_copy_global(graphion_vm *vm, const graphion_insn *in) {
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_DICT ||
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_TUPLE ||
       vm->globals[(size_t)in->imm].kind == GVM_VALUE_SET ||
-      vm->globals[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF) {
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_GRAPH_REF ||
+      vm->globals[(size_t)in->imm].kind == GVM_VALUE_HYPERGRAPH_REF) {
     int rc = vm_value_clone(&cloned, &vm->globals[(size_t)in->imm]);
     if (rc != GVM_OK) {
       return rc;
@@ -339,4 +343,14 @@ int op_graph_new(graphion_vm *vm, const graphion_insn *in) {
     return GVM_ERR_INVALID_ARG;
   }
   return vm_reg_set_graph_node_count(vm, in->a, (size_t)in->imm);
+}
+
+int op_hypergraph_new(graphion_vm *vm, const graphion_insn *in) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (in->imm != 0) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  return vm_reg_set_empty_hypergraph(vm, in->a);
 }
