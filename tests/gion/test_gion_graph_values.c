@@ -223,9 +223,13 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
       "    alice\n"
       "    [alice, bob, 2] {\"kind\": \"team\"}\n"
       "    [2, \"Carol\"]\n"
-      "print(H)\n";
+      "print(H)\n"
+      "print(hyperedge_vertices(H, 0))\n"
+      "print(hyperedge_vertices(H, 1))\n"
+      "print(hyperedge_attrs(H, 0)[\"kind\"])\n"
+      "print(hyperedge_attrs(H, 1)[\"color\"])\n";
   char path[512];
-  char output[128];
+  char output[256];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *hypergraph_value;
@@ -286,7 +290,12 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
     return finish_scope_test(&scope, 8);
   }
   remove(path);
-  if (strcmp(output, "hypergraph(vertices=4, hyperedges=2, hyperedge_attrs=2)\n") != 0) {
+  if (strcmp(output,
+             "hypergraph(vertices=4, hyperedges=2, hyperedge_attrs=2)\n"
+             "[0, 1, 2]\n"
+             "[2, 3]\n"
+             "team\n"
+             "blue\n") != 0) {
     return finish_scope_test(&scope, 9);
   }
   return finish_scope_test(&scope, 0);

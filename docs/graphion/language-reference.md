@@ -267,6 +267,9 @@ Current hypergraph declaration rules:
 - without vertex defaults, either no vertex has attributes or every vertex must define attributes with the same keys
 - vertex attributes cannot introduce keys outside the declared vertex defaults
 - hyperedge entries use list syntax, such as `[vertex_a, vertex_b, vertex_c]`
+- hyperedges receive implicit numeric IDs in declaration order, starting at `0`
+- user-provided hyperedge IDs are not part of the first hypergraph version
+- hyperedge IDs can be inspected with `hyperedge_vertices(hypergraph, id)` and `hyperedge_attrs(hypergraph, id)`
 - hyperedges may reference string literals, non-negative integer IDs, or variables that contain a `string` or `int`
 - missing vertices referenced by a hyperedge are created before the hyperedge is created
 - hyperedge entries may attach attributes with `[vertex_a, vertex_b] {"key": value}`
@@ -279,7 +282,7 @@ Current hypergraph declaration rules:
 - vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
 - hypergraphs with hyperedges print as `hypergraph(vertices=N, hyperedges=M)`
 - hypergraphs with hyperedge attributes also include `hyperedge_attrs=K`
-- hypergraph query/mutation operations will be added later
+- broader hypergraph query/mutation operations will be added later
 
 Graph mutation statements:
 

@@ -248,6 +248,9 @@ Current `hypergraph` declarations:
 - reject vertex attribute keys outside the declared vertex defaults
 - reject duplicate explicit integer IDs
 - may define hyperedges with `[vertex_a, vertex_b, vertex_c]`
+- assign implicit numeric hyperedge IDs in declaration order, starting at `0`
+- do not support user-provided hyperedge IDs in the first version
+- expose implicit hyperedge IDs through `hyperedge_vertices(hypergraph, id)` and `hyperedge_attrs(hypergraph, id)`
 - create missing vertices before creating a hyperedge
 - may attach hyperedge attributes with `[vertex_a, vertex_b] {"key": value}`
 - may declare hyperedge attribute defaults with `defaults hyperedge {"key": value}`
@@ -259,7 +262,7 @@ Current `hypergraph` declarations:
 - print vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
 - print hypergraphs with hyperedges as `hypergraph(vertices=N, hyperedges=M)`
 - print hypergraphs with hyperedge attributes as `hypergraph(vertices=N, hyperedges=M, hyperedge_attrs=K)`
-- will gain hypergraph-specific operations in later steps
+- will gain broader hypergraph-specific operations in later steps
 
 ## Type Notes
 

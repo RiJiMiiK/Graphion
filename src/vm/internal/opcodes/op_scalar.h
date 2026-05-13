@@ -98,6 +98,8 @@ int op_graph_set_edge_attrs(graphion_vm *vm, const graphion_insn *in);
 int op_graph_set_edge_weight(graphion_vm *vm, const graphion_insn *in);
 int op_graph_remove_node(graphion_vm *vm, const graphion_insn *in);
 int op_graph_remove_edge(graphion_vm *vm, const graphion_insn *in);
+int op_hypergraph_hyperedge_vertices(graphion_vm *vm, const graphion_insn *in);
+int op_hypergraph_hyperedge_attrs(graphion_vm *vm, const graphion_insn *in);
 int op_factorial(graphion_vm *vm, const graphion_insn *in);
 int op_degrees_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_radians_builtin(graphion_vm *vm, const graphion_insn *in);

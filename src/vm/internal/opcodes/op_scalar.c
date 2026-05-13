@@ -1005,6 +1005,36 @@ static int graph_reg_value(const graphion_vm *vm, const graphion_insn *in, const
   return GVM_OK;
 }
 
+static int hypergraph_reg_value(const graphion_vm *vm,
+                                const graphion_insn *in,
+                                const graphion_hypergraph_value **hypergraph_out) {
+  if (!is_valid_reg(in->a)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_HYPERGRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  *hypergraph_out = (const graphion_hypergraph_value *)vm->regs[in->a].as.ref_value;
+  return GVM_OK;
+}
+
+static int hypergraph_id_from_value(const graphion_vm_value *value, size_t count, size_t *id_out) {
+  int64_t id;
+
+  if (value == NULL || id_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (value->kind != GVM_VALUE_INT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  id = value->as.int_value;
+  if (id < 0 || (uint64_t)id >= (uint64_t)count) {
+    return GVM_ERR_INVALID_HYPEREDGE_ID;
+  }
+  *id_out = (size_t)id;
+  return GVM_OK;
+}
+
 static size_t graph_visible_node_count(const graphion_vm_value *value, const graphion_graph_value *graph) {
   size_t count;
 
@@ -2424,6 +2454,70 @@ int op_graph_remove_edge(graphion_vm *vm, const graphion_insn *in) {
     graph_update_visible_counts(&vm->regs[in->a], graph);
   }
   return rc;
+}
+
+int op_hypergraph_hyperedge_vertices(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  const graphion_hypergraph *hypergraph;
+  size_t hyperedge_id;
+  size_t start;
+  size_t end;
+  size_t i;
+  int rc;
+
+  if (!is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  hypergraph = &value->hypergraph;
+  rc = hypergraph_id_from_value(&vm->regs[in->b], hypergraph->hyperedge_count, &hyperedge_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (hypergraph->hyperedge_offsets == NULL || hypergraph->hyperedge_nodes == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  start = hypergraph->hyperedge_offsets[hyperedge_id];
+  end = hypergraph->hyperedge_offsets[hyperedge_id + 1U];
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  rc = vm_reg_set_empty_list(vm, in->a);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = start; i < end; ++i) {
+    rc = vm_list_append_int(vm, in->a, (int64_t)hypergraph->hyperedge_nodes[i]);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+  }
+  return GVM_OK;
+}
+
+int op_hypergraph_hyperedge_attrs(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t hyperedge_id;
+  int rc;
+
+  if (!is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = hypergraph_id_from_value(&vm->regs[in->b], value->hypergraph.hyperedge_count, &hyperedge_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (value->hyperedge_attrs == NULL || hyperedge_id >= value->hyperedge_attr_count ||
+      value->hyperedge_attrs[hyperedge_id].kind == GVM_VALUE_NONE) {
+    vm_value_dispose_owned(&vm->regs[in->a]);
+    return vm_reg_set_empty_dict(vm, in->a);
+  }
+  return graph_clone_result_into_target(vm, in->a, &value->hyperedge_attrs[hyperedge_id]);
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

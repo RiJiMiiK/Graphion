@@ -9,6 +9,8 @@ They are documented on the [Language Reference](language-reference.md) page beca
 
 Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(graph)` for
 inspecting graph contents without knowing node names or IDs ahead of time.
+Hypergraph hyperedge builtins currently include `hyperedge_vertices(hypergraph, id)` and
+`hyperedge_attrs(hypergraph, id)` for inspecting implicit hyperedge IDs.
 
 ## Shared Rules
 
@@ -94,6 +96,8 @@ Unless a builtin says otherwise:
 | `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
 | `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
 | `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
+| `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
+| `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
 | `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
 | `has_edge(graph, from, to)` | whether an edge exists | `bool` | respects directed edge orientation |
 | `neighbors(graph, node)` | adjacent neighbor IDs | `list` | includes incoming and outgoing directed edges |
@@ -1393,6 +1397,59 @@ Current runtime notes:
 - missing nodes are runtime errors
 - missing edges are runtime errors
 - an existing edge without `weight` is a missing-key runtime error
+
+### `hyperedge_vertices(hypergraph, id)`
+
+Returns the vertex IDs contained in one hyperedge. Hyperedge IDs are implicit numeric IDs assigned in declaration order, starting at `0`.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob", 2]
+
+print(hyperedge_vertices(H, 0))
+```
+
+Expected output:
+
+```text
+[0, 1, 2]
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` hyperedge ID
+
+Result type:
+
+- `list`
+
+### `hyperedge_attrs(hypergraph, id)`
+
+Returns the attribute dictionary attached to one hyperedge. Missing hyperedge attributes return an empty dict.
+
+```gion
+hypergraph H:
+    defaults hyperedge {"kind": "group"}
+    ["Alice", "Bob"] {"kind": "team"}
+
+print(hyperedge_attrs(H, 0)["kind"])
+```
+
+Expected output:
+
+```text
+team
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` hyperedge ID
+
+Result type:
+
+- `dict`
 
 ### `has_node(graph, node)`
 

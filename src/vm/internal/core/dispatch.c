@@ -341,6 +341,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_REMOVE_EDGE:
         rc = op_graph_remove_edge(vm, &in);
         break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_VERTICES:
+        rc = op_hypergraph_hyperedge_vertices(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_ATTRS:
+        rc = op_hypergraph_hyperedge_attrs(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;

@@ -86,9 +86,11 @@ This branch is for active work on non-scalar language types.
   - [x] support vertex attributes and `defaults vertex`
   - [x] support hyperedges as vertex lists with `[vertex, ...]`
   - [x] support hyperedge attributes and `defaults hyperedge`
-  - [ ] decide how `.gion` addresses hyperedges after initialization
-    - stable hyperedge IDs / indexes
-    - whether IDs are implicit only or can be user-provided later
+  - [x] decide how `.gion` addresses hyperedges after initialization
+    - implicit stable numeric hyperedge IDs / indexes
+    - IDs are assigned in declaration order
+    - IDs are not user-provided in the first version
+    - IDs should not be renumbered or reused after removal
   - [ ] add `.gion` hypergraph inspection operations
     - vertex count
     - hyperedge count
