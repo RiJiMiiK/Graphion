@@ -15,5 +15,9 @@ hypergraph Hypergraph_avec_vertices:
     [2, "Carol"]
 
 print(Hypergraph_avec_vertices)
+print(vertex_count(Hypergraph_avec_vertices))
+print(hyperedge_count(Hypergraph_avec_vertices))
+print(vertex_attr_count(Hypergraph_avec_vertices))
+print(hyperedge_attr_count(Hypergraph_avec_vertices))
 print(hyperedge_vertices(Hypergraph_avec_vertices, 0))
 print(hyperedge_attrs(Hypergraph_avec_vertices, 0)["kind"])

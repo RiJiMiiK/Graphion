@@ -91,10 +91,9 @@ This branch is for active work on non-scalar language types.
     - IDs are assigned in declaration order
     - IDs are not user-provided in the first version
     - IDs should not be renumbered or reused after removal
-  - [ ] add `.gion` hypergraph inspection operations
+  - [x] add `.gion` hypergraph inspection operations
     - vertex count
     - hyperedge count
-    - incidence count
     - vertex / hyperedge attribute schema information
   - [ ] add `.gion` hypergraph attribute lookup operations
     - vertex attributes

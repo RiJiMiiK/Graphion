@@ -282,6 +282,7 @@ Current hypergraph declaration rules:
 - vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
 - hypergraphs with hyperedges print as `hypergraph(vertices=N, hyperedges=M)`
 - hypergraphs with hyperedge attributes also include `hyperedge_attrs=K`
+- hypergraph inspection builtins include `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - broader hypergraph query/mutation operations will be added later
 
 Graph mutation statements:

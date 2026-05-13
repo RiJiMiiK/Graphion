@@ -9,8 +9,9 @@ They are documented on the [Language Reference](language-reference.md) page beca
 
 Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(graph)` for
 inspecting graph contents without knowing node names or IDs ahead of time.
-Hypergraph hyperedge builtins currently include `hyperedge_vertices(hypergraph, id)` and
-`hyperedge_attrs(hypergraph, id)` for inspecting implicit hyperedge IDs.
+Hypergraph builtins currently include `vertex_count(hypergraph)`, `hyperedge_count(hypergraph)`,
+`vertex_attr_count(hypergraph)`, `hyperedge_attr_count(hypergraph)`,
+`hyperedge_vertices(hypergraph, id)`, and `hyperedge_attrs(hypergraph, id)`.
 
 ## Shared Rules
 
@@ -96,6 +97,10 @@ Unless a builtin says otherwise:
 | `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
 | `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
 | `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
+| `vertex_count(hypergraph)` | number of logical vertices | `int` | counts present vertices, not ID gaps |
+| `hyperedge_count(hypergraph)` | number of hyperedges | `int` | hyperedge IDs are assigned in declaration order |
+| `vertex_attr_count(hypergraph)` | vertex attribute key count | `int` | returns `0` when no vertex attrs exist |
+| `hyperedge_attr_count(hypergraph)` | hyperedge attribute key count | `int` | returns `0` when no hyperedge attrs exist |
 | `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
 | `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
 | `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
@@ -1397,6 +1402,94 @@ Current runtime notes:
 - missing nodes are runtime errors
 - missing edges are runtime errors
 - an existing edge without `weight` is a missing-key runtime error
+
+### `vertex_count(hypergraph)`
+
+Returns the number of logical vertices in a hypergraph.
+
+```gion
+hypergraph H:
+    "Alice"
+    2
+
+print(vertex_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `hyperedge_count(hypergraph)`
+
+Returns the number of hyperedges in a hypergraph.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+    ["Bob", "Carol"]
+
+print(hyperedge_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `vertex_attr_count(hypergraph)`
+
+Returns the number of keys in the visible vertex attribute schema. Hypergraphs without vertex attributes return `0`.
+
+```gion
+hypergraph H:
+    defaults vertex {"label": "unknown", "score": 0}
+    "Alice"
+
+print(vertex_attr_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `hyperedge_attr_count(hypergraph)`
+
+Returns the number of keys in the visible hyperedge attribute schema. Hypergraphs without hyperedge attributes return `0`.
+
+```gion
+hypergraph H:
+    defaults hyperedge {"kind": "group"}
+    ["Alice", "Bob"]
+
+print(hyperedge_attr_count(H))
+```
+
+Expected output:
+
+```text
+1
+```
+
+Result type:
+
+- `int`
 
 ### `hyperedge_vertices(hypergraph, id)`
 

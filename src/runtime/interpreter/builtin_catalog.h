@@ -57,7 +57,11 @@
   X("orientation", GVM_OP_GRAPH_ORIENTATION) \
   X("node_ids", GVM_OP_GRAPH_NODE_IDS)       \
   X("nodes", GVM_OP_GRAPH_NODES)             \
-  X("edges", GVM_OP_GRAPH_EDGES)
+  X("edges", GVM_OP_GRAPH_EDGES)             \
+  X("vertex_count", GVM_OP_HYPERGRAPH_VERTEX_COUNT) \
+  X("hyperedge_count", GVM_OP_HYPERGRAPH_HYPEREDGE_COUNT) \
+  X("vertex_attr_count", GVM_OP_HYPERGRAPH_VERTEX_ATTR_COUNT) \
+  X("hyperedge_attr_count", GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT)
 
 #define GRAPHION_BINARY_DIRECT_BUILTINS(X) \
   X("min", GVM_OP_MIN)                     \

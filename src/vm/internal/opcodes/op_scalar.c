@@ -1035,6 +1035,32 @@ static int hypergraph_id_from_value(const graphion_vm_value *value, size_t count
   return GVM_OK;
 }
 
+static size_t hypergraph_visible_vertex_count(const graphion_vm_value *value,
+                                              const graphion_hypergraph_value *hypergraph) {
+  size_t count;
+
+  count = (size_t)value->reserved[1] | ((size_t)value->reserved[2] << 8U);
+  if (count != 0U) {
+    return count;
+  }
+  return hypergraph != NULL ? hypergraph->hypergraph.node_count : 0U;
+}
+
+static size_t hypergraph_visible_attr_key_count(const graphion_vm_value *attrs, size_t attr_count) {
+  size_t i;
+  size_t len = 0U;
+
+  if (attrs == NULL) {
+    return 0U;
+  }
+  for (i = 0U; i < attr_count; ++i) {
+    if (attrs[i].kind == GVM_VALUE_DICT && vm_value_dict_length(&attrs[i], &len) && len > 0U) {
+      return len;
+    }
+  }
+  return 0U;
+}
+
 static size_t graph_visible_node_count(const graphion_vm_value *value, const graphion_graph_value *graph) {
   size_t count;
 
@@ -2518,6 +2544,66 @@ int op_hypergraph_hyperedge_attrs(graphion_vm *vm, const graphion_insn *in) {
     return vm_reg_set_empty_dict(vm, in->a);
   }
   return graph_clone_result_into_target(vm, in->a, &value->hyperedge_attrs[hyperedge_id]);
+}
+
+int op_hypergraph_vertex_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t count;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = hypergraph_visible_vertex_count(&vm->regs[in->a], value);
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
+  return GVM_OK;
+}
+
+int op_hypergraph_hyperedge_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t count;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = value->hypergraph.hyperedge_count;
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
+  return GVM_OK;
+}
+
+int op_hypergraph_vertex_attr_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t count;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = hypergraph_visible_attr_key_count(value->vertex_attrs, value->vertex_attr_count);
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
+  return GVM_OK;
+}
+
+int op_hypergraph_hyperedge_attr_count(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t count;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = hypergraph_visible_attr_key_count(value->hyperedge_attrs, value->hyperedge_attr_count);
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
+  return GVM_OK;
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

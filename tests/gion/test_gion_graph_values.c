@@ -227,7 +227,11 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
       "print(hyperedge_vertices(H, 0))\n"
       "print(hyperedge_vertices(H, 1))\n"
       "print(hyperedge_attrs(H, 0)[\"kind\"])\n"
-      "print(hyperedge_attrs(H, 1)[\"color\"])\n";
+      "print(hyperedge_attrs(H, 1)[\"color\"])\n"
+      "print(vertex_count(H))\n"
+      "print(hyperedge_count(H))\n"
+      "print(vertex_attr_count(H))\n"
+      "print(hyperedge_attr_count(H))\n";
   char path[512];
   char output[256];
   graphion_runtime_scope scope;
@@ -295,7 +299,11 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
              "[0, 1, 2]\n"
              "[2, 3]\n"
              "team\n"
-             "blue\n") != 0) {
+             "blue\n"
+             "4\n"
+             "2\n"
+             "0\n"
+             "2\n") != 0) {
     return finish_scope_test(&scope, 9);
   }
   return finish_scope_test(&scope, 0);
@@ -313,9 +321,13 @@ int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
       "    bob {\"score\": 1}\n"
       "    [alice, bob, 2] {\"kind\": \"team\"}\n"
       "    [2, \"Carol\"]\n"
-      "print(H)\n";
+      "print(H)\n"
+      "print(vertex_count(H))\n"
+      "print(hyperedge_count(H))\n"
+      "print(vertex_attr_count(H))\n"
+      "print(hyperedge_attr_count(H))\n";
   char path[512];
-  char output[128];
+  char output[256];
   graphion_runtime_scope scope;
   graphion_runtime_diagnostic diagnostic;
   const graphion_runtime_value *hypergraph_value;
@@ -363,7 +375,12 @@ int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
     return finish_scope_test(&scope, 7);
   }
   remove(path);
-  if (strcmp(output, "hypergraph(vertices=4, hyperedges=2, vertex_attrs=2, hyperedge_attrs=2)\n") != 0) {
+  if (strcmp(output,
+             "hypergraph(vertices=4, hyperedges=2, vertex_attrs=2, hyperedge_attrs=2)\n"
+             "4\n"
+             "2\n"
+             "2\n"
+             "2\n") != 0) {
     return finish_scope_test(&scope, 8);
   }
   return finish_scope_test(&scope, 0);
