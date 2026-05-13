@@ -86,6 +86,41 @@ This branch is for active work on non-scalar language types.
   - [x] support vertex attributes and `defaults vertex`
   - [x] support hyperedges as vertex lists with `[vertex, ...]`
   - [x] support hyperedge attributes and `defaults hyperedge`
+  - [ ] decide how `.gion` addresses hyperedges after initialization
+    - stable hyperedge IDs / indexes
+    - whether IDs are implicit only or can be user-provided later
+  - [ ] add `.gion` hypergraph inspection operations
+    - vertex count
+    - hyperedge count
+    - incidence count
+    - vertex / hyperedge attribute schema information
+  - [ ] add `.gion` hypergraph attribute lookup operations
+    - vertex attributes
+    - hyperedge attributes
+  - [ ] add basic hypergraph membership/query operations
+    - vertex exists
+    - hyperedge exists
+    - hyperedges incident to a vertex
+    - vertices contained in a hyperedge
+  - [ ] add hypergraph listing/query operations
+    - list vertices / vertex IDs
+    - list hyperedges
+    - expose each hyperedge as a vertex list
+  - [ ] decide and add the first hypergraph mutation surface after initialization
+    - add vertex
+    - add hyperedge
+  - [ ] add hypergraph attribute mutation after initialization
+    - update vertex attributes
+    - update hyperedge attributes
+  - [ ] add hypergraph removal mutation after initialization
+    - remove vertex
+    - remove hyperedge
+    - define how vertex removal affects incident hyperedges and attributes
+  - [ ] harden hypergraph error coverage
+    - unknown attribute keys
+    - missing vertices / hyperedges
+    - invalid hyperedge vertex lists
+    - partial attribute patches on vertices / hyperedges added after defaults
 - [ ] `path` or `walk` value type
   - useful if traversal results should become first-class language values
 - [ ] `record` / `struct`
