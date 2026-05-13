@@ -11,7 +11,8 @@ Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(gra
 inspecting graph contents without knowing node names or IDs ahead of time.
 Hypergraph builtins currently include `vertex_count(hypergraph)`, `hyperedge_count(hypergraph)`,
 `vertex_attr_count(hypergraph)`, `hyperedge_attr_count(hypergraph)`,
-`hyperedge_vertices(hypergraph, id)`, and `hyperedge_attrs(hypergraph, id)`.
+`vertex_attrs(hypergraph, vertex)`, `hyperedge_vertices(hypergraph, id)`,
+and `hyperedge_attrs(hypergraph, id)`.
 
 ## Shared Rules
 
@@ -101,6 +102,7 @@ Unless a builtin says otherwise:
 | `hyperedge_count(hypergraph)` | number of hyperedges | `int` | hyperedge IDs are assigned in declaration order |
 | `vertex_attr_count(hypergraph)` | vertex attribute key count | `int` | returns `0` when no vertex attrs exist |
 | `hyperedge_attr_count(hypergraph)` | hyperedge attribute key count | `int` | returns `0` when no hyperedge attrs exist |
+| `vertex_attrs(hypergraph, vertex)` | attributes for one vertex | `dict` | `vertex` can be an ID or string vertex name |
 | `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
 | `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
 | `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
@@ -1490,6 +1492,35 @@ Expected output:
 Result type:
 
 - `int`
+
+### `vertex_attrs(hypergraph, vertex)`
+
+Returns the attribute dictionary attached to one vertex. The `vertex` argument can be an integer vertex ID or a string vertex name. Missing vertex attributes return an empty dict.
+
+```gion
+hypergraph H:
+    defaults vertex {"label": "unknown", "score": 0}
+    "Alice" {"score": 3}
+
+print(vertex_attrs(H, "Alice")["label"])
+print(vertex_attrs(H, "Alice")["score"])
+```
+
+Expected output:
+
+```text
+unknown
+3
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` vertex ID or `string` vertex name
+
+Result type:
+
+- `dict`
 
 ### `hyperedge_vertices(hypergraph, id)`
 

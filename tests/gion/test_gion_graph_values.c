@@ -325,7 +325,10 @@ int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
       "print(vertex_count(H))\n"
       "print(hyperedge_count(H))\n"
       "print(vertex_attr_count(H))\n"
-      "print(hyperedge_attr_count(H))\n";
+      "print(hyperedge_attr_count(H))\n"
+      "print(vertex_attrs(H, alice)[\"label\"])\n"
+      "print(vertex_attrs(H, 2)[\"score\"])\n"
+      "print(hyperedge_attrs(H, 0)[\"kind\"])\n";
   char path[512];
   char output[256];
   graphion_runtime_scope scope;
@@ -380,7 +383,10 @@ int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
              "4\n"
              "2\n"
              "2\n"
-             "2\n") != 0) {
+             "2\n"
+             "unknown\n"
+             "2\n"
+             "team\n") != 0) {
     return finish_scope_test(&scope, 8);
   }
   return finish_scope_test(&scope, 0);

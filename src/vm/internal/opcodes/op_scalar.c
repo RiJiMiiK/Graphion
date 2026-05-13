@@ -1035,6 +1035,40 @@ static int hypergraph_id_from_value(const graphion_vm_value *value, size_t count
   return GVM_OK;
 }
 
+static int hypergraph_vertex_id_from_value(const graphion_hypergraph_value *hypergraph,
+                                           const graphion_vm_value *value,
+                                           uint32_t *id_out) {
+  size_t i;
+
+  if (hypergraph == NULL || value == NULL || id_out == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if (value->kind == GVM_VALUE_INT) {
+    const int64_t id = value->as.int_value;
+    if (id < 0 || id > UINT32_MAX) {
+      return GVM_ERR_INVALID_NODE_ID;
+    }
+    for (i = 0U; i < hypergraph->vertex_count; ++i) {
+      if (hypergraph->vertices[i].id == (uint32_t)id) {
+        *id_out = (uint32_t)id;
+        return GVM_OK;
+      }
+    }
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  if (value->kind == GVM_VALUE_STRING) {
+    const char *name = value->as.string_value != NULL ? value->as.string_value : "";
+    for (i = 0U; i < hypergraph->vertex_count; ++i) {
+      if (hypergraph->vertices[i].name != NULL && strcmp(hypergraph->vertices[i].name, name) == 0) {
+        *id_out = hypergraph->vertices[i].id;
+        return GVM_OK;
+      }
+    }
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  return GVM_ERR_TYPE_MISMATCH;
+}
+
 static size_t hypergraph_visible_vertex_count(const graphion_vm_value *value,
                                               const graphion_hypergraph_value *hypergraph) {
   size_t count;
@@ -2604,6 +2638,30 @@ int op_hypergraph_hyperedge_attr_count(graphion_vm *vm, const graphion_insn *in)
   vm_value_dispose_owned(&vm->regs[in->a]);
   vm_value_set_int(&vm->regs[in->a], (int64_t)count);
   return GVM_OK;
+}
+
+int op_hypergraph_vertex_attrs(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  uint32_t vertex_id;
+  int rc;
+
+  if (!is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = hypergraph_vertex_id_from_value(value, &vm->regs[in->b], &vertex_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  if (value->vertex_attrs == NULL || (size_t)vertex_id >= value->vertex_attr_count ||
+      value->vertex_attrs[vertex_id].kind == GVM_VALUE_NONE) {
+    vm_value_dispose_owned(&vm->regs[in->a]);
+    return vm_reg_set_empty_dict(vm, in->a);
+  }
+  return graph_clone_result_into_target(vm, in->a, &value->vertex_attrs[vertex_id]);
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

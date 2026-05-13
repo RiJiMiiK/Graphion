@@ -104,6 +104,7 @@ int op_hypergraph_vertex_count(graphion_vm *vm, const graphion_insn *in);
 int op_hypergraph_hyperedge_count(graphion_vm *vm, const graphion_insn *in);
 int op_hypergraph_vertex_attr_count(graphion_vm *vm, const graphion_insn *in);
 int op_hypergraph_hyperedge_attr_count(graphion_vm *vm, const graphion_insn *in);
+int op_hypergraph_vertex_attrs(graphion_vm *vm, const graphion_insn *in);
 int op_factorial(graphion_vm *vm, const graphion_insn *in);
 int op_degrees_builtin(graphion_vm *vm, const graphion_insn *in);
 int op_radians_builtin(graphion_vm *vm, const graphion_insn *in);

@@ -359,6 +359,9 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT:
         rc = op_hypergraph_hyperedge_attr_count(vm, &in);
         break;
+      case GVM_OP_HYPERGRAPH_VERTEX_ATTRS:
+        rc = op_hypergraph_vertex_attrs(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;

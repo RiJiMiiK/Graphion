@@ -95,7 +95,7 @@ This branch is for active work on non-scalar language types.
     - vertex count
     - hyperedge count
     - vertex / hyperedge attribute schema information
-  - [ ] add `.gion` hypergraph attribute lookup operations
+  - [x] add `.gion` hypergraph attribute lookup operations
     - vertex attributes
     - hyperedge attributes
   - [ ] add basic hypergraph membership/query operations
