@@ -219,8 +219,9 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
       "alice = \"Alice\"\n"
       "bob = \"Bob\"\n"
       "hypergraph H:\n"
+      "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
       "    alice\n"
-      "    [alice, bob, 2]\n"
+      "    [alice, bob, 2] {\"kind\": \"team\"}\n"
       "    [2, \"Carol\"]\n"
       "print(H)\n";
   char path[512];
@@ -230,6 +231,7 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
   const graphion_runtime_value *hypergraph_value;
   const graphion_hypergraph *hypergraph;
   const graphion_hypergraph_value *value;
+  size_t attr_len = 0U;
   FILE *fp = NULL;
   int rc;
 
@@ -273,12 +275,86 @@ int test_gion_hypergraph_hyperedge_declaration(void) {
     remove(path);
     return finish_scope_test(&scope, 6);
   }
+  if (value->hyperedge_attrs == NULL || value->hyperedge_attr_count != 2U ||
+      !vm_value_dict_length(&value->hyperedge_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->hyperedge_attrs[1], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 7);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 8);
+  }
+  remove(path);
+  if (strcmp(output, "hypergraph(vertices=4, hyperedges=2, hyperedge_attrs=2)\n") != 0) {
+    return finish_scope_test(&scope, 9);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
+int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+      "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
+      "    alice\n"
+      "    2 {\"label\": \"explicit id\", \"score\": 2}\n"
+      "    bob {\"score\": 1}\n"
+      "    [alice, bob, 2] {\"kind\": \"team\"}\n"
+      "    [2, \"Carol\"]\n"
+      "print(H)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  const graphion_runtime_value *hypergraph_value;
+  const graphion_hypergraph_value *value;
+  size_t attr_len = 0U;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_vertex_and_hyperedge_attributes.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  hypergraph_value = graphion_runtime_scope_find(&scope, "H");
+  if (hypergraph_value == NULL || hypergraph_value->kind != GVM_VALUE_HYPERGRAPH_REF) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  value = (const graphion_hypergraph_value *)hypergraph_value->as.ref_value;
+  if (value == NULL || value->vertex_attrs == NULL || value->vertex_attr_count != 4U ||
+      value->hyperedge_attrs == NULL || value->hyperedge_attr_count != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 4);
+  }
+  if (!vm_value_dict_length(&value->vertex_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->vertex_attrs[1], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->vertex_attrs[2], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->vertex_attrs[3], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 5);
+  }
+  if (!vm_value_dict_length(&value->hyperedge_attrs[0], &attr_len) || attr_len != 2U ||
+      !vm_value_dict_length(&value->hyperedge_attrs[1], &attr_len) || attr_len != 2U) {
+    remove(path);
+    return finish_scope_test(&scope, 6);
+  }
   if (!test_read_file_text(path, output, sizeof(output))) {
     remove(path);
     return finish_scope_test(&scope, 7);
   }
   remove(path);
-  if (strcmp(output, "hypergraph(vertices=4, hyperedges=2)\n") != 0) {
+  if (strcmp(output, "hypergraph(vertices=4, hyperedges=2, vertex_attrs=2, hyperedge_attrs=2)\n") != 0) {
     return finish_scope_test(&scope, 8);
   }
   return finish_scope_test(&scope, 0);

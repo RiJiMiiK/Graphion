@@ -273,6 +273,8 @@ typedef struct {
   size_t vertex_count;
   graphion_vm_value *vertex_attrs;
   size_t vertex_attr_count;
+  graphion_vm_value *hyperedge_attrs;
+  size_t hyperedge_attr_count;
 } graphion_hypergraph_value;
 
 typedef struct {

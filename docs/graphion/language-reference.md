@@ -244,10 +244,11 @@ label = "Alice"
 
 hypergraph HG:
     defaults vertex {"label": "unknown", "score": 0}
+    defaults hyperedge {"kind": "group", "color": "blue"}
     label
     2 {"label": "explicit id", "score": 2}
     "Bob" {"score": 1}
-    [label, 2, "Bob"]
+    [label, 2, "Bob"] {"kind": "team"}
 ```
 
 Current hypergraph declaration rules:
@@ -268,10 +269,16 @@ Current hypergraph declaration rules:
 - hyperedge entries use list syntax, such as `[vertex_a, vertex_b, vertex_c]`
 - hyperedges may reference string literals, non-negative integer IDs, or variables that contain a `string` or `int`
 - missing vertices referenced by a hyperedge are created before the hyperedge is created
+- hyperedge entries may attach attributes with `[vertex_a, vertex_b] {"key": value}`
+- hyperedge attributes are `dict` values and do not reserve a `weight` key yet
+- `defaults hyperedge {"key": value}` declares hyperedge attribute defaults for the hypergraph
+- with hyperedge defaults, hyperedge entries may omit attributes or override only some keys
+- without hyperedge defaults, either no hyperedge has attributes or every hyperedge must define attributes with the same keys
 - empty hypergraphs print as `hypergraph()`
 - vertex-only hypergraphs print as `hypergraph(vertices=N)`
 - vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
 - hypergraphs with hyperedges print as `hypergraph(vertices=N, hyperedges=M)`
+- hypergraphs with hyperedge attributes also include `hyperedge_attrs=K`
 - hypergraph query/mutation operations will be added later
 
 Graph mutation statements:

@@ -249,10 +249,16 @@ Current `hypergraph` declarations:
 - reject duplicate explicit integer IDs
 - may define hyperedges with `[vertex_a, vertex_b, vertex_c]`
 - create missing vertices before creating a hyperedge
+- may attach hyperedge attributes with `[vertex_a, vertex_b] {"key": value}`
+- may declare hyperedge attribute defaults with `defaults hyperedge {"key": value}`
+- use hyperedge defaults for hyperedges that omit attributes or omit specific keys
+- require all hyperedge attributes to share the same keys when no hyperedge defaults are declared
+- do not reserve a special `weight` key for hyperedges yet
 - print empty hypergraphs as `hypergraph()`
 - print vertex-only hypergraphs as `hypergraph(vertices=N)`
 - print vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
 - print hypergraphs with hyperedges as `hypergraph(vertices=N, hyperedges=M)`
+- print hypergraphs with hyperedge attributes as `hypergraph(vertices=N, hyperedges=M, hyperedge_attrs=K)`
 - will gain hypergraph-specific operations in later steps
 
 ## Type Notes
@@ -413,14 +419,16 @@ Current hypergraph support is intentionally minimal:
 - empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
 - vertex-only hypergraph values with zero hyperedges and zero incidences
 - hyperedges declared as vertex lists
+- hyperedge attributes with shared-key schema rules and optional `defaults hyperedge`
 - vertex attributes with shared-key schema rules and optional `defaults vertex`
 - storage in variables
 - printing as `hypergraph()`
 - printing vertex-only hypergraphs as `hypergraph(vertices=N)`
 - printing vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
 - printing hypergraphs with hyperedges as `hypergraph(vertices=N, hyperedges=M)`
+- printing hypergraphs with hyperedge attributes as `hypergraph(vertices=N, hyperedges=M, hyperedge_attrs=K)`
 
-Hyperedge initialization and hypergraph operations will be added in later steps.
+Hypergraph query and mutation operations will be added in later steps.
 
 ### Bits
 

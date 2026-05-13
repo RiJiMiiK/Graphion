@@ -7,10 +7,11 @@ bob = "Bob"
 
 hypergraph Hypergraph_avec_vertices:
     defaults vertex {"label": "unknown", "score": 0}
+    defaults hyperedge {"kind": "group", "color": "blue"}
     alice
     2 {"label": "explicit id", "score": 2}
     bob {"score": 1}
-    [alice, bob, 2]
+    [alice, bob, 2] {"kind": "team"}
     [2, "Carol"]
 
 print(Hypergraph_avec_vertices)

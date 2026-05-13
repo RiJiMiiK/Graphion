@@ -22,6 +22,8 @@ typedef struct {
 typedef struct {
   size_t start;
   size_t vertex_count;
+  int has_attrs;
+  graphion_vm_value attrs;
 } runtime_hyperedge_builder;
 
 typedef struct {
@@ -113,6 +115,12 @@ static void runtime_graph_builder_dispose(runtime_graph_builder *builder) {
     if (builder->edges[i].has_attrs) {
       vm_value_dispose_owned(&builder->edges[i].attrs);
       builder->edges[i].has_attrs = 0;
+    }
+  }
+  for (i = 0U; i < builder->hyperedge_count; ++i) {
+    if (builder->hyperedges[i].has_attrs) {
+      vm_value_dispose_owned(&builder->hyperedges[i].attrs);
+      builder->hyperedges[i].has_attrs = 0;
     }
   }
 }
@@ -513,6 +521,59 @@ static int runtime_graph_set_edge_attrs(runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int runtime_hypergraph_set_hyperedge_attr_defaults(runtime_graph_builder *builder,
+                                                          const graphion_vm_value *defaults,
+                                                          unsigned int line,
+                                                          graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || defaults == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->has_edge_attr_defaults) {
+    return fail(diagnostic, line, 1U, "duplicate hypergraph hyperedge attribute defaults", GINT_ERR_PARSE);
+  }
+  if (defaults->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "hypergraph hyperedge attribute defaults must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, defaults);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone hypergraph hyperedge attribute defaults", GINT_ERR_CAPACITY);
+  }
+  builder->edge_attr_defaults = cloned;
+  builder->has_edge_attr_defaults = 1;
+  return GINT_OK;
+}
+
+static int runtime_hypergraph_set_hyperedge_attrs(runtime_graph_builder *builder,
+                                                  size_t hyperedge_index,
+                                                  const graphion_vm_value *attrs,
+                                                  unsigned int line,
+                                                  graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value cloned;
+  int rc;
+
+  if (builder == NULL || attrs == NULL || hyperedge_index >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (attrs->kind != GVM_VALUE_DICT) {
+    return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must be a dict literal", GINT_ERR_PARSE);
+  }
+  vm_value_set_none(&cloned);
+  rc = vm_value_clone(&cloned, attrs);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to clone hypergraph hyperedge attributes", GINT_ERR_CAPACITY);
+  }
+  if (builder->hyperedges[hyperedge_index].has_attrs) {
+    vm_value_dispose_owned(&builder->hyperedges[hyperedge_index].attrs);
+  }
+  builder->hyperedges[hyperedge_index].attrs = cloned;
+  builder->hyperedges[hyperedge_index].has_attrs = 1;
+  return GINT_OK;
+}
+
 static int graph_node_attr_keys_match(const runtime_graph_builder *builder, size_t reference_id, size_t node_id) {
   if (builder == NULL || reference_id >= GRAPHION_RUNTIME_PROGRAM_MAX || node_id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
     return 0;
@@ -730,6 +791,82 @@ static int validate_graph_edge_attr_schema(const runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int hypergraph_hyperedge_attr_keys_match(const runtime_graph_builder *builder,
+                                                size_t reference_index,
+                                                size_t hyperedge_index) {
+  if (builder == NULL || reference_index >= builder->hyperedge_count || hyperedge_index >= builder->hyperedge_count) {
+    return 0;
+  }
+  if (!builder->hyperedges[reference_index].has_attrs && !builder->hyperedges[hyperedge_index].has_attrs) {
+    return 1;
+  }
+  if (!builder->hyperedges[reference_index].has_attrs || !builder->hyperedges[hyperedge_index].has_attrs) {
+    return 0;
+  }
+  return vm_value_dict_keys_equal(&builder->hyperedges[reference_index].attrs,
+                                  &builder->hyperedges[hyperedge_index].attrs);
+}
+
+static int apply_hypergraph_hyperedge_attr_defaults(runtime_graph_builder *builder,
+                                                    unsigned int line,
+                                                    graphion_runtime_diagnostic *diagnostic) {
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (!builder->has_edge_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->hyperedge_count; ++i) {
+    if (!builder->hyperedges[i].has_attrs) {
+      const int rc = runtime_hypergraph_set_hyperedge_attrs(builder, i, &builder->edge_attr_defaults, line, diagnostic);
+      if (rc != GINT_OK) {
+        return rc;
+      }
+    } else {
+      int rc;
+      if (!vm_value_dict_keys_subset(&builder->hyperedges[i].attrs, &builder->edge_attr_defaults)) {
+        return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use declared default keys", GINT_ERR_PARSE);
+      }
+      rc = vm_value_dict_merge_defaults(&builder->hyperedges[i].attrs, &builder->edge_attr_defaults);
+      if (rc != GVM_OK) {
+        return fail(diagnostic, line, 1U, "failed to apply hypergraph hyperedge attribute defaults", GINT_ERR_CAPACITY);
+      }
+    }
+  }
+  return GINT_OK;
+}
+
+static int validate_hypergraph_hyperedge_attr_schema(const runtime_graph_builder *builder,
+                                                     unsigned int line,
+                                                     graphion_runtime_diagnostic *diagnostic) {
+  size_t reference_index = GRAPHION_RUNTIME_PROGRAM_MAX;
+  size_t i;
+
+  if (builder == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->hyperedge_count == 0U || builder->has_edge_attr_defaults) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->hyperedge_count; ++i) {
+    if (builder->hyperedges[i].has_attrs) {
+      reference_index = i;
+      break;
+    }
+  }
+  if (reference_index == GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return GINT_OK;
+  }
+  for (i = 0U; i < builder->hyperedge_count; ++i) {
+    if (!hypergraph_hyperedge_attr_keys_match(builder, reference_index, i)) {
+      return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use the same keys", GINT_ERR_PARSE);
+    }
+  }
+  return GINT_OK;
+}
+
 static int parse_graph_node_attrs(const char *text,
                                   runtime_graph_builder *builder,
                                   uint32_t node_id,
@@ -786,19 +923,31 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
   }
   cursor += 8;
   skip_spaces(&cursor);
-  if (strncmp(cursor, "vertex", 6U) != 0 || is_ident_char(cursor[6])) {
-    return fail(diagnostic, line, 1U, "expected 'vertex' after defaults", GINT_ERR_PARSE);
-  }
-  cursor += 6;
-  skip_spaces(&cursor);
-  vm_value_set_none(&defaults);
-  rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
-  if (rc != GINT_OK) {
+  if (strncmp(cursor, "vertex", 6U) == 0 && !is_ident_char(cursor[6])) {
+    cursor += 6;
+    skip_spaces(&cursor);
+    vm_value_set_none(&defaults);
+    rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = runtime_hypergraph_set_vertex_attr_defaults(builder, &defaults, line, diagnostic);
+    vm_value_dispose_owned(&defaults);
     return rc;
   }
-  rc = runtime_hypergraph_set_vertex_attr_defaults(builder, &defaults, line, diagnostic);
-  vm_value_dispose_owned(&defaults);
-  return rc;
+  if (strncmp(cursor, "hyperedge", 9U) == 0 && !is_ident_char(cursor[9])) {
+    cursor += 9;
+    skip_spaces(&cursor);
+    vm_value_set_none(&defaults);
+    rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = runtime_hypergraph_set_hyperedge_attr_defaults(builder, &defaults, line, diagnostic);
+    vm_value_dispose_owned(&defaults);
+    return rc;
+  }
+  return fail(diagnostic, line, 1U, "expected 'vertex' or 'hyperedge' after defaults", GINT_ERR_PARSE);
 }
 
 static int parse_hypergraph_edge_line(const char *text,
@@ -808,15 +957,65 @@ static int parse_hypergraph_edge_line(const char *text,
                                       unsigned int line,
                                       graphion_runtime_diagnostic *diagnostic) {
   graphion_vm_value vertices;
+  graphion_vm_value attrs;
+  char list_text[512];
+  const char *list_start;
+  const char *scan;
+  const char *attrs_text;
+  size_t list_len;
   size_t vertex_count = 0U;
   size_t i;
+  int depth = 0;
+  int in_string = 0;
+  int has_attrs = 0;
   int rc;
 
   if (text == NULL || builder == NULL || scope == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
+  skip_spaces(&text);
+  list_start = text;
+  scan = text;
+  while (*scan != '\0') {
+    if (in_string) {
+      if (*scan == '"') {
+        in_string = 0;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == '"') {
+      in_string = 1;
+      scan++;
+      continue;
+    }
+    if (*scan == '[') {
+      depth++;
+    } else if (*scan == ']') {
+      depth--;
+      if (depth == 0) {
+        scan++;
+        break;
+      }
+    }
+    scan++;
+  }
+  if (depth != 0) {
+    return fail(diagnostic, line, 1U, "expected ']' after hyperedge vertex list", GINT_ERR_PARSE);
+  }
+  list_len = (size_t)(scan - list_start);
+  if (list_len >= sizeof(list_text)) {
+    return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
+  }
+  memcpy(list_text, list_start, list_len);
+  list_text[list_len] = '\0';
+  attrs_text = scan;
+  skip_spaces(&attrs_text);
+  has_attrs = *attrs_text != '\0' ? 1 : 0;
+
   vm_value_set_none(&vertices);
-  rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &vertices);
+  vm_value_set_none(&attrs);
+  rc = evaluate_expression_text_to_value(list_text, strlen(list_text), scope, line, diagnostic, &vertices);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -865,6 +1064,19 @@ static int parse_hypergraph_edge_line(const char *text,
   }
   if (!reserve_only) {
     builder->hyperedges[builder->hyperedge_count].vertex_count = vertex_count;
+    if (has_attrs) {
+      rc = evaluate_expression_text_to_value(attrs_text, strlen(attrs_text), scope, line, diagnostic, &attrs);
+      if (rc != GINT_OK) {
+        vm_value_dispose_owned(&vertices);
+        return rc;
+      }
+      rc = runtime_hypergraph_set_hyperedge_attrs(builder, builder->hyperedge_count, &attrs, line, diagnostic);
+      vm_value_dispose_owned(&attrs);
+      if (rc != GINT_OK) {
+        vm_value_dispose_owned(&vertices);
+        return rc;
+      }
+    }
     builder->hyperedge_vertex_count += vertex_count;
     builder->hyperedge_count += 1U;
   }
@@ -1462,6 +1674,7 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   size_t dense_vertex_count;
   size_t visible_vertex_count = 0U;
   size_t visible_vertex_attr_key_count = 0U;
+  size_t visible_hyperedge_attr_key_count = 0U;
   size_t incidence_count = 0U;
   size_t i;
 
@@ -1615,6 +1828,34 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
       }
       free(cursor);
     }
+    hypergraph_value->hyperedge_attrs =
+        (graphion_vm_value *)calloc(builder->hyperedge_count, sizeof(*hypergraph_value->hyperedge_attrs));
+    if (hypergraph_value->hyperedge_attrs == NULL) {
+      graphion_vm_value cleanup;
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+      cleanup.as.ref_value = hypergraph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    hypergraph_value->hyperedge_attr_count = builder->hyperedge_count;
+    for (i = 0U; i < builder->hyperedge_count; ++i) {
+      vm_value_set_none(&hypergraph_value->hyperedge_attrs[i]);
+      if (builder->hyperedges[i].has_attrs) {
+        const int rc = vm_value_clone(&hypergraph_value->hyperedge_attrs[i], &builder->hyperedges[i].attrs);
+        if (rc != GVM_OK) {
+          graphion_vm_value cleanup;
+          vm_value_set_none(&cleanup);
+          cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+          cleanup.as.ref_value = hypergraph_value;
+          vm_value_dispose_owned(&cleanup);
+          return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+        }
+        if (visible_hyperedge_attr_key_count == 0U) {
+          (void)vm_value_dict_length(&builder->hyperedges[i].attrs, &visible_hyperedge_attr_key_count);
+        }
+      }
+    }
   }
   hypergraph->node_count = dense_vertex_count;
   hypergraph->hyperedge_count = builder->hyperedge_count;
@@ -1633,6 +1874,7 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   value_out->reserved[5] = (uint8_t)(visible_vertex_attr_key_count & 0xFFU);
   value_out->reserved[6] = (uint8_t)((visible_vertex_attr_key_count >> 8U) & 0xFFU);
   value_out->as.ref_value = hypergraph_value;
+  (void)visible_hyperedge_attr_key_count;
   return GINT_OK;
 }
 
@@ -1830,6 +2072,18 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
   }
   {
     const int rc = validate_hypergraph_vertex_attr_schema(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = apply_hypergraph_hyperedge_attr_defaults(builder, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  {
+    const int rc = validate_hypergraph_hyperedge_attr_schema(builder, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

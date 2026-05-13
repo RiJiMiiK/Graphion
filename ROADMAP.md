@@ -85,6 +85,7 @@ This branch is for active work on non-scalar language types.
   - [x] create hypergraph values with vertex blocks
   - [x] support vertex attributes and `defaults vertex`
   - [x] support hyperedges as vertex lists with `[vertex, ...]`
+  - [x] support hyperedge attributes and `defaults hyperedge`
 - [ ] `path` or `walk` value type
   - useful if traversal results should become first-class language values
 - [ ] `record` / `struct`
