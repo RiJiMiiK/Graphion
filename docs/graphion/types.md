@@ -247,10 +247,13 @@ Current `hypergraph` declarations:
 - require all vertex attributes to share the same keys when no vertex defaults are declared
 - reject vertex attribute keys outside the declared vertex defaults
 - reject duplicate explicit integer IDs
+- may define hyperedges with `[vertex_a, vertex_b, vertex_c]`
+- create missing vertices before creating a hyperedge
 - print empty hypergraphs as `hypergraph()`
 - print vertex-only hypergraphs as `hypergraph(vertices=N)`
 - print vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
-- will gain hyperedge blocks and hypergraph-specific operations in later steps
+- print hypergraphs with hyperedges as `hypergraph(vertices=N, hyperedges=M)`
+- will gain hypergraph-specific operations in later steps
 
 ## Type Notes
 
@@ -409,11 +412,13 @@ Current hypergraph support is intentionally minimal:
 - declaration with `hypergraph Name:` and an indented vertex block
 - empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
 - vertex-only hypergraph values with zero hyperedges and zero incidences
+- hyperedges declared as vertex lists
 - vertex attributes with shared-key schema rules and optional `defaults vertex`
 - storage in variables
 - printing as `hypergraph()`
 - printing vertex-only hypergraphs as `hypergraph(vertices=N)`
 - printing vertex-only hypergraphs with attributes as `hypergraph(vertices=N, vertex_attrs=K)`
+- printing hypergraphs with hyperedges as `hypergraph(vertices=N, hyperedges=M)`
 
 Hyperedge initialization and hypergraph operations will be added in later steps.
 

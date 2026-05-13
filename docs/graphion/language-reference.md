@@ -247,6 +247,7 @@ hypergraph HG:
     label
     2 {"label": "explicit id", "score": 2}
     "Bob" {"score": 1}
+    [label, 2, "Bob"]
 ```
 
 Current hypergraph declaration rules:
@@ -264,10 +265,14 @@ Current hypergraph declaration rules:
 - with vertex defaults, vertex entries may omit attributes or override only some keys
 - without vertex defaults, either no vertex has attributes or every vertex must define attributes with the same keys
 - vertex attributes cannot introduce keys outside the declared vertex defaults
+- hyperedge entries use list syntax, such as `[vertex_a, vertex_b, vertex_c]`
+- hyperedges may reference string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- missing vertices referenced by a hyperedge are created before the hyperedge is created
 - empty hypergraphs print as `hypergraph()`
 - vertex-only hypergraphs print as `hypergraph(vertices=N)`
 - vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
-- hyperedge blocks and hypergraph query/mutation operations will be added later
+- hypergraphs with hyperedges print as `hypergraph(vertices=N, hyperedges=M)`
+- hypergraph query/mutation operations will be added later
 
 Graph mutation statements:
 

@@ -33,6 +33,7 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
                          int *compatible_out,
                          int *equal_out);
 int vm_value_list_length(const graphion_vm_value *value, size_t *len_out);
+int vm_value_list_clone_item(const graphion_vm_value *value, size_t index, graphion_vm_value *out);
 int vm_value_set_empty_list_value(graphion_vm_value *value);
 int vm_value_list_append_clone(graphion_vm_value *list, const graphion_vm_value *item);
 int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out);

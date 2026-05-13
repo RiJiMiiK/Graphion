@@ -20,6 +20,11 @@ typedef struct {
 } runtime_graph_named_node;
 
 typedef struct {
+  size_t start;
+  size_t vertex_count;
+} runtime_hyperedge_builder;
+
+typedef struct {
   unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX];
   unsigned char has_node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
   graphion_vm_value node_attrs[GRAPHION_RUNTIME_PROGRAM_MAX];
@@ -29,6 +34,10 @@ typedef struct {
   size_t named_node_count;
   runtime_graph_edge edges[GRAPHION_RUNTIME_PROGRAM_MAX];
   size_t edge_count;
+  runtime_hyperedge_builder hyperedges[GRAPHION_RUNTIME_PROGRAM_MAX];
+  uint32_t hyperedge_vertices[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t hyperedge_vertex_count;
+  size_t hyperedge_count;
   uint32_t max_id;
   int has_nodes;
   int has_directed_edges;
@@ -792,6 +801,77 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
   return rc;
 }
 
+static int parse_hypergraph_edge_line(const char *text,
+                                      runtime_graph_builder *builder,
+                                      int reserve_only,
+                                      graphion_runtime_scope *scope,
+                                      unsigned int line,
+                                      graphion_runtime_diagnostic *diagnostic) {
+  graphion_vm_value vertices;
+  size_t vertex_count = 0U;
+  size_t i;
+  int rc;
+
+  if (text == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  vm_value_set_none(&vertices);
+  rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &vertices);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (!vm_value_list_length(&vertices, &vertex_count)) {
+    vm_value_dispose_owned(&vertices);
+    return fail(diagnostic, line, 1U, "hyperedge must be a list of vertices", GINT_ERR_PARSE);
+  }
+  if (vertex_count == 0U) {
+    vm_value_dispose_owned(&vertices);
+    return fail(diagnostic, line, 1U, "hyperedge must contain at least one vertex", GINT_ERR_PARSE);
+  }
+  if (vertex_count > GRAPHION_RUNTIME_PROGRAM_MAX) {
+    vm_value_dispose_owned(&vertices);
+    return fail(diagnostic, line, 1U, "too many hyperedge vertices", GINT_ERR_CAPACITY);
+  }
+  if (!reserve_only && builder->hyperedge_count >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    vm_value_dispose_owned(&vertices);
+    return fail(diagnostic, line, 1U, "too many hyperedges", GINT_ERR_CAPACITY);
+  }
+  if (!reserve_only && builder->hyperedge_vertex_count + vertex_count > GRAPHION_RUNTIME_PROGRAM_MAX) {
+    vm_value_dispose_owned(&vertices);
+    return fail(diagnostic, line, 1U, "too many hyperedge incidences", GINT_ERR_CAPACITY);
+  }
+  if (!reserve_only) {
+    builder->hyperedges[builder->hyperedge_count].start = builder->hyperedge_vertex_count;
+  }
+  for (i = 0U; i < vertex_count; ++i) {
+    graphion_vm_value vertex_value;
+    uint32_t vertex_id = 0U;
+
+    vm_value_set_none(&vertex_value);
+    rc = vm_value_list_clone_item(&vertices, i, &vertex_value);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&vertices);
+      return fail(diagnostic, line, 1U, "invalid hyperedge vertex", GINT_ERR_PARSE);
+    }
+    rc = runtime_graph_id_from_value(builder, &vertex_value, 0, !reserve_only, &vertex_id, line, diagnostic);
+    vm_value_dispose_owned(&vertex_value);
+    if (rc != GINT_OK) {
+      vm_value_dispose_owned(&vertices);
+      return rc;
+    }
+    if (!reserve_only) {
+      builder->hyperedge_vertices[builder->hyperedge_vertex_count + i] = vertex_id;
+    }
+  }
+  if (!reserve_only) {
+    builder->hyperedges[builder->hyperedge_count].vertex_count = vertex_count;
+    builder->hyperedge_vertex_count += vertex_count;
+    builder->hyperedge_count += 1U;
+  }
+  vm_value_dispose_owned(&vertices);
+  return GINT_OK;
+}
+
 static int graph_block_line_is_defaults(const char *text) {
   const char *cursor = text;
 
@@ -1350,6 +1430,24 @@ static int parse_hypergraph_vertex_line(const char *text,
   return GINT_OK;
 }
 
+static int parse_hypergraph_block_line(const char *text,
+                                       runtime_graph_builder *builder,
+                                       int reserve_only,
+                                       graphion_runtime_scope *scope,
+                                       unsigned int line,
+                                       graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+
+  if (text == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  skip_spaces(&cursor);
+  if (*cursor == '[') {
+    return parse_hypergraph_edge_line(cursor, builder, reserve_only, scope, line, diagnostic);
+  }
+  return parse_hypergraph_vertex_line(cursor, builder, reserve_only, scope, line, diagnostic);
+}
+
 static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
                                           graphion_vm_value *value_out,
                                           unsigned int line,
@@ -1357,9 +1455,14 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   graphion_hypergraph_value *hypergraph_value = NULL;
   graphion_hypergraph *hypergraph = NULL;
   uint32_t *offsets = NULL;
+  uint32_t *node_hyperedge_offsets = NULL;
+  uint32_t *node_hyperedges = NULL;
+  uint32_t *hyperedge_offsets = NULL;
+  uint32_t *hyperedge_vertices = NULL;
   size_t dense_vertex_count;
   size_t visible_vertex_count = 0U;
   size_t visible_vertex_attr_key_count = 0U;
+  size_t incidence_count = 0U;
   size_t i;
 
   if (builder == NULL || value_out == NULL) {
@@ -1376,6 +1479,9 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
   }
   hypergraph = &hypergraph_value->hypergraph;
+  for (i = 0U; i < builder->hyperedge_count; ++i) {
+    incidence_count += builder->hyperedges[i].vertex_count;
+  }
   if (dense_vertex_count > 0U) {
     size_t vertex_index = 0U;
     offsets = (uint32_t *)calloc(dense_vertex_count + 1U, sizeof(*offsets));
@@ -1451,12 +1557,75 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
       }
     }
   }
+  if (builder->hyperedge_count > 0U) {
+    hyperedge_offsets = (uint32_t *)calloc(builder->hyperedge_count + 1U, sizeof(*hyperedge_offsets));
+    hyperedge_vertices = (uint32_t *)calloc(incidence_count, sizeof(*hyperedge_vertices));
+    node_hyperedge_offsets = (uint32_t *)calloc(dense_vertex_count + 1U, sizeof(*node_hyperedge_offsets));
+    node_hyperedges = (uint32_t *)calloc(incidence_count, sizeof(*node_hyperedges));
+    if (hyperedge_offsets == NULL || hyperedge_vertices == NULL || node_hyperedge_offsets == NULL ||
+        node_hyperedges == NULL) {
+      graphion_vm_value cleanup;
+      free(hyperedge_offsets);
+      free(hyperedge_vertices);
+      free(node_hyperedge_offsets);
+      free(node_hyperedges);
+      vm_value_set_none(&cleanup);
+      cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+      cleanup.as.ref_value = hypergraph_value;
+      vm_value_dispose_owned(&cleanup);
+      return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+    }
+    {
+      size_t write_index = 0U;
+      for (i = 0U; i < builder->hyperedge_count; ++i) {
+        size_t j;
+        hyperedge_offsets[i] = (uint32_t)write_index;
+        for (j = 0U; j < builder->hyperedges[i].vertex_count; ++j) {
+          const uint32_t vertex_id = builder->hyperedge_vertices[builder->hyperedges[i].start + j];
+          hyperedge_vertices[write_index++] = vertex_id;
+          node_hyperedge_offsets[vertex_id + 1U] += 1U;
+        }
+      }
+      hyperedge_offsets[builder->hyperedge_count] = (uint32_t)write_index;
+    }
+    for (i = 1U; i <= dense_vertex_count; ++i) {
+      node_hyperedge_offsets[i] += node_hyperedge_offsets[i - 1U];
+    }
+    {
+      uint32_t *cursor = (uint32_t *)calloc(dense_vertex_count, sizeof(*cursor));
+      if (cursor == NULL) {
+        graphion_vm_value cleanup;
+        free(hyperedge_offsets);
+        free(hyperedge_vertices);
+        free(node_hyperedge_offsets);
+        free(node_hyperedges);
+        vm_value_set_none(&cleanup);
+        cleanup.kind = GVM_VALUE_HYPERGRAPH_REF;
+        cleanup.as.ref_value = hypergraph_value;
+        vm_value_dispose_owned(&cleanup);
+        return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
+      }
+      memcpy(cursor, node_hyperedge_offsets, dense_vertex_count * sizeof(*cursor));
+      for (i = 0U; i < builder->hyperedge_count; ++i) {
+        size_t j;
+        for (j = 0U; j < builder->hyperedges[i].vertex_count; ++j) {
+          const uint32_t vertex_id = builder->hyperedge_vertices[builder->hyperedges[i].start + j];
+          node_hyperedges[cursor[vertex_id]++] = (uint32_t)i;
+        }
+      }
+      free(cursor);
+    }
+  }
   hypergraph->node_count = dense_vertex_count;
-  hypergraph->hyperedge_count = 0U;
-  hypergraph->incidence_count = 0U;
-  hypergraph->node_hyperedges = NULL;
-  hypergraph->hyperedge_offsets = NULL;
-  hypergraph->hyperedge_nodes = NULL;
+  hypergraph->hyperedge_count = builder->hyperedge_count;
+  hypergraph->incidence_count = incidence_count;
+  hypergraph->node_hyperedges = node_hyperedges;
+  hypergraph->hyperedge_offsets = hyperedge_offsets;
+  hypergraph->hyperedge_nodes = hyperedge_vertices;
+  if (node_hyperedge_offsets != NULL) {
+    free((void *)hypergraph->node_offsets);
+    hypergraph->node_offsets = node_hyperedge_offsets;
+  }
   vm_value_set_none(value_out);
   value_out->kind = GVM_VALUE_HYPERGRAPH_REF;
   value_out->reserved[1] = (uint8_t)(visible_vertex_count & 0xFFU);
@@ -1630,7 +1799,7 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
     }
-    rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 1, scope, lines[i].line, diagnostic);
+    rc = parse_hypergraph_block_line(line_content(&lines[i]), builder, 1, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -1648,7 +1817,7 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
     }
-    rc = parse_hypergraph_vertex_line(line_content(&lines[i]), builder, 0, scope, lines[i].line, diagnostic);
+    rc = parse_hypergraph_block_line(line_content(&lines[i]), builder, 0, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

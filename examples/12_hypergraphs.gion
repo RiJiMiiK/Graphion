@@ -10,5 +10,7 @@ hypergraph Hypergraph_avec_vertices:
     alice
     2 {"label": "explicit id", "score": 2}
     bob {"score": 1}
+    [alice, bob, 2]
+    [2, "Carol"]
 
 print(Hypergraph_avec_vertices)

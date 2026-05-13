@@ -686,6 +686,19 @@ int vm_value_list_length(const graphion_vm_value *value, size_t *len_out) {
   return 1;
 }
 
+int vm_value_list_clone_item(const graphion_vm_value *value, size_t index, graphion_vm_value *out) {
+  graphion_vm_list *list;
+
+  if (value == NULL || out == NULL || value->kind != GVM_VALUE_LIST) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  list = (graphion_vm_list *)value->as.ref_value;
+  if (list == NULL || index >= list->count) {
+    return GVM_ERR_INDEX_OUT_OF_RANGE;
+  }
+  return vm_value_clone(out, &list->items[index]);
+}
+
 int vm_value_set_empty_list_value(graphion_vm_value *value) {
   graphion_vm_list *list;
 
