@@ -96,7 +96,9 @@ Unless a builtin says otherwise:
 | `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
 | `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
 | `has_edge(graph, from, to)` | whether an edge exists | `bool` | respects directed edge orientation |
-| `neighbors(graph, node)` | outgoing neighbor IDs | `list` | undirected edges appear in both directions |
+| `neighbors(graph, node)` | adjacent neighbor IDs | `list` | includes incoming and outgoing directed edges |
+| `indegree(graph, node)` | incoming neighbor IDs | `list` | use `len(...)` for the count |
+| `outdegree(graph, node)` | outgoing neighbor IDs | `list` | use `len(...)` for the count |
 
 ## `print(...)`
 
@@ -1454,14 +1456,14 @@ Result type:
 
 ### `neighbors(graph, node)`
 
-Returns the neighbor node IDs reachable from a node.
+Returns all adjacent neighbor node IDs.
 
-For undirected graphs, neighbors are the usual adjacent nodes. For directed graphs, `neighbors(graph, node)` returns outgoing neighbors, so only nodes reachable from `node` through the stored edge direction are included.
+For undirected graphs, neighbors are the usual adjacent nodes. For directed graphs, `neighbors(graph, node)` includes both incoming and outgoing adjacency. Use `indegree(...)` and `outdegree(...)` when the direction matters.
 
 ```gion
 graph G:
-    1 - 2
-    2 - 3
+    1 -> 2
+    3 -> 2
 
 print(neighbors(G, 2))
 ```
@@ -1470,6 +1472,64 @@ Expected output:
 
 ```text
 [1, 3]
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `indegree(graph, node)`
+
+Returns the incoming neighbor node IDs for a node. Undirected `-` and bidirectional `<->` edges count once as incoming for each endpoint. Use `len(indegree(graph, node))` when you need the count.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 2
+
+print(indegree(G, 2))
+print(len(indegree(G, 2)))
+```
+
+Expected output:
+
+```text
+[1, 3]
+2
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `outdegree(graph, node)`
+
+Returns the outgoing neighbor node IDs for a node. Undirected `-` and bidirectional `<->` edges count once as outgoing for each endpoint. Use `len(outdegree(graph, node))` when you need the count.
+
+```gion
+graph G:
+    1 -> 2
+    2 <-> 3
+
+print(outdegree(G, 2))
+print(len(outdegree(G, 2)))
+```
+
+Expected output:
+
+```text
+[3]
+1
 ```
 
 Accepted input:

@@ -70,7 +70,9 @@
   X("log", GVM_OP_LOG)                     \
   X("node_attrs", GVM_OP_GRAPH_NODE_ATTRS) \
   X("has_node", GVM_OP_GRAPH_HAS_NODE)     \
-  X("neighbors", GVM_OP_GRAPH_NEIGHBORS)
+  X("neighbors", GVM_OP_GRAPH_NEIGHBORS)   \
+  X("indegree", GVM_OP_GRAPH_INDEGREE)     \
+  X("outdegree", GVM_OP_GRAPH_OUTDEGREE)
 
 #define GRAPHION_TERNARY_DIRECT_BUILTINS(X) \
   X("clamp", GVM_OP_CLAMP)                  \

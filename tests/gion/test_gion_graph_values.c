@@ -626,7 +626,11 @@ int test_gion_graph_membership_query_builtins(void) {
       "print(has_edge(Directed, \"A\", \"B\"))\n"
       "print(has_edge(Directed, \"B\", \"A\"))\n"
       "print(has_edge(Directed, 3, \"B\"))\n"
-      "print(neighbors(Directed, \"B\"))\n";
+      "print(neighbors(Directed, \"B\"))\n"
+      "print(indegree(Directed, \"B\"))\n"
+      "print(outdegree(Directed, \"B\"))\n"
+      "print(len(indegree(Directed, \"B\")))\n"
+      "print(len(outdegree(Directed, \"B\")))\n";
   const char *expected =
       "true\n"
       "false\n"
@@ -638,7 +642,11 @@ int test_gion_graph_membership_query_builtins(void) {
       "true\n"
       "false\n"
       "true\n"
-      "[3]\n";
+      "[0, 3]\n"
+      "[0, 3]\n"
+      "[3]\n"
+      "2\n"
+      "1\n";
   char path[512];
   char output[512];
   graphion_runtime_scope scope;

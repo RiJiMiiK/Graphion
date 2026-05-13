@@ -279,6 +279,8 @@ print(edges(G))
 print(has_node(G, "Alice"))
 print(has_edge(G, "Alice", 2))
 print(neighbors(G, "Alice"))
+print(indegree(G, "Alice"))
+print(outdegree(G, "Alice"))
 ```
 
 - `node_ids(graph)` returns a list of present numeric node IDs
@@ -286,6 +288,11 @@ print(neighbors(G, "Alice"))
 - numeric-only nodes omit the `name` key in `nodes(...)`
 - `edges(graph)` returns edge dictionaries with `from`, `to`, `directed`, and `bidirectional`
 - bidirectional `<->` edges appear as one logical edge in `edges(...)`
+- `neighbors(graph, node)` returns all adjacent node IDs, including incoming and outgoing directed edges
+- `indegree(graph, node)` returns incoming adjacent node IDs
+- `outdegree(graph, node)` returns outgoing adjacent node IDs
+- use `len(indegree(...))` or `len(outdegree(...))` when the count is needed
+- undirected `-` and bidirectional `<->` edges appear once in both incoming and outgoing lists for each endpoint
 
 Compound assignment:
 
@@ -879,6 +886,8 @@ Current builtin functions:
 - `has_node(graph, node)`
 - `has_edge(graph, from, to)`
 - `neighbors(graph, node)`
+- `indegree(graph, node)`
+- `outdegree(graph, node)`
 - `add_node(graph, node)` as a statement
 - `add_edge(graph, from, to)` as a statement
 - `remove_node(graph, node)` as a statement

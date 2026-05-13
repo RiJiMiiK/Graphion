@@ -1779,11 +1779,8 @@ int op_graph_has_edge(graphion_vm *vm, const graphion_insn *in) {
 
 int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in) {
   const graphion_graph_value *graph;
-  const graphion_csr_graph *csr;
   uint32_t *ids = NULL;
   uint32_t node_id;
-  size_t begin;
-  size_t end;
   size_t count;
   size_t i;
   int rc;
@@ -1799,20 +1796,33 @@ int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in) {
   if (rc != GVM_OK) {
     return rc;
   }
-  csr = &graph->csr;
-  if ((size_t)node_id >= csr->node_count || csr->offsets == NULL) {
-    return GVM_ERR_INVALID_NODE_ID;
-  }
-  begin = csr->offsets[node_id];
-  end = csr->offsets[node_id + 1U];
-  count = end - begin;
-  if (count > 0U) {
-    ids = (uint32_t *)calloc(count, sizeof(*ids));
+  count = 0U;
+  if (graph->edge_count > 0U) {
+    ids = (uint32_t *)calloc(graph->edge_count, sizeof(*ids));
     if (ids == NULL) {
       return GVM_ERR_INVALID_ARG;
     }
-    for (i = 0U; i < count; ++i) {
-      ids[i] = csr->neighbors[begin + i];
+    for (i = 0U; i < graph->edge_count; ++i) {
+      uint32_t candidate = 0U;
+      size_t j;
+      int present = 0;
+
+      if (graph->edges[i].from == node_id) {
+        candidate = graph->edges[i].to;
+      } else if (graph->edges[i].to == node_id) {
+        candidate = graph->edges[i].from;
+      } else {
+        continue;
+      }
+      for (j = 0U; j < count; ++j) {
+        if (ids[j] == candidate) {
+          present = 1;
+          break;
+        }
+      }
+      if (!present) {
+        ids[count++] = candidate;
+      }
     }
   }
 
@@ -1831,6 +1841,92 @@ int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in) {
   }
   free(ids);
   return GVM_OK;
+}
+
+static int graph_degree_builtin(graphion_vm *vm, const graphion_insn *in, int incoming) {
+  const graphion_graph_value *graph;
+  uint32_t *ids = NULL;
+  uint32_t node_id;
+  size_t count;
+  size_t i;
+  int rc;
+
+  if (!is_valid_reg(in->b)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  rc = graph_reg_value(vm, in, &graph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = graph_node_id_from_value(graph, &vm->regs[in->b], &node_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  count = 0U;
+  if (graph->edge_count > 0U) {
+    ids = (uint32_t *)calloc(graph->edge_count, sizeof(*ids));
+    if (ids == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    for (i = 0U; i < graph->edge_count; ++i) {
+      const graphion_graph_edge_value *edge = &graph->edges[i];
+      uint32_t candidate = 0U;
+      size_t j;
+      int include = 0;
+      int present = 0;
+
+      if (edge->directed && !edge->bidirectional) {
+        if (incoming && edge->to == node_id) {
+          candidate = edge->from;
+          include = 1;
+        } else if (!incoming && edge->from == node_id) {
+          candidate = edge->to;
+          include = 1;
+        }
+      } else if (edge->from == node_id) {
+        candidate = edge->to;
+        include = 1;
+      } else if (edge->to == node_id) {
+        candidate = edge->from;
+        include = 1;
+      }
+      if (!include) {
+        continue;
+      }
+      for (j = 0U; j < count; ++j) {
+        if (ids[j] == candidate) {
+          present = 1;
+          break;
+        }
+      }
+      if (!present) {
+        ids[count++] = candidate;
+      }
+    }
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  rc = vm_reg_set_empty_list(vm, in->a);
+  if (rc != GVM_OK) {
+    free(ids);
+    return rc;
+  }
+  for (i = 0U; i < count; ++i) {
+    rc = vm_list_append_int(vm, in->a, (int64_t)ids[i]);
+    if (rc != GVM_OK) {
+      free(ids);
+      return rc;
+    }
+  }
+  free(ids);
+  return GVM_OK;
+}
+
+int op_graph_indegree(graphion_vm *vm, const graphion_insn *in) {
+  return graph_degree_builtin(vm, in, 1);
+}
+
+int op_graph_outdegree(graphion_vm *vm, const graphion_insn *in) {
+  return graph_degree_builtin(vm, in, 0);
 }
 
 static int graph_dict_set_int(graphion_vm_value *dict, const char *key, int64_t value) {

@@ -166,6 +166,8 @@ int try_parse_opcode_builtin(const char **cursor,
       {"node_attrs", GVM_OP_GRAPH_NODE_ATTRS},
       {"has_node", GVM_OP_GRAPH_HAS_NODE},
       {"neighbors", GVM_OP_GRAPH_NEIGHBORS},
+      {"indegree", GVM_OP_GRAPH_INDEGREE},
+      {"outdegree", GVM_OP_GRAPH_OUTDEGREE},
   };
   size_t i;
 

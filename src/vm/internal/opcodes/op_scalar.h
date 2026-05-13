@@ -89,6 +89,8 @@ int op_graph_neighbors(graphion_vm *vm, const graphion_insn *in);
 int op_graph_node_ids(graphion_vm *vm, const graphion_insn *in);
 int op_graph_nodes(graphion_vm *vm, const graphion_insn *in);
 int op_graph_edges(graphion_vm *vm, const graphion_insn *in);
+int op_graph_indegree(graphion_vm *vm, const graphion_insn *in);
+int op_graph_outdegree(graphion_vm *vm, const graphion_insn *in);
 int op_graph_add_node(graphion_vm *vm, const graphion_insn *in);
 int op_graph_add_edge(graphion_vm *vm, const graphion_insn *in);
 int op_graph_set_node_attrs(graphion_vm *vm, const graphion_insn *in);

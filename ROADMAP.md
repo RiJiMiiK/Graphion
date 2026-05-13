@@ -71,9 +71,9 @@ This branch is for active work on non-scalar language types.
     - list nodes / node IDs
     - list edges
     - expose enough graph contents to inspect a value without knowing names or IDs ahead of time
-  - [ ] clarify directed adjacency semantics
-    - define whether `neighbors(...)` means outgoing-only, incoming+outgoing, or orientation-aware
-    - add explicit directed helpers if needed, such as successors / predecessors
+  - [x] clarify directed adjacency semantics
+    - `neighbors(...)` means incoming plus outgoing adjacency
+    - `indegree(...)` and `outdegree(...)` expose incoming / outgoing node IDs
   - [ ] harden graph mutation error coverage
     - unknown attribute keys
     - invalid `weight` types

@@ -314,6 +314,12 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_GRAPH_EDGES:
         rc = op_graph_edges(vm, &in);
         break;
+      case GVM_OP_GRAPH_INDEGREE:
+        rc = op_graph_indegree(vm, &in);
+        break;
+      case GVM_OP_GRAPH_OUTDEGREE:
+        rc = op_graph_outdegree(vm, &in);
+        break;
       case GVM_OP_GRAPH_ADD_NODE:
         rc = op_graph_add_node(vm, &in);
         break;

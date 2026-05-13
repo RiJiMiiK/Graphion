@@ -367,7 +367,7 @@ Current graph support is intentionally minimal:
 - printing graph values with edges as `graph(nodes=N, edges=M)`
 - inspection with `node_count(graph)`, `edge_count(graph)`, `is_directed(graph)`, `is_weighted(graph)`, and `orientation(graph)`
 - attribute lookup with `node_attrs(graph, node)`, `edge_attrs(graph, from, to)`, and `edge_weight(graph, from, to)`
-- basic queries with `has_node(graph, node)`, `has_edge(graph, from, to)`, and `neighbors(graph, node)`
+- basic queries with `has_node(graph, node)`, `has_edge(graph, from, to)`, `neighbors(graph, node)`, `indegree(graph, node)`, and `outdegree(graph, node)`
 - listing queries with `node_ids(graph)`, `nodes(graph)`, and `edges(graph)`
 - structural mutation with `add_node(graph, node)`, `add_edge(graph, from, to)`, `remove_node(graph, node)`, and `remove_edge(graph, from, to)`
 - attribute mutation with partial or full `set_node_attrs(...)`, partial or full `set_edge_attrs(...)`, and `set_edge_weight(...)`
