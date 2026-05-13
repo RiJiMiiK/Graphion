@@ -1400,6 +1400,24 @@ static int graph_replace_attr_value(graphion_vm_value *slot, const graphion_vm_v
   return GVM_OK;
 }
 
+static int graph_apply_node_defaults(graphion_graph_value *graph,
+                                     uint32_t node_id,
+                                     const graphion_vm_value *defaults) {
+  if (graph == NULL || defaults == NULL || defaults->kind == GVM_VALUE_NONE) {
+    return GVM_OK;
+  }
+  if (defaults->kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if ((size_t)node_id >= graph->node_attr_count) {
+    return GVM_ERR_INVALID_NODE_ID;
+  }
+  if (graph->node_attrs[node_id].kind == GVM_VALUE_NONE) {
+    return graph_replace_attr_value(&graph->node_attrs[node_id], defaults);
+  }
+  return GVM_OK;
+}
+
 static int graph_ensure_edge_attr_capacity(graphion_graph_value *graph) {
   graphion_vm_value *attrs;
   size_t i;
@@ -2073,9 +2091,13 @@ int op_graph_edges(graphion_vm *vm, const graphion_insn *in) {
 
 int op_graph_add_node(graphion_vm *vm, const graphion_insn *in) {
   graphion_graph_value *graph;
+  const graphion_vm_value *schema;
+  graphion_vm_value defaults;
   uint32_t node_id;
   int rc;
 
+  memset(&defaults, 0, sizeof(defaults));
+  defaults.kind = GVM_VALUE_NONE;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b)) {
     return GVM_ERR_INVALID_REG;
   }
@@ -2083,16 +2105,18 @@ int op_graph_add_node(graphion_vm *vm, const graphion_insn *in) {
     return GVM_ERR_TYPE_MISMATCH;
   }
   graph = (graphion_graph_value *)vm->regs[in->a].as.ref_value;
-  if (graph->node_attr_count > 0U) {
-    size_t i;
-    for (i = 0U; i < graph->node_attr_count; ++i) {
-      if (graph->node_attrs[i].kind != GVM_VALUE_NONE) {
-        return GVM_ERR_TYPE_MISMATCH;
-      }
+  schema = graph_first_node_attrs(graph);
+  if (schema != NULL) {
+    rc = vm_value_clone(&defaults, schema);
+    if (rc != GVM_OK) {
+      return rc;
     }
   }
   rc = graph_node_id_from_value_or_add(graph, &vm->regs[in->b], &node_id);
-  (void)node_id;
+  if (rc == GVM_OK) {
+    rc = graph_apply_node_defaults(graph, node_id, &defaults);
+  }
+  vm_value_dispose_owned(&defaults);
   if (rc == GVM_OK) {
     graph_update_visible_counts(&vm->regs[in->a], graph);
   }
@@ -2102,11 +2126,19 @@ int op_graph_add_node(graphion_vm *vm, const graphion_insn *in) {
 int op_graph_add_edge(graphion_vm *vm, const graphion_insn *in) {
   graphion_graph_edge_value *edges;
   graphion_graph_value *graph;
+  const graphion_vm_value *node_schema;
+  const graphion_vm_value *edge_schema;
+  graphion_vm_value node_defaults;
+  graphion_vm_value edge_defaults;
   uint32_t from;
   uint32_t to;
   size_t edge_index;
   int rc;
 
+  memset(&node_defaults, 0, sizeof(node_defaults));
+  node_defaults.kind = GVM_VALUE_NONE;
+  memset(&edge_defaults, 0, sizeof(edge_defaults));
+  edge_defaults.kind = GVM_VALUE_NONE;
   if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
     return GVM_ERR_INVALID_REG;
   }
@@ -2117,31 +2149,58 @@ int op_graph_add_edge(graphion_vm *vm, const graphion_insn *in) {
   if (graph_has_directed_edges(graph)) {
     return GVM_ERR_TYPE_MISMATCH;
   }
-  if (graph->edge_attr_count > 0U) {
-    size_t i;
-    for (i = 0U; i < graph->edge_attr_count; ++i) {
-      if (graph->edge_attrs[i].kind != GVM_VALUE_NONE) {
-        return GVM_ERR_TYPE_MISMATCH;
-      }
+  node_schema = graph_first_node_attrs(graph);
+  if (node_schema != NULL) {
+    rc = vm_value_clone(&node_defaults, node_schema);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+  }
+  edge_schema = graph_first_edge_attrs(graph);
+  if (edge_schema != NULL) {
+    rc = vm_value_clone(&edge_defaults, edge_schema);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&node_defaults);
+      return rc;
     }
   }
   rc = graph_node_id_from_value_or_add(graph, &vm->regs[in->b], &from);
   if (rc != GVM_OK) {
+    vm_value_dispose_owned(&node_defaults);
+    vm_value_dispose_owned(&edge_defaults);
+    return rc;
+  }
+  rc = graph_apply_node_defaults(graph, from, &node_defaults);
+  if (rc != GVM_OK) {
+    vm_value_dispose_owned(&node_defaults);
+    vm_value_dispose_owned(&edge_defaults);
     return rc;
   }
   rc = graph_node_id_from_value_or_add(graph, &vm->regs[(uint8_t)in->imm], &to);
   if (rc != GVM_OK) {
+    vm_value_dispose_owned(&node_defaults);
+    vm_value_dispose_owned(&edge_defaults);
     return rc;
   }
+  rc = graph_apply_node_defaults(graph, to, &node_defaults);
+  if (rc != GVM_OK) {
+    vm_value_dispose_owned(&node_defaults);
+    vm_value_dispose_owned(&edge_defaults);
+    return rc;
+  }
+  vm_value_dispose_owned(&node_defaults);
   rc = graph_edge_index_from_ids(graph, from, to, &edge_index);
   if (rc == GVM_OK) {
+    vm_value_dispose_owned(&edge_defaults);
     return GVM_OK;
   }
   if (rc != GVM_ERR_MISSING_KEY) {
+    vm_value_dispose_owned(&edge_defaults);
     return rc;
   }
   edges = (graphion_graph_edge_value *)realloc(graph->edges, (graph->edge_count + 1U) * sizeof(*edges));
   if (edges == NULL) {
+    vm_value_dispose_owned(&edge_defaults);
     return GVM_ERR_INVALID_ARG;
   }
   graph->edges = edges;
@@ -2151,8 +2210,16 @@ int op_graph_add_edge(graphion_vm *vm, const graphion_insn *in) {
   graph->edges[graph->edge_count].bidirectional = 1U;
   graph->edges[graph->edge_count].reserved[0] = 0U;
   graph->edges[graph->edge_count].reserved[1] = 0U;
+  edge_index = graph->edge_count;
   graph->edge_count += 1U;
   rc = graph_rebuild_adjacency(graph);
+  if (rc == GVM_OK && edge_defaults.kind != GVM_VALUE_NONE) {
+    rc = graph_ensure_edge_attr_capacity(graph);
+    if (rc == GVM_OK) {
+      rc = graph_replace_attr_value(&graph->edge_attrs[edge_index], &edge_defaults);
+    }
+  }
+  vm_value_dispose_owned(&edge_defaults);
   if (rc == GVM_OK) {
     graph_update_visible_counts(&vm->regs[in->a], graph);
   }

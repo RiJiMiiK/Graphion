@@ -257,6 +257,8 @@ Current graph mutation rules:
 - `node`, `from`, and `to` may be integer IDs or string node names
 - `add_edge(...)` creates missing endpoint nodes before adding the edge
 - `add_edge(...)` currently creates undirected edges
+- added nodes receive declared `defaults node` attributes when node defaults exist
+- added edges receive declared `defaults edge` attributes when edge defaults exist
 - adding an existing node or edge is a no-op
 - removing a missing node or edge is a runtime error
 - removing a direction from a bidirectional directed edge keeps the reverse direction
@@ -267,6 +269,7 @@ Current graph mutation rules:
 - `set_*_attrs(...)` can establish the initial node or edge attribute schema
 - partial `set_*_attrs(...)` patches require the target node or edge to already have an attribute dictionary containing every patched key
 - if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
+- nodes and edges added after initialization use defaults first, so partial patches are valid for them when defaults exist
 - edge `weight` values must be `int` or `float`
 - attribute mutation preserves the shared-key schema once a schema exists
 

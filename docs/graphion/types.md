@@ -371,6 +371,7 @@ Current graph support is intentionally minimal:
 - listing queries with `node_ids(graph)`, `nodes(graph)`, and `edges(graph)`
 - structural mutation with `add_node(graph, node)`, `add_edge(graph, from, to)`, `remove_node(graph, node)`, and `remove_edge(graph, from, to)`
 - attribute mutation with partial or full `set_node_attrs(...)`, partial or full `set_edge_attrs(...)`, and `set_edge_weight(...)`
+- added nodes and edges receive declared defaults before later partial attribute patches
 
 Graph algorithms from `.gion` will be added in later steps.
 

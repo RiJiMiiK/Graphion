@@ -921,6 +921,112 @@ int test_gion_graph_removal_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_graph_mutation_error_coverage(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } error_cases[] = {
+      {"graph G:\n"
+       "    defaults node {\"score\": 0}\n"
+       "    \"Alice\"\n"
+       "set_node_attrs(G, \"Alice\", {\"label\": \"start\"})\n",
+       "incompatible operand types"},
+      {"graph G:\n"
+       "    defaults edge {\"weight\": 1}\n"
+       "    1 - 2\n"
+       "set_edge_attrs(G, 1, 2, {\"kind\": \"path\"})\n",
+       "incompatible operand types"},
+      {"graph G:\n"
+       "    1 - 2\n"
+       "set_edge_attrs(G, 1, 2, {\"weight\": \"heavy\"})\n",
+       "incompatible operand types"},
+      {"graph G:\n"
+       "    1 - 2\n"
+       "set_edge_weight(G, 1, 2, \"heavy\")\n",
+       "incompatible operand types"},
+      {"graph G:\n"
+       "    1\n"
+       "remove_node(G, 2)\n",
+       "failed to execute VM program"},
+      {"graph G:\n"
+       "    1\n"
+       "    2\n"
+       "remove_edge(G, 1, 2)\n",
+       "dict key not found"},
+  };
+  const char *node_defaults_source =
+      "graph G:\n"
+      "    defaults node {\"label\": \"unknown\", \"score\": 0}\n"
+      "    \"Alice\"\n"
+      "add_node(G, \"Bob\")\n"
+      "set_node_attrs(G, \"Bob\", {\"score\": 10})\n"
+      "print(node_attrs(G, \"Bob\")[\"label\"])\n"
+      "print(node_attrs(G, \"Bob\")[\"score\"])\n";
+  const char *edge_defaults_source =
+      "graph G:\n"
+      "    defaults edge {\"kind\": \"normal\", \"weight\": 1}\n"
+      "    1 - 2\n"
+      "add_edge(G, 2, 3)\n"
+      "set_edge_attrs(G, 2, 3, {\"weight\": 7})\n"
+      "print(edge_attrs(G, 2, 3)[\"kind\"])\n"
+      "print(edge_weight(G, 2, 3))\n";
+  char path[512];
+  char output[256];
+  graphion_runtime_scope defaults_scope;
+  graphion_runtime_diagnostic defaults_diagnostic;
+  size_t i;
+
+  for (i = 0U; i < sizeof(error_cases) / sizeof(error_cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(error_cases[i].source, &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_RUN) {
+      return (int)(100 + i);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, error_cases[i].message) != 0) {
+      return (int)(200 + i);
+    }
+  }
+
+  graphion_runtime_scope_init(&defaults_scope);
+  if (test_capture_gion_output(node_defaults_source,
+                               "gion_graph_mutation_node_defaults.txt",
+                               &defaults_scope,
+                               &defaults_diagnostic,
+                               path,
+                               sizeof(path),
+                               output,
+                               sizeof(output)) == 0) {
+    graphion_runtime_scope_dispose(&defaults_scope);
+    return 300;
+  }
+  graphion_runtime_scope_dispose(&defaults_scope);
+  if (strcmp(output, "unknown\n10\n") != 0) {
+    return 301;
+  }
+  graphion_runtime_scope_init(&defaults_scope);
+  if (test_capture_gion_output(edge_defaults_source,
+                               "gion_graph_mutation_edge_defaults.txt",
+                               &defaults_scope,
+                               &defaults_diagnostic,
+                               path,
+                               sizeof(path),
+                               output,
+                               sizeof(output)) == 0) {
+    graphion_runtime_scope_dispose(&defaults_scope);
+    return 302;
+  }
+  graphion_runtime_scope_dispose(&defaults_scope);
+  if (strcmp(output, "normal\n7\n") != 0) {
+    return 303;
+  }
+  return 0;
+}
+
 int test_gion_graph_numeric_id_gap_warnings(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

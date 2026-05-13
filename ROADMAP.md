@@ -74,11 +74,11 @@ This branch is for active work on non-scalar language types.
   - [x] clarify directed adjacency semantics
     - `neighbors(...)` means incoming plus outgoing adjacency
     - `indegree(...)` and `outdegree(...)` expose incoming / outgoing node IDs
-  - [ ] harden graph mutation error coverage
+  - [x] harden graph mutation error coverage
     - unknown attribute keys
     - invalid `weight` types
     - missing nodes / edges
-    - partial attribute patches before a full schema-backed value exists
+    - partial attribute patches on nodes / edges added after defaults
 - [ ] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
 - [ ] `path` or `walk` value type
