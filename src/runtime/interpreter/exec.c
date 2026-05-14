@@ -2401,6 +2401,8 @@ static int execute_statement_source_line(const runtime_source_line *lines,
              !(strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5])) &&
              !(strncmp(statement_source, "add_node", 8U) == 0 && !is_ident_char(statement_source[8])) &&
              !(strncmp(statement_source, "add_edge", 8U) == 0 && !is_ident_char(statement_source[8])) &&
+             !(strncmp(statement_source, "add_vertex", 10U) == 0 && !is_ident_char(statement_source[10])) &&
+             !(strncmp(statement_source, "add_hyperedge", 13U) == 0 && !is_ident_char(statement_source[13])) &&
              !(strncmp(statement_source, "remove_node", 11U) == 0 && !is_ident_char(statement_source[11])) &&
              !(strncmp(statement_source, "remove_edge", 11U) == 0 && !is_ident_char(statement_source[11])) &&
              !(strncmp(statement_source, "set_node_attrs", 14U) == 0 && !is_ident_char(statement_source[14])) &&

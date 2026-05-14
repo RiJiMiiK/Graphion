@@ -266,7 +266,8 @@ Current `hypergraph` declarations:
 - support attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - support membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 - support listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
-- will gain broader hypergraph-specific operations in later steps
+- support structure mutation after initialization with `add_vertex` and `add_hyperedge`
+- will gain broader hypergraph attribute mutation operations in later steps
 
 ## Type Notes
 
@@ -438,8 +439,9 @@ Current hypergraph support is intentionally minimal:
 - attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 - listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
+- structure mutation after initialization with `add_vertex` and `add_hyperedge`
 
-Hypergraph query and mutation operations will be added in later steps.
+Hypergraph attribute mutation operations will be added in later steps.
 
 ### Bits
 

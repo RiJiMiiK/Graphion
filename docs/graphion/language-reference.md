@@ -286,7 +286,8 @@ Current hypergraph declaration rules:
 - hypergraph attribute lookup builtins include `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - hypergraph membership/query builtins include `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 - hypergraph listing/query builtins include `vertex_ids`, `vertices`, and `hyperedges`
-- broader hypergraph query/mutation operations will be added later
+- hypergraph structure mutation statements include `add_vertex` and `add_hyperedge`
+- broader hypergraph attribute mutation operations will be added later
 
 Graph mutation statements:
 
@@ -328,6 +329,27 @@ Current graph mutation rules:
 - nodes and edges added after initialization use defaults first, so partial patches are valid for them when defaults exist
 - edge `weight` values must be `int` or `float`
 - attribute mutation preserves the shared-key schema once a schema exists
+
+Hypergraph mutation statements:
+
+```gion
+hypergraph H;
+
+add_vertex(H, "Alice")
+add_hyperedge(H, ["Alice", 2, "Bob"])
+```
+
+Current hypergraph mutation rules:
+
+- `add_vertex(hypergraph_variable, vertex)` mutates the named hypergraph variable in place
+- `add_hyperedge(hypergraph_variable, vertices)` mutates the named hypergraph variable in place
+- `vertex` values may be integer IDs or string vertex names
+- `vertices` must be a non-empty list of integer IDs or string vertex names
+- `add_hyperedge(...)` creates missing vertices before adding the hyperedge
+- added vertices receive declared `defaults vertex` attributes when vertex defaults exist
+- added hyperedges receive declared `defaults hyperedge` attributes when hyperedge defaults exist
+- adding an existing vertex is a no-op
+- hyperedges receive the next implicit numeric hyperedge ID and existing hyperedge IDs stay stable
 
 Graph listing and query builtins:
 

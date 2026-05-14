@@ -107,7 +107,7 @@ This branch is for active work on non-scalar language types.
     - list vertices / vertex IDs
     - list hyperedges
     - expose each hyperedge as a vertex list
-  - [ ] decide and add the first hypergraph mutation surface after initialization
+  - [x] decide and add the first hypergraph mutation surface after initialization
     - add vertex
     - add hyperedge
   - [ ] add hypergraph attribute mutation after initialization

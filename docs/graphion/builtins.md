@@ -2,10 +2,11 @@
 
 This page documents the builtins currently available in Graphion.
 
-Graphion also has graph mutation statements such as `add_node(G, node)`, `add_edge(G, from, to)`,
-`remove_node(G, node)`, `remove_edge(G, from, to)`, `set_node_attrs(...)`, `set_edge_attrs(...)`,
-and `set_edge_weight(...)`.
-They are documented on the [Language Reference](language-reference.md) page because they mutate a named graph variable rather than returning a standalone value.
+Graphion also has graph and hypergraph mutation statements such as `add_node(G, node)`,
+`add_edge(G, from, to)`, `add_vertex(H, vertex)`, `add_hyperedge(H, vertices)`,
+`remove_node(G, node)`, `remove_edge(G, from, to)`, `set_node_attrs(...)`,
+`set_edge_attrs(...)`, and `set_edge_weight(...)`.
+They are documented on the [Language Reference](language-reference.md) page because they mutate a named graph or hypergraph variable rather than returning a standalone value.
 
 Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(graph)` for
 inspecting graph contents without knowing node names or IDs ahead of time.

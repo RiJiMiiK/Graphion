@@ -493,6 +493,62 @@ int test_gion_hypergraph_listing_query_builtins(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_structure_mutation_statements(void) {
+  const char *source =
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+      "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
+      "    \"Alice\"\n"
+      "    2 {\"label\": \"explicit\", \"score\": 2}\n"
+      "    [\"Alice\", 2]\n"
+      "add_vertex(H, \"Bob\")\n"
+      "add_hyperedge(H, [\"Bob\", \"Carol\", 5])\n"
+      "print(H)\n"
+      "print(vertex_ids(H))\n"
+      "print(hyperedge_vertices(H, 1))\n"
+      "print(hyperedge_attrs(H, 1)[\"kind\"])\n"
+      "print(vertex_attrs(H, \"Carol\")[\"label\"])\n"
+      "print(vertex_attrs(H, 5)[\"score\"])\n"
+      "print(has_vertex(H, 5))\n"
+      "print(incident_hyperedges(H, \"Bob\"))\n";
+  const char *expected =
+      "hypergraph(vertices=5, hyperedges=2, vertex_attrs=2, hyperedge_attrs=2)\n"
+      "[0, 2, 1, 3, 5]\n"
+      "[1, 3, 5]\n"
+      "group\n"
+      "unknown\n"
+      "0\n"
+      "true\n"
+      "[1]\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_structure_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"
