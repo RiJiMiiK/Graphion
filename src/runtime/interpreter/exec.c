@@ -2407,7 +2407,9 @@ static int execute_statement_source_line(const runtime_source_line *lines,
              !(strncmp(statement_source, "remove_edge", 11U) == 0 && !is_ident_char(statement_source[11])) &&
              !(strncmp(statement_source, "set_node_attrs", 14U) == 0 && !is_ident_char(statement_source[14])) &&
              !(strncmp(statement_source, "set_edge_attrs", 14U) == 0 && !is_ident_char(statement_source[14])) &&
-             !(strncmp(statement_source, "set_edge_weight", 15U) == 0 && !is_ident_char(statement_source[15]))) {
+             !(strncmp(statement_source, "set_edge_weight", 15U) == 0 && !is_ident_char(statement_source[15])) &&
+             !(strncmp(statement_source, "set_vertex_attrs", 16U) == 0 && !is_ident_char(statement_source[16])) &&
+             !(strncmp(statement_source, "set_hyperedge_attrs", 19U) == 0 && !is_ident_char(statement_source[19]))) {
     rc = collect_assignment_statement_text(lines,
                                            count,
                                            *index,

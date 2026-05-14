@@ -1749,6 +1749,29 @@ static int hypergraph_apply_vertex_defaults(graphion_hypergraph_value *hypergrap
   return GVM_OK;
 }
 
+static int hypergraph_ensure_vertex_attr_capacity(graphion_hypergraph_value *hypergraph, uint32_t vertex_id) {
+  graphion_vm_value *attrs;
+  size_t i;
+
+  if (hypergraph == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  if ((size_t)vertex_id < hypergraph->vertex_attr_count) {
+    return GVM_OK;
+  }
+  attrs = (graphion_vm_value *)realloc(hypergraph->vertex_attrs, ((size_t)vertex_id + 1U) * sizeof(*attrs));
+  if (attrs == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  hypergraph->vertex_attrs = attrs;
+  for (i = hypergraph->vertex_attr_count; i <= (size_t)vertex_id; ++i) {
+    memset(&hypergraph->vertex_attrs[i], 0, sizeof(hypergraph->vertex_attrs[i]));
+    hypergraph->vertex_attrs[i].kind = GVM_VALUE_NONE;
+  }
+  hypergraph->vertex_attr_count = (size_t)vertex_id + 1U;
+  return GVM_OK;
+}
+
 static int hypergraph_ensure_hyperedge_attr_capacity(graphion_hypergraph_value *hypergraph) {
   graphion_vm_value *attrs;
   size_t i;
@@ -3342,6 +3365,90 @@ int op_hypergraph_add_hyperedge(graphion_vm *vm, const graphion_insn *in) {
     hypergraph_update_visible_counts(&vm->regs[in->a], hypergraph);
   }
   return rc;
+}
+
+int op_hypergraph_set_vertex_attrs(graphion_vm *vm, const graphion_insn *in) {
+  graphion_hypergraph_value *hypergraph;
+  const graphion_vm_value *schema;
+  graphion_vm_value *slot;
+  uint32_t vertex_id;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_HYPERGRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (vm->regs[(uint8_t)in->imm].kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  hypergraph = (graphion_hypergraph_value *)vm->regs[in->a].as.ref_value;
+  rc = hypergraph_vertex_id_from_value(hypergraph, &vm->regs[in->b], &vertex_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = hypergraph_ensure_vertex_attr_capacity(hypergraph, vertex_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  schema = hypergraph_first_vertex_attrs(hypergraph);
+  slot = &hypergraph->vertex_attrs[vertex_id];
+  if (slot->kind == GVM_VALUE_DICT) {
+    if (schema != NULL && !vm_value_dict_keys_subset(&vm->regs[(uint8_t)in->imm], schema)) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    return vm_value_dict_patch_existing(slot, &vm->regs[(uint8_t)in->imm]);
+  }
+  if (slot->kind != GVM_VALUE_NONE) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (schema != NULL && !vm_value_dict_keys_equal(schema, &vm->regs[(uint8_t)in->imm])) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  return graph_replace_attr_value(slot, &vm->regs[(uint8_t)in->imm]);
+}
+
+int op_hypergraph_set_hyperedge_attrs(graphion_vm *vm, const graphion_insn *in) {
+  graphion_hypergraph_value *hypergraph;
+  const graphion_vm_value *schema;
+  graphion_vm_value *slot;
+  size_t hyperedge_id;
+  int rc;
+
+  if (!is_valid_reg(in->a) || !is_valid_reg(in->b) || in->imm < 0 || !is_valid_reg((uint8_t)in->imm)) {
+    return GVM_ERR_INVALID_REG;
+  }
+  if (vm->regs[in->a].kind != GVM_VALUE_HYPERGRAPH_REF || vm->regs[in->a].as.ref_value == NULL) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (vm->regs[(uint8_t)in->imm].kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  hypergraph = (graphion_hypergraph_value *)vm->regs[in->a].as.ref_value;
+  rc = hypergraph_id_from_value(&vm->regs[in->b], hypergraph->hypergraph.hyperedge_count, &hyperedge_id);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  rc = hypergraph_ensure_hyperedge_attr_capacity(hypergraph);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  schema = hypergraph_first_hyperedge_attrs(hypergraph);
+  slot = &hypergraph->hyperedge_attrs[hyperedge_id];
+  if (slot->kind == GVM_VALUE_DICT) {
+    if (schema != NULL && !vm_value_dict_keys_subset(&vm->regs[(uint8_t)in->imm], schema)) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    return vm_value_dict_patch_existing(slot, &vm->regs[(uint8_t)in->imm]);
+  }
+  if (slot->kind != GVM_VALUE_NONE) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  if (schema != NULL && !vm_value_dict_keys_equal(schema, &vm->regs[(uint8_t)in->imm])) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  return graph_replace_attr_value(slot, &vm->regs[(uint8_t)in->imm]);
 }
 
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {

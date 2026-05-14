@@ -549,6 +549,57 @@ int test_gion_hypergraph_structure_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_attribute_mutation_statements(void) {
+  const char *source =
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+      "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
+      "    \"Alice\"\n"
+      "    [\"Alice\", \"Bob\"]\n"
+      "add_vertex(H, \"Carol\")\n"
+      "add_hyperedge(H, [\"Bob\", \"Carol\"])\n"
+      "set_vertex_attrs(H, \"Alice\", {\"score\": 10})\n"
+      "set_hyperedge_attrs(H, 0, {\"color\": \"red\"})\n"
+      "set_vertex_attrs(H, \"Carol\", {\"label\": \"end\"})\n"
+      "set_hyperedge_attrs(H, 1, {\"kind\": \"pair\"})\n"
+      "print(vertex_attrs(H, \"Alice\"))\n"
+      "print(hyperedge_attrs(H, 0))\n"
+      "print(vertex_attrs(H, \"Carol\"))\n"
+      "print(hyperedge_attrs(H, 1))\n";
+  const char *expected =
+      "{\"label\": \"unknown\", \"score\": 10}\n"
+      "{\"kind\": \"group\", \"color\": \"red\"}\n"
+      "{\"label\": \"end\", \"score\": 0}\n"
+      "{\"kind\": \"pair\", \"color\": \"blue\"}\n";
+  char path[512];
+  char output[512];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_attribute_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

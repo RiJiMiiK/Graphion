@@ -22,7 +22,8 @@ static int is_scalar_builtin_name(const char *name) {
       "has_edge",   "neighbors",   "indegree",             "outdegree",
       "node_ids",   "nodes",       "edges",                "add_node",
       "add_edge",   "set_node_attrs", "set_edge_attrs",    "set_edge_weight",
-      "remove_node", "remove_edge", "add_vertex",          "add_hyperedge"
+      "remove_node", "remove_edge", "add_vertex",          "add_hyperedge",
+      "set_vertex_attrs",          "set_hyperedge_attrs"
   };
   size_t i;
 

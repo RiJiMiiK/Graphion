@@ -287,7 +287,7 @@ Current hypergraph declaration rules:
 - hypergraph membership/query builtins include `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 - hypergraph listing/query builtins include `vertex_ids`, `vertices`, and `hyperedges`
 - hypergraph structure mutation statements include `add_vertex` and `add_hyperedge`
-- broader hypergraph attribute mutation operations will be added later
+- hypergraph attribute mutation statements include `set_vertex_attrs` and `set_hyperedge_attrs`
 
 Graph mutation statements:
 
@@ -337,6 +337,8 @@ hypergraph H;
 
 add_vertex(H, "Alice")
 add_hyperedge(H, ["Alice", 2, "Bob"])
+set_vertex_attrs(H, "Alice", {"label": "start"})
+set_hyperedge_attrs(H, 0, {"kind": "group"})
 ```
 
 Current hypergraph mutation rules:
@@ -350,6 +352,13 @@ Current hypergraph mutation rules:
 - added hyperedges receive declared `defaults hyperedge` attributes when hyperedge defaults exist
 - adding an existing vertex is a no-op
 - hyperedges receive the next implicit numeric hyperedge ID and existing hyperedge IDs stay stable
+- `set_vertex_attrs(hypergraph_variable, vertex, attrs)` applies a full or partial dictionary patch to vertex attributes
+- `set_hyperedge_attrs(hypergraph_variable, id, attrs)` applies a full or partial dictionary patch to hyperedge attributes
+- `set_*_attrs(...)` can establish the initial vertex or hyperedge attribute schema
+- partial `set_*_attrs(...)` patches require the target vertex or hyperedge to already have an attribute dictionary containing every patched key
+- if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
+- vertices and hyperedges added after initialization use defaults first, so partial patches are valid for them when defaults exist
+- attribute mutation preserves the shared-key schema once a schema exists
 
 Graph listing and query builtins:
 
