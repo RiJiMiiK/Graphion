@@ -113,7 +113,7 @@ This branch is for active work on non-scalar language types.
   - [x] add hypergraph attribute mutation after initialization
     - update vertex attributes
     - update hyperedge attributes
-  - [ ] add hypergraph removal mutation after initialization
+  - [x] add hypergraph removal mutation after initialization
     - remove vertex
     - remove hyperedge
     - define how vertex removal affects incident hyperedges and attributes

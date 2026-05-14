@@ -633,6 +633,8 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
   } specs[] = {
       {"add_vertex", 10U, GVM_OP_HYPERGRAPH_ADD_VERTEX},
       {"add_hyperedge", 13U, GVM_OP_HYPERGRAPH_ADD_HYPEREDGE},
+      {"remove_vertex", 13U, GVM_OP_HYPERGRAPH_REMOVE_VERTEX},
+      {"remove_hyperedge", 16U, GVM_OP_HYPERGRAPH_REMOVE_HYPEREDGE},
   };
   const char *name = NULL;
   const char *cursor = line_text;
@@ -944,7 +946,9 @@ int parse_statement_line(const char *line_text,
              (strncmp(line_cursor, "remove_edge", 11U) == 0 && !is_ident_char(line_cursor[11]))) {
     rc = parse_graph_mutation_statement(line_cursor, program, line, diagnostic);
   } else if ((strncmp(line_cursor, "add_vertex", 10U) == 0 && !is_ident_char(line_cursor[10])) ||
-             (strncmp(line_cursor, "add_hyperedge", 13U) == 0 && !is_ident_char(line_cursor[13]))) {
+             (strncmp(line_cursor, "add_hyperedge", 13U) == 0 && !is_ident_char(line_cursor[13])) ||
+             (strncmp(line_cursor, "remove_vertex", 13U) == 0 && !is_ident_char(line_cursor[13])) ||
+             (strncmp(line_cursor, "remove_hyperedge", 16U) == 0 && !is_ident_char(line_cursor[16]))) {
     rc = parse_hypergraph_mutation_statement(line_cursor, program, line, diagnostic);
   } else if ((strncmp(line_cursor, "set_node_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
              (strncmp(line_cursor, "set_edge_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||

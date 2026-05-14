@@ -600,6 +600,74 @@ int test_gion_hypergraph_attribute_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_removal_mutation_statements(void) {
+  const char *source =
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\"}\n"
+      "    defaults hyperedge {\"kind\": \"group\"}\n"
+      "    [\"Alice\", \"Bob\"]\n"
+      "    [\"Bob\", \"Carol\"]\n"
+      "    [\"Solo\"]\n"
+      "remove_vertex(H, \"Bob\")\n"
+      "remove_hyperedge(H, 0)\n"
+      "add_hyperedge(H, [\"Alice\", 9])\n"
+      "remove_vertex(H, \"Solo\")\n"
+      "print(H)\n"
+      "print(vertex_ids(H))\n"
+      "print(hyperedge_count(H))\n"
+      "print(has_vertex(H, \"Bob\"))\n"
+      "print(has_hyperedge(H, 0))\n"
+      "print(has_hyperedge(H, 1))\n"
+      "print(has_hyperedge(H, 2))\n"
+      "print(has_hyperedge(H, 3))\n"
+      "print(hyperedges(H))\n"
+      "print(hyperedge_vertices(H, 1))\n"
+      "print(incident_hyperedges(H, \"Alice\"))\n"
+      "print(vertex_attrs(H, 9))\n"
+      "print(hyperedge_attrs(H, 3))\n";
+  const char *expected =
+      "hypergraph(vertices=3, hyperedges=2, vertex_attrs=1, hyperedge_attrs=1)\n"
+      "[0, 2, 9]\n"
+      "2\n"
+      "false\n"
+      "false\n"
+      "true\n"
+      "false\n"
+      "true\n"
+      "[{\"id\": 1, \"vertices\": [2]}, {\"id\": 3, \"vertices\": [0, 9]}]\n"
+      "[2]\n"
+      "[3]\n"
+      "{\"label\": \"unknown\"}\n"
+      "{\"kind\": \"group\"}\n";
+  char path[512];
+  char output[768];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_removal_mutation_statements.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

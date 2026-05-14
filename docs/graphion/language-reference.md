@@ -288,6 +288,7 @@ Current hypergraph declaration rules:
 - hypergraph listing/query builtins include `vertex_ids`, `vertices`, and `hyperedges`
 - hypergraph structure mutation statements include `add_vertex` and `add_hyperedge`
 - hypergraph attribute mutation statements include `set_vertex_attrs` and `set_hyperedge_attrs`
+- hypergraph removal mutation statements include `remove_vertex` and `remove_hyperedge`
 
 Graph mutation statements:
 
@@ -339,6 +340,8 @@ add_vertex(H, "Alice")
 add_hyperedge(H, ["Alice", 2, "Bob"])
 set_vertex_attrs(H, "Alice", {"label": "start"})
 set_hyperedge_attrs(H, 0, {"kind": "group"})
+remove_vertex(H, 2)
+remove_hyperedge(H, 0)
 ```
 
 Current hypergraph mutation rules:
@@ -359,6 +362,13 @@ Current hypergraph mutation rules:
 - if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
 - vertices and hyperedges added after initialization use defaults first, so partial patches are valid for them when defaults exist
 - attribute mutation preserves the shared-key schema once a schema exists
+- `remove_vertex(hypergraph_variable, vertex)` removes a vertex and its attributes
+- removing a vertex removes it from every incident hyperedge
+- hyperedges that become empty after vertex removal are removed
+- non-empty hyperedges remain valid, even if they contain only one vertex
+- `remove_hyperedge(hypergraph_variable, id)` removes one hyperedge and its attributes
+- removing a hyperedge never removes its vertices
+- removed hyperedge IDs are not reused, and later hyperedges keep/newly receive stable IDs
 
 Graph listing and query builtins:
 

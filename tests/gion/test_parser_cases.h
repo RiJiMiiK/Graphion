@@ -66,6 +66,7 @@
   X(gion_hypergraph_listing_query_builtins)            \
   X(gion_hypergraph_structure_mutation_statements)     \
   X(gion_hypergraph_attribute_mutation_statements)     \
+  X(gion_hypergraph_removal_mutation_statements)       \
   X(gion_graph_node_block_declaration)                 \
   X(gion_graph_explicit_ids_have_priority)             \
   X(gion_graph_node_attributes)                        \

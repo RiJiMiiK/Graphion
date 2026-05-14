@@ -268,6 +268,7 @@ Current `hypergraph` declarations:
 - support listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
 - support structure mutation after initialization with `add_vertex` and `add_hyperedge`
 - support attribute mutation after initialization with `set_vertex_attrs` and `set_hyperedge_attrs`
+- support removal mutation after initialization with `remove_vertex` and `remove_hyperedge`
 
 ## Type Notes
 
@@ -441,8 +442,9 @@ Current hypergraph support is intentionally minimal:
 - listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
 - structure mutation after initialization with `add_vertex` and `add_hyperedge`
 - attribute mutation after initialization with `set_vertex_attrs` and `set_hyperedge_attrs`
+- removal mutation after initialization with `remove_vertex` and `remove_hyperedge`
 
-Hypergraph removal operations will be added in later steps.
+Hypergraph error coverage will be hardened in later steps.
 
 ### Bits
 
