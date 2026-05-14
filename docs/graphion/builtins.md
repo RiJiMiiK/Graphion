@@ -12,7 +12,8 @@ inspecting graph contents without knowing node names or IDs ahead of time.
 Hypergraph builtins currently include `vertex_count(hypergraph)`, `hyperedge_count(hypergraph)`,
 `vertex_attr_count(hypergraph)`, `hyperedge_attr_count(hypergraph)`,
 `vertex_attrs(hypergraph, vertex)`, `hyperedge_vertices(hypergraph, id)`,
-and `hyperedge_attrs(hypergraph, id)`.
+`hyperedge_attrs(hypergraph, id)`, `has_vertex(hypergraph, vertex)`,
+`has_hyperedge(hypergraph, id)`, and `incident_hyperedges(hypergraph, vertex)`.
 
 ## Shared Rules
 
@@ -105,6 +106,9 @@ Unless a builtin says otherwise:
 | `vertex_attrs(hypergraph, vertex)` | attributes for one vertex | `dict` | `vertex` can be an ID or string vertex name |
 | `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
 | `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
+| `has_vertex(hypergraph, vertex)` | whether a vertex exists | `bool` | `vertex` can be an ID or string vertex name |
+| `has_hyperedge(hypergraph, id)` | whether a hyperedge ID exists | `bool` | hyperedge IDs are implicit numeric IDs |
+| `incident_hyperedges(hypergraph, vertex)` | hyperedge IDs touching a vertex | `list` | `vertex` can be an ID or string vertex name |
 | `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
 | `has_edge(graph, from, to)` | whether an edge exists | `bool` | respects directed edge orientation |
 | `neighbors(graph, node)` | adjacent neighbor IDs | `list` | includes incoming and outgoing directed edges |
@@ -1574,6 +1578,79 @@ Accepted input:
 Result type:
 
 - `dict`
+
+### `has_vertex(hypergraph, vertex)`
+
+Returns whether a vertex exists in a hypergraph. The `vertex` argument can be either an integer vertex ID or a string vertex name.
+
+```gion
+hypergraph H:
+    "Alice"
+
+print(has_vertex(H, "Alice"))
+print(has_vertex(H, 99))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Result type:
+
+- `bool`
+
+### `has_hyperedge(hypergraph, id)`
+
+Returns whether an implicit hyperedge ID exists.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+
+print(has_hyperedge(H, 0))
+print(has_hyperedge(H, 1))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Result type:
+
+- `bool`
+
+### `incident_hyperedges(hypergraph, vertex)`
+
+Returns the implicit hyperedge IDs that contain a vertex.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+    ["Bob", "Carol"]
+
+print(incident_hyperedges(H, "Bob"))
+```
+
+Expected output:
+
+```text
+[0, 1]
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` vertex ID or `string` vertex name
+
+Result type:
+
+- `list`
 
 ### `has_node(graph, node)`
 

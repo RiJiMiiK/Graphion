@@ -264,6 +264,7 @@ Current `hypergraph` declarations:
 - print hypergraphs with hyperedge attributes as `hypergraph(vertices=N, hyperedges=M, hyperedge_attrs=K)`
 - support inspection with `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - support attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
+- support membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 - will gain broader hypergraph-specific operations in later steps
 
 ## Type Notes
@@ -434,6 +435,7 @@ Current hypergraph support is intentionally minimal:
 - printing hypergraphs with hyperedge attributes as `hypergraph(vertices=N, hyperedges=M, hyperedge_attrs=K)`
 - inspection with `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
+- membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
 
 Hypergraph query and mutation operations will be added in later steps.
 

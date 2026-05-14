@@ -76,6 +76,9 @@
   X("vertex_attrs", GVM_OP_HYPERGRAPH_VERTEX_ATTRS) \
   X("hyperedge_vertices", GVM_OP_HYPERGRAPH_HYPEREDGE_VERTICES) \
   X("hyperedge_attrs", GVM_OP_HYPERGRAPH_HYPEREDGE_ATTRS) \
+  X("has_vertex", GVM_OP_HYPERGRAPH_HAS_VERTEX) \
+  X("has_hyperedge", GVM_OP_HYPERGRAPH_HAS_HYPEREDGE) \
+  X("incident_hyperedges", GVM_OP_HYPERGRAPH_INCIDENT_HYPEREDGES) \
   X("has_node", GVM_OP_GRAPH_HAS_NODE)     \
   X("neighbors", GVM_OP_GRAPH_NEIGHBORS)   \
   X("indegree", GVM_OP_GRAPH_INDEGREE)     \

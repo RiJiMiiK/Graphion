@@ -392,6 +392,60 @@ int test_gion_hypergraph_vertex_and_hyperedge_attributes(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_membership_query_builtins(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "hypergraph H:\n"
+      "    alice\n"
+      "    [alice, bob, 2]\n"
+      "    [2, \"Carol\"]\n"
+      "print(has_vertex(H, alice))\n"
+      "print(has_vertex(H, \"Carol\"))\n"
+      "print(has_vertex(H, 99))\n"
+      "print(has_hyperedge(H, 0))\n"
+      "print(has_hyperedge(H, 2))\n"
+      "print(incident_hyperedges(H, 2))\n"
+      "print(incident_hyperedges(H, bob))\n"
+      "print(hyperedge_vertices(H, 1))\n";
+  const char *expected =
+      "true\n"
+      "true\n"
+      "false\n"
+      "true\n"
+      "false\n"
+      "[0, 1]\n"
+      "[0]\n"
+      "[2, 3]\n";
+  char path[512];
+  char output[256];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_membership_query_builtins.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

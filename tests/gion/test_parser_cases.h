@@ -62,6 +62,7 @@
   X(gion_hypergraph_vertex_attributes)                 \
   X(gion_hypergraph_hyperedge_declaration)             \
   X(gion_hypergraph_vertex_and_hyperedge_attributes)   \
+  X(gion_hypergraph_membership_query_builtins)         \
   X(gion_graph_node_block_declaration)                 \
   X(gion_graph_explicit_ids_have_priority)             \
   X(gion_graph_node_attributes)                        \
