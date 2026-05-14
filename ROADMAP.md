@@ -103,7 +103,7 @@ This branch is for active work on non-scalar language types.
     - hyperedge exists
     - hyperedges incident to a vertex
     - vertices contained in a hyperedge
-  - [ ] add hypergraph listing/query operations
+  - [x] add hypergraph listing/query operations
     - list vertices / vertex IDs
     - list hyperedges
     - expose each hyperedge as a vertex list

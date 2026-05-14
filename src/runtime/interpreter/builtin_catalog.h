@@ -61,7 +61,10 @@
   X("vertex_count", GVM_OP_HYPERGRAPH_VERTEX_COUNT) \
   X("hyperedge_count", GVM_OP_HYPERGRAPH_HYPEREDGE_COUNT) \
   X("vertex_attr_count", GVM_OP_HYPERGRAPH_VERTEX_ATTR_COUNT) \
-  X("hyperedge_attr_count", GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT)
+  X("hyperedge_attr_count", GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT) \
+  X("vertex_ids", GVM_OP_HYPERGRAPH_VERTEX_IDS) \
+  X("vertices", GVM_OP_HYPERGRAPH_VERTICES) \
+  X("hyperedges", GVM_OP_HYPERGRAPH_HYPEREDGES)
 
 #define GRAPHION_BINARY_DIRECT_BUILTINS(X) \
   X("min", GVM_OP_MIN)                     \

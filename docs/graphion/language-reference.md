@@ -285,6 +285,7 @@ Current hypergraph declaration rules:
 - hypergraph inspection builtins include `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - hypergraph attribute lookup builtins include `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - hypergraph membership/query builtins include `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
+- hypergraph listing/query builtins include `vertex_ids`, `vertices`, and `hyperedges`
 - broader hypergraph query/mutation operations will be added later
 
 Graph mutation statements:

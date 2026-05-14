@@ -446,6 +446,53 @@ int test_gion_hypergraph_membership_query_builtins(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_listing_query_builtins(void) {
+  const char *source =
+      "alice = \"Alice\"\n"
+      "bob = \"Bob\"\n"
+      "hypergraph H:\n"
+      "    alice\n"
+      "    [alice, bob, 2]\n"
+      "    [2, \"Carol\"]\n"
+      "print(vertex_ids(H))\n"
+      "print(vertices(H))\n"
+      "print(hyperedges(H))\n"
+      "print(hyperedges(H)[1][\"vertices\"])\n";
+  const char *expected =
+      "[0, 1, 2, 3]\n"
+      "[{\"id\": 0, \"name\": \"Alice\"}, {\"id\": 1, \"name\": \"Bob\"}, {\"id\": 2}, "
+      "{\"id\": 3, \"name\": \"Carol\"}]\n"
+      "[{\"id\": 0, \"vertices\": [0, 1, 2]}, {\"id\": 1, \"vertices\": [2, 3]}]\n"
+      "[2, 3]\n";
+  char path[512];
+  char output[768];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_hypergraph_listing_query_builtins.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output, expected) != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

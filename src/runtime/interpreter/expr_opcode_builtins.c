@@ -160,6 +160,9 @@ int try_parse_opcode_builtin(const char **cursor,
       {"hyperedge_count", GVM_OP_HYPERGRAPH_HYPEREDGE_COUNT},
       {"vertex_attr_count", GVM_OP_HYPERGRAPH_VERTEX_ATTR_COUNT},
       {"hyperedge_attr_count", GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT},
+      {"vertex_ids", GVM_OP_HYPERGRAPH_VERTEX_IDS},
+      {"vertices", GVM_OP_HYPERGRAPH_VERTICES},
+      {"hyperedges", GVM_OP_HYPERGRAPH_HYPEREDGES},
   };
   static const expr_named_builtin_entry binary_builtins[] = {
       {"atan2", GVM_OP_ATAN2},

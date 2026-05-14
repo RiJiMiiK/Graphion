@@ -265,6 +265,7 @@ Current `hypergraph` declarations:
 - support inspection with `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - support attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - support membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
+- support listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
 - will gain broader hypergraph-specific operations in later steps
 
 ## Type Notes
@@ -436,6 +437,7 @@ Current hypergraph support is intentionally minimal:
 - inspection with `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
 - attribute lookup with `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
 - membership/query operations with `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
+- listing/query operations with `vertex_ids`, `vertices`, and `hyperedges`
 
 Hypergraph query and mutation operations will be added in later steps.
 

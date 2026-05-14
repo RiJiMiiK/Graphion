@@ -11,6 +11,7 @@ Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(gra
 inspecting graph contents without knowing node names or IDs ahead of time.
 Hypergraph builtins currently include `vertex_count(hypergraph)`, `hyperedge_count(hypergraph)`,
 `vertex_attr_count(hypergraph)`, `hyperedge_attr_count(hypergraph)`,
+`vertex_ids(hypergraph)`, `vertices(hypergraph)`, `hyperedges(hypergraph)`,
 `vertex_attrs(hypergraph, vertex)`, `hyperedge_vertices(hypergraph, id)`,
 `hyperedge_attrs(hypergraph, id)`, `has_vertex(hypergraph, vertex)`,
 `has_hyperedge(hypergraph, id)`, and `incident_hyperedges(hypergraph, vertex)`.
@@ -103,6 +104,9 @@ Unless a builtin says otherwise:
 | `hyperedge_count(hypergraph)` | number of hyperedges | `int` | hyperedge IDs are assigned in declaration order |
 | `vertex_attr_count(hypergraph)` | vertex attribute key count | `int` | returns `0` when no vertex attrs exist |
 | `hyperedge_attr_count(hypergraph)` | hyperedge attribute key count | `int` | returns `0` when no hyperedge attrs exist |
+| `vertex_ids(hypergraph)` | present vertex IDs | `list` | IDs remain stable and can have gaps |
+| `vertices(hypergraph)` | present vertex descriptors | `list` | each item is a dict with `id` and optional `name` |
+| `hyperedges(hypergraph)` | hyperedge descriptors | `list` | each item has `id` and `vertices` |
 | `vertex_attrs(hypergraph, vertex)` | attributes for one vertex | `dict` | `vertex` can be an ID or string vertex name |
 | `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
 | `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
@@ -1496,6 +1500,84 @@ Expected output:
 Result type:
 
 - `int`
+
+### `vertex_ids(hypergraph)`
+
+Returns a list of present numeric vertex IDs.
+
+```gion
+hypergraph H:
+    "Alice"
+    10
+
+print(vertex_ids(H))
+```
+
+Expected output:
+
+```text
+[0, 10]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `int` vertex IDs
+
+### `vertices(hypergraph)`
+
+Returns a list of vertex descriptor dictionaries. Named vertices include `name`; numeric-only vertices only include `id`.
+
+```gion
+hypergraph H:
+    "Alice"
+    10
+
+print(vertices(H))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "name": "Alice"}, {"id": 10}]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `dict`
+
+### `hyperedges(hypergraph)`
+
+Returns a list of hyperedge descriptor dictionaries. Each descriptor contains the implicit hyperedge `id` and a `vertices` list of contained vertex IDs.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob", 2]
+    [2, "Carol"]
+
+print(hyperedges(H))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "vertices": [0, 1, 2]}, {"id": 1, "vertices": [2, 3]}]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `dict`
 
 ### `vertex_attrs(hypergraph, vertex)`
 

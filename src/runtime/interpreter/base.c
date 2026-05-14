@@ -12,12 +12,17 @@ static int is_scalar_builtin_name(const char *name) {
       "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
       "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
-      "round",      "trunc",       "sign",      "len",         "contains", "node_count",
-      "edge_count", "is_directed", "is_weighted", "orientation", "node_attrs", "edge_attrs",
-      "edge_weight", "vertex_count", "hyperedge_count", "vertex_attr_count", "hyperedge_attr_count",
-      "vertex_attrs", "hyperedge_vertices", "hyperedge_attrs", "has_vertex", "has_hyperedge",
-      "incident_hyperedges", "has_node", "has_edge", "neighbors", "indegree", "outdegree", "node_ids", "nodes", "edges", "add_node", "add_edge",
-      "set_node_attrs", "set_edge_attrs", "set_edge_weight", "remove_node", "remove_edge"
+      "round",      "trunc",      "sign",                  "len",
+      "contains",   "node_count", "edge_count",            "is_directed",
+      "is_weighted", "orientation", "node_attrs",           "edge_attrs",
+      "edge_weight", "vertex_count", "hyperedge_count",     "vertex_attr_count",
+      "hyperedge_attr_count",        "vertex_ids",          "vertices",
+      "hyperedges", "vertex_attrs", "hyperedge_vertices",  "hyperedge_attrs",
+      "has_vertex", "has_hyperedge", "incident_hyperedges", "has_node",
+      "has_edge",   "neighbors",   "indegree",             "outdegree",
+      "node_ids",   "nodes",       "edges",                "add_node",
+      "add_edge",   "set_node_attrs", "set_edge_attrs",    "set_edge_weight",
+      "remove_node", "remove_edge"
   };
   size_t i;
 

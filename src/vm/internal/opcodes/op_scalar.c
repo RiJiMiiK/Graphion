@@ -2751,6 +2751,135 @@ int op_hypergraph_incident_hyperedges(graphion_vm *vm, const graphion_insn *in) 
   return GVM_OK;
 }
 
+int op_hypergraph_vertex_ids(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  size_t i;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  rc = vm_reg_set_empty_list(vm, in->a);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < value->vertex_count; ++i) {
+    rc = vm_list_append_int(vm, in->a, (int64_t)value->vertices[i].id);
+    if (rc != GVM_OK) {
+      return rc;
+    }
+  }
+  return GVM_OK;
+}
+
+int op_hypergraph_vertices(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  graphion_vm_value list;
+  size_t i;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  memset(&list, 0, sizeof(list));
+  list.kind = GVM_VALUE_NONE;
+  rc = vm_value_set_empty_list_value(&list);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < value->vertex_count; ++i) {
+    graphion_vm_value vertex;
+    memset(&vertex, 0, sizeof(vertex));
+    vertex.kind = GVM_VALUE_NONE;
+    rc = vm_value_set_empty_dict_value(&vertex);
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_int(&vertex, "id", (int64_t)value->vertices[i].id);
+    }
+    if (rc == GVM_OK && value->vertices[i].name != NULL) {
+      rc = graph_dict_set_string(&vertex, "name", value->vertices[i].name);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_list_append_clone(&list, &vertex);
+    }
+    vm_value_dispose_owned(&vertex);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&list);
+      return rc;
+    }
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = list;
+  return GVM_OK;
+}
+
+int op_hypergraph_hyperedges(graphion_vm *vm, const graphion_insn *in) {
+  const graphion_hypergraph_value *value;
+  const graphion_hypergraph *hypergraph;
+  graphion_vm_value list;
+  size_t i;
+  int rc;
+
+  rc = hypergraph_reg_value(vm, in, &value);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  hypergraph = &value->hypergraph;
+  if (hypergraph->hyperedge_count > 0U &&
+      (hypergraph->hyperedge_offsets == NULL || hypergraph->hyperedge_nodes == NULL)) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  memset(&list, 0, sizeof(list));
+  list.kind = GVM_VALUE_NONE;
+  rc = vm_value_set_empty_list_value(&list);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < hypergraph->hyperedge_count; ++i) {
+    graphion_vm_value edge;
+    graphion_vm_value vertices;
+    size_t j;
+    const size_t start = hypergraph->hyperedge_offsets[i];
+    const size_t end = hypergraph->hyperedge_offsets[i + 1U];
+
+    memset(&edge, 0, sizeof(edge));
+    memset(&vertices, 0, sizeof(vertices));
+    edge.kind = GVM_VALUE_NONE;
+    vertices.kind = GVM_VALUE_NONE;
+    rc = vm_value_set_empty_dict_value(&edge);
+    if (rc == GVM_OK) {
+      rc = graph_dict_set_int(&edge, "id", (int64_t)i);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_set_empty_list_value(&vertices);
+    }
+    for (j = start; rc == GVM_OK && j < end; ++j) {
+      graphion_vm_value vertex_id;
+      memset(&vertex_id, 0, sizeof(vertex_id));
+      vertex_id.kind = GVM_VALUE_NONE;
+      vm_value_set_int(&vertex_id, (int64_t)hypergraph->hyperedge_nodes[j]);
+      rc = vm_value_list_append_clone(&vertices, &vertex_id);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_dict_set_clone(&edge, "vertices", &vertices);
+    }
+    if (rc == GVM_OK) {
+      rc = vm_value_list_append_clone(&list, &edge);
+    }
+    vm_value_dispose_owned(&vertices);
+    vm_value_dispose_owned(&edge);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&list);
+      return rc;
+    }
+  }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = list;
+  return GVM_OK;
+}
+
 int op_factorial(graphion_vm *vm, const graphion_insn *in) {
   int64_t value;
   int64_t result;
