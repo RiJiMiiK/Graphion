@@ -45,8 +45,16 @@ int vm_value_dict_key_kind(const graphion_vm_value *value, const char *key, uint
 int vm_value_dict_get_clone(const graphion_vm_value *value, const char *key, graphion_vm_value *out);
 int vm_value_dict_set_clone(graphion_vm_value *value, const char *key, const graphion_vm_value *src);
 int vm_value_dict_patch_existing(graphion_vm_value *value, const graphion_vm_value *patch);
+int vm_value_set_struct_type(graphion_vm_value *value,
+                             const char *name,
+                             const graphion_struct_field_value *fields,
+                             size_t field_count);
+int vm_value_instantiate_struct(graphion_vm_value *out,
+                                const graphion_vm_value *type_value,
+                                const graphion_vm_value *overrides);
 int vm_value_tuple_length(const graphion_vm_value *value, size_t *len_out);
 int vm_value_set_length(const graphion_vm_value *value, size_t *len_out);
+int vm_value_struct_field_count(const graphion_vm_value *value, size_t *len_out);
 uint8_t vm_value_get_bits_width(const graphion_vm_value *value);
 uint64_t vm_value_get_bits_payload(const graphion_vm_value *value);
 size_t vm_write_bits_text(char *buffer,

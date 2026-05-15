@@ -31,5 +31,6 @@ int op_set_add(graphion_vm *vm, const graphion_insn *in);
 int op_set_contains(graphion_vm *vm, const graphion_insn *in);
 int op_graph_new(graphion_vm *vm, const graphion_insn *in);
 int op_hypergraph_new(graphion_vm *vm, const graphion_insn *in);
+int op_struct_new(graphion_vm *vm, const graphion_insn *in);
 
 #endif

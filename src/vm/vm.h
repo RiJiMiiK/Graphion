@@ -180,6 +180,7 @@ typedef enum {
   GVM_OP_HYPERGRAPH_SET_HYPEREDGE_ATTRS = 172,
   GVM_OP_HYPERGRAPH_REMOVE_VERTEX = 173,
   GVM_OP_HYPERGRAPH_REMOVE_HYPEREDGE = 174,
+  GVM_OP_STRUCT_NEW = 175,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -246,7 +247,9 @@ typedef enum {
   GVM_VALUE_LIST = 9,
   GVM_VALUE_DICT = 10,
   GVM_VALUE_TUPLE = 11,
-  GVM_VALUE_SET = 12
+  GVM_VALUE_SET = 12,
+  GVM_VALUE_STRUCT_TYPE = 13,
+  GVM_VALUE_STRUCT = 14
 } graphion_vm_value_kind;
 
 typedef struct {
@@ -260,6 +263,25 @@ typedef struct {
     const void *ref_value;
   } as;
 } graphion_vm_value;
+
+typedef struct {
+  char name[64];
+  char type_name[32];
+  uint8_t has_default;
+  uint8_t reserved[7];
+  graphion_vm_value default_value;
+} graphion_struct_field_value;
+
+typedef struct {
+  char name[64];
+  graphion_struct_field_value *fields;
+  size_t field_count;
+} graphion_struct_type_value;
+
+typedef struct {
+  char type_name[64];
+  graphion_vm_value fields;
+} graphion_struct_instance_value;
 
 typedef struct {
   uint32_t from;

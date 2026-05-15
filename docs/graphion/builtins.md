@@ -89,7 +89,7 @@ Unless a builtin says otherwise:
 | `trunc(x)` | drop fractional part | same numeric family | toward zero |
 | `fract(x)` | fractional part | `float` | defined as `x - floor(x)` |
 | `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
-| `len(x)` | container or string length | `int` | strings, lists, dicts, tuples, and sets |
+| `len(x)` | container or string length | `int` | strings, lists, dicts, tuples, sets, and structs |
 | `contains(set, value)` | set membership | `bool` | first argument must be a set |
 | `node_count(graph)` | number of logical nodes in a graph | `int` | counts present nodes, not ID gaps |
 | `edge_count(graph)` | number of logical edges in a graph | `int` | `<->` counts as one edge |
@@ -1055,7 +1055,7 @@ The result type is currently `int`.
 
 ### `len(x)`
 
-Returns the length of a string, list, dict, tuple, or set expression.
+Returns the length of a string, list, dict, tuple, set, or struct expression.
 
 ```gion
 print(len("graphion"))

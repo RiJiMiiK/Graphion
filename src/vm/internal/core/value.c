@@ -68,6 +68,14 @@ static graphion_vm_dict *vm_dict_create(void) {
   return dict;
 }
 
+static graphion_struct_type_value *vm_struct_type_create(void) {
+  return (graphion_struct_type_value *)calloc(1U, sizeof(graphion_struct_type_value));
+}
+
+static graphion_struct_instance_value *vm_struct_instance_create(void) {
+  return (graphion_struct_instance_value *)calloc(1U, sizeof(graphion_struct_instance_value));
+}
+
 static graphion_csr_graph *vm_graph_create_empty(void) {
   graphion_graph_value *graph = (graphion_graph_value *)calloc(1U, sizeof(*graph));
   return graph != NULL ? &graph->csr : NULL;
@@ -268,7 +276,7 @@ static int vm_value_is_list_storage_kind(uint8_t kind) {
 
 static int vm_value_is_compound_kind(uint8_t kind) {
   return vm_value_is_list_storage_kind(kind) || kind == GVM_VALUE_DICT || kind == GVM_VALUE_GRAPH_REF ||
-         kind == GVM_VALUE_HYPERGRAPH_REF;
+         kind == GVM_VALUE_HYPERGRAPH_REF || kind == GVM_VALUE_STRUCT_TYPE || kind == GVM_VALUE_STRUCT;
 }
 
 void vm_value_dispose_owned(graphion_vm_value *value) {
@@ -279,6 +287,8 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
   graphion_graph_value *graph_value;
   graphion_hypergraph *hypergraph;
   graphion_hypergraph_value *hypergraph_value;
+  graphion_struct_type_value *struct_type;
+  graphion_struct_instance_value *struct_instance;
 
   if (value == NULL) {
     return;
@@ -361,6 +371,23 @@ void vm_value_dispose_owned(graphion_vm_value *value) {
       free((void *)hypergraph->hyperedge_nodes);
       free(hypergraph);
     }
+  } else if (value->kind == GVM_VALUE_STRUCT_TYPE) {
+    struct_type = (graphion_struct_type_value *)value->as.ref_value;
+    if (struct_type != NULL) {
+      for (i = 0U; i < struct_type->field_count; ++i) {
+        if (struct_type->fields[i].has_default) {
+          vm_value_dispose_owned(&struct_type->fields[i].default_value);
+        }
+      }
+      free(struct_type->fields);
+      free(struct_type);
+    }
+  } else if (value->kind == GVM_VALUE_STRUCT) {
+    struct_instance = (graphion_struct_instance_value *)value->as.ref_value;
+    if (struct_instance != NULL) {
+      vm_value_dispose_owned(&struct_instance->fields);
+      free(struct_instance);
+    }
   }
   vm_value_clear(value);
 }
@@ -379,6 +406,10 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
   graphion_hypergraph *dst_hypergraph;
   graphion_hypergraph_value *src_hypergraph_value;
   graphion_hypergraph_value *dst_hypergraph_value;
+  graphion_struct_type_value *src_struct_type;
+  graphion_struct_type_value *dst_struct_type;
+  graphion_struct_instance_value *src_struct_instance;
+  graphion_struct_instance_value *dst_struct_instance;
 
   if (dst == NULL || src == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -657,6 +688,62 @@ int vm_value_clone(graphion_vm_value *dst, const graphion_vm_value *src) {
     return GVM_OK;
   }
 
+  if (src->kind == GVM_VALUE_STRUCT_TYPE) {
+    src_struct_type = (graphion_struct_type_value *)src->as.ref_value;
+    dst_struct_type = vm_struct_type_create();
+    if (dst_struct_type == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    if (src_struct_type != NULL) {
+      memcpy(dst_struct_type->name, src_struct_type->name, sizeof(dst_struct_type->name));
+      if (src_struct_type->field_count > 0U) {
+        dst_struct_type->fields =
+            (graphion_struct_field_value *)calloc(src_struct_type->field_count, sizeof(*dst_struct_type->fields));
+        if (dst_struct_type->fields == NULL) {
+          free(dst_struct_type);
+          return GVM_ERR_INVALID_ARG;
+        }
+        dst_struct_type->field_count = src_struct_type->field_count;
+        for (i = 0U; i < src_struct_type->field_count; ++i) {
+          memcpy(&dst_struct_type->fields[i], &src_struct_type->fields[i], sizeof(dst_struct_type->fields[i]));
+          if (src_struct_type->fields[i].has_default) {
+            int rc = vm_value_clone(&dst_struct_type->fields[i].default_value,
+                                    &src_struct_type->fields[i].default_value);
+            if (rc != GVM_OK) {
+              graphion_vm_value cleanup;
+              vm_value_clear(&cleanup);
+              cleanup.kind = GVM_VALUE_STRUCT_TYPE;
+              cleanup.as.ref_value = dst_struct_type;
+              vm_value_dispose_owned(&cleanup);
+              return rc;
+            }
+          }
+        }
+      }
+    }
+    dst->kind = GVM_VALUE_STRUCT_TYPE;
+    dst->as.ref_value = dst_struct_type;
+    return GVM_OK;
+  }
+
+  if (src->kind == GVM_VALUE_STRUCT) {
+    src_struct_instance = (graphion_struct_instance_value *)src->as.ref_value;
+    dst_struct_instance = vm_struct_instance_create();
+    if (dst_struct_instance == NULL) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    if (src_struct_instance != NULL) {
+      memcpy(dst_struct_instance->type_name, src_struct_instance->type_name, sizeof(dst_struct_instance->type_name));
+      if (vm_value_clone(&dst_struct_instance->fields, &src_struct_instance->fields) != GVM_OK) {
+        free(dst_struct_instance);
+        return GVM_ERR_INVALID_ARG;
+      }
+    }
+    dst->kind = GVM_VALUE_STRUCT;
+    dst->as.ref_value = dst_struct_instance;
+    return GVM_OK;
+  }
+
   src_dict = (graphion_vm_dict *)src->as.ref_value;
   dst_dict = vm_dict_create();
   if (dst_dict == NULL) {
@@ -800,6 +887,15 @@ int vm_value_dict_length(const graphion_vm_value *value, size_t *len_out) {
   dict = (graphion_vm_dict *)value->as.ref_value;
   *len_out = dict != NULL ? dict->count : 0U;
   return 1;
+}
+
+int vm_value_struct_field_count(const graphion_vm_value *value, size_t *len_out) {
+  graphion_struct_instance_value *instance;
+  if (value == NULL || len_out == NULL || value->kind != GVM_VALUE_STRUCT) {
+    return 0;
+  }
+  instance = (graphion_struct_instance_value *)value->as.ref_value;
+  return vm_value_dict_length(instance != NULL ? &instance->fields : NULL, len_out);
 }
 
 int vm_value_set_empty_dict_value(graphion_vm_value *value) {
@@ -1013,6 +1109,179 @@ int vm_value_dict_patch_existing(graphion_vm_value *value, const graphion_vm_val
   return GVM_OK;
 }
 
+static int vm_struct_field_index(const graphion_struct_type_value *type_value, const char *field_name) {
+  size_t i;
+  if (type_value == NULL || field_name == NULL) {
+    return -1;
+  }
+  for (i = 0U; i < type_value->field_count; ++i) {
+    if (strcmp(type_value->fields[i].name, field_name) == 0) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
+static int vm_struct_value_matches_type(const graphion_vm_value *value, const char *type_name) {
+  if (value == NULL || type_name == NULL || strcmp(type_name, "any") == 0) {
+    return 1;
+  }
+  if (strcmp(type_name, "int") == 0) {
+    return value->kind == GVM_VALUE_INT;
+  }
+  if (strcmp(type_name, "float") == 0) {
+    return value->kind == GVM_VALUE_FLOAT;
+  }
+  if (strcmp(type_name, "bool") == 0) {
+    return value->kind == GVM_VALUE_BOOL;
+  }
+  if (strcmp(type_name, "string") == 0) {
+    return value->kind == GVM_VALUE_STRING;
+  }
+  if (strcmp(type_name, "bits") == 0) {
+    return value->kind == GVM_VALUE_BITS;
+  }
+  if (strcmp(type_name, "list") == 0) {
+    return value->kind == GVM_VALUE_LIST;
+  }
+  if (strcmp(type_name, "dict") == 0) {
+    return value->kind == GVM_VALUE_DICT;
+  }
+  if (strcmp(type_name, "tuple") == 0) {
+    return value->kind == GVM_VALUE_TUPLE;
+  }
+  if (strcmp(type_name, "set") == 0) {
+    return value->kind == GVM_VALUE_SET;
+  }
+  if (strcmp(type_name, "graph") == 0) {
+    return value->kind == GVM_VALUE_GRAPH_REF;
+  }
+  if (strcmp(type_name, "hypergraph") == 0) {
+    return value->kind == GVM_VALUE_HYPERGRAPH_REF;
+  }
+  if (value->kind == GVM_VALUE_STRUCT) {
+    const graphion_struct_instance_value *instance = (const graphion_struct_instance_value *)value->as.ref_value;
+    return instance != NULL && strcmp(instance->type_name, type_name) == 0;
+  }
+  return 0;
+}
+
+int vm_value_set_struct_type(graphion_vm_value *value,
+                             const char *name,
+                             const graphion_struct_field_value *fields,
+                             size_t field_count) {
+  graphion_struct_type_value *type_value;
+  size_t i;
+
+  if (value == NULL || name == NULL || fields == NULL || field_count == 0U || strlen(name) >= 64U) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  type_value = vm_struct_type_create();
+  if (type_value == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  memcpy(type_value->name, name, strlen(name) + 1U);
+  type_value->fields = (graphion_struct_field_value *)calloc(field_count, sizeof(*type_value->fields));
+  if (type_value->fields == NULL) {
+    free(type_value);
+    return GVM_ERR_INVALID_ARG;
+  }
+  type_value->field_count = field_count;
+  for (i = 0U; i < field_count; ++i) {
+    if (fields[i].name[0] == '\0' || fields[i].type_name[0] == '\0') {
+      vm_value_dispose_owned(&(graphion_vm_value){GVM_VALUE_STRUCT_TYPE, {0}, {.ref_value = type_value}});
+      return GVM_ERR_INVALID_ARG;
+    }
+    memcpy(&type_value->fields[i], &fields[i], sizeof(type_value->fields[i]));
+    if (fields[i].has_default) {
+      int rc = vm_value_clone(&type_value->fields[i].default_value, &fields[i].default_value);
+      if (rc != GVM_OK) {
+        graphion_vm_value cleanup;
+        vm_value_clear(&cleanup);
+        cleanup.kind = GVM_VALUE_STRUCT_TYPE;
+        cleanup.as.ref_value = type_value;
+        vm_value_dispose_owned(&cleanup);
+        return rc;
+      }
+    }
+  }
+  vm_value_dispose_owned(value);
+  value->kind = GVM_VALUE_STRUCT_TYPE;
+  value->as.ref_value = type_value;
+  return GVM_OK;
+}
+
+int vm_value_instantiate_struct(graphion_vm_value *out,
+                                const graphion_vm_value *type_value,
+                                const graphion_vm_value *overrides) {
+  const graphion_struct_type_value *type;
+  graphion_struct_instance_value *instance;
+  graphion_vm_value fields_dict;
+  graphion_vm_dict *override_dict;
+  size_t i;
+  int rc;
+
+  if (out == NULL || type_value == NULL || overrides == NULL || type_value->kind != GVM_VALUE_STRUCT_TYPE ||
+      overrides->kind != GVM_VALUE_DICT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  type = (const graphion_struct_type_value *)type_value->as.ref_value;
+  if (type == NULL) {
+    return GVM_ERR_INVALID_ARG;
+  }
+  override_dict = (graphion_vm_dict *)overrides->as.ref_value;
+  if (override_dict != NULL) {
+    for (i = 0U; i < override_dict->count; ++i) {
+      const char *key = override_dict->entries[i].key != NULL ? override_dict->entries[i].key : "";
+      if (vm_struct_field_index(type, key) < 0) {
+        return GVM_ERR_MISSING_KEY;
+      }
+    }
+  }
+
+  vm_value_clear(&fields_dict);
+  rc = vm_value_set_empty_dict_value(&fields_dict);
+  if (rc != GVM_OK) {
+    return rc;
+  }
+  for (i = 0U; i < type->field_count; ++i) {
+    graphion_vm_value field_value;
+    const graphion_struct_field_value *field = &type->fields[i];
+    vm_value_clear(&field_value);
+    rc = vm_value_dict_get_clone(overrides, field->name, &field_value);
+    if (rc == GVM_ERR_MISSING_KEY && field->has_default) {
+      rc = vm_value_clone(&field_value, &field->default_value);
+    }
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&fields_dict);
+      return rc;
+    }
+    if (!vm_struct_value_matches_type(&field_value, field->type_name)) {
+      vm_value_dispose_owned(&field_value);
+      vm_value_dispose_owned(&fields_dict);
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    rc = vm_value_dict_set_clone(&fields_dict, field->name, &field_value);
+    vm_value_dispose_owned(&field_value);
+    if (rc != GVM_OK) {
+      vm_value_dispose_owned(&fields_dict);
+      return rc;
+    }
+  }
+
+  instance = vm_struct_instance_create();
+  if (instance == NULL) {
+    vm_value_dispose_owned(&fields_dict);
+    return GVM_ERR_INVALID_ARG;
+  }
+  memcpy(instance->type_name, type->name, sizeof(instance->type_name));
+  instance->fields = fields_dict;
+  vm_value_dispose_owned(out);
+  out->kind = GVM_VALUE_STRUCT;
+  out->as.ref_value = instance;
+  return GVM_OK;
+}
+
 int vm_values_deep_equal(const graphion_vm_value *lhs,
                          const graphion_vm_value *rhs,
                          int *compatible_out,
@@ -1022,6 +1291,8 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
   graphion_vm_list *rhs_list;
   graphion_vm_dict *lhs_dict;
   graphion_vm_dict *rhs_dict;
+  graphion_struct_instance_value *lhs_struct;
+  graphion_struct_instance_value *rhs_struct;
 
   if (lhs == NULL || rhs == NULL || compatible_out == NULL || equal_out == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -1149,6 +1420,26 @@ int vm_values_deep_equal(const graphion_vm_value *lhs,
       }
     }
     *equal_out = 1;
+    return GVM_OK;
+  }
+  if (lhs->kind == GVM_VALUE_STRUCT && rhs->kind == GVM_VALUE_STRUCT) {
+    int nested_compatible = 0;
+    int nested_equal = 0;
+    lhs_struct = (graphion_struct_instance_value *)lhs->as.ref_value;
+    rhs_struct = (graphion_struct_instance_value *)rhs->as.ref_value;
+    if (lhs_struct == NULL || rhs_struct == NULL || strcmp(lhs_struct->type_name, rhs_struct->type_name) != 0) {
+      *equal_out = 0;
+      return GVM_OK;
+    }
+    if (vm_values_deep_equal(&lhs_struct->fields,
+                             &rhs_struct->fields,
+                             &nested_compatible,
+                             &nested_equal) != GVM_OK ||
+        !nested_compatible) {
+      *compatible_out = 0;
+      return GVM_OK;
+    }
+    *equal_out = nested_equal;
     return GVM_OK;
   }
   if (!vm_value_is_sequence_kind(lhs->kind) || !vm_value_is_sequence_kind(rhs->kind) || lhs->kind != rhs->kind) {
@@ -1637,6 +1928,42 @@ int vm_list_get_element(graphion_vm *vm, uint8_t list_reg, uint8_t index_reg) {
   if (vm == NULL || !is_valid_reg(list_reg) || !is_valid_reg(index_reg)) {
     return GVM_ERR_INVALID_REG;
   }
+  if (vm->regs[list_reg].kind == GVM_VALUE_STRUCT) {
+    graphion_struct_instance_value *instance = (graphion_struct_instance_value *)vm->regs[list_reg].as.ref_value;
+    graphion_vm_dict *fields;
+    const graphion_vm_value *field_item;
+    size_t index;
+    graphion_vm_value field_clone;
+    const char *key;
+    if (instance == NULL) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    if (vm->regs[index_reg].kind != GVM_VALUE_STRING) {
+      return GVM_ERR_TYPE_MISMATCH;
+    }
+    fields = (graphion_vm_dict *)instance->fields.as.ref_value;
+    if (fields == NULL) {
+      return GVM_ERR_MISSING_KEY;
+    }
+    key = vm->regs[index_reg].as.string_value != NULL ? vm->regs[index_reg].as.string_value : "";
+    index = vm_dict_find_index(fields, key);
+    if (index == (size_t)-1) {
+      return GVM_ERR_MISSING_KEY;
+    }
+    field_item = &fields->entries[index].value;
+    if (field_item->kind == GVM_VALUE_STRING) {
+      return vm_reg_set_string_copy(vm,
+                                    list_reg,
+                                    field_item->as.string_value != NULL ? field_item->as.string_value : "");
+    }
+    vm_value_clear(&field_clone);
+    if (vm_value_clone(&field_clone, field_item) != GVM_OK) {
+      return GVM_ERR_INVALID_ARG;
+    }
+    vm_free_owned_reg_string(vm, list_reg);
+    vm->regs[list_reg] = field_clone;
+    return GVM_OK;
+  }
   if (vm->regs[list_reg].kind == GVM_VALUE_DICT) {
     return vm_dict_get_element(vm, list_reg, index_reg);
   }
@@ -1777,6 +2104,8 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
   size_t i;
   graphion_vm_list *list;
   graphion_vm_dict *dict;
+  graphion_struct_type_value *struct_type;
+  graphion_struct_instance_value *struct_instance;
 
   if (value == NULL || len_out == NULL) {
     return GVM_ERR_INVALID_ARG;
@@ -1993,6 +2322,29 @@ int vm_value_text_len(const graphion_vm_value *value, size_t *len_out) {
       }
       *len_out = total;
       return GVM_OK;
+    case GVM_VALUE_STRUCT_TYPE:
+      struct_type = (graphion_struct_type_value *)value->as.ref_value;
+      written = snprintf(buffer,
+                         sizeof(buffer),
+                         "struct %s(fields=%zu)\n",
+                         struct_type != NULL ? struct_type->name : "",
+                         struct_type != NULL ? struct_type->field_count : 0U);
+      if (written < 0 || (size_t)written >= sizeof(buffer)) {
+        return GVM_ERR_OUTPUT_UNBOUND;
+      }
+      *len_out = (size_t)written;
+      return GVM_OK;
+    case GVM_VALUE_STRUCT:
+      struct_instance = (graphion_struct_instance_value *)value->as.ref_value;
+      if (struct_instance == NULL) {
+        *len_out = 9U;
+        return GVM_OK;
+      }
+      if (vm_value_text_len(&struct_instance->fields, &len) != GVM_OK) {
+        return GVM_ERR_TYPE_MISMATCH;
+      }
+      *len_out = strlen(struct_instance->type_name) + len;
+      return GVM_OK;
     default:
       return GVM_ERR_TYPE_MISMATCH;
   }
@@ -2096,6 +2448,22 @@ static int vm_write_dict_inline(const graphion_output_sink *output, const graphi
   return vm_write_bytes_sink(output, "}", 1U);
 }
 
+static int vm_write_struct_inline(const graphion_output_sink *output, const graphion_vm_value *value) {
+  const graphion_struct_instance_value *instance;
+
+  if (value == NULL || value->kind != GVM_VALUE_STRUCT) {
+    return GVM_ERR_TYPE_MISMATCH;
+  }
+  instance = (const graphion_struct_instance_value *)value->as.ref_value;
+  if (instance == NULL) {
+    return vm_write_bytes_sink(output, "struct{}", 8U);
+  }
+  if (vm_write_bytes_sink(output, instance->type_name, strlen(instance->type_name)) != GVM_OK) {
+    return GVM_ERR_OUTPUT_UNBOUND;
+  }
+  return vm_write_dict_inline(output, &instance->fields);
+}
+
 static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
                                          const graphion_vm_value *value,
                                          int string_as_list_item) {
@@ -2150,6 +2518,21 @@ static int vm_write_value_sink_inline_ex(const graphion_output_sink *output,
       return vm_write_tuple_inline(output, value);
     case GVM_VALUE_SET:
       return vm_write_set_inline(output, value);
+    case GVM_VALUE_STRUCT_TYPE:
+      {
+        const graphion_struct_type_value *type_value = (const graphion_struct_type_value *)value->as.ref_value;
+        written = snprintf(buffer,
+                           sizeof(buffer),
+                           "struct %s(fields=%zu)",
+                           type_value != NULL ? type_value->name : "",
+                           type_value != NULL ? type_value->field_count : 0U);
+        if (written < 0 || (size_t)written >= sizeof(buffer)) {
+          return GVM_ERR_OUTPUT_UNBOUND;
+        }
+        return vm_write_bytes_sink(output, buffer, (size_t)written);
+      }
+    case GVM_VALUE_STRUCT:
+      return vm_write_struct_inline(output, value);
     case GVM_VALUE_GRAPH_REF:
       {
         const graphion_csr_graph *graph = (const graphion_csr_graph *)value->as.ref_value;

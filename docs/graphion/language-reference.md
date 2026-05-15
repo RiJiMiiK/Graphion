@@ -22,10 +22,12 @@ Current supported top-level statements:
 - compound assignment
 - graph declaration
 - hypergraph declaration
+- struct declaration
 - `if` / `elif` / `else`
 - `match`
 - `print(...)`
 - graph mutation with `add_node(...)` and `add_edge(...)`
+- hypergraph mutation with `add_vertex(...)` and `add_hyperedge(...)`
 
 Examples:
 
@@ -34,6 +36,9 @@ count = 42
 count += 1
 graph G;
 hypergraph H;
+struct Player:
+    id: int
+    name: string = "unknown"
 
 if true:
     count += 1
@@ -47,7 +52,7 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, `graph`, and `hypergraph`.
+Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, `struct`, `graph`, and `hypergraph`.
 
 For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
@@ -159,6 +164,7 @@ Graphion currently supports literals for:
 - `dict`
 - `tuple`
 - `set`
+- `struct`
 - `graph`
 
 For the exact literal forms and examples, see [Types](types.md).
@@ -289,6 +295,34 @@ Current hypergraph declaration rules:
 - hypergraph structure mutation statements include `add_vertex` and `add_hyperedge`
 - hypergraph attribute mutation statements include `set_vertex_attrs` and `set_hyperedge_attrs`
 - hypergraph removal mutation statements include `remove_vertex` and `remove_hyperedge`
+
+Struct declaration:
+
+```gion
+struct Player:
+    id: int
+    name: string = "unknown"
+    score: float = 0.0
+
+alice = Player {"id": 1, "name": "Alice", "score": 42.5}
+bob = Player {"id": 2}
+```
+
+Current struct declaration rules:
+
+- the declaration shape is `struct Name:` followed by an indented field block
+- `Name` must be a valid identifier
+- fields use `field: type`
+- defaulted fields use `field: type = value`
+- supported field types are `int`, `float`, `bool`, `string`, `bits`, `list`, `dict`, `tuple`, `set`, `graph`, `hypergraph`, `any`, and previously declared struct type names
+- field defaults are validated against the declared field type
+- struct instances use `Name {"field": value}`
+- omitted defaulted fields are filled automatically
+- missing required fields, unknown fields, and wrong field types are runtime errors
+- field lookup uses the same index syntax as dictionaries, such as `player["name"]`
+- `len(struct_instance)` returns the number of fields
+- struct types print as `struct Name(fields=N)`
+- struct instances print as `Name{"field": value}`
 
 Graph mutation statements:
 

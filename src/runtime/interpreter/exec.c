@@ -48,6 +48,11 @@ typedef struct {
   int has_edge_attr_defaults;
 } runtime_graph_builder;
 
+typedef struct {
+  graphion_struct_field_value fields[GRAPHION_RUNTIME_PROGRAM_MAX];
+  size_t field_count;
+} runtime_struct_builder;
+
 static int graph_header_ends_with_colon(const char *text) {
   const char *cursor = text;
   skip_spaces(&cursor);
@@ -67,6 +72,21 @@ static int hypergraph_header_ends_with_colon(const char *text) {
   const char *cursor = text;
   skip_spaces(&cursor);
   if (strncmp(cursor, "hypergraph", 10U) != 0 || is_ident_char(cursor[10])) {
+    return 0;
+  }
+  while (*cursor != '\0') {
+    cursor++;
+  }
+  while (cursor > text && (cursor[-1] == ' ' || cursor[-1] == '\t' || cursor[-1] == '\r')) {
+    cursor--;
+  }
+  return cursor > text && cursor[-1] == ':';
+}
+
+static int struct_header_ends_with_colon(const char *text) {
+  const char *cursor = text;
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "struct", 6U) != 0 || is_ident_char(cursor[6])) {
     return 0;
   }
   while (*cursor != '\0') {
@@ -121,6 +141,30 @@ static void runtime_graph_builder_dispose(runtime_graph_builder *builder) {
     if (builder->hyperedges[i].has_attrs) {
       vm_value_dispose_owned(&builder->hyperedges[i].attrs);
       builder->hyperedges[i].has_attrs = 0;
+    }
+  }
+}
+
+static void runtime_struct_builder_init(runtime_struct_builder *builder) {
+  size_t i;
+  if (builder == NULL) {
+    return;
+  }
+  memset(builder, 0, sizeof(*builder));
+  for (i = 0U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
+    vm_value_set_none(&builder->fields[i].default_value);
+  }
+}
+
+static void runtime_struct_builder_dispose(runtime_struct_builder *builder) {
+  size_t i;
+  if (builder == NULL) {
+    return;
+  }
+  for (i = 0U; i < builder->field_count; ++i) {
+    if (builder->fields[i].has_default) {
+      vm_value_dispose_owned(&builder->fields[i].default_value);
+      builder->fields[i].has_default = 0U;
     }
   }
 }
@@ -1392,6 +1436,108 @@ static int parse_hypergraph_name_from_header(const char *text,
   return GINT_OK;
 }
 
+static int parse_struct_name_from_header(const char *text,
+                                         char target[GRAPHION_RUNTIME_NAME_MAX],
+                                         unsigned int line,
+                                         graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "struct", 6U) != 0 || is_ident_char(cursor[6])) {
+    return fail(diagnostic, line, 1U, "expected 'struct'", GINT_ERR_PARSE);
+  }
+  cursor += 6;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected struct name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    return fail(diagnostic, line, 1U, "expected ':' after struct declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after struct declaration", GINT_ERR_PARSE);
+  }
+  return GINT_OK;
+}
+
+static int runtime_struct_type_name_is_builtin(const char *name) {
+  static const char *supported[] = {"int",   "float", "bool",  "string", "bits",  "list",
+                                    "dict",  "tuple", "set",   "graph",  "hypergraph", "any"};
+  size_t i;
+  if (name == NULL || *name == '\0') {
+    return 0;
+  }
+  for (i = 0U; i < sizeof(supported) / sizeof(supported[0]); ++i) {
+    if (strcmp(name, supported[i]) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int runtime_struct_type_name_is_supported(const char *name, const graphion_runtime_scope *scope) {
+  const graphion_runtime_value *value;
+  if (runtime_struct_type_name_is_builtin(name)) {
+    return 1;
+  }
+  value = graphion_runtime_scope_find(scope, name);
+  return value != NULL && value->kind == GVM_VALUE_STRUCT_TYPE;
+}
+
+static int runtime_value_matches_struct_type(const graphion_vm_value *value, const char *type_name) {
+  if (value == NULL || type_name == NULL || strcmp(type_name, "any") == 0) {
+    return 1;
+  }
+  if (strcmp(type_name, "int") == 0) {
+    return value->kind == GVM_VALUE_INT;
+  }
+  if (strcmp(type_name, "float") == 0) {
+    return value->kind == GVM_VALUE_FLOAT;
+  }
+  if (strcmp(type_name, "bool") == 0) {
+    return value->kind == GVM_VALUE_BOOL;
+  }
+  if (strcmp(type_name, "string") == 0) {
+    return value->kind == GVM_VALUE_STRING;
+  }
+  if (strcmp(type_name, "bits") == 0) {
+    return value->kind == GVM_VALUE_BITS;
+  }
+  if (strcmp(type_name, "list") == 0) {
+    return value->kind == GVM_VALUE_LIST;
+  }
+  if (strcmp(type_name, "dict") == 0) {
+    return value->kind == GVM_VALUE_DICT;
+  }
+  if (strcmp(type_name, "tuple") == 0) {
+    return value->kind == GVM_VALUE_TUPLE;
+  }
+  if (strcmp(type_name, "set") == 0) {
+    return value->kind == GVM_VALUE_SET;
+  }
+  if (strcmp(type_name, "graph") == 0) {
+    return value->kind == GVM_VALUE_GRAPH_REF;
+  }
+  if (strcmp(type_name, "hypergraph") == 0) {
+    return value->kind == GVM_VALUE_HYPERGRAPH_REF;
+  }
+  if (value->kind == GVM_VALUE_STRUCT) {
+    const graphion_struct_instance_value *instance = (const graphion_struct_instance_value *)value->as.ref_value;
+    return instance != NULL && strcmp(instance->type_name, type_name) == 0;
+  }
+  return 0;
+}
+
 static int build_runtime_graph_value(const runtime_graph_builder *builder,
                                      graphion_vm_value *value_out,
                                      unsigned int line,
@@ -1878,6 +2024,108 @@ static int build_runtime_hypergraph_value(const runtime_graph_builder *builder,
   return GINT_OK;
 }
 
+static int parse_struct_field_line(const char *text,
+                                   runtime_struct_builder *builder,
+                                   graphion_runtime_scope *scope,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = text;
+  graphion_struct_field_value *field;
+  size_t i;
+  int rc;
+
+  if (text == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  if (builder->field_count >= GRAPHION_RUNTIME_PROGRAM_MAX) {
+    return fail(diagnostic, line, 1U, "too many struct fields", GINT_ERR_CAPACITY);
+  }
+  field = &builder->fields[builder->field_count];
+  rc = parse_identifier_token(&cursor, field->name, sizeof(field->name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  for (i = 0U; i < builder->field_count; ++i) {
+    if (strcmp(builder->fields[i].name, field->name) == 0) {
+      return fail(diagnostic, line, 1U, "duplicate struct field", GINT_ERR_PARSE);
+    }
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ':') {
+    return fail(diagnostic, line, 1U, "expected ':' after struct field name", GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, field->type_name, sizeof(field->type_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (!runtime_struct_type_name_is_supported(field->type_name, scope)) {
+    return fail(diagnostic, line, 1U, "unsupported struct field type", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor == '=') {
+    cursor++;
+    vm_value_set_none(&field->default_value);
+    rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &field->default_value);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (!runtime_value_matches_struct_type(&field->default_value, field->type_name)) {
+      vm_value_dispose_owned(&field->default_value);
+      return fail(diagnostic, line, 1U, "struct field default has wrong type", GINT_ERR_PARSE);
+    }
+    field->has_default = 1U;
+  } else if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after struct field", GINT_ERR_PARSE);
+  }
+  builder->field_count += 1U;
+  return GINT_OK;
+}
+
+static int collect_struct_block(const runtime_source_line *lines,
+                                size_t count,
+                                size_t start_index,
+                                unsigned int current_indent,
+                                size_t *end_index_out,
+                                runtime_struct_builder *builder,
+                                graphion_runtime_scope *scope,
+                                unsigned int line,
+                                graphion_runtime_diagnostic *diagnostic) {
+  size_t body_start;
+  size_t body_end;
+  unsigned int body_indent;
+  size_t i;
+
+  if (lines == NULL || end_index_out == NULL || builder == NULL || scope == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  runtime_struct_builder_init(builder);
+  body_start = find_next_nonblank_line(lines, count, start_index + 1U);
+  if (body_start >= count || lines[body_start].indent <= current_indent) {
+    return fail(diagnostic, line, 1U, "expected indented struct field block", GINT_ERR_PARSE);
+  }
+  body_indent = lines[body_start].indent;
+  body_end = scan_block_end(lines, count, body_start, body_indent);
+  for (i = body_start; i < body_end; ++i) {
+    int rc;
+    if (line_is_blank(&lines[i])) {
+      continue;
+    }
+    if (lines[i].indent != body_indent) {
+      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+    }
+    rc = parse_struct_field_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  if (builder->field_count == 0U) {
+    return fail(diagnostic, line, 1U, "struct requires at least one field", GINT_ERR_PARSE);
+  }
+  *end_index_out = body_end - 1U;
+  return GINT_OK;
+}
+
 static int collect_graph_block(const runtime_source_line *lines,
                                size_t count,
                                size_t start_index,
@@ -2129,12 +2377,44 @@ static int execute_graph_block_declaration(const char *statement_source,
   if (scope->globals[target_index].kind == GVM_VALUE_LIST || scope->globals[target_index].kind == GVM_VALUE_DICT ||
       scope->globals[target_index].kind == GVM_VALUE_TUPLE || scope->globals[target_index].kind == GVM_VALUE_SET ||
       scope->globals[target_index].kind == GVM_VALUE_GRAPH_REF ||
-      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF) {
+      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF ||
+      scope->globals[target_index].kind == GVM_VALUE_STRUCT_TYPE || scope->globals[target_index].kind == GVM_VALUE_STRUCT) {
     vm_value_dispose_owned(&scope->globals[target_index]);
   } else {
     vm_value_set_none(&scope->globals[target_index]);
   }
   scope->globals[target_index] = graph_value;
+  return GINT_OK;
+}
+
+static int runtime_scope_set_owned_value(graphion_runtime_scope *scope,
+                                         const char *name,
+                                         graphion_vm_value *value,
+                                         unsigned int line,
+                                         graphion_runtime_diagnostic *diagnostic) {
+  int existing;
+  size_t target_index;
+  int rc;
+
+  if (scope == NULL || name == NULL || value == NULL) {
+    return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
+  }
+  existing = scope_find_global_index(scope, name);
+  if (existing >= 0) {
+    target_index = (size_t)existing;
+  } else {
+    rc = graphion_runtime_scope_reserve_globals(scope, scope->global_count + 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    target_index = scope->global_count;
+    copy_name(scope->global_names[target_index], name);
+    scope->global_count += 1U;
+  }
+  runtime_free_string(&scope->owned_string_values[target_index]);
+  vm_value_dispose_owned(&scope->globals[target_index]);
+  scope->globals[target_index] = *value;
+  vm_value_set_none(value);
   return GINT_OK;
 }
 
@@ -2175,12 +2455,113 @@ static int execute_hypergraph_block_declaration(const char *statement_source,
   if (scope->globals[target_index].kind == GVM_VALUE_LIST || scope->globals[target_index].kind == GVM_VALUE_DICT ||
       scope->globals[target_index].kind == GVM_VALUE_TUPLE || scope->globals[target_index].kind == GVM_VALUE_SET ||
       scope->globals[target_index].kind == GVM_VALUE_GRAPH_REF ||
-      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF) {
+      scope->globals[target_index].kind == GVM_VALUE_HYPERGRAPH_REF ||
+      scope->globals[target_index].kind == GVM_VALUE_STRUCT_TYPE || scope->globals[target_index].kind == GVM_VALUE_STRUCT) {
     vm_value_dispose_owned(&scope->globals[target_index]);
   } else {
     vm_value_set_none(&scope->globals[target_index]);
   }
   scope->globals[target_index] = hypergraph_value;
+  return GINT_OK;
+}
+
+static int execute_struct_block_declaration(const char *statement_source,
+                                            const runtime_struct_builder *builder,
+                                            graphion_runtime_scope *scope,
+                                            unsigned int line,
+                                            graphion_runtime_diagnostic *diagnostic) {
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_vm_value struct_value;
+  int rc;
+
+  vm_value_set_none(&struct_value);
+  rc = parse_struct_name_from_header(statement_source, target, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = vm_value_set_struct_type(&struct_value, target, builder->fields, builder->field_count);
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to create struct type", GINT_ERR_CAPACITY);
+  }
+  return runtime_scope_set_owned_value(scope, target, &struct_value, line, diagnostic);
+}
+
+static int execute_struct_instance_assignment(const char *statement_source,
+                                              graphion_runtime_scope *scope,
+                                              unsigned int line,
+                                              graphion_runtime_diagnostic *diagnostic,
+                                              int *handled_out) {
+  const char *cursor = statement_source;
+  const char *dict_start;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  char type_name[GRAPHION_RUNTIME_NAME_MAX];
+  const graphion_runtime_value *type_value;
+  graphion_vm_value overrides;
+  graphion_vm_value instance;
+  int rc;
+
+  if (handled_out != NULL) {
+    *handled_out = 0;
+  }
+  vm_value_set_none(&overrides);
+  vm_value_set_none(&instance);
+  rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '=') {
+    return GINT_OK;
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (!is_ident_start_char(*cursor)) {
+    return GINT_OK;
+  }
+  rc = parse_identifier_token(&cursor, type_name, sizeof(type_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return GINT_OK;
+  }
+  type_value = graphion_runtime_scope_find(scope, type_name);
+  if (type_value == NULL || type_value->kind != GVM_VALUE_STRUCT_TYPE) {
+    return GINT_OK;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '{') {
+    return fail(diagnostic, line, 1U, "expected struct instance field dictionary", GINT_ERR_PARSE);
+  }
+  dict_start = cursor;
+  rc = evaluate_expression_text_to_value(dict_start, strlen(dict_start), scope, line, diagnostic, &overrides);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (overrides.kind != GVM_VALUE_DICT) {
+    vm_value_dispose_owned(&overrides);
+    return fail(diagnostic, line, 1U, "struct instance fields must be a dict literal", GINT_ERR_PARSE);
+  }
+  rc = vm_value_instantiate_struct(&instance, type_value, &overrides);
+  vm_value_dispose_owned(&overrides);
+  if (rc == GVM_ERR_MISSING_KEY) {
+    return fail(diagnostic, line, 1U, "missing or unknown struct field", GINT_ERR_RUN);
+  }
+  if (rc == GVM_ERR_TYPE_MISMATCH) {
+    return fail(diagnostic, line, 1U, "struct field value has wrong type", GINT_ERR_RUN);
+  }
+  if (rc != GVM_OK) {
+    return fail(diagnostic, line, 1U, "failed to create struct instance", GINT_ERR_CAPACITY);
+  }
+  if (is_reserved_name(target)) {
+    vm_value_dispose_owned(&instance);
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  rc = runtime_scope_set_owned_value(scope, target, &instance, line, diagnostic);
+  if (rc != GINT_OK) {
+    vm_value_dispose_owned(&instance);
+    return rc;
+  }
+  if (handled_out != NULL) {
+    *handled_out = 1;
+  }
   return GINT_OK;
 }
 
@@ -2359,11 +2740,14 @@ static int execute_statement_source_line(const runtime_source_line *lines,
   graphion_runtime_program program;
   size_t statement_end = *index;
   runtime_graph_builder graph_builder;
+  runtime_struct_builder struct_builder;
   int graph_block_declaration = 0;
   int hypergraph_block_declaration = 0;
+  int struct_block_declaration = 0;
   int rc;
 
   runtime_graph_builder_init(&graph_builder);
+  runtime_struct_builder_init(&struct_builder);
   if (strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5]) &&
       graph_header_ends_with_colon(statement_source)) {
     graph_block_declaration = 1;
@@ -2396,7 +2780,24 @@ static int execute_statement_source_line(const runtime_source_line *lines,
       runtime_graph_builder_dispose(&graph_builder);
       return rc;
     }
+  } else if (strncmp(statement_source, "struct", 6U) == 0 && !is_ident_char(statement_source[6]) &&
+             struct_header_ends_with_colon(statement_source)) {
+    struct_block_declaration = 1;
+    rc = collect_struct_block(lines,
+                              count,
+                              *index,
+                              lines[*index].indent,
+                              &statement_end,
+                              &struct_builder,
+                              scope,
+                              lines[*index].line,
+                              diagnostic);
+    if (rc != GINT_OK) {
+      runtime_struct_builder_dispose(&struct_builder);
+      return rc;
+    }
   } else if (!(strncmp(statement_source, "print", 5U) == 0 && !is_ident_char(statement_source[5])) &&
+             !(strncmp(statement_source, "struct", 6U) == 0 && !is_ident_char(statement_source[6])) &&
              !(strncmp(statement_source, "hypergraph", 10U) == 0 && !is_ident_char(statement_source[10])) &&
              !(strncmp(statement_source, "graph", 5U) == 0 && !is_ident_char(statement_source[5])) &&
              !(strncmp(statement_source, "add_node", 8U) == 0 && !is_ident_char(statement_source[8])) &&
@@ -2442,6 +2843,26 @@ static int execute_statement_source_line(const runtime_source_line *lines,
     }
     *index = statement_end + 1U;
     return GINT_OK;
+  }
+  if (struct_block_declaration) {
+    rc = execute_struct_block_declaration(statement_source, &struct_builder, scope, lines[*index].line, diagnostic);
+    runtime_struct_builder_dispose(&struct_builder);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    *index = statement_end + 1U;
+    return GINT_OK;
+  }
+  {
+    int struct_assignment_handled = 0;
+    rc = execute_struct_instance_assignment(statement_source, scope, lines[*index].line, diagnostic, &struct_assignment_handled);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (struct_assignment_handled) {
+      *index = statement_end + 1U;
+      return GINT_OK;
+    }
   }
   rc = seed_program_from_scope(&program, scope, lines[*index].line, diagnostic);
   if (rc != GINT_OK) {

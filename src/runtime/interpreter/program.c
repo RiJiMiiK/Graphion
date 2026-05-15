@@ -338,7 +338,8 @@ void graphion_runtime_scope_dispose(graphion_runtime_scope *scope) {
     runtime_free_string(&scope->owned_string_values[i]);
     if (scope->globals[i].kind == GVM_VALUE_LIST || scope->globals[i].kind == GVM_VALUE_DICT ||
         scope->globals[i].kind == GVM_VALUE_TUPLE || scope->globals[i].kind == GVM_VALUE_SET ||
-        scope->globals[i].kind == GVM_VALUE_GRAPH_REF || scope->globals[i].kind == GVM_VALUE_HYPERGRAPH_REF) {
+        scope->globals[i].kind == GVM_VALUE_GRAPH_REF || scope->globals[i].kind == GVM_VALUE_HYPERGRAPH_REF ||
+        scope->globals[i].kind == GVM_VALUE_STRUCT_TYPE || scope->globals[i].kind == GVM_VALUE_STRUCT) {
       vm_value_dispose_owned(&scope->globals[i]);
     }
   }
@@ -387,7 +388,9 @@ void graphion_runtime_program_dispose(graphion_runtime_program *program) {
     runtime_free_string(&program->owned_const_strings[i]);
     if (program->const_pool[i].kind == GVM_VALUE_LIST || program->const_pool[i].kind == GVM_VALUE_DICT ||
         program->const_pool[i].kind == GVM_VALUE_TUPLE || program->const_pool[i].kind == GVM_VALUE_SET ||
-        program->const_pool[i].kind == GVM_VALUE_GRAPH_REF || program->const_pool[i].kind == GVM_VALUE_HYPERGRAPH_REF) {
+        program->const_pool[i].kind == GVM_VALUE_GRAPH_REF ||
+        program->const_pool[i].kind == GVM_VALUE_HYPERGRAPH_REF ||
+        program->const_pool[i].kind == GVM_VALUE_STRUCT_TYPE || program->const_pool[i].kind == GVM_VALUE_STRUCT) {
       vm_value_dispose_owned(&program->const_pool[i]);
     }
     vm_value_set_none(&program->const_pool[i]);

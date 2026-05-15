@@ -1,0 +1,15 @@
+struct Player:
+    id: int
+    name: string = "unknown"
+    score: float = 0.0
+    tags: list = []
+    metadata: dict = {}
+
+alice = Player {"id": 1, "name": "Alice", "score": 42.5}
+bob = Player {"id": 2}
+
+print(Player)
+print(alice)
+print(bob)
+print(bob["name"])
+print(len(bob))

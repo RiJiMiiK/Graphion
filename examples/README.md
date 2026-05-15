@@ -34,6 +34,8 @@ Files:
   - first-class graph declarations with `graph Name;`, node blocks, node/edge attributes, undirected/directed edges, graph inspection/listing builtins, graph attribute lookup builtins, basic membership/neighbor queries, structural graph mutation including removal, and graph attribute mutation
 - `12_hypergraphs.gion`
   - first-class hypergraph declarations with `hypergraph Name;`, vertex blocks, vertex/hyperedge attributes, hyperedge lists, hypergraph inspection/listing builtins, membership/incidence queries, structural mutation including removal, and hypergraph attribute mutation
+- `13_structs.gion`
+  - first-class `struct Name:` declarations, required/defaulted typed fields, `Name {"field": value}` instances, field lookup, printing, and `len(...)`
 
 Run any example with:
 

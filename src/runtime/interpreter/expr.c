@@ -105,6 +105,64 @@ static int parenthesized_form_is_tuple(const char *cursor, int *is_tuple_out, in
   return 1;
 }
 
+static int try_parse_struct_instance_literal(const char **cursor,
+                                             graphion_runtime_program *program,
+                                             parsed_expr_result *result_out,
+                                             uint8_t base_reg,
+                                             unsigned int line,
+                                             graphion_runtime_diagnostic *diagnostic) {
+  const char *saved;
+  const char *scan;
+  char type_name[GRAPHION_RUNTIME_NAME_MAX];
+  int global_index;
+  parsed_expr_result fields_expr;
+  int rc;
+
+  if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL ||
+      !is_ident_start_char(**cursor)) {
+    return 0;
+  }
+  saved = *cursor;
+  scan = saved;
+  rc = parse_identifier_token(&scan, type_name, sizeof(type_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    *cursor = saved;
+    return 0;
+  }
+  skip_spaces(&scan);
+  if (*scan != '{') {
+    *cursor = saved;
+    return 0;
+  }
+  global_index = program_find_global_index(program, type_name);
+  if (global_index < 0) {
+    *cursor = saved;
+    return fail(diagnostic, line, 1U, "unknown struct type", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  *cursor = scan;
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, base_reg, 0U, global_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = parse_dict_literal(cursor, program, &fields_expr, (uint8_t)(base_reg + 1U), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &fields_expr, (uint8_t)(base_reg + 1U), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, GVM_OP_STRUCT_NEW, base_reg, (uint8_t)(base_reg + 1U), 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  result_out->kind = EXPR_RESULT_REG;
+  result_out->reg_index = base_reg;
+  result_out->const_index = 0U;
+  result_out->global_index = 0U;
+  return 1;
+}
+
 static int parse_primary_expression(const char **cursor,
                                     graphion_runtime_program *program,
                                     parsed_expr_result *result_out,
@@ -117,7 +175,11 @@ static int parse_primary_expression(const char **cursor,
   int rc;
 
   skip_spaces(cursor);
-  if (strncmp(*cursor, "set", 3U) == 0 && !is_ident_char((*cursor)[3])) {
+  if ((rc = try_parse_struct_instance_literal(cursor, program, &lhs, base_reg, line, diagnostic)) != 0) {
+    if (rc < 0) {
+      return rc;
+    }
+  } else if (strncmp(*cursor, "set", 3U) == 0 && !is_ident_char((*cursor)[3])) {
     rc = parse_set_literal(cursor, program, &lhs, base_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;

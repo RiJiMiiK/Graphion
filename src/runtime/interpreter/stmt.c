@@ -936,6 +936,8 @@ int parse_statement_line(const char *line_text,
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
+  } else if (strncmp(line_cursor, "struct", 6U) == 0 && !is_ident_char(line_cursor[6])) {
+    rc = fail(diagnostic, line, 1U, "struct declaration requires ':' and an indented field block", GINT_ERR_PARSE);
   } else if (strncmp(line_cursor, "hypergraph", 10U) == 0 && !is_ident_char(line_cursor[10])) {
     rc = parse_hypergraph_declaration(line_cursor, program, line, diagnostic);
   } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {

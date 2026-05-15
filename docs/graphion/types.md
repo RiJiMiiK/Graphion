@@ -24,6 +24,7 @@ Graphion currently exposes these value kinds:
 - `dict`
 - `tuple`
 - `set`
+- `struct`
 - `graph`
 - `hypergraph`
 
@@ -166,6 +167,39 @@ Current `set` literals:
 - remove duplicate elements during construction
 - may contain nested container values
 - currently reject trailing commas
+
+### Structs
+
+```gion
+struct Player:
+    id: int
+    name: string = "unknown"
+    score: float = 0.0
+
+alice = Player {"id": 1, "name": "Alice", "score": 42.5}
+bob = Player {"id": 2}
+```
+
+Current `struct` declarations:
+
+- use `struct Name:` followed by an indented field block
+- define a fixed field schema
+- use required fields with `field: type`
+- use defaulted fields with `field: type = value`
+- support `int`, `float`, `bool`, `string`, `bits`, `list`, `dict`, `tuple`, `set`, `graph`, `hypergraph`, `any`, and previously declared struct type names as field types
+- validate default values against their declared field type
+
+Current `struct` instances:
+
+- use `Name {"field": value}`
+- fill omitted defaulted fields automatically
+- reject missing required fields
+- reject unknown fields
+- reject values whose type does not match the declared field type
+- support field lookup with `struct_expr["field"]`
+- support equality and inequality with instances of the same struct type
+- support `len(x)` as the number of fields
+- print as `Name{"field": value}`
 
 ### Graphs
 
@@ -390,6 +424,30 @@ Current set rules:
 - printing preserves first-insertion order for deterministic output
 - `set()` is the empty set
 - trailing commas are currently rejected
+
+### Structs
+
+`struct` values are fixed-field typed composites.
+
+Current struct support includes:
+
+- type declarations with `struct Name:`
+- required fields with `field: type`
+- defaulted fields with `field: type = value`
+- instance construction with `Name {"field": value}`
+- automatic filling of omitted defaulted fields
+- runtime validation for missing required fields, unknown fields, and wrong field types
+- field lookup with `struct_expr["field"]`
+- equality and inequality between instances of the same struct type
+- `len(x)`
+- printing as `Name{"field": value}`
+
+Current struct rules:
+
+- instance field dictionaries use string literal keys, like ordinary dict literals
+- container defaults are cloned per instance
+- direct user construction is limited to the `Name {...}` form
+- field mutation is not part of the first struct surface
 
 ### Graphs
 

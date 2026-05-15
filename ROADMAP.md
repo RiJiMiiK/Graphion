@@ -122,8 +122,13 @@ This branch is for active work on non-scalar language types.
     - missing vertices / hyperedges
     - invalid hyperedge vertex lists
     - partial attribute patches on vertices / hyperedges added after defaults
-- [ ] `record` / `struct`
-  - optional future typed composite if `dict` is too dynamic for some language features
+- [x] `struct`
+  - fixed-field typed composite for cases where `dict` is too dynamic
+  - declaration syntax: `struct Name:`
+  - required fields with `field: type`
+  - defaulted fields with `field: type = value`
+  - instance syntax: `Name {"field": value}`
+  - missing required fields, unknown fields, and wrong field types are runtime errors
 
 ## Future additions gated by other features
 
