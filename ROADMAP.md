@@ -122,8 +122,6 @@ This branch is for active work on non-scalar language types.
     - missing vertices / hyperedges
     - invalid hyperedge vertex lists
     - partial attribute patches on vertices / hyperedges added after defaults
-- [ ] `path` or `walk` value type
-  - useful if traversal results should become first-class language values
 - [ ] `record` / `struct`
   - optional future typed composite if `dict` is too dynamic for some language features
 
@@ -139,6 +137,10 @@ These items stay visible for traceability and future planning.
 
 ### Builtins gated by future types
 
+- [ ] future `path` value type
+  - reserved for traversal builtins such as `shortest_path`, `bfs_path`, or `dfs_path`
+  - not user-constructible directly in the first version
+  - intended print shape: `path(1 -> 2 -> 4)`
 - [ ] builtin `modf(x)`
   - needs a multi-value return shape such as a future list/tuple-like type
 - [ ] builtin `cis(x)`
