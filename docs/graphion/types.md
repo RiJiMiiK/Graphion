@@ -421,12 +421,12 @@ Graph algorithms from `.gion` will be added in later steps.
 
 `hypergraph` values are first-class hypergraph objects in `.gion`.
 
-Current hypergraph support is intentionally minimal:
+Current hypergraph support includes:
 
 - declaration with `hypergraph Name;`
 - declaration with `hypergraph Name:` and an indented vertex block
-- empty hypergraph values with zero nodes, zero hyperedges, and zero incidences
-- vertex-only hypergraph values with zero hyperedges and zero incidences
+- empty hypergraph values with zero vertices and zero hyperedges
+- vertex-only hypergraph values with zero hyperedges
 - hyperedges declared as vertex lists
 - hyperedge attributes with shared-key schema rules and optional `defaults hyperedge`
 - vertex attributes with shared-key schema rules and optional `defaults vertex`
@@ -443,8 +443,9 @@ Current hypergraph support is intentionally minimal:
 - structure mutation after initialization with `add_vertex` and `add_hyperedge`
 - attribute mutation after initialization with `set_vertex_attrs` and `set_hyperedge_attrs`
 - removal mutation after initialization with `remove_vertex` and `remove_hyperedge`
+- hardened runtime errors for unknown attribute keys, missing vertices / hyperedges, invalid hyperedge vertex lists, and partial attribute patches after defaults
 
-Hypergraph error coverage will be hardened in later steps.
+Hypergraph algorithms from `.gion` can be added in later steps.
 
 ### Bits
 

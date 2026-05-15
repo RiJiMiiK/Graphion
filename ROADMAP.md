@@ -79,7 +79,7 @@ This branch is for active work on non-scalar language types.
     - invalid `weight` types
     - missing nodes / edges
     - partial attribute patches on nodes / edges added after defaults
-- [ ] first-class `hypergraph` values in `.gion`
+- [x] first-class `hypergraph` values in `.gion`
   - distinct from backend-only VM/runtime support
   - [x] create an empty hypergraph with `hypergraph Name;`
   - [x] create hypergraph values with vertex blocks
