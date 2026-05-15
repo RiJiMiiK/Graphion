@@ -668,6 +668,141 @@ int test_gion_hypergraph_removal_mutation_statements(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_hypergraph_error_coverage(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    const char *message;
+  } error_cases[] = {
+      {"hypergraph H:\n"
+       "    defaults vertex {\"score\": 0}\n"
+       "    \"Alice\"\n"
+       "set_vertex_attrs(H, \"Alice\", {\"label\": \"start\"})\n",
+       GINT_ERR_RUN,
+       "incompatible operand types"},
+      {"hypergraph H:\n"
+       "    defaults hyperedge {\"kind\": \"group\"}\n"
+       "    [\"Alice\", \"Bob\"]\n"
+       "set_hyperedge_attrs(H, 0, {\"color\": \"blue\"})\n",
+       GINT_ERR_RUN,
+       "incompatible operand types"},
+      {"hypergraph H:\n"
+       "    \"Alice\"\n"
+       "set_vertex_attrs(H, \"Bob\", {\"label\": \"missing\"})\n",
+       GINT_ERR_RUN,
+       "failed to execute VM program"},
+      {"hypergraph H:\n"
+       "    [\"Alice\", \"Bob\"]\n"
+       "set_hyperedge_attrs(H, 9, {\"kind\": \"missing\"})\n",
+       GINT_ERR_RUN,
+       "invalid hyperedge id"},
+      {"hypergraph H:\n"
+       "    \"Alice\"\n"
+       "remove_vertex(H, \"Bob\")\n",
+       GINT_ERR_RUN,
+       "failed to execute VM program"},
+      {"hypergraph H:\n"
+       "    [\"Alice\", \"Bob\"]\n"
+       "remove_hyperedge(H, 0)\n"
+       "remove_hyperedge(H, 0)\n",
+       GINT_ERR_RUN,
+       "invalid hyperedge id"},
+      {"hypergraph H:\n"
+       "    []\n",
+       GINT_ERR_PARSE,
+       "hyperedge must contain at least one vertex"},
+      {"hypergraph H:\n"
+       "    [\"Alice\", true]\n",
+       GINT_ERR_PARSE,
+       "graph node variable must be int or string"},
+      {"hypergraph H:\n"
+       "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+       "    \"Alice\"\n"
+       "add_vertex(H, \"Bob\")\n"
+       "set_vertex_attrs(H, \"Bob\", {\"unknown\": 1})\n",
+       GINT_ERR_RUN,
+       "incompatible operand types"},
+      {"hypergraph H:\n"
+       "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
+       "    [\"Alice\", \"Bob\"]\n"
+       "add_hyperedge(H, [\"Bob\", \"Carol\"])\n"
+       "set_hyperedge_attrs(H, 1, {\"unknown\": 1})\n",
+       GINT_ERR_RUN,
+       "incompatible operand types"},
+  };
+  const char *vertex_defaults_source =
+      "hypergraph H:\n"
+      "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
+      "    \"Alice\"\n"
+      "add_vertex(H, \"Bob\")\n"
+      "set_vertex_attrs(H, \"Bob\", {\"score\": 10})\n"
+      "print(vertex_attrs(H, \"Bob\")[\"label\"])\n"
+      "print(vertex_attrs(H, \"Bob\")[\"score\"])\n";
+  const char *hyperedge_defaults_source =
+      "hypergraph H:\n"
+      "    defaults hyperedge {\"kind\": \"group\", \"color\": \"blue\"}\n"
+      "    [\"Alice\", \"Bob\"]\n"
+      "add_hyperedge(H, [\"Bob\", \"Carol\"])\n"
+      "set_hyperedge_attrs(H, 1, {\"color\": \"red\"})\n"
+      "print(hyperedge_attrs(H, 1)[\"kind\"])\n"
+      "print(hyperedge_attrs(H, 1)[\"color\"])\n";
+  char path[512];
+  char output[256];
+  graphion_runtime_scope defaults_scope;
+  graphion_runtime_diagnostic defaults_diagnostic;
+  size_t i;
+
+  for (i = 0U; i < sizeof(error_cases) / sizeof(error_cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(error_cases[i].source, &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != error_cases[i].expected_rc) {
+      return (int)(100 + i);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, error_cases[i].message) != 0) {
+      return (int)(200 + i);
+    }
+  }
+
+  graphion_runtime_scope_init(&defaults_scope);
+  if (test_capture_gion_output(vertex_defaults_source,
+                               "gion_hypergraph_error_vertex_defaults.txt",
+                               &defaults_scope,
+                               &defaults_diagnostic,
+                               path,
+                               sizeof(path),
+                               output,
+                               sizeof(output)) == 0) {
+    graphion_runtime_scope_dispose(&defaults_scope);
+    return 300;
+  }
+  graphion_runtime_scope_dispose(&defaults_scope);
+  if (strcmp(output, "unknown\n10\n") != 0) {
+    return 301;
+  }
+  graphion_runtime_scope_init(&defaults_scope);
+  if (test_capture_gion_output(hyperedge_defaults_source,
+                               "gion_hypergraph_error_hyperedge_defaults.txt",
+                               &defaults_scope,
+                               &defaults_diagnostic,
+                               path,
+                               sizeof(path),
+                               output,
+                               sizeof(output)) == 0) {
+    graphion_runtime_scope_dispose(&defaults_scope);
+    return 302;
+  }
+  graphion_runtime_scope_dispose(&defaults_scope);
+  if (strcmp(output, "group\nred\n") != 0) {
+    return 303;
+  }
+  return 0;
+}
+
 int test_gion_graph_node_block_declaration(void) {
   const char *source =
       "alpha = \"alpha\"\n"

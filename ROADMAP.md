@@ -117,7 +117,7 @@ This branch is for active work on non-scalar language types.
     - remove vertex
     - remove hyperedge
     - define how vertex removal affects incident hyperedges and attributes
-  - [ ] harden hypergraph error coverage
+  - [x] harden hypergraph error coverage
     - unknown attribute keys
     - missing vertices / hyperedges
     - invalid hyperedge vertex lists
