@@ -453,7 +453,7 @@ Current struct rules:
 
 `graph` values are first-class graph objects in `.gion`.
 
-Current graph support is intentionally minimal:
+Current graph support includes:
 
 - declaration with `graph Name;`
 - declaration with `graph Name:` and an indented node block

@@ -5,8 +5,7 @@ This directory contains focused `.gion` examples for the current documented fron
 Current project state:
 
 - these examples track the implemented `.gion` subset
-- the repository also contains broader VM work for graph and hypergraph execution
-- the active repo lane currently includes non-scalar language work
+- the examples include scalar values, non-scalar containers, structs, graphs, and hypergraphs
 
 Files:
 
