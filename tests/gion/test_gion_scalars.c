@@ -203,7 +203,7 @@ int test_gion_compound_assignment_errors(void) {
     int expected_rc;
     const char *message;
   } cases[] = {
-      {"count += 1\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
+      {"count += 1\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable 'count'"},
       {"count = 1\ncount +=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount -=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 1\ncount *=\n", GINT_ERR_PARSE, "expected scalar literal"},

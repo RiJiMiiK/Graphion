@@ -2,6 +2,15 @@
 
 #include "runtime/interpreter/stmt.h"
 
+static int fail_unknown_variable(graphion_runtime_diagnostic *diagnostic,
+                                 unsigned int line,
+                                 const char *name) {
+  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
+  snprintf(message, sizeof(message), "unknown variable '%s'", name);
+  return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_VARIABLE);
+}
+
 int parse_assignment(const char *line_text,
                             graphion_runtime_program *program,
                             unsigned int line,
@@ -35,7 +44,7 @@ int parse_assignment(const char *line_text,
     indexed_target = 1;
     existing = program_find_global_index(program, target);
     if (existing < 0) {
-      return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+      return fail_unknown_variable(diagnostic, line, target);
     }
     target_index = (size_t)existing;
     cursor++;
@@ -102,7 +111,7 @@ int parse_assignment(const char *line_text,
   } else if (!indexed_target) {
     int existing = program_find_global_index(program, target);
     if (existing < 0) {
-      return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+      return fail_unknown_variable(diagnostic, line, target);
     }
     target_index = (size_t)existing;
   }

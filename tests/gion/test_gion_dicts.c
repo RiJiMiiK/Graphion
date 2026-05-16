@@ -148,6 +148,7 @@ int test_gion_dict_syntax_errors(void) {
       {"data = {\"a\": 1 \"b\": 2}\n", GINT_ERR_PARSE, "expected ',' or '}' after dict entry"},
       {"data = {\"a\": 1}\ndata[\"a\" = 2\n", GINT_ERR_PARSE, "expected ']' after assignment target index"},
       {"data = {\"a\": 1}\ndata[\"a\"] += 2\n", GINT_ERR_PARSE, "compound indexed assignment is not supported"},
+      {"missing[\"a\"] = 2\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable 'missing'"},
   };
   size_t i;
 

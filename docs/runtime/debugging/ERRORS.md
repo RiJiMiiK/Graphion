@@ -62,7 +62,7 @@ These are raised when source evaluation references a name that does not exist.
 
 Current distinction:
 
-- `unknown variable`
+- `unknown variable 'count'`
   - typically used when the target of a mutation-style operation does not exist yet
   - example: `count += 1` when `count` is not defined
 - `unknown operand 'missing'`
@@ -138,7 +138,7 @@ count += 1
 Typical result:
 
 - source/runtime failure
-- message `unknown variable`
+- message `unknown variable 'count'`
 
 ### Runtime arithmetic error
 

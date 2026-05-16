@@ -1056,7 +1056,7 @@ Current high-level error classes:
 
 Examples:
 
-`unknown variable`
+`unknown variable 'count'`
 : compound assignment target does not exist
 
 `unknown operand 'missing'`
