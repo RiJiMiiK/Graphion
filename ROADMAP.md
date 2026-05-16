@@ -10,7 +10,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
 ### Diagnostics and warnings
 
 - [x] audit current diagnostic sources before changing behavior
-- [ ] make common `.gion` errors more actionable
+- [x] make common `.gion` errors more actionable
   - [x] name the missing identifier in unknown operand diagnostics
   - [x] name the missing assignment or indexed-assignment target in unknown variable diagnostics
   - [x] name unknown graph variables in graph mutation diagnostics
