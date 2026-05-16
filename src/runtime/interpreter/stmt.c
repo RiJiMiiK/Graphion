@@ -208,6 +208,7 @@ int parse_assignment(const char *line_text,
     const char *trimmed_expr_start = expr_start;
     skip_spaces(&trimmed_expr_start);
     if (assign_op == '=' && *trimmed_expr_start != '\0') {
+      point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       return rc;
     }
     return remap_missing_assignment_rhs_error(
@@ -446,6 +447,7 @@ int parse_print(const char *line_text,
           segment[len] = '\0';
           rc = parse_expression(&segment_cursor, program, &part_expr, 0U, line, diagnostic);
           if (rc != GINT_OK) {
+            point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
             return rc;
           }
           skip_spaces(&segment_cursor);
@@ -483,6 +485,7 @@ int parse_print(const char *line_text,
   }
   rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     return rc;
   }
   skip_spaces(&cursor);

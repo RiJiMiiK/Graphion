@@ -21,6 +21,9 @@ int add_warning(graphion_runtime_warning_report *report,
                 unsigned int column,
                 const char *message,
                 graphion_runtime_diagnostic *diagnostic);
+void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
+                                      const char *source_text,
+                                      unsigned int base_column);
 void vm_value_set_none(graphion_vm_value *value);
 void runtime_free_string(char **text);
 void skip_spaces(const char **cursor);

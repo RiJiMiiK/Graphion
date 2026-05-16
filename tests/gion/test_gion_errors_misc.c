@@ -8,14 +8,15 @@ int test_gion_print_syntax_errors(void) {
   static const struct {
     const char *source;
     int expected_rc;
+    unsigned int expected_column;
     const char *message;
   } cases[] = {
-      {"print = 42\n", GINT_ERR_PARSE, "expected '(' after print"},
-      {"print\n", GINT_ERR_PARSE, "expected '(' after print"},
-      {"print(\n", GINT_ERR_PARSE, "expected print argument"},
-      {"print()\n", GINT_ERR_PARSE, "expected print argument"},
-      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
-      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
+      {"print = 42\n", GINT_ERR_PARSE, 1U, "expected '(' after print"},
+      {"print\n", GINT_ERR_PARSE, 1U, "expected '(' after print"},
+      {"print(\n", GINT_ERR_PARSE, 1U, "expected print argument"},
+      {"print()\n", GINT_ERR_PARSE, 1U, "expected print argument"},
+      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
+      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
   };
   size_t i;
 
@@ -29,7 +30,7 @@ int test_gion_print_syntax_errors(void) {
     if (rc != cases[i].expected_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.line != 1U) {
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
@@ -183,13 +184,47 @@ int test_gion_reference_before_definition_errors(void) {
   if (rc != GINT_ERR_UNKNOWN_OPERAND) {
     return finish_scope_test(&scope, 1);
   }
-  if (diagnostic.line != 1U || diagnostic.column != 1U) {
+  if (diagnostic.line != 1U || diagnostic.column != 8U) {
     return finish_scope_test(&scope, 2);
   }
   if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown operand 'count'") != 0) {
     return finish_scope_test(&scope, 3);
   }
   return finish_scope_test(&scope, 0);
+}
+
+int test_gion_unknown_identifier_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"copy = missing\n", 8U, "unknown operand 'missing'"},
+      {"print(missing)\n", 7U, "unknown operand 'missing'"},
+      {"if missing:\n    print(1)\n", 4U, "unknown operand 'missing'"},
+      {"match missing:\n    1:\n        print(1)\n", 7U, "unknown operand 'missing'"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_UNKNOWN_OPERAND) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
 }
 
 int test_gion_reassignment_and_type_change(void) {
@@ -286,7 +321,7 @@ int test_gion_late_line_error_diagnostics(void) {
        "third = missing\n",
        GINT_ERR_UNKNOWN_OPERAND,
        3U,
-       1U,
+       9U,
        "unknown operand 'missing'"},
       {"ready = true\n"
        "value = \"ready\" if\n"

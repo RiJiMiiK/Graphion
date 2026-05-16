@@ -3002,6 +3002,7 @@ static int execute_if_chain(const runtime_source_line *lines,
                                      diagnostic,
                                      &condition_true);
         if (rc != GINT_OK) {
+          point_unknown_operand_diagnostic(diagnostic, line_content(clause_line), 1U);
           return rc;
         }
         if (condition_true) {
@@ -3064,6 +3065,7 @@ static int execute_match_statement(const runtime_source_line *lines,
                                          diagnostic,
                                          &match_value);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_content(&lines[*index]), 1U);
     goto cleanup;
   }
 

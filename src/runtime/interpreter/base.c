@@ -143,6 +143,36 @@ int is_ident_char(char ch) {
   return is_ident_start_char(ch) || (ch >= '0' && ch <= '9');
 }
 
+void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
+                                      const char *source_text,
+                                      unsigned int base_column) {
+  const char *prefix = "unknown operand '";
+  const char *name_start;
+  const char *name_end;
+  const char *scan;
+  size_t prefix_len = strlen(prefix);
+  size_t name_len;
+
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      strncmp(diagnostic->message, prefix, prefix_len) != 0) {
+    return;
+  }
+  name_start = diagnostic->message + prefix_len;
+  name_end = strchr(name_start, '\'');
+  if (name_end == NULL || name_end == name_start) {
+    return;
+  }
+  name_len = (size_t)(name_end - name_start);
+  for (scan = source_text; *scan != '\0'; ++scan) {
+    if ((scan == source_text || !is_ident_char(scan[-1])) &&
+        strncmp(scan, name_start, name_len) == 0 &&
+        !is_ident_char(scan[name_len])) {
+      diagnostic->column = base_column + (unsigned int)(scan - source_text);
+      return;
+    }
+  }
+}
+
 int is_reserved_name(const char *name) {
   if (is_scalar_builtin_name(name)) {
     return 1;

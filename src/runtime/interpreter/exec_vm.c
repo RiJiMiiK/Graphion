@@ -263,6 +263,7 @@ int evaluate_expression_text_to_value(const char *expression_text,
   }
   rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, expression_text, 1U);
     graphion_runtime_program_dispose(&program);
     return rc;
   }
