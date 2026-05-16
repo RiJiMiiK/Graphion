@@ -3027,7 +3027,7 @@ static int execute_match_statement(const runtime_source_line *lines,
                                    graphion_runtime_diagnostic *diagnostic,
                                    FILE *output) {
   char match_expression[512];
-  graphion_vm_value match_value;
+  graphion_vm_value match_value = {GVM_VALUE_NONE, {0}, {0}};
   runtime_match_case_value seen_cases[GRAPHION_RUNTIME_PROGRAM_MAX];
   size_t seen_case_count = 0U;
   size_t header_end_index = *index;
@@ -3191,6 +3191,7 @@ static int execute_match_statement(const runtime_source_line *lines,
   rc = GINT_OK;
 
 cleanup:
+  vm_value_dispose_owned(&match_value);
   for (i = 0U; i < seen_case_count; ++i) {
     runtime_match_case_value_dispose(&seen_cases[i]);
   }
