@@ -21,7 +21,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] replace operator-missing operand fallbacks with operator-specific messages
   - [x] replace bare assignment RHS fallbacks such as `count =` with assignment-specific messages
   - [x] replace unexpected prefix-token fallbacks such as `value = !` with token-specific messages
-  - [ ] replace late execution parse fallbacks that still surface as `expected scalar literal`
+  - [x] replace late execution parse fallbacks that still surface as `expected scalar literal`
 - [ ] improve line and column precision
   - [ ] keep current line accuracy for late source errors
   - [ ] report useful columns for assignment operator errors

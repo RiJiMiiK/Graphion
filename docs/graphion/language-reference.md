@@ -1071,6 +1071,9 @@ Examples:
 `expected expression before '!'`
 : parse error when an expression starts with the postfix factorial operator
 
+`expected match case or default`
+: parse error when a `match` block contains no valid case or `default` clause
+
 `unknown variable 'count'`
 : compound assignment target does not exist
 

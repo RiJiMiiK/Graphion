@@ -3148,7 +3148,7 @@ static int execute_match_statement(const runtime_source_line *lines,
         }
       }
       if (label_index == label_start) {
-        rc = fail(diagnostic, lines[clause_index].line, 1U, "expected scalar literal", GINT_ERR_PARSE);
+        rc = fail(diagnostic, lines[clause_index].line, 1U, "expected match case or default", GINT_ERR_PARSE);
         goto cleanup;
       }
     }
