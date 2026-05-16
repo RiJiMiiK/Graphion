@@ -1059,7 +1059,7 @@ Examples:
 `unknown variable`
 : compound assignment target does not exist
 
-`unknown operand`
+`unknown operand 'missing'`
 : expression references a missing value
 
 `division by zero`

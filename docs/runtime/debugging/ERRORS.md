@@ -65,7 +65,7 @@ Current distinction:
 - `unknown variable`
   - typically used when the target of a mutation-style operation does not exist yet
   - example: `count += 1` when `count` is not defined
-- `unknown operand`
+- `unknown operand 'missing'`
   - used when an expression references a missing value
   - examples:
     - `copy = missing`
@@ -125,7 +125,7 @@ value = missing
 Typical result:
 
 - source/runtime failure
-- message `unknown operand`
+- message `unknown operand 'missing'`
 
 ### Unknown variable
 

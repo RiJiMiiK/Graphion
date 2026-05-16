@@ -14,8 +14,8 @@ int test_gion_print_syntax_errors(void) {
       {"print\n", GINT_ERR_PARSE, "expected '(' after print"},
       {"print(\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"print()\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
-      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
+      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
+      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
   };
   size_t i;
 
@@ -185,7 +185,7 @@ int test_gion_reference_before_definition_errors(void) {
   if (diagnostic.line != 1U || diagnostic.column != 1U) {
     return finish_scope_test(&scope, 2);
   }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown operand") != 0) {
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown operand 'count'") != 0) {
     return finish_scope_test(&scope, 3);
   }
   return finish_scope_test(&scope, 0);

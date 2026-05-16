@@ -299,8 +299,8 @@ int test_gion_if_elif_else_errors(void) {
       {"if false:\n    print(1)\nelif true: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after condition"},
       {"if false:\n    print(1)\nelse\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after else"},
       {"if false:\n    print(1)\nelse: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after else"},
-      {"if nope:\n    print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
-      {"flag = false\nif flag:\n    print(1)\nelif nope:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_UNKNOWN_OPERAND, 4U, "unknown operand"},
+      {"if nope:\n    print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand 'nope'"},
+      {"flag = false\nif flag:\n    print(1)\nelif nope:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_UNKNOWN_OPERAND, 4U, "unknown operand 'nope'"},
   };
   size_t i;
 
@@ -482,7 +482,7 @@ int test_gion_match_errors(void) {
       {"match 1:\n    1:\n        print(1)\n    1.0:\n        print(2)\n", GINT_ERR_PARSE, 4U, "duplicate match case"},
       {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
       {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
-      {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
+      {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand 'nope'"},
       {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected scalar literal"},
   };
   size_t i;

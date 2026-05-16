@@ -1916,7 +1916,7 @@ int test_gion_graph_declaration_syntax_errors(void) {
        GINT_ERR_PARSE,
        "trailing comma is not allowed in dict literal"},
       {"graph G:\n    1 -\n", GINT_ERR_PARSE, "expected graph node name or id"},
-      {"graph G:\n    1 - 2 extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
+      {"graph G:\n    1 - 2 extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'extra'"},
       {"graph G:\n    1 -> 2\n    2 - 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
       {"graph G:\n    1 - 2\n    2 -> 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
   };

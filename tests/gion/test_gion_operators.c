@@ -107,7 +107,7 @@ int test_gion_and_syntax_errors(void) {
     const char *message;
   } cases[] = {
       {"value = true and\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = and true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"value = and true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'and'"},
       {"print(true and )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
       {"if true and:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
   };
@@ -234,7 +234,7 @@ int test_gion_or_syntax_errors(void) {
     const char *message;
   } cases[] = {
       {"value = true or\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = or true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"value = or true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'or'"},
       {"print(true or )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
       {"if true or:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
   };
@@ -477,7 +477,7 @@ int test_gion_nand_syntax_errors(void) {
     const char *message;
   } cases[] = {
       {"value = true nand\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = nand true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"value = nand true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'nand'"},
       {"print(true nand )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
       {"if true nand:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
   };
@@ -596,7 +596,7 @@ int test_gion_nor_syntax_errors(void) {
     const char *message;
   } cases[] = {
       {"value = false nor\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = nor false\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand"},
+      {"value = nor false\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'nor'"},
       {"print(false nor )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
       {"if false nor:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
   };

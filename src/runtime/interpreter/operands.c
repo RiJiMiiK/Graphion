@@ -528,7 +528,9 @@ int parse_operand(const char **cursor,
       int index;
       index = program_find_global_index(program, name);
       if (index < 0) {
-        return fail(diagnostic, line, 1U, "unknown operand", GINT_ERR_UNKNOWN_OPERAND);
+        char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+        snprintf(message, sizeof(message), "unknown operand '%s'", name);
+        return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_OPERAND);
       }
       operand_out->kind = OPERAND_GLOBAL;
       operand_out->global_index = (size_t)index;

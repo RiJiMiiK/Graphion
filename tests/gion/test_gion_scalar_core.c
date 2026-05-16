@@ -150,7 +150,7 @@ int test_gion_unknown_variable_errors(void) {
   if (diagnostic.message == NULL) {
     return finish_scope_test(&scope, 2);
   }
-  return finish_scope_test(&scope, strcmp(diagnostic.message, "unknown operand") == 0 ? 0 : 3);
+  return finish_scope_test(&scope, strcmp(diagnostic.message, "unknown operand 'missing'") == 0 ? 0 : 3);
 }
 
 int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
@@ -315,7 +315,7 @@ int test_gion_assignment_syntax_errors(void) {
       {"= 42\n", GINT_ERR_PARSE, "expected identifier"},
       {"count =\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"count = 42 +\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
+      {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'nope'"},
   };
   size_t i;
 
