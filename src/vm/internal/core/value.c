@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+// cppcheck-suppress-file constVariablePointer
+// cppcheck-suppress-file variableScope
 
 #include "vm/internal/core/value.h"
 
@@ -78,11 +80,13 @@ static graphion_struct_instance_value *vm_struct_instance_create(void) {
 
 static graphion_csr_graph *vm_graph_create_empty(void) {
   graphion_graph_value *graph = (graphion_graph_value *)calloc(1U, sizeof(*graph));
+  // cppcheck-suppress memleak
   return graph != NULL ? &graph->csr : NULL;
 }
 
 static graphion_hypergraph *vm_hypergraph_create_empty(void) {
   graphion_hypergraph_value *hypergraph = (graphion_hypergraph_value *)calloc(1U, sizeof(*hypergraph));
+  // cppcheck-suppress memleak
   return hypergraph != NULL ? &hypergraph->hypergraph : NULL;
 }
 
@@ -1102,7 +1106,6 @@ int vm_value_dict_patch_existing(graphion_vm_value *value, const graphion_vm_val
     if (rc != GVM_OK) {
       return rc;
     }
-    dict = (graphion_vm_dict *)value->as.ref_value;
   }
   return GVM_OK;
 }

@@ -308,7 +308,6 @@ static int parse_graph_node_ref(const char **cursor,
                                 graphion_runtime_diagnostic *diagnostic) {
   char name[GRAPHION_RUNTIME_NAME_MAX];
   char *end = NULL;
-  int64_t id;
 
   if (cursor == NULL || *cursor == NULL || builder == NULL || id_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
@@ -338,7 +337,7 @@ static int parse_graph_node_ref(const char **cursor,
   }
 
   if (**cursor == '-' || (**cursor >= '0' && **cursor <= '9')) {
-    id = strtoll(*cursor, &end, 10);
+    int64_t id = strtoll(*cursor, &end, 10);
     if (end == *cursor) {
       return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
     }
@@ -1578,11 +1577,9 @@ static int build_runtime_graph_value(const runtime_graph_builder *builder,
       return fail(diagnostic, line, 1U, "out of memory", GINT_ERR_CAPACITY);
     }
     graph->offsets = offsets;
-  }
-  if (node_count > 0U) {
-    size_t node_index = 0U;
-
     if (visible_node_count > 0U) {
+      size_t node_index = 0U;
+
       graph_value->nodes = (graphion_graph_node_value *)calloc(visible_node_count, sizeof(*graph_value->nodes));
       if (graph_value->nodes == NULL) {
         free((void *)graph->offsets);
@@ -2394,7 +2391,6 @@ static int runtime_scope_set_owned_value(graphion_runtime_scope *scope,
                                          graphion_runtime_diagnostic *diagnostic) {
   int existing;
   size_t target_index;
-  int rc;
 
   if (scope == NULL || name == NULL || value == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
@@ -2403,7 +2399,7 @@ static int runtime_scope_set_owned_value(graphion_runtime_scope *scope,
   if (existing >= 0) {
     target_index = (size_t)existing;
   } else {
-    rc = graphion_runtime_scope_reserve_globals(scope, scope->global_count + 1U, line, diagnostic);
+    int rc = graphion_runtime_scope_reserve_globals(scope, scope->global_count + 1U, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }

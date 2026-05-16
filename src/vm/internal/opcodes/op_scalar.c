@@ -2051,7 +2051,7 @@ static int hypergraph_remove_vertex_id(graphion_hypergraph_value *value, uint32_
         nodes[write_index++] = hypergraph->hyperedge_nodes[j];
       }
     }
-    if (sizes[i] == 0U && i < value->hyperedge_attr_count) {
+    if (i < value->hyperedge_attr_count && sizes[i] == 0U) {
       vm_value_dispose_owned(&value->hyperedge_attrs[i]);
       value->hyperedge_attrs[i].kind = GVM_VALUE_NONE;
     }
