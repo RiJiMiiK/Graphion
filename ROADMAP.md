@@ -9,43 +9,49 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
 
 ### Diagnostics and warnings
 
-- [ ] audit current diagnostic sources before changing behavior
-  - parser/frontend diagnostics in `src/parser`
-  - runtime/interpreter diagnostics in `src/runtime`
-  - VM errors that are translated into `.gion` runtime errors
-  - CLI formatting in `src/main.c`
-  - debug warning collection and emission for `-d`
-  - existing tests and docs that lock current messages
+- [x] audit current diagnostic sources before changing behavior
 - [ ] make common `.gion` errors more actionable
-  - name the missing identifier in unknown operand diagnostics
-  - name the missing assignment or indexed-assignment target in unknown variable diagnostics
-  - replace ambiguous parse fallbacks such as `expected scalar literal` where a more specific message is available
-  - replace broad messages such as `unsupported assignment expression` for obvious trailing tokens
+  - [ ] name the missing identifier in unknown operand diagnostics
+  - [ ] name the missing assignment or indexed-assignment target in unknown variable diagnostics
+  - [ ] name unknown graph variables in graph mutation diagnostics
+  - [ ] name unknown hypergraph variables in hypergraph mutation diagnostics
+  - [ ] replace ambiguous parse fallbacks such as `expected scalar literal` where a more specific message is available
+  - [ ] replace broad messages such as `unsupported assignment expression` for obvious trailing tokens
+  - [ ] replace unmapped VM failures with a stable diagnostic that includes the VM result class
 - [ ] improve line and column precision
-  - keep current line accuracy for late source errors
-  - report useful columns for assignment operator errors
-  - report useful columns for missing delimiters in `print`, grouped expressions, indexing, lists, dicts, tuples, and sets
-  - report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
-  - report useful columns for graph and hypergraph declaration/body errors
+  - [ ] keep current line accuracy for late source errors
+  - [ ] report useful columns for assignment operator errors
+  - [ ] report useful columns for unknown identifiers in expressions
+  - [ ] report useful columns for missing delimiters in `print`, grouped expressions, indexing, lists, dicts, tuples, and sets
+  - [ ] report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
+  - [ ] report useful columns for graph and hypergraph declaration/body errors
+  - [ ] report useful columns for warnings emitted by `-d`
 - [ ] align parse/runtime categories where user-visible behavior is surprising
-  - distinguish syntax errors from name resolution errors in `print(...)`
-  - distinguish graph declaration syntax errors from expression/name resolution errors
-  - keep runtime type/domain errors separate from frontend parse errors
-  - document intentional subsystem-local result codes
+  - [ ] distinguish syntax errors from name resolution errors in `print(...)`
+  - [ ] distinguish graph declaration syntax errors from expression/name resolution errors
+  - [ ] keep runtime type/domain errors separate from frontend parse errors
+  - [ ] decide whether parser/frontend `GFE_*` errors need a diagnostic object or remain code-only
+  - [ ] decide whether bytecode decode `GBC_*` errors need user-facing text or remain code-only
+  - [ ] document intentional subsystem-local result codes
 - [ ] harden debug warnings exposed by `-d`
-  - verify warning directives are either intentionally ignored or implemented consistently
-  - document current `-d` behavior
-  - ensure warnings include stable `warning:line:column: message` output
-  - add coverage for warning capacity and warning collection failures
+  - [ ] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule
+  - [ ] decide how CLI should handle `-d` warning collection failures before execution
+  - [ ] document current `-d` behavior
+  - [ ] ensure warnings include stable `warning:line:column: message` output
+  - [ ] add coverage for impossible literal `match` warnings
+  - [ ] add coverage for graph numeric node-id gap warnings
+  - [ ] add coverage for warning capacity and warning collection failures
 - [ ] improve test coverage for diagnostics
-  - add focused parser/frontend tests for message text and line/column pairs
-  - add runtime/interpreter tests for representative runtime errors across scalar and non-scalar values
-  - add CLI-path tests where formatting differs from direct API diagnostics
-  - keep tests scoped to user-visible behavior, not internal implementation details
+  - [ ] add focused parser/frontend tests for result-code diagnostics
+  - [ ] add runtime/interpreter tests for exact message and line/column pairs
+  - [ ] add runtime/interpreter tests for representative runtime errors across scalar and non-scalar values
+  - [ ] add VM-to-runtime mapping tests for every `.gion`-visible `GVM_ERR_*`
+  - [ ] add CLI-path tests where formatting differs from direct API diagnostics
+  - [ ] keep tests scoped to user-visible behavior, not internal implementation details
 - [ ] update documentation when diagnostics change
-  - `docs/runtime/debugging/ERRORS.md`
-  - Graphion language reference diagnostics section
-  - examples or tutorial notes only when user-facing behavior changes
+  - [ ] update `docs/runtime/debugging/ERRORS.md`
+  - [ ] update Graphion language reference diagnostics section
+  - [ ] update examples or tutorial notes only when user-facing behavior changes
 
 ## Future additions gated by other features
 
