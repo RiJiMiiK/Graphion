@@ -26,4 +26,23 @@ int try_parse_opcode_builtin(const char **cursor,
                              unsigned int line,
                              graphion_runtime_diagnostic *diagnostic);
 
+static int expr_cursor_starts_missing_argument(const char *cursor) {
+  skip_spaces(&cursor);
+  return *cursor == ')' || *cursor == ',';
+}
+
+static int fail_expected_builtin_argument(graphion_runtime_diagnostic *diagnostic,
+                                          unsigned int line,
+                                          const char *name,
+                                          const char *argument) {
+  char message[128];
+
+  if (argument == NULL) {
+    snprintf(message, sizeof(message), "expected %s argument", name);
+  } else {
+    snprintf(message, sizeof(message), "expected %s %s argument", name, argument);
+  }
+  return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+}
+
 #endif

@@ -32,6 +32,9 @@ static int parse_named_unary_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, NULL);
+  }
   rc = parse_expression(cursor, program, &value, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -79,6 +82,9 @@ static int parse_named_binary_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, "first");
+  }
   rc = parse_expression(cursor, program, &lhs, target_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -91,6 +97,9 @@ static int parse_named_binary_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, "second");
+  }
   rc = parse_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -141,6 +150,9 @@ static int parse_log_constant_base_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, NULL);
+  }
   rc = parse_expression(cursor, program, &value, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -189,6 +201,9 @@ static int parse_clamp_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected '(' after clamp", GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail(diagnostic, line, 1U, "expected clamp value", GINT_ERR_PARSE);
+  }
   rc = parse_expression(cursor, program, &value, target_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -198,6 +213,9 @@ static int parse_clamp_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected ',' after clamp value", GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail(diagnostic, line, 1U, "expected clamp lower bound", GINT_ERR_PARSE);
+  }
   rc = parse_expression(cursor, program, &lo, lo_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -207,6 +225,9 @@ static int parse_clamp_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected ',' after clamp lower bound", GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail(diagnostic, line, 1U, "expected clamp upper bound", GINT_ERR_PARSE);
+  }
   rc = parse_expression(cursor, program, &hi, hi_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -256,6 +277,9 @@ static int parse_fma_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected '(' after fma", GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, "fma", "first");
+  }
   rc = parse_expression(cursor, program, &lhs, target_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -265,6 +289,9 @@ static int parse_fma_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected ',' after fma first argument", GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, "fma", "second");
+  }
   rc = parse_expression(cursor, program, &mul_rhs, mul_rhs_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -274,6 +301,9 @@ static int parse_fma_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, "expected ',' after fma second argument", GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, "fma", "third");
+  }
   rc = parse_expression(cursor, program, &add_rhs, add_rhs_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;

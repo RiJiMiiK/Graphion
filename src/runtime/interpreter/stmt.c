@@ -216,6 +216,10 @@ int parse_print(const char *line_text,
     return fail(diagnostic, line, 1U, "expected '(' after print", GINT_ERR_PARSE);
   }
   cursor++;
+  skip_spaces(&cursor);
+  if (*cursor == ')' || *cursor == '\0') {
+    return fail(diagnostic, line, 1U, "expected print argument", GINT_ERR_PARSE);
+  }
   {
     const char *scan = cursor;
     int depth = 0;

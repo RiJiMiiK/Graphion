@@ -12,8 +12,8 @@ int test_gion_print_syntax_errors(void) {
   } cases[] = {
       {"print = 42\n", GINT_ERR_PARSE, "expected '(' after print"},
       {"print\n", GINT_ERR_PARSE, "expected '(' after print"},
-      {"print(\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"print()\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"print(\n", GINT_ERR_PARSE, "expected print argument"},
+      {"print()\n", GINT_ERR_PARSE, "expected print argument"},
       {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
       {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'count'"},
   };

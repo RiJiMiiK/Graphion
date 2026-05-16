@@ -53,6 +53,10 @@ Typical messages include:
 
 - `expected '='`
 - `expected scalar literal`
+- `expected print argument`
+- `expected abs argument`
+- `expected min first argument`
+- `expected match case literal`
 - `expected ')' after expression`
 - `unsupported assignment expression`
 
@@ -116,7 +120,7 @@ value = 1 + * 2
 Typical result:
 
 - parse failure
-- message similar to `expected scalar literal`
+- message similar to `expected scalar literal` or a context-specific message such as `expected min first argument`
 
 ### Unknown operand
 

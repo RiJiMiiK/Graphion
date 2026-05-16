@@ -483,7 +483,7 @@ int test_gion_match_errors(void) {
       {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
       {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
       {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand 'nope'"},
-      {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected scalar literal"},
+      {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected match case literal"},
   };
   size_t i;
 

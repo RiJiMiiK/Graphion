@@ -562,6 +562,11 @@ int parse_match_case_header(const char *cursor,
   rc = parse_scalar_literal(&program, &cursor, value_out, line, diagnostic);
   if (rc != GINT_OK) {
     graphion_runtime_program_dispose(&program);
+    if (rc == GINT_ERR_PARSE && diagnostic != NULL &&
+        diagnostic->message != NULL &&
+        strcmp(diagnostic->message, "expected scalar literal") == 0) {
+      return fail(diagnostic, line, 1U, "expected match case literal", GINT_ERR_PARSE);
+    }
     return rc;
   }
   skip_spaces(&cursor);

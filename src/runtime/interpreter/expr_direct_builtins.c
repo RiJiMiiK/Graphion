@@ -118,6 +118,9 @@ static int try_parse_unary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, NULL);
+    }
     rc = parse_expression(cursor, program, &value, base_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -169,6 +172,9 @@ static int try_parse_binary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, "first");
+    }
     rc = parse_expression(cursor, program, &lhs, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -178,6 +184,9 @@ static int try_parse_binary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_binary_builtin_separator(diagnostic, line, specs[i].name);
     }
     (*cursor)++;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, "second");
+    }
     rc = parse_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -235,6 +244,9 @@ static int try_parse_ternary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, "first");
+    }
     rc = parse_expression(cursor, program, &first, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -244,6 +256,9 @@ static int try_parse_ternary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_ternary_builtin_separator(diagnostic, line, specs[i].name);
     }
     (*cursor)++;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, "second");
+    }
     rc = parse_expression(cursor, program, &second, second_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
@@ -253,6 +268,9 @@ static int try_parse_ternary_direct_builtin(const direct_builtin_spec *specs,
       return fail_expected_ternary_builtin_separator(diagnostic, line, specs[i].name);
     }
     (*cursor)++;
+    if (expr_cursor_starts_missing_argument(*cursor)) {
+      return fail_expected_builtin_argument(diagnostic, line, specs[i].name, "third");
+    }
     rc = parse_expression(cursor, program, &third, third_reg, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
