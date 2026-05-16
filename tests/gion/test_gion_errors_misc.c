@@ -478,7 +478,7 @@ int test_gion_comment_errors(void) {
   return 0;
 }
 
-int test_gion_warning_directives(void) {
+int test_gion_warning_comments_are_ignored(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;
   int rc;
@@ -490,14 +490,8 @@ int test_gion_warning_directives(void) {
   if (!report.enabled) {
     return 2;
   }
-  if (report.count != 1U) {
+  if (report.count != 0U) {
     return 3;
-  }
-  if (report.items[0].line != 1U || report.items[0].column != 1U) {
-    return 4;
-  }
-  if (strcmp(report.items[0].message, "unknown graphion directive") != 0) {
-    return 5;
   }
 
   rc = graphion_collect_source_warnings("# graphion: warnings=off\n# graphion: unknown=off\nprint(1)\n",
@@ -506,7 +500,7 @@ int test_gion_warning_directives(void) {
   if (rc != GINT_OK) {
     return 6;
   }
-  if (report.enabled) {
+  if (!report.enabled) {
     return 7;
   }
   if (report.count != 0U) {
@@ -543,17 +537,30 @@ int test_gion_warning_directives(void) {
     return 16;
   }
 
+  rc = graphion_collect_source_warnings("# graphion: warnings=off\n"
+                                        "match \"a\":\n"
+                                        "    1:\n"
+                                        "        print(1)\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 17;
+  }
+  if (!report.enabled || report.count != 1U) {
+    return 18;
+  }
+
   return 0;
 }
 
-int test_gion_warning_directives_from_path(void) {
+int test_gion_warning_comments_are_ignored_from_path(void) {
   char path[512];
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;
   FILE *fp = NULL;
   int rc;
 
-  fp = test_open_temp_output(path, sizeof(path), "gion_warning_directives_path.gion");
+  fp = test_open_temp_output(path, sizeof(path), "gion_warning_comments_ignored_path.gion");
   if (fp == NULL) {
     return 1;
   }
@@ -565,7 +572,7 @@ int test_gion_warning_directives_from_path(void) {
   if (rc != GENTRY_OK) {
     return 2;
   }
-  if (report.enabled) {
+  if (!report.enabled) {
     return 3;
   }
   if (report.count != 0U) {

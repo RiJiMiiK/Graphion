@@ -124,6 +124,63 @@ typedef enum {
   GVM_OP_SECH = 116,
   GVM_OP_CSCH = 117,
   GVM_OP_COTH = 118,
+  GVM_OP_LIST_NEW = 119,
+  GVM_OP_LIST_APPEND = 120,
+  GVM_OP_LIST_GET = 121,
+  GVM_OP_DICT_NEW = 122,
+  GVM_OP_DICT_SET = 123,
+  GVM_OP_DICT_GET = 124,
+  GVM_OP_DICT_SET_KEY = 125,
+  GVM_OP_TUPLE_NEW = 126,
+  GVM_OP_TUPLE_APPEND = 127,
+  GVM_OP_SET_NEW = 128,
+  GVM_OP_SET_ADD = 129,
+  GVM_OP_SET_CONTAINS = 130,
+  GVM_OP_GRAPH_NEW = 131,
+  GVM_OP_GRAPH_NODE_COUNT = 132,
+  GVM_OP_GRAPH_EDGE_COUNT = 133,
+  GVM_OP_GRAPH_IS_DIRECTED = 134,
+  GVM_OP_GRAPH_ORIENTATION = 135,
+  GVM_OP_GRAPH_IS_WEIGHTED = 136,
+  GVM_OP_GRAPH_NODE_ATTRS = 137,
+  GVM_OP_GRAPH_EDGE_ATTRS = 138,
+  GVM_OP_GRAPH_EDGE_WEIGHT = 139,
+  GVM_OP_GRAPH_HAS_NODE = 140,
+  GVM_OP_GRAPH_HAS_EDGE = 141,
+  GVM_OP_GRAPH_NEIGHBORS = 142,
+  GVM_OP_GRAPH_ADD_NODE = 143,
+  GVM_OP_GRAPH_ADD_EDGE = 144,
+  GVM_OP_GRAPH_SET_NODE_ATTRS = 145,
+  GVM_OP_GRAPH_SET_EDGE_ATTRS = 146,
+  GVM_OP_GRAPH_SET_EDGE_WEIGHT = 147,
+  GVM_OP_GRAPH_REMOVE_NODE = 148,
+  GVM_OP_GRAPH_REMOVE_EDGE = 149,
+  GVM_OP_GRAPH_NODE_IDS = 150,
+  GVM_OP_GRAPH_NODES = 151,
+  GVM_OP_GRAPH_EDGES = 152,
+  GVM_OP_GRAPH_INDEGREE = 153,
+  GVM_OP_GRAPH_OUTDEGREE = 154,
+  GVM_OP_HYPERGRAPH_NEW = 155,
+  GVM_OP_HYPERGRAPH_HYPEREDGE_VERTICES = 156,
+  GVM_OP_HYPERGRAPH_HYPEREDGE_ATTRS = 157,
+  GVM_OP_HYPERGRAPH_VERTEX_COUNT = 158,
+  GVM_OP_HYPERGRAPH_HYPEREDGE_COUNT = 159,
+  GVM_OP_HYPERGRAPH_VERTEX_ATTR_COUNT = 160,
+  GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT = 161,
+  GVM_OP_HYPERGRAPH_VERTEX_ATTRS = 162,
+  GVM_OP_HYPERGRAPH_HAS_VERTEX = 163,
+  GVM_OP_HYPERGRAPH_HAS_HYPEREDGE = 164,
+  GVM_OP_HYPERGRAPH_INCIDENT_HYPEREDGES = 165,
+  GVM_OP_HYPERGRAPH_VERTEX_IDS = 166,
+  GVM_OP_HYPERGRAPH_VERTICES = 167,
+  GVM_OP_HYPERGRAPH_HYPEREDGES = 168,
+  GVM_OP_HYPERGRAPH_ADD_VERTEX = 169,
+  GVM_OP_HYPERGRAPH_ADD_HYPEREDGE = 170,
+  GVM_OP_HYPERGRAPH_SET_VERTEX_ATTRS = 171,
+  GVM_OP_HYPERGRAPH_SET_HYPEREDGE_ATTRS = 172,
+  GVM_OP_HYPERGRAPH_REMOVE_VERTEX = 173,
+  GVM_OP_HYPERGRAPH_REMOVE_HYPEREDGE = 174,
+  GVM_OP_STRUCT_NEW = 175,
   GVM_OP_BFS_LEVELS = 16,
   GVM_OP_INCIDENT_COUNT = 17,
   GVM_OP_HYPEREDGE_SIZE = 18,
@@ -172,7 +229,9 @@ typedef enum {
   GVM_ERR_ACSC_DOMAIN = -35,
   GVM_ERR_ASEC_DOMAIN = -36,
   GVM_ERR_BITS_WIDTH_MISMATCH = -37,
-  GVM_ERR_NEGATIVE_SHIFT = -38
+  GVM_ERR_NEGATIVE_SHIFT = -38,
+  GVM_ERR_INDEX_OUT_OF_RANGE = -39,
+  GVM_ERR_MISSING_KEY = -40
 } graphion_vm_result;
 
 typedef enum {
@@ -184,7 +243,13 @@ typedef enum {
   GVM_VALUE_GRAPH_REF = 5,
   GVM_VALUE_HYPERGRAPH_REF = 6,
   GVM_VALUE_INT_SEQUENCE_REF = 7,
-  GVM_VALUE_BITS = 8
+  GVM_VALUE_BITS = 8,
+  GVM_VALUE_LIST = 9,
+  GVM_VALUE_DICT = 10,
+  GVM_VALUE_TUPLE = 11,
+  GVM_VALUE_SET = 12,
+  GVM_VALUE_STRUCT_TYPE = 13,
+  GVM_VALUE_STRUCT = 14
 } graphion_vm_value_kind;
 
 typedef struct {
@@ -198,6 +263,60 @@ typedef struct {
     const void *ref_value;
   } as;
 } graphion_vm_value;
+
+typedef struct {
+  char name[64];
+  char type_name[32];
+  uint8_t has_default;
+  uint8_t reserved[7];
+  graphion_vm_value default_value;
+} graphion_struct_field_value;
+
+typedef struct {
+  char name[64];
+  graphion_struct_field_value *fields;
+  size_t field_count;
+} graphion_struct_type_value;
+
+typedef struct {
+  char type_name[64];
+  graphion_vm_value fields;
+} graphion_struct_instance_value;
+
+typedef struct {
+  uint32_t from;
+  uint32_t to;
+  uint8_t directed;
+  uint8_t bidirectional;
+  uint8_t reserved[2];
+} graphion_graph_edge_value;
+
+typedef struct {
+  uint32_t id;
+  const char *name;
+} graphion_graph_node_value;
+
+typedef struct {
+  graphion_csr_graph csr;
+  graphion_graph_node_value *nodes;
+  size_t node_count;
+  graphion_graph_edge_value *edges;
+  size_t edge_count;
+  graphion_vm_value *node_attrs;
+  size_t node_attr_count;
+  graphion_vm_value *edge_attrs;
+  size_t edge_attr_count;
+} graphion_graph_value;
+
+typedef struct {
+  graphion_hypergraph hypergraph;
+  graphion_graph_node_value *vertices;
+  size_t vertex_count;
+  graphion_vm_value *vertex_attrs;
+  size_t vertex_attr_count;
+  graphion_vm_value *hyperedge_attrs;
+  size_t hyperedge_attr_count;
+} graphion_hypergraph_value;
 
 typedef struct {
   uint8_t op;

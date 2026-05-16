@@ -17,6 +17,20 @@ int op_load_global(graphion_vm *vm, const graphion_insn *in);
 int op_store_global(graphion_vm *vm, const graphion_insn *in);
 int op_store_const_global(graphion_vm *vm, const graphion_insn *in);
 int op_copy_global(graphion_vm *vm, const graphion_insn *in);
+int op_list_new(graphion_vm *vm, const graphion_insn *in);
+int op_list_append(graphion_vm *vm, const graphion_insn *in);
+int op_list_get(graphion_vm *vm, const graphion_insn *in);
+int op_dict_new(graphion_vm *vm, const graphion_insn *in);
+int op_dict_set(graphion_vm *vm, const graphion_insn *in);
+int op_dict_get(graphion_vm *vm, const graphion_insn *in);
+int op_dict_set_key(graphion_vm *vm, const graphion_insn *in);
+int op_tuple_new(graphion_vm *vm, const graphion_insn *in);
+int op_tuple_append(graphion_vm *vm, const graphion_insn *in);
+int op_set_new(graphion_vm *vm, const graphion_insn *in);
+int op_set_add(graphion_vm *vm, const graphion_insn *in);
+int op_set_contains(graphion_vm *vm, const graphion_insn *in);
+int op_graph_new(graphion_vm *vm, const graphion_insn *in);
+int op_hypergraph_new(graphion_vm *vm, const graphion_insn *in);
+int op_struct_new(graphion_vm *vm, const graphion_insn *in);
 
 #endif
-

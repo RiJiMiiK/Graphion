@@ -44,6 +44,50 @@
   X(gion_bits_shl_runtime_errors)                      \
   X(gion_bits_shr)                                     \
   X(gion_bits_shr_runtime_errors)                      \
+  X(gion_list_literals_and_prints)                     \
+  X(gion_list_runtime_errors)                          \
+  X(gion_list_syntax_errors)                           \
+  X(gion_dict_literals_and_prints)                     \
+  X(gion_dict_runtime_errors)                          \
+  X(gion_dict_syntax_errors)                           \
+  X(gion_tuple_literals_and_prints)                    \
+  X(gion_tuple_runtime_errors)                         \
+  X(gion_tuple_syntax_errors)                          \
+  X(gion_set_literals_and_prints)                      \
+  X(gion_set_runtime_errors)                           \
+  X(gion_set_syntax_errors)                            \
+  X(gion_struct_declarations_and_instances)            \
+  X(gion_struct_runtime_errors)                        \
+  X(gion_struct_syntax_errors)                         \
+  X(gion_empty_graph_declaration)                      \
+  X(gion_empty_hypergraph_declaration)                 \
+  X(gion_hypergraph_vertex_block_declaration)          \
+  X(gion_hypergraph_vertex_attributes)                 \
+  X(gion_hypergraph_hyperedge_declaration)             \
+  X(gion_hypergraph_vertex_and_hyperedge_attributes)   \
+  X(gion_hypergraph_membership_query_builtins)         \
+  X(gion_hypergraph_listing_query_builtins)            \
+  X(gion_hypergraph_structure_mutation_statements)     \
+  X(gion_hypergraph_attribute_mutation_statements)     \
+  X(gion_hypergraph_removal_mutation_statements)       \
+  X(gion_hypergraph_error_coverage)                    \
+  X(gion_graph_node_block_declaration)                 \
+  X(gion_graph_explicit_ids_have_priority)             \
+  X(gion_graph_node_attributes)                        \
+  X(gion_graph_node_attribute_defaults)                \
+  X(gion_graph_undirected_edge_declaration)            \
+  X(gion_graph_edge_attributes)                        \
+  X(gion_graph_directed_edge_declaration)              \
+  X(gion_graph_inspection_builtins)                    \
+  X(gion_graph_attribute_lookup_builtins)              \
+  X(gion_graph_membership_query_builtins)              \
+  X(gion_graph_listing_query_builtins)                 \
+  X(gion_graph_structure_mutation_statements)          \
+  X(gion_graph_attribute_mutation_statements)          \
+  X(gion_graph_removal_mutation_statements)            \
+  X(gion_graph_mutation_error_coverage)                \
+  X(gion_graph_numeric_id_gap_warnings)                \
+  X(gion_graph_declaration_syntax_errors)              \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \
@@ -55,8 +99,8 @@
   X(gion_unexpected_indentation_errors)                \
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \
-  X(gion_warning_directives)                           \
-  X(gion_warning_directives_from_path)                 \
+  X(gion_warning_comments_are_ignored)                 \
+  X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
   X(gion_match_control_flow)                           \

@@ -20,15 +20,25 @@ Current supported top-level statements:
 
 - assignment
 - compound assignment
+- graph declaration
+- hypergraph declaration
+- struct declaration
 - `if` / `elif` / `else`
 - `match`
 - `print(...)`
+- graph mutation with `add_node(...)` and `add_edge(...)`
+- hypergraph mutation with `add_vertex(...)` and `add_hyperedge(...)`
 
 Examples:
 
 ```gion
 count = 42
 count += 1
+graph G;
+hypergraph H;
+struct Player:
+    id: int
+    name: string = "unknown"
 
 if true:
     count += 1
@@ -42,9 +52,9 @@ Unsupported statements are parse errors in the current `.gion` frontend path.
 
 ### Values
 
-Graphion currently exposes scalar values only.
+Graphion currently exposes scalar values plus `list`, `dict`, `tuple`, `set`, `struct`, `graph`, and `hypergraph`.
 
-For the current scalar types, literal forms, and built-in numeric constants, see [Types](types.md).
+For the current value kinds, literal forms, and built-in numeric constants, see [Types](types.md).
 
 ### Identifiers
 
@@ -127,6 +137,9 @@ These names are currently reserved and cannot be assigned:
 - `trunc`
 - `sign`
 - `len`
+- `contains`
+- `set`
+- `graph`
 - `if`
 - `elif`
 - `else`
@@ -147,6 +160,12 @@ Graphion currently supports literals for:
 - `bool`
 - `string`
 - `bits`
+- `list`
+- `dict`
+- `tuple`
+- `set`
+- `struct`
+- `graph`
 
 For the exact literal forms and examples, see [Types](types.md).
 
@@ -158,7 +177,256 @@ Simple assignment:
 count = 42
 copy = count
 ratio = 7 / 2
+weights = {"a": 1}
+weights["b"] = 2
 ```
+
+Graph declaration:
+
+```gion
+graph G;
+hypergraph HG;
+
+alice = "Alice"
+bob = "Bob"
+
+graph H:
+    defaults node {"label": "unknown", "score": 0}
+    alice {"label": "start", "score": 1}
+    2 {"score": 2}
+    bob
+
+graph I:
+    defaults edge {"kind": "normal", "weight": 1}
+    1-2 15
+    3 - 2 {"kind": "shortcut", "weight": 2.5}
+
+graph J:
+    defaults edge {"kind": "directed", "weight": 1}
+    1 -> 2 {"weight": 1}
+    3 <-> 4 {"kind": "bidirectional"}
+```
+
+Current graph declaration rules:
+
+- the empty shape is `graph Name;`
+- the node-block shape is `graph Name:` followed by an indented block
+- `Name` must be a valid identifier
+- `graph Name;` creates an empty graph value
+- graph node blocks create graph values with nodes and optional edges
+- node entries may be string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- string node names must use quotes, such as `"Alice"`; an unquoted identifier is resolved as a variable
+- node entries may attach attributes with `node {"key": value}`
+- node attributes are `dict` values and their values may use any supported Graphion value type
+- `defaults node {"key": value}` declares node attribute defaults for the graph
+- with node defaults, node entries may omit attributes or override only some keys
+- without node defaults, either no node has attributes or every node must define attributes with the same keys
+- node attributes cannot introduce keys outside the declared node defaults
+- undirected edge entries use `node - node`
+- directed edge entries use `node -> node`
+- bidirectional directed edge entries use `node <-> node`
+- edge entries may attach attributes with `edge {"key": value}`
+- the compact form `node - node 15` means `node - node {"weight": 15}`
+- the compact edge form also accepts variables or expressions that evaluate to `int`, `float`, or `dict`
+- `defaults edge {"key": value}` declares edge attribute defaults for the graph
+- with edge defaults, edge entries may omit attributes or override only some keys
+- without edge defaults, either no edge has attributes or every edge must define attributes with the same keys
+- edge attributes cannot introduce keys outside the declared edge defaults
+- `weight` is a reserved edge attribute key and must be `int` or `float` when present
+- graphs that use directed edge syntax cannot also use undirected `node - node` entries
+- missing edge endpoint nodes are created before the edge is created
+- explicit integer IDs are reserved first and cannot be duplicated
+- explicit numeric IDs with gaps emit a warning after generated named-node IDs are assigned
+- named nodes receive generated IDs after explicit IDs are reserved
+- the semicolon is required for empty declarations
+- the colon is required for node-block declarations
+
+Hypergraph declaration:
+
+```gion
+hypergraph H;
+
+label = "Alice"
+
+hypergraph HG:
+    defaults vertex {"label": "unknown", "score": 0}
+    defaults hyperedge {"kind": "group", "color": "blue"}
+    label
+    2 {"label": "explicit id", "score": 2}
+    "Bob" {"score": 1}
+    [label, 2, "Bob"] {"kind": "team"}
+```
+
+Current hypergraph declaration rules:
+
+- the empty shape is `hypergraph Name;`
+- the vertex-block shape is `hypergraph Name:` followed by an indented block
+- `Name` must be a valid identifier
+- `hypergraph Name;` creates an empty first-class hypergraph value
+- hypergraph vertex blocks create hypergraph values with vertices and no hyperedges yet
+- vertex entries may be string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- string vertex names must use quotes, such as `"Alice"`; an unquoted identifier is resolved as a variable
+- vertex entries may attach attributes with `vertex {"key": value}`
+- vertex attributes are `dict` values and their values may use any supported Graphion value type
+- `defaults vertex {"key": value}` declares vertex attribute defaults for the hypergraph
+- with vertex defaults, vertex entries may omit attributes or override only some keys
+- without vertex defaults, either no vertex has attributes or every vertex must define attributes with the same keys
+- vertex attributes cannot introduce keys outside the declared vertex defaults
+- hyperedge entries use list syntax, such as `[vertex_a, vertex_b, vertex_c]`
+- hyperedges receive implicit numeric IDs in declaration order, starting at `0`
+- user-provided hyperedge IDs are not part of the first hypergraph version
+- hyperedge IDs can be inspected with `hyperedge_vertices(hypergraph, id)` and `hyperedge_attrs(hypergraph, id)`
+- hyperedges may reference string literals, non-negative integer IDs, or variables that contain a `string` or `int`
+- missing vertices referenced by a hyperedge are created before the hyperedge is created
+- hyperedge entries may attach attributes with `[vertex_a, vertex_b] {"key": value}`
+- hyperedge attributes are `dict` values and do not reserve a `weight` key yet
+- `defaults hyperedge {"key": value}` declares hyperedge attribute defaults for the hypergraph
+- with hyperedge defaults, hyperedge entries may omit attributes or override only some keys
+- without hyperedge defaults, either no hyperedge has attributes or every hyperedge must define attributes with the same keys
+- empty hypergraphs print as `hypergraph()`
+- vertex-only hypergraphs print as `hypergraph(vertices=N)`
+- vertex-only hypergraphs with attributes print as `hypergraph(vertices=N, vertex_attrs=K)`
+- hypergraphs with hyperedges print as `hypergraph(vertices=N, hyperedges=M)`
+- hypergraphs with hyperedge attributes also include `hyperedge_attrs=K`
+- hypergraph inspection builtins include `vertex_count`, `hyperedge_count`, `vertex_attr_count`, and `hyperedge_attr_count`
+- hypergraph attribute lookup builtins include `vertex_attrs(hypergraph, vertex)` and `hyperedge_attrs(hypergraph, id)`
+- hypergraph membership/query builtins include `has_vertex`, `has_hyperedge`, `incident_hyperedges`, and `hyperedge_vertices`
+- hypergraph listing/query builtins include `vertex_ids`, `vertices`, and `hyperedges`
+- hypergraph structure mutation statements include `add_vertex` and `add_hyperedge`
+- hypergraph attribute mutation statements include `set_vertex_attrs` and `set_hyperedge_attrs`
+- hypergraph removal mutation statements include `remove_vertex` and `remove_hyperedge`
+
+Struct declaration:
+
+```gion
+struct Player:
+    id: int
+    name: string = "unknown"
+    score: float = 0.0
+
+alice = Player {"id": 1, "name": "Alice", "score": 42.5}
+bob = Player {"id": 2}
+```
+
+Current struct declaration rules:
+
+- the declaration shape is `struct Name:` followed by an indented field block
+- `Name` must be a valid identifier
+- fields use `field: type`
+- defaulted fields use `field: type = value`
+- supported field types are `int`, `float`, `bool`, `string`, `bits`, `list`, `dict`, `tuple`, `set`, `graph`, `hypergraph`, `any`, and previously declared struct type names
+- field defaults are validated against the declared field type
+- struct instances use `Name {"field": value}`
+- omitted defaulted fields are filled automatically
+- missing required fields, unknown fields, and wrong field types are runtime errors
+- field lookup uses the same index syntax as dictionaries, such as `player["name"]`
+- `len(struct_instance)` returns the number of fields
+- struct types print as `struct Name(fields=N)`
+- struct instances print as `Name{"field": value}`
+
+Graph mutation statements:
+
+```gion
+graph G;
+
+add_node(G, "Alice")
+add_edge(G, "Alice", 2)
+set_node_attrs(G, "Alice", {"label": "start", "score": 1})
+set_node_attrs(G, "Alice", {"score": 10})
+set_edge_attrs(G, "Alice", 2, {"kind": "path", "weight": 3})
+set_edge_attrs(G, "Alice", 2, {"kind": "shortcut"})
+set_edge_weight(G, "Alice", 2, 7)
+remove_edge(G, "Alice", 2)
+remove_node(G, "Alice")
+```
+
+Current graph mutation rules:
+
+- `add_node(graph_variable, node)` mutates the named graph variable in place
+- `add_edge(graph_variable, from, to)` mutates the named graph variable in place
+- `remove_node(graph_variable, node)` removes a node and all incident edges
+- `remove_edge(graph_variable, from, to)` removes one edge direction
+- `node`, `from`, and `to` may be integer IDs or string node names
+- `add_edge(...)` creates missing endpoint nodes before adding the edge
+- `add_edge(...)` currently creates undirected edges
+- added nodes receive declared `defaults node` attributes when node defaults exist
+- added edges receive declared `defaults edge` attributes when edge defaults exist
+- adding an existing node or edge is a no-op
+- removing a missing node or edge is a runtime error
+- removing a direction from a bidirectional directed edge keeps the reverse direction
+- node removal keeps other node IDs stable and can leave numeric ID gaps
+- `set_node_attrs(graph_variable, node, attrs)` applies a full or partial dictionary patch to node attributes
+- `set_edge_attrs(graph_variable, from, to, attrs)` applies a full or partial dictionary patch to edge attributes
+- `set_edge_weight(graph_variable, from, to, weight)` updates the reserved numeric `weight` key
+- `set_*_attrs(...)` can establish the initial node or edge attribute schema
+- partial `set_*_attrs(...)` patches require the target node or edge to already have an attribute dictionary containing every patched key
+- if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
+- nodes and edges added after initialization use defaults first, so partial patches are valid for them when defaults exist
+- edge `weight` values must be `int` or `float`
+- attribute mutation preserves the shared-key schema once a schema exists
+
+Hypergraph mutation statements:
+
+```gion
+hypergraph H;
+
+add_vertex(H, "Alice")
+add_hyperedge(H, ["Alice", 2, "Bob"])
+set_vertex_attrs(H, "Alice", {"label": "start"})
+set_hyperedge_attrs(H, 0, {"kind": "group"})
+remove_vertex(H, 2)
+remove_hyperedge(H, 0)
+```
+
+Current hypergraph mutation rules:
+
+- `add_vertex(hypergraph_variable, vertex)` mutates the named hypergraph variable in place
+- `add_hyperedge(hypergraph_variable, vertices)` mutates the named hypergraph variable in place
+- `vertex` values may be integer IDs or string vertex names
+- `vertices` must be a non-empty list of integer IDs or string vertex names
+- `add_hyperedge(...)` creates missing vertices before adding the hyperedge
+- added vertices receive declared `defaults vertex` attributes when vertex defaults exist
+- added hyperedges receive declared `defaults hyperedge` attributes when hyperedge defaults exist
+- adding an existing vertex is a no-op
+- hyperedges receive the next implicit numeric hyperedge ID and existing hyperedge IDs stay stable
+- `set_vertex_attrs(hypergraph_variable, vertex, attrs)` applies a full or partial dictionary patch to vertex attributes
+- `set_hyperedge_attrs(hypergraph_variable, id, attrs)` applies a full or partial dictionary patch to hyperedge attributes
+- `set_*_attrs(...)` can establish the initial vertex or hyperedge attribute schema
+- partial `set_*_attrs(...)` patches require the target vertex or hyperedge to already have an attribute dictionary containing every patched key
+- if a schema exists but the target has no attributes yet, `set_*_attrs(...)` must provide the full schema
+- vertices and hyperedges added after initialization use defaults first, so partial patches are valid for them when defaults exist
+- attribute mutation preserves the shared-key schema once a schema exists
+- `remove_vertex(hypergraph_variable, vertex)` removes a vertex and its attributes
+- removing a vertex removes it from every incident hyperedge
+- hyperedges that become empty after vertex removal are removed
+- non-empty hyperedges remain valid, even if they contain only one vertex
+- `remove_hyperedge(hypergraph_variable, id)` removes one hyperedge and its attributes
+- removing a hyperedge never removes its vertices
+- removed hyperedge IDs are not reused, and later hyperedges keep/newly receive stable IDs
+
+Graph listing and query builtins:
+
+```gion
+print(node_ids(G))
+print(nodes(G))
+print(edges(G))
+print(has_node(G, "Alice"))
+print(has_edge(G, "Alice", 2))
+print(neighbors(G, "Alice"))
+print(indegree(G, "Alice"))
+print(outdegree(G, "Alice"))
+```
+
+- `node_ids(graph)` returns a list of present numeric node IDs
+- `nodes(graph)` returns node dictionaries such as `{"id": 0, "name": "Alice"}`
+- numeric-only nodes omit the `name` key in `nodes(...)`
+- `edges(graph)` returns edge dictionaries with `from`, `to`, `directed`, and `bidirectional`
+- bidirectional `<->` edges appear as one logical edge in `edges(...)`
+- `neighbors(graph, node)` returns all adjacent node IDs, including incoming and outgoing directed edges
+- `indegree(graph, node)` returns incoming adjacent node IDs
+- `outdegree(graph, node)` returns outgoing adjacent node IDs
+- use `len(indegree(...))` or `len(outdegree(...))` when the count is needed
+- undirected `-` and bidirectional `<->` edges appear once in both incoming and outgoing lists for each endpoint
 
 Compound assignment:
 
@@ -173,6 +441,80 @@ count **= 2
 ```
 
 Compound assignment requires the target variable to already exist.
+
+### Indexing
+
+Graphion currently supports list indexing with `[...]`:
+
+```gion
+values = [10, 20, 30]
+second = values[1]
+print(second)
+```
+
+Current indexing rules:
+
+- the left-hand side must evaluate to `list`
+- the index must evaluate to `int`
+- negative indexes are rejected
+- out-of-range indexes are runtime errors
+
+Graphion also supports dictionary lookup and assignment with the same `[...]` syntax:
+
+```gion
+weights = {"a": 1, "b": 2}
+value = weights["b"]
+weights["c"] = 3
+print(value)
+```
+
+Current dictionary lookup rules:
+
+- the left-hand side must evaluate to `dict`
+- literal keys inside `{...}` must be `string` literals
+- lookup keys must evaluate to `string`
+- assignment keys must evaluate to `string`
+- missing keys are runtime errors
+
+Current dictionary assignment notes:
+
+- `dict_expr[key_expr] = value_expr` updates an existing key or creates a new one
+- only simple `=` assignment is currently supported on indexed dictionary targets
+
+Graphion also supports tuple indexing with the same `[...]` syntax:
+
+```gion
+pair = (10, 20)
+second = pair[1]
+print(second)
+```
+
+Current tuple rules:
+
+- the left-hand side must evaluate to `tuple`
+- tuple literals currently require at least two elements
+- `(expr)` remains a grouped expression
+- indexes must evaluate to `int`
+- negative indexes are rejected
+- out-of-range indexes are runtime errors
+
+### Set Membership
+
+Graphion supports set membership with `contains(set_expr, value_expr)`:
+
+```gion
+frontier = set(1, 2, 2, "a")
+print(contains(frontier, 2))
+print(contains(frontier, 3))
+```
+
+Current set rules:
+
+- set literals use `set(...)`
+- duplicate elements are removed
+- `set()` is the empty set
+- equality between sets ignores insertion order
+- `contains(...)` requires the first argument to evaluate to `set`
 
 ## Control Flow
 
@@ -485,7 +827,7 @@ Rules:
 - the matched expression is evaluated once, then branches are tested from top to bottom
 - the first matching branch wins
 - incompatible case types do not raise an error during execution; they simply do not match
-- if the matched expression is a scalar literal and a case can never match it, Graphion emits a pre-execution warning unless warnings are disabled
+- if the matched expression is a scalar literal and a case can never match it, Graphion can emit a pre-execution warning in debug mode
 
 Grouped cases:
 
@@ -516,21 +858,20 @@ match value:
         print("y")
 ```
 
-## Comments And Directives
+## Comments And Debug Warnings
 
 Graphion currently supports two comment forms:
 
 - `#` for line comments
 - `/* ... */` for block comments
 
-At the top of a file, `#` also supports a reserved Graphion directive form:
+Warnings are not controlled by comments. The CLI prints warnings only in debug mode:
 
-```gion
-# graphion: warnings=off
+```powershell
+.\build\Release\graphion.exe -d .\examples\11_graphs.gion
 ```
 
-When this directive appears before the first real statement, pre-execution warnings are suppressed for the file. It
-does not suppress parse errors or runtime errors.
+Without `-d`, the program runs normally and warnings are not printed to the terminal.
 
 ### Line Comments
 
@@ -664,6 +1005,30 @@ Current builtin functions:
 - `fract(x)`
 - `sign(x)`
 - `len(x)`
+- `contains(set, value)`
+- `node_count(graph)`
+- `edge_count(graph)`
+- `is_directed(graph)`
+- `is_weighted(graph)`
+- `orientation(graph)`
+- `node_ids(graph)`
+- `nodes(graph)`
+- `edges(graph)`
+- `node_attrs(graph, node)`
+- `edge_attrs(graph, from, to)`
+- `edge_weight(graph, from, to)`
+- `has_node(graph, node)`
+- `has_edge(graph, from, to)`
+- `neighbors(graph, node)`
+- `indegree(graph, node)`
+- `outdegree(graph, node)`
+- `add_node(graph, node)` as a statement
+- `add_edge(graph, from, to)` as a statement
+- `remove_node(graph, node)` as a statement
+- `remove_edge(graph, from, to)` as a statement
+- `set_node_attrs(graph, node, attrs)` as a statement
+- `set_edge_attrs(graph, from, to, attrs)` as a statement
+- `set_edge_weight(graph, from, to, weight)` as a statement
 
 See [Builtins](builtins.md).
 

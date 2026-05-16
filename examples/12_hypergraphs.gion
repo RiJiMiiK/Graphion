@@ -1,0 +1,48 @@
+hypergraph Nom_du_hypergraph;
+
+print(Nom_du_hypergraph)
+
+alice = "Alice"
+bob = "Bob"
+
+hypergraph Hypergraph_avec_vertices:
+    defaults vertex {"label": "unknown", "score": 0}
+    defaults hyperedge {"kind": "group", "color": "blue"}
+    alice
+    2 {"label": "explicit id", "score": 2}
+    bob {"score": 1}
+    [alice, bob, 2] {"kind": "team"}
+    [2, "Carol"]
+
+print(Hypergraph_avec_vertices)
+print(vertex_count(Hypergraph_avec_vertices))
+print(hyperedge_count(Hypergraph_avec_vertices))
+print(vertex_attr_count(Hypergraph_avec_vertices))
+print(hyperedge_attr_count(Hypergraph_avec_vertices))
+print(vertex_attrs(Hypergraph_avec_vertices, alice)["label"])
+print(has_vertex(Hypergraph_avec_vertices, "Carol"))
+print(has_hyperedge(Hypergraph_avec_vertices, 1))
+print(incident_hyperedges(Hypergraph_avec_vertices, 2))
+print(hyperedge_vertices(Hypergraph_avec_vertices, 0))
+print(vertex_ids(Hypergraph_avec_vertices))
+print(vertices(Hypergraph_avec_vertices))
+print(hyperedges(Hypergraph_avec_vertices))
+print(hyperedge_attrs(Hypergraph_avec_vertices, 0)["kind"])
+
+add_vertex(Hypergraph_avec_vertices, "Dave")
+add_hyperedge(Hypergraph_avec_vertices, ["Dave", 2, "Eve"])
+set_vertex_attrs(Hypergraph_avec_vertices, "Dave", {"label": "added"})
+set_hyperedge_attrs(Hypergraph_avec_vertices, 2, {"kind": "added"})
+
+print(Hypergraph_avec_vertices)
+print(vertex_ids(Hypergraph_avec_vertices))
+print(hyperedge_vertices(Hypergraph_avec_vertices, 2))
+print(vertex_attrs(Hypergraph_avec_vertices, "Dave"))
+print(hyperedge_attrs(Hypergraph_avec_vertices, 2))
+
+remove_vertex(Hypergraph_avec_vertices, "Eve")
+remove_hyperedge(Hypergraph_avec_vertices, 0)
+
+print(Hypergraph_avec_vertices)
+print(has_hyperedge(Hypergraph_avec_vertices, 0))
+print(hyperedges(Hypergraph_avec_vertices))

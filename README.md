@@ -5,20 +5,22 @@
 [![Fuzz Nightly](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml/badge.svg)](https://github.com/RiJiMiiK/Graphion/actions/workflows/fuzz-nightly.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Graphion is a language project built around a `.gion` source pipeline and a VM backend.
+Graphion is a language project built around a `.gion` source pipeline and a VM backend, with first-class graph and hypergraph values as part of the language surface.
 
-Today, the implemented user-facing `.gion` surface is a scalar language subset with:
+Today, the implemented user-facing `.gion` surface includes:
 
 - variable assignment, reuse, and compound assignments
 - `print(...)`
 - scalar values: `int`, `float`, `bool`, `string`, and `bits`
+- non-scalar values: `list`, `dict`, `tuple`, `set`, and `struct`
+- first-class `graph` and `hypergraph` values
 - built-in numeric constants such as `pi`, `tau`, `phi`, `e`, `nan`, and `inf`
 - arithmetic expressions, grouped expressions, and postfix factorial
 - comparisons and boolean logic
 - `if / elif / else`, ternary expressions, and `match ... default`
 - line comments and block comments
 - `bits` literals and bitwise operators
-- documented scalar builtins such as `abs`, `min`, `max`, `clamp`, trigonometric helpers, rounding helpers, and numeric predicates
+- documented builtins for numeric work, containers, graphs, and hypergraphs
 
 ## Current direction
 
@@ -28,9 +30,9 @@ The rebuild is guided by one target pipeline:
 
 Current project state:
 
-- the user-facing `.gion` frontend is documented for the implemented scalar subset only
-- the repository also contains broader VM work for graph and hypergraph execution
-- the active repo lane is currently hygiene and maintenance rather than new language-surface expansion
+- the user-facing `.gion` frontend is documented for the implemented scalar and non-scalar language surface
+- graph and hypergraph support is available as first-class `.gion` values
+- the active repo lane has been focused on non-scalar language types
 
 ## Quick start
 
@@ -52,6 +54,12 @@ Run the main executable on any example:
 
 ```powershell
 .\build\Release\graphion.exe .\examples\01_scalars_and_print.gion
+```
+
+Use `-d` to print debug warnings before execution:
+
+```powershell
+.\build\Release\graphion.exe -d .\examples\11_graphs.gion
 ```
 
 Start with the examples index:

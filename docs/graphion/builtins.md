@@ -2,6 +2,22 @@
 
 This page documents the builtins currently available in Graphion.
 
+Graphion also has graph and hypergraph mutation statements such as `add_node(G, node)`,
+`add_edge(G, from, to)`, `add_vertex(H, vertex)`, `add_hyperedge(H, vertices)`,
+`remove_node(G, node)`, `remove_edge(G, from, to)`, `remove_vertex(H, vertex)`,
+`remove_hyperedge(H, id)`, `set_node_attrs(...)`, `set_edge_attrs(...)`,
+`set_vertex_attrs(...)`, `set_hyperedge_attrs(...)`, and `set_edge_weight(...)`.
+They are documented on the [Language Reference](language-reference.md) page because they mutate a named graph or hypergraph variable rather than returning a standalone value.
+
+Graph listing builtins include `node_ids(graph)`, `nodes(graph)`, and `edges(graph)` for
+inspecting graph contents without knowing node names or IDs ahead of time.
+Hypergraph builtins currently include `vertex_count(hypergraph)`, `hyperedge_count(hypergraph)`,
+`vertex_attr_count(hypergraph)`, `hyperedge_attr_count(hypergraph)`,
+`vertex_ids(hypergraph)`, `vertices(hypergraph)`, `hyperedges(hypergraph)`,
+`vertex_attrs(hypergraph, vertex)`, `hyperedge_vertices(hypergraph, id)`,
+`hyperedge_attrs(hypergraph, id)`, `has_vertex(hypergraph, vertex)`,
+`has_hyperedge(hypergraph, id)`, and `incident_hyperedges(hypergraph, vertex)`.
+
 ## Shared Rules
 
 Unless a builtin says otherwise:
@@ -73,7 +89,37 @@ Unless a builtin says otherwise:
 | `trunc(x)` | drop fractional part | same numeric family | toward zero |
 | `fract(x)` | fractional part | `float` | defined as `x - floor(x)` |
 | `sign(x)` | sign of a number | `int` | `-1`, `0`, or `1` |
-| `len(x)` | string length | `int` | strings only |
+| `len(x)` | container or string length | `int` | strings, lists, dicts, tuples, sets, and structs |
+| `contains(set, value)` | set membership | `bool` | first argument must be a set |
+| `node_count(graph)` | number of logical nodes in a graph | `int` | counts present nodes, not ID gaps |
+| `edge_count(graph)` | number of logical edges in a graph | `int` | `<->` counts as one edge |
+| `is_directed(graph)` | whether a graph has directed syntax | `bool` | `->` and `<->` make this true |
+| `is_weighted(graph)` | whether a graph has edge weights | `bool` | true when any edge has `weight` |
+| `orientation(graph)` | graph orientation summary | `string` | `empty`, `undirected`, or `directed` |
+| `node_ids(graph)` | present node IDs | `list` | IDs remain stable and can have gaps |
+| `nodes(graph)` | present node descriptors | `list` | each item is a dict with `id` and optional `name` |
+| `edges(graph)` | logical edge descriptors | `list` | each item has `from`, `to`, `directed`, and `bidirectional` |
+| `node_attrs(graph, node)` | attributes for one node | `dict` | `node` can be an ID or string node name |
+| `edge_attrs(graph, from, to)` | attributes for one edge | `dict` | bidirectional edges can be queried both ways |
+| `edge_weight(graph, from, to)` | reserved `weight` for one edge | numeric | missing `weight` is a runtime error |
+| `vertex_count(hypergraph)` | number of logical vertices | `int` | counts present vertices, not ID gaps |
+| `hyperedge_count(hypergraph)` | number of hyperedges | `int` | hyperedge IDs are assigned in declaration order |
+| `vertex_attr_count(hypergraph)` | vertex attribute key count | `int` | returns `0` when no vertex attrs exist |
+| `hyperedge_attr_count(hypergraph)` | hyperedge attribute key count | `int` | returns `0` when no hyperedge attrs exist |
+| `vertex_ids(hypergraph)` | present vertex IDs | `list` | IDs remain stable and can have gaps |
+| `vertices(hypergraph)` | present vertex descriptors | `list` | each item is a dict with `id` and optional `name` |
+| `hyperedges(hypergraph)` | hyperedge descriptors | `list` | each item has `id` and `vertices` |
+| `vertex_attrs(hypergraph, vertex)` | attributes for one vertex | `dict` | `vertex` can be an ID or string vertex name |
+| `hyperedge_vertices(hypergraph, id)` | vertex IDs in one hyperedge | `list` | hyperedge IDs are assigned in declaration order |
+| `hyperedge_attrs(hypergraph, id)` | attributes for one hyperedge | `dict` | missing attributes return an empty dict |
+| `has_vertex(hypergraph, vertex)` | whether a vertex exists | `bool` | `vertex` can be an ID or string vertex name |
+| `has_hyperedge(hypergraph, id)` | whether a hyperedge ID exists | `bool` | hyperedge IDs are implicit numeric IDs |
+| `incident_hyperedges(hypergraph, vertex)` | hyperedge IDs touching a vertex | `list` | `vertex` can be an ID or string vertex name |
+| `has_node(graph, node)` | whether a node exists | `bool` | `node` can be an ID or string node name |
+| `has_edge(graph, from, to)` | whether an edge exists | `bool` | respects directed edge orientation |
+| `neighbors(graph, node)` | adjacent neighbor IDs | `list` | includes incoming and outgoing directed edges |
+| `indegree(graph, node)` | incoming neighbor IDs | `list` | use `len(...)` for the count |
+| `outdegree(graph, node)` | outgoing neighbor IDs | `list` | use `len(...)` for the count |
 
 ## `print(...)`
 
@@ -1009,27 +1055,833 @@ The result type is currently `int`.
 
 ### `len(x)`
 
-Returns the length of a string expression.
+Returns the length of a string, list, dict, tuple, set, or struct expression.
 
 ```gion
 print(len("graphion"))
-print(len("graph" + "ion"))
+print(len([1, 2, 3]))
+print(len({"a": 1, "b": 2}))
+print(len((1, 2)))
+print(len(set(1, 2, 2)))
 ```
 
 Expected output:
 
 ```text
 8
-8
+3
+2
+2
+2
 ```
 
 Accepted input:
 
-- string expressions only
+- string expressions
+- list expressions
+- dict expressions
+- tuple expressions
+- set expressions
 
 Result type:
 
 - `int`
+
+### `contains(set, value)`
+
+Returns whether a set contains a value.
+
+```gion
+frontier = set(1, 2, "a")
+print(contains(frontier, 2))
+print(contains(frontier, 3))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Accepted input:
+
+- first argument: `set`
+- second argument: any currently comparable value
+
+Result type:
+
+- `bool`
+
+## Graphs
+
+### `node_count(graph)`
+
+Returns the number of logical nodes currently present in a graph.
+
+```gion
+graph G:
+    1 - 2
+    3 - 2
+
+print(node_count(G))
+```
+
+Expected output:
+
+```text
+3
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `int`
+
+### `edge_count(graph)`
+
+Returns the number of logical edges currently present in a graph. Bidirectional edges count as one logical edge.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 4
+
+print(edge_count(G))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `int`
+
+### `is_directed(graph)`
+
+Returns whether the graph uses directed edge syntax.
+
+```gion
+graph G:
+    1 -> 2
+
+print(is_directed(G))
+```
+
+Expected output:
+
+```text
+true
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `bool`
+
+### `is_weighted(graph)`
+
+Returns whether at least one logical edge has the reserved `weight` attribute. This includes weights provided through `defaults edge`.
+
+```gion
+graph G:
+    defaults edge {"weight": 1}
+    1 - 2
+
+print(is_weighted(G))
+```
+
+Expected output:
+
+```text
+true
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `bool`
+
+### `orientation(graph)`
+
+Returns a string describing the graph's current global orientation state.
+
+```gion
+graph G:
+    1 - 2
+
+print(orientation(G))
+```
+
+Expected output:
+
+```text
+undirected
+```
+
+Current return values:
+
+- `empty` when the graph has no edges
+- `undirected` when the graph uses `node - node` edges
+- `directed` when the graph uses `node -> node` or `node <-> node` edges
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `string`
+
+### `node_ids(graph)`
+
+Returns a list of present numeric node IDs.
+
+```gion
+graph G:
+    "Alice"
+    10
+
+print(node_ids(G))
+```
+
+Expected output:
+
+```text
+[0, 10]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `nodes(graph)`
+
+Returns a list of node descriptor dictionaries. Named nodes include `name`; numeric-only nodes only include `id`.
+
+```gion
+graph G:
+    "Alice"
+    10
+
+print(nodes(G))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "name": "Alice"}, {"id": 10}]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `dict`
+
+### `edges(graph)`
+
+Returns a list of logical edge descriptor dictionaries with `from`, `to`, `directed`, and `bidirectional`.
+
+```gion
+graph G:
+    1 -> 2
+    2 <-> 3
+
+print(edges(G))
+```
+
+Expected output:
+
+```text
+[{"from": 1, "to": 2, "directed": true, "bidirectional": false}, {"from": 2, "to": 3, "directed": true, "bidirectional": true}]
+```
+
+Accepted input:
+
+- `graph`
+
+Result type:
+
+- `list` of `dict`
+
+### `node_attrs(graph, node)`
+
+Returns the attribute dictionary attached to a node. The `node` argument can be either an integer node ID or a string node name.
+
+```gion
+alice = "Alice"
+
+graph G:
+    defaults node {"label": "unknown", "score": 0}
+    alice {"label": "start"}
+
+print(node_attrs(G, alice)["label"])
+```
+
+Expected output:
+
+```text
+start
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `dict`
+
+### `edge_attrs(graph, from, to)`
+
+Returns the attribute dictionary attached to one logical edge. For undirected edges and `<->` edges, the lookup works in either endpoint order.
+
+```gion
+graph G:
+    defaults edge {"kind": "normal", "weight": 1}
+    1 - 2 {"weight": 3}
+
+print(edge_attrs(G, 2, 1)["kind"])
+```
+
+Expected output:
+
+```text
+normal
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `dict`
+
+### `edge_weight(graph, from, to)`
+
+Returns the reserved `weight` attribute for one logical edge. This is equivalent to `edge_attrs(graph, from, to)["weight"]`, but makes weighted graph code easier to read.
+
+```gion
+graph G:
+    1 - 2 15
+
+print(edge_weight(G, 1, 2))
+```
+
+Expected output:
+
+```text
+15
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `int` or `float`
+
+Current runtime notes:
+
+- missing nodes are runtime errors
+- missing edges are runtime errors
+- an existing edge without `weight` is a missing-key runtime error
+
+### `vertex_count(hypergraph)`
+
+Returns the number of logical vertices in a hypergraph.
+
+```gion
+hypergraph H:
+    "Alice"
+    2
+
+print(vertex_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `hyperedge_count(hypergraph)`
+
+Returns the number of hyperedges in a hypergraph.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+    ["Bob", "Carol"]
+
+print(hyperedge_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `vertex_attr_count(hypergraph)`
+
+Returns the number of keys in the visible vertex attribute schema. Hypergraphs without vertex attributes return `0`.
+
+```gion
+hypergraph H:
+    defaults vertex {"label": "unknown", "score": 0}
+    "Alice"
+
+print(vertex_attr_count(H))
+```
+
+Expected output:
+
+```text
+2
+```
+
+Result type:
+
+- `int`
+
+### `hyperedge_attr_count(hypergraph)`
+
+Returns the number of keys in the visible hyperedge attribute schema. Hypergraphs without hyperedge attributes return `0`.
+
+```gion
+hypergraph H:
+    defaults hyperedge {"kind": "group"}
+    ["Alice", "Bob"]
+
+print(hyperedge_attr_count(H))
+```
+
+Expected output:
+
+```text
+1
+```
+
+Result type:
+
+- `int`
+
+### `vertex_ids(hypergraph)`
+
+Returns a list of present numeric vertex IDs.
+
+```gion
+hypergraph H:
+    "Alice"
+    10
+
+print(vertex_ids(H))
+```
+
+Expected output:
+
+```text
+[0, 10]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `int` vertex IDs
+
+### `vertices(hypergraph)`
+
+Returns a list of vertex descriptor dictionaries. Named vertices include `name`; numeric-only vertices only include `id`.
+
+```gion
+hypergraph H:
+    "Alice"
+    10
+
+print(vertices(H))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "name": "Alice"}, {"id": 10}]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `dict`
+
+### `hyperedges(hypergraph)`
+
+Returns a list of hyperedge descriptor dictionaries. Each descriptor contains the implicit hyperedge `id` and a `vertices` list of contained vertex IDs.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob", 2]
+    [2, "Carol"]
+
+print(hyperedges(H))
+```
+
+Expected output:
+
+```text
+[{"id": 0, "vertices": [0, 1, 2]}, {"id": 1, "vertices": [2, 3]}]
+```
+
+Accepted input:
+
+- `hypergraph`
+
+Result type:
+
+- `list` of `dict`
+
+### `vertex_attrs(hypergraph, vertex)`
+
+Returns the attribute dictionary attached to one vertex. The `vertex` argument can be an integer vertex ID or a string vertex name. Missing vertex attributes return an empty dict.
+
+```gion
+hypergraph H:
+    defaults vertex {"label": "unknown", "score": 0}
+    "Alice" {"score": 3}
+
+print(vertex_attrs(H, "Alice")["label"])
+print(vertex_attrs(H, "Alice")["score"])
+```
+
+Expected output:
+
+```text
+unknown
+3
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` vertex ID or `string` vertex name
+
+Result type:
+
+- `dict`
+
+### `hyperedge_vertices(hypergraph, id)`
+
+Returns the vertex IDs contained in one hyperedge. Hyperedge IDs are implicit numeric IDs assigned in declaration order, starting at `0`.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob", 2]
+
+print(hyperedge_vertices(H, 0))
+```
+
+Expected output:
+
+```text
+[0, 1, 2]
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` hyperedge ID
+
+Result type:
+
+- `list`
+
+### `hyperedge_attrs(hypergraph, id)`
+
+Returns the attribute dictionary attached to one hyperedge. Missing hyperedge attributes return an empty dict.
+
+```gion
+hypergraph H:
+    defaults hyperedge {"kind": "group"}
+    ["Alice", "Bob"] {"kind": "team"}
+
+print(hyperedge_attrs(H, 0)["kind"])
+```
+
+Expected output:
+
+```text
+team
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` hyperedge ID
+
+Result type:
+
+- `dict`
+
+### `has_vertex(hypergraph, vertex)`
+
+Returns whether a vertex exists in a hypergraph. The `vertex` argument can be either an integer vertex ID or a string vertex name.
+
+```gion
+hypergraph H:
+    "Alice"
+
+print(has_vertex(H, "Alice"))
+print(has_vertex(H, 99))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Result type:
+
+- `bool`
+
+### `has_hyperedge(hypergraph, id)`
+
+Returns whether an implicit hyperedge ID exists.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+
+print(has_hyperedge(H, 0))
+print(has_hyperedge(H, 1))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Result type:
+
+- `bool`
+
+### `incident_hyperedges(hypergraph, vertex)`
+
+Returns the implicit hyperedge IDs that contain a vertex.
+
+```gion
+hypergraph H:
+    ["Alice", "Bob"]
+    ["Bob", "Carol"]
+
+print(incident_hyperedges(H, "Bob"))
+```
+
+Expected output:
+
+```text
+[0, 1]
+```
+
+Accepted input:
+
+- first argument: `hypergraph`
+- second argument: `int` vertex ID or `string` vertex name
+
+Result type:
+
+- `list`
+
+### `has_node(graph, node)`
+
+Returns whether a node exists in a graph. The `node` argument can be either an integer node ID or a string node name.
+
+```gion
+graph G:
+    "Alice"
+    2
+
+print(has_node(G, "Alice"))
+print(has_node(G, 99))
+```
+
+Expected output:
+
+```text
+true
+false
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `bool`
+
+### `has_edge(graph, from, to)`
+
+Returns whether one logical edge exists between two nodes. Directed `->` edges only match in their declared direction. Undirected `-` edges and bidirectional `<->` edges match in both endpoint orders.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 4
+
+print(has_edge(G, 1, 2))
+print(has_edge(G, 2, 1))
+print(has_edge(G, 4, 3))
+```
+
+Expected output:
+
+```text
+true
+false
+true
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second and third arguments: `int` node IDs or `string` node names
+
+Result type:
+
+- `bool`
+
+### `neighbors(graph, node)`
+
+Returns all adjacent neighbor node IDs.
+
+For undirected graphs, neighbors are the usual adjacent nodes. For directed graphs, `neighbors(graph, node)` includes both incoming and outgoing adjacency. Use `indegree(...)` and `outdegree(...)` when the direction matters.
+
+```gion
+graph G:
+    1 -> 2
+    3 -> 2
+
+print(neighbors(G, 2))
+```
+
+Expected output:
+
+```text
+[1, 3]
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `indegree(graph, node)`
+
+Returns the incoming neighbor node IDs for a node. Undirected `-` and bidirectional `<->` edges count once as incoming for each endpoint. Use `len(indegree(graph, node))` when you need the count.
+
+```gion
+graph G:
+    1 -> 2
+    3 <-> 2
+
+print(indegree(G, 2))
+print(len(indegree(G, 2)))
+```
+
+Expected output:
+
+```text
+[1, 3]
+2
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
+
+### `outdegree(graph, node)`
+
+Returns the outgoing neighbor node IDs for a node. Undirected `-` and bidirectional `<->` edges count once as outgoing for each endpoint. Use `len(outdegree(graph, node))` when you need the count.
+
+```gion
+graph G:
+    1 -> 2
+    2 <-> 3
+
+print(outdegree(G, 2))
+print(len(outdegree(G, 2)))
+```
+
+Expected output:
+
+```text
+[3]
+1
+```
+
+Accepted input:
+
+- first argument: `graph`
+- second argument: `int` node ID or `string` node name
+
+Result type:
+
+- `list` of `int` node IDs
 
 ## Error Summary
 

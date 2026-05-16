@@ -1,0 +1,88 @@
+graph Nom_du_graph;
+
+print(Nom_du_graph)
+
+alice = "Alice"
+bob = "Bob"
+
+graph Graphe_avec_noeuds:
+    defaults node {"label": "unknown", "score": 0}
+    alice {"label": "start", "score": 1}
+    2 {"score": 2}
+    bob
+
+print(Graphe_avec_noeuds)
+print(node_attrs(Graphe_avec_noeuds, alice)["label"])
+print(node_attrs(Graphe_avec_noeuds, 2)["score"])
+
+poids_arete = 15
+attrs_arete = {"kind": "shortcut", "weight": 2.5}
+
+graph Graphe_non_oriente:
+    defaults edge {"kind": "normal", "weight": 1}
+    1-2 poids_arete
+    3 - 2 attrs_arete
+
+print(Graphe_non_oriente)
+print(edge_attrs(Graphe_non_oriente, 1, 2)["kind"])
+print(edge_weight(Graphe_non_oriente, 2, 1))
+print(has_node(Graphe_non_oriente, 3))
+print(has_edge(Graphe_non_oriente, 2, 1))
+print(neighbors(Graphe_non_oriente, 2))
+print(node_count(Graphe_non_oriente))
+print(edge_count(Graphe_non_oriente))
+print(is_directed(Graphe_non_oriente))
+print(is_weighted(Graphe_non_oriente))
+print(orientation(Graphe_non_oriente))
+
+graph Graphe_oriente:
+    defaults edge {"kind": "directed", "weight": 1}
+    1 -> 2 {"weight": 1}
+    3 <-> 4 {"kind": "bidirectional"}
+
+print(Graphe_oriente)
+print(edge_attrs(Graphe_oriente, 3, 4)["kind"])
+print(edge_weight(Graphe_oriente, 4, 3))
+print(has_edge(Graphe_oriente, 2, 1))
+print(has_edge(Graphe_oriente, 4, 3))
+print(neighbors(Graphe_oriente, 3))
+print(indegree(Graphe_oriente, 3))
+print(outdegree(Graphe_oriente, 3))
+print(node_count(Graphe_oriente))
+print(edge_count(Graphe_oriente))
+print(is_directed(Graphe_oriente))
+print(is_weighted(Graphe_oriente))
+print(orientation(Graphe_oriente))
+print(node_ids(Graphe_oriente))
+print(nodes(Graphe_oriente))
+print(edges(Graphe_oriente))
+
+graph Graphe_mutable;
+add_node(Graphe_mutable, "Alice")
+add_edge(Graphe_mutable, "Alice", 2)
+add_node(Graphe_mutable, "Bob")
+add_edge(Graphe_mutable, "Bob", "Alice")
+set_node_attrs(Graphe_mutable, "Alice", {"label": "start", "score": 1})
+set_node_attrs(Graphe_mutable, 2, {"label": "end", "score": 2})
+set_node_attrs(Graphe_mutable, "Bob", {"label": "side", "score": 3})
+set_node_attrs(Graphe_mutable, "Alice", {"score": 10})
+set_edge_attrs(Graphe_mutable, "Alice", 2, {"kind": "path", "weight": 1})
+set_edge_attrs(Graphe_mutable, "Bob", "Alice", {"kind": "path", "weight": 2})
+set_edge_attrs(Graphe_mutable, "Bob", "Alice", {"kind": "shortcut"})
+set_edge_weight(Graphe_mutable, "Alice", 2, 7)
+
+print(Graphe_mutable)
+print(neighbors(Graphe_mutable, "Alice"))
+print(node_attrs(Graphe_mutable, "Alice")["score"])
+print(edge_attrs(Graphe_mutable, "Bob", "Alice")["kind"])
+print(edge_weight(Graphe_mutable, "Alice", 2))
+
+graph Graphe_suppression:
+    1 <-> 2 {"weight": 8, "kind": "both"}
+    2 -> 3 {"weight": 5, "kind": "tail"}
+remove_edge(Graphe_suppression, 1, 2)
+print(has_edge(Graphe_suppression, 1, 2))
+print(has_edge(Graphe_suppression, 2, 1))
+print(edge_weight(Graphe_suppression, 2, 1))
+remove_node(Graphe_suppression, 2)
+print(Graphe_suppression)

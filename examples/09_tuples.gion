@@ -1,0 +1,12 @@
+pair = (1, 2)
+mixed = (pair, "x", true)
+
+second = pair[1]
+same = pair == (1, 2)
+size = len(pair)
+
+print(pair)
+print(mixed)
+print(second)
+print(same)
+print(size)

@@ -6,6 +6,8 @@
 
 #include "test_vm_helpers.h"
 
+#include "vm/internal/core/value.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -124,6 +126,13 @@ int run_vm_program(graphion_vm *vm, const graphion_insn *program, size_t len) {
 }
 
 int finish_vm_test(graphion_vm *vm, int code) {
+  size_t i;
+
+  if (vm != NULL && vm->globals != NULL) {
+    for (i = 0U; i < vm->global_count; ++i) {
+      vm_release_global_value(vm, i);
+    }
+  }
   graphion_vm_dispose(vm);
   return code;
 }
@@ -131,6 +140,11 @@ int finish_vm_test(graphion_vm *vm, int code) {
 int finish_vm_test_with_owned_globals(graphion_vm *vm, char **owners, size_t owner_count, int code) {
   size_t i;
 
+  if (vm != NULL && vm->globals != NULL) {
+    for (i = 0U; i < vm->global_count; ++i) {
+      vm_release_global_value(vm, i);
+    }
+  }
   graphion_vm_dispose(vm);
   if (owners != NULL) {
     for (i = 0U; i < owner_count; ++i) {

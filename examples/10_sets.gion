@@ -1,0 +1,12 @@
+frontier = set(1, 2, 2, "a")
+same = frontier == set("a", 2, 1)
+has_two = contains(frontier, 2)
+has_three = contains(frontier, 3)
+size = len(frontier)
+
+print(frontier)
+print(set())
+print(same)
+print(has_two)
+print(has_three)
+print(size)

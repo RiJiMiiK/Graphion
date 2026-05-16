@@ -12,7 +12,19 @@ static int is_scalar_builtin_name(const char *name) {
       "isnan",     "isinf",    "isfinite",  "expm1",    "exp2",     "log1p",
       "erf",       "erfc",     "gamma",     "lgamma",   "fract",    "exp",
       "ln",        "log",      "log10",     "log2",     "floor",    "ceil",
-      "round",     "trunc",    "sign",      "len"
+      "round",      "trunc",      "sign",                  "len",
+      "contains",   "node_count", "edge_count",            "is_directed",
+      "is_weighted", "orientation", "node_attrs",           "edge_attrs",
+      "edge_weight", "vertex_count", "hyperedge_count",     "vertex_attr_count",
+      "hyperedge_attr_count",        "vertex_ids",          "vertices",
+      "hyperedges", "vertex_attrs", "hyperedge_vertices",  "hyperedge_attrs",
+      "has_vertex", "has_hyperedge", "incident_hyperedges", "has_node",
+      "has_edge",   "neighbors",   "indegree",             "outdegree",
+      "node_ids",   "nodes",       "edges",                "add_node",
+      "add_edge",   "set_node_attrs", "set_edge_attrs",    "set_edge_weight",
+      "remove_node", "remove_edge", "add_vertex",          "add_hyperedge",
+      "set_vertex_attrs",          "set_hyperedge_attrs",  "remove_vertex",
+      "remove_hyperedge"
   };
   size_t i;
 
@@ -139,6 +151,10 @@ int is_reserved_name(const char *name) {
          strcmp(name, "pi") == 0 || strcmp(name, "tau") == 0 || strcmp(name, "phi") == 0 ||
          strcmp(name, "e") == 0 ||
          strcmp(name, "nan") == 0 || strcmp(name, "inf") == 0 ||
+         strcmp(name, "set") == 0 ||
+         strcmp(name, "graph") == 0 ||
+         strcmp(name, "hypergraph") == 0 ||
+         strcmp(name, "struct") == 0 ||
          strcmp(name, "if") == 0 ||
          strcmp(name, "elif") == 0 ||
          strcmp(name, "else") == 0 || strcmp(name, "match") == 0 || strcmp(name, "default") == 0 ||

@@ -13,17 +13,16 @@ Use it in this order:
 That split is intentional:
 
 - the tutorial teaches by building small scripts step by step
-- the types page centralizes scalar values, literals, and built-in constants
+- the types page centralizes scalar values, non-scalar values, literals, and built-in constants
 - the operators page centralizes precedence, arithmetic, comparisons, boolean logic, strings, and `bits`
 - the language reference states the exact rules of the currently implemented language
 - the builtins page is a focused catalog of callable builtins
 
 ## Current Scope
 
-Graphion currently exposes a documented scalar `.gion` frontend with arithmetic, logic, control-flow, comments, `bits`, and scalar builtins.
+Graphion currently exposes a documented `.gion` frontend with arithmetic, logic, control-flow, comments, scalar values, non-scalar containers, structs, graphs, hypergraphs, and builtins.
 
 This is the current documented `.gion` frontend scope.
-The repository also contains broader VM work for graph and hypergraph execution, while the active repo lane is currently hygiene and maintenance.
 
 Implemented today:
 
@@ -35,6 +34,14 @@ Implemented today:
   - `bool`
   - `string`
   - `bits`
+- non-scalar values:
+  - `list`
+  - `dict`
+  - `tuple`
+  - `set`
+  - `struct`
+  - `graph`
+  - `hypergraph`
 - numeric constants:
   - `pi`
   - `tau`
@@ -54,7 +61,7 @@ Implemented today:
 - line comments with `#`
 - block comments with `/* ... */`
 - `bits` literals and bitwise operators
-- scalar builtins documented in [Builtins](builtins.md)
+- builtins documented in [Builtins](builtins.md)
 
 This user guide documents only behavior that is implemented now.
 
@@ -97,7 +104,7 @@ Use the builtins page when you need:
 
 Use the types page when you need:
 
-- the current scalar value kinds
+- the current scalar and non-scalar value kinds
 - literal syntax
 - `bits` width basics
 - built-in constants such as `pi`, `tau`, `phi`, `e`, `nan`, and `inf`
@@ -109,9 +116,9 @@ This is still the implemented `v0.x` frontend, not the long-term target language
 Still missing or intentionally deferred:
 
 - loops and broader control-flow forms beyond the current subset
-- tuples or structured multi-value returns
 - user-defined functions
-- graph-specific source-language constructs in the `.gion` frontend path
-- broader type-system features beyond the current scalar focus
+- traversal result types such as a future `path`
+- graph and hypergraph algorithms exposed from `.gion`
+- broader type-system features such as generic container types
 
 Those can be added later, but they are not documented here until they actually exist in the language.

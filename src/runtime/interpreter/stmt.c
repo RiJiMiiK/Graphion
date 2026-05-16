@@ -9,7 +9,9 @@ int parse_assignment(const char *line_text,
   const char *cursor = line_text;
   char target[GRAPHION_RUNTIME_NAME_MAX];
   parsed_expr_result expr;
-  size_t target_index;
+  parsed_expr_result key_expr;
+  size_t target_index = 0U;
+  int indexed_target = 0;
   char assign_op = '=';
   int power_assign = 0;
   int floor_div_assign = 0;
@@ -28,6 +30,30 @@ int parse_assignment(const char *line_text,
     return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
   }
   skip_spaces(&cursor);
+  if (*cursor == '[') {
+    int existing;
+    indexed_target = 1;
+    existing = program_find_global_index(program, target);
+    if (existing < 0) {
+      return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
+    }
+    target_index = (size_t)existing;
+    cursor++;
+    rc = parse_expression(&cursor, program, &key_expr, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &key_expr, 1U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    skip_spaces(&cursor);
+    if (*cursor != ']') {
+      return fail(diagnostic, line, 1U, "expected ']' after assignment target index", GINT_ERR_PARSE);
+    }
+    cursor++;
+    skip_spaces(&cursor);
+  }
   if (cursor[0] == '*' && cursor[1] == '*' && cursor[2] == '=') {
     assign_op = '*';
     power_assign = 1;
@@ -65,19 +91,22 @@ int parse_assignment(const char *line_text,
   } else {
     return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
   }
-  if (assign_op == '=') {
+  if (indexed_target && assign_op != '=') {
+    return fail(diagnostic, line, 1U, "compound indexed assignment is not supported", GINT_ERR_PARSE);
+  }
+  if (!indexed_target && assign_op == '=') {
     rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
     if (rc != GINT_OK) {
       return rc;
     }
-  } else {
+  } else if (!indexed_target) {
     int existing = program_find_global_index(program, target);
     if (existing < 0) {
       return fail(diagnostic, line, 1U, "unknown variable", GINT_ERR_UNKNOWN_VARIABLE);
     }
     target_index = (size_t)existing;
   }
-  rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
+  rc = parse_expression(&cursor, program, &expr, indexed_target ? 2U : 0U, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -111,6 +140,21 @@ int parse_assignment(const char *line_text,
                       0,
                       line,
                       diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+  }
+  if (indexed_target) {
+    rc = ensure_expr_in_reg(program, &expr, 2U, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, GVM_OP_DICT_SET_KEY, 0U, 1U, 2, line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
@@ -343,6 +387,523 @@ int parse_print(const char *line_text,
   return program_emit(program, GVM_OP_PRINT_REG, expr.reg_index, 0U, 0, line, diagnostic);
 }
 
+int parse_graph_declaration_with_node_count(const char *line_text,
+                                            size_t node_count,
+                                            graphion_runtime_program *program,
+                                            unsigned int line,
+                                            graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = line_text;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  size_t target_index = 0U;
+  int block_declaration = 0;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "graph", 5U) != 0 || is_ident_char(cursor[5])) {
+    return fail(diagnostic, line, 1U, "expected 'graph'", GINT_ERR_PARSE);
+  }
+  cursor += 5;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected graph name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor == ':') {
+    block_declaration = 1;
+  } else if (*cursor != ';') {
+    return fail(diagnostic, line, 1U, "expected ';' or ':' after graph declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph declaration", GINT_ERR_PARSE);
+  }
+  rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (!block_declaration && node_count != 0U) {
+    return fail(diagnostic, line, 1U, "graph node block requires ':'", GINT_ERR_PARSE);
+  }
+  if (node_count > (size_t)INT32_MAX) {
+    return fail(diagnostic, line, 1U, "too many graph nodes", GINT_ERR_CAPACITY);
+  }
+  rc = program_emit(program, GVM_OP_GRAPH_NEW, 0U, 0U, (int32_t)node_count, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+}
+
+static int parse_graph_declaration(const char *line_text,
+                                   graphion_runtime_program *program,
+                                   unsigned int line,
+                                   graphion_runtime_diagnostic *diagnostic) {
+  return parse_graph_declaration_with_node_count(line_text, 0U, program, line, diagnostic);
+}
+
+static int parse_hypergraph_declaration(const char *line_text,
+                                        graphion_runtime_program *program,
+                                        unsigned int line,
+                                        graphion_runtime_diagnostic *diagnostic) {
+  const char *cursor = line_text;
+  char target[GRAPHION_RUNTIME_NAME_MAX];
+  size_t target_index = 0U;
+  int rc;
+
+  skip_spaces(&cursor);
+  if (strncmp(cursor, "hypergraph", 10U) != 0 || is_ident_char(cursor[10])) {
+    return fail(diagnostic, line, 1U, "expected 'hypergraph'", GINT_ERR_PARSE);
+  }
+  cursor += 10;
+  if (*cursor != ' ' && *cursor != '\t') {
+    return fail(diagnostic, line, 1U, "expected hypergraph name", GINT_ERR_PARSE);
+  }
+  rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  if (is_reserved_name(target)) {
+    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ';') {
+    return fail(diagnostic, line, 1U, "expected ';' after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph declaration", GINT_ERR_PARSE);
+  }
+  rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, GVM_OP_HYPERGRAPH_NEW, 0U, 0U, 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
+}
+
+static int parse_graph_mutation_statement(const char *line_text,
+                                          graphion_runtime_program *program,
+                                          unsigned int line,
+                                          graphion_runtime_diagnostic *diagnostic) {
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+    int endpoint_count;
+  } specs[] = {
+      {"add_node", 8U, GVM_OP_GRAPH_ADD_NODE, 1},
+      {"add_edge", 8U, GVM_OP_GRAPH_ADD_EDGE, 2},
+      {"remove_node", 11U, GVM_OP_GRAPH_REMOVE_NODE, 1},
+      {"remove_edge", 11U, GVM_OP_GRAPH_REMOVE_EDGE, 2},
+  };
+  const char *name = NULL;
+  const char *cursor = line_text;
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  parsed_expr_result first;
+  parsed_expr_result second;
+  graphion_opcode opcode = GVM_OP_NOP;
+  int graph_index;
+  int endpoint_count = 0;
+  size_t i;
+  int rc;
+
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      endpoint_count = specs[i].endpoint_count;
+      break;
+    }
+  }
+  if (name == NULL) {
+    return fail(diagnostic, line, 1U, "expected graph mutation statement", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '(') {
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  graph_index = program_find_global_index(program, graph_name);
+  if (graph_index < 0) {
+    return fail(diagnostic, line, 1U, "unknown graph variable", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ',') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' after %s graph", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_expression(&cursor, program, &first, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &first, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (endpoint_count == 1) {
+    if (*cursor != ')') {
+      char message[128];
+      snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    }
+    cursor++;
+    skip_spaces(&cursor);
+    if (*cursor != '\0') {
+      char message[128];
+      snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    }
+    rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = program_emit(program, opcode, 0U, 1U, 0, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  }
+  if (*cursor != ',') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' between %s endpoints", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_expression(&cursor, program, &second, 2U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &second, 2U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ')') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, opcode, 0U, 1U, 2, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+}
+
+static int parse_hypergraph_mutation_statement(const char *line_text,
+                                               graphion_runtime_program *program,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+  } specs[] = {
+      {"add_vertex", 10U, GVM_OP_HYPERGRAPH_ADD_VERTEX},
+      {"add_hyperedge", 13U, GVM_OP_HYPERGRAPH_ADD_HYPEREDGE},
+      {"remove_vertex", 13U, GVM_OP_HYPERGRAPH_REMOVE_VERTEX},
+      {"remove_hyperedge", 16U, GVM_OP_HYPERGRAPH_REMOVE_HYPEREDGE},
+  };
+  const char *name = NULL;
+  const char *cursor = line_text;
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  parsed_expr_result arg;
+  graphion_opcode opcode = GVM_OP_NOP;
+  int graph_index;
+  size_t i;
+  int rc;
+
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      break;
+    }
+  }
+  if (name == NULL) {
+    return fail(diagnostic, line, 1U, "expected hypergraph mutation statement", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '(') {
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  graph_index = program_find_global_index(program, graph_name);
+  if (graph_index < 0) {
+    return fail(diagnostic, line, 1U, "unknown hypergraph variable", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ',') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' after %s hypergraph", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_expression(&cursor, program, &arg, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &arg, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ')') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, opcode, 0U, 1U, 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+}
+
+static int parse_graph_attr_mutation_statement(const char *line_text,
+                                               graphion_runtime_program *program,
+                                               unsigned int line,
+                                               graphion_runtime_diagnostic *diagnostic) {
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+    int arg_count;
+  } specs[] = {
+      {"set_node_attrs", 14U, GVM_OP_GRAPH_SET_NODE_ATTRS, 2},
+      {"set_edge_attrs", 14U, GVM_OP_GRAPH_SET_EDGE_ATTRS, 3},
+      {"set_edge_weight", 15U, GVM_OP_GRAPH_SET_EDGE_WEIGHT, 3},
+  };
+  parsed_expr_result args[4];
+  const char *name = NULL;
+  const char *cursor = line_text;
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_opcode opcode = GVM_OP_NOP;
+  int graph_index;
+  int arg_count = 0;
+  size_t i;
+  int rc;
+
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      arg_count = specs[i].arg_count;
+      break;
+    }
+  }
+  if (name == NULL) {
+    return fail(diagnostic, line, 1U, "expected graph attribute mutation statement", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '(') {
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  graph_index = program_find_global_index(program, graph_name);
+  if (graph_index < 0) {
+    return fail(diagnostic, line, 1U, "unknown graph variable", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  for (i = 0U; i < (size_t)arg_count; ++i) {
+    skip_spaces(&cursor);
+    if (*cursor != ',') {
+      char message[128];
+      snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
+      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    }
+    cursor++;
+    rc = parse_expression(&cursor, program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    rc = ensure_expr_in_reg(program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ')') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, opcode, 0U, 1U, arg_count >= 2 ? 2 : 0, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+}
+
+static int parse_hypergraph_attr_mutation_statement(const char *line_text,
+                                                    graphion_runtime_program *program,
+                                                    unsigned int line,
+                                                    graphion_runtime_diagnostic *diagnostic) {
+  static const struct {
+    const char *name;
+    size_t len;
+    graphion_opcode opcode;
+  } specs[] = {
+      {"set_vertex_attrs", 16U, GVM_OP_HYPERGRAPH_SET_VERTEX_ATTRS},
+      {"set_hyperedge_attrs", 19U, GVM_OP_HYPERGRAPH_SET_HYPEREDGE_ATTRS},
+  };
+  parsed_expr_result target;
+  parsed_expr_result attrs;
+  const char *name = NULL;
+  const char *cursor = line_text;
+  char graph_name[GRAPHION_RUNTIME_NAME_MAX];
+  graphion_opcode opcode = GVM_OP_NOP;
+  int graph_index;
+  size_t i;
+  int rc;
+
+  for (i = 0U; i < sizeof(specs) / sizeof(specs[0]); ++i) {
+    if (strncmp(line_text, specs[i].name, specs[i].len) == 0 && !is_ident_char(line_text[specs[i].len])) {
+      name = specs[i].name;
+      cursor = line_text + specs[i].len;
+      opcode = specs[i].opcode;
+      break;
+    }
+  }
+  if (name == NULL) {
+    return fail(diagnostic, line, 1U, "expected hypergraph attribute mutation statement", GINT_ERR_PARSE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != '(') {
+    char message[96];
+    snprintf(message, sizeof(message), "expected '(' after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  graph_index = program_find_global_index(program, graph_name);
+  if (graph_index < 0) {
+    return fail(diagnostic, line, 1U, "unknown hypergraph variable", GINT_ERR_UNKNOWN_VARIABLE);
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ',') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_expression(&cursor, program, &target, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &target, 1U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ',') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  rc = parse_expression(&cursor, program, &attrs, 2U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = ensure_expr_in_reg(program, &attrs, 2U, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  skip_spaces(&cursor);
+  if (*cursor != ')') {
+    char message[128];
+    snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  cursor++;
+  skip_spaces(&cursor);
+  if (*cursor != '\0') {
+    char message[128];
+    snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  rc = program_emit(program, opcode, 0U, 1U, 2, line, diagnostic);
+  if (rc != GINT_OK) {
+    return rc;
+  }
+  return program_emit(program, GVM_OP_STORE_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
+}
+
 int seed_program_from_scope(graphion_runtime_program *program,
                             const graphion_runtime_scope *scope,
                             unsigned int line,
@@ -375,6 +936,29 @@ int parse_statement_line(const char *line_text,
   }
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
+  } else if (strncmp(line_cursor, "struct", 6U) == 0 && !is_ident_char(line_cursor[6])) {
+    rc = fail(diagnostic, line, 1U, "struct declaration requires ':' and an indented field block", GINT_ERR_PARSE);
+  } else if (strncmp(line_cursor, "hypergraph", 10U) == 0 && !is_ident_char(line_cursor[10])) {
+    rc = parse_hypergraph_declaration(line_cursor, program, line, diagnostic);
+  } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {
+    rc = parse_graph_declaration(line_cursor, program, line, diagnostic);
+  } else if ((strncmp(line_cursor, "add_node", 8U) == 0 && !is_ident_char(line_cursor[8])) ||
+             (strncmp(line_cursor, "add_edge", 8U) == 0 && !is_ident_char(line_cursor[8])) ||
+             (strncmp(line_cursor, "remove_node", 11U) == 0 && !is_ident_char(line_cursor[11])) ||
+             (strncmp(line_cursor, "remove_edge", 11U) == 0 && !is_ident_char(line_cursor[11]))) {
+    rc = parse_graph_mutation_statement(line_cursor, program, line, diagnostic);
+  } else if ((strncmp(line_cursor, "add_vertex", 10U) == 0 && !is_ident_char(line_cursor[10])) ||
+             (strncmp(line_cursor, "add_hyperedge", 13U) == 0 && !is_ident_char(line_cursor[13])) ||
+             (strncmp(line_cursor, "remove_vertex", 13U) == 0 && !is_ident_char(line_cursor[13])) ||
+             (strncmp(line_cursor, "remove_hyperedge", 16U) == 0 && !is_ident_char(line_cursor[16]))) {
+    rc = parse_hypergraph_mutation_statement(line_cursor, program, line, diagnostic);
+  } else if ((strncmp(line_cursor, "set_node_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
+             (strncmp(line_cursor, "set_edge_attrs", 14U) == 0 && !is_ident_char(line_cursor[14])) ||
+             (strncmp(line_cursor, "set_edge_weight", 15U) == 0 && !is_ident_char(line_cursor[15]))) {
+    rc = parse_graph_attr_mutation_statement(line_cursor, program, line, diagnostic);
+  } else if ((strncmp(line_cursor, "set_vertex_attrs", 16U) == 0 && !is_ident_char(line_cursor[16])) ||
+             (strncmp(line_cursor, "set_hyperedge_attrs", 19U) == 0 && !is_ident_char(line_cursor[19]))) {
+    rc = parse_hypergraph_attr_mutation_statement(line_cursor, program, line, diagnostic);
   } else {
     rc = parse_assignment(line_cursor, program, line, diagnostic);
   }

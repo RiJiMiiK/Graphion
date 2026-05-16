@@ -272,6 +272,132 @@ static int run_dispatch_switch(graphion_vm *vm) {
       case GVM_OP_LEN:
         rc = op_len(vm, &in);
         break;
+      case GVM_OP_GRAPH_NODE_COUNT:
+        rc = op_graph_node_count(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGE_COUNT:
+        rc = op_graph_edge_count(vm, &in);
+        break;
+      case GVM_OP_GRAPH_IS_DIRECTED:
+        rc = op_graph_is_directed(vm, &in);
+        break;
+      case GVM_OP_GRAPH_IS_WEIGHTED:
+        rc = op_graph_is_weighted(vm, &in);
+        break;
+      case GVM_OP_GRAPH_ORIENTATION:
+        rc = op_graph_orientation(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NODE_ATTRS:
+        rc = op_graph_node_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGE_ATTRS:
+        rc = op_graph_edge_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGE_WEIGHT:
+        rc = op_graph_edge_weight(vm, &in);
+        break;
+      case GVM_OP_GRAPH_HAS_NODE:
+        rc = op_graph_has_node(vm, &in);
+        break;
+      case GVM_OP_GRAPH_HAS_EDGE:
+        rc = op_graph_has_edge(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NEIGHBORS:
+        rc = op_graph_neighbors(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NODE_IDS:
+        rc = op_graph_node_ids(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NODES:
+        rc = op_graph_nodes(vm, &in);
+        break;
+      case GVM_OP_GRAPH_EDGES:
+        rc = op_graph_edges(vm, &in);
+        break;
+      case GVM_OP_GRAPH_INDEGREE:
+        rc = op_graph_indegree(vm, &in);
+        break;
+      case GVM_OP_GRAPH_OUTDEGREE:
+        rc = op_graph_outdegree(vm, &in);
+        break;
+      case GVM_OP_GRAPH_ADD_NODE:
+        rc = op_graph_add_node(vm, &in);
+        break;
+      case GVM_OP_GRAPH_ADD_EDGE:
+        rc = op_graph_add_edge(vm, &in);
+        break;
+      case GVM_OP_GRAPH_SET_NODE_ATTRS:
+        rc = op_graph_set_node_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_SET_EDGE_ATTRS:
+        rc = op_graph_set_edge_attrs(vm, &in);
+        break;
+      case GVM_OP_GRAPH_SET_EDGE_WEIGHT:
+        rc = op_graph_set_edge_weight(vm, &in);
+        break;
+      case GVM_OP_GRAPH_REMOVE_NODE:
+        rc = op_graph_remove_node(vm, &in);
+        break;
+      case GVM_OP_GRAPH_REMOVE_EDGE:
+        rc = op_graph_remove_edge(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_VERTICES:
+        rc = op_hypergraph_hyperedge_vertices(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_ATTRS:
+        rc = op_hypergraph_hyperedge_attrs(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_VERTEX_COUNT:
+        rc = op_hypergraph_vertex_count(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_COUNT:
+        rc = op_hypergraph_hyperedge_count(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_VERTEX_ATTR_COUNT:
+        rc = op_hypergraph_vertex_attr_count(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGE_ATTR_COUNT:
+        rc = op_hypergraph_hyperedge_attr_count(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_VERTEX_ATTRS:
+        rc = op_hypergraph_vertex_attrs(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HAS_VERTEX:
+        rc = op_hypergraph_has_vertex(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HAS_HYPEREDGE:
+        rc = op_hypergraph_has_hyperedge(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_INCIDENT_HYPEREDGES:
+        rc = op_hypergraph_incident_hyperedges(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_VERTEX_IDS:
+        rc = op_hypergraph_vertex_ids(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_VERTICES:
+        rc = op_hypergraph_vertices(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_HYPEREDGES:
+        rc = op_hypergraph_hyperedges(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_ADD_VERTEX:
+        rc = op_hypergraph_add_vertex(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_ADD_HYPEREDGE:
+        rc = op_hypergraph_add_hyperedge(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_SET_VERTEX_ATTRS:
+        rc = op_hypergraph_set_vertex_attrs(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_SET_HYPEREDGE_ATTRS:
+        rc = op_hypergraph_set_hyperedge_attrs(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_REMOVE_VERTEX:
+        rc = op_hypergraph_remove_vertex(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_REMOVE_HYPEREDGE:
+        rc = op_hypergraph_remove_hyperedge(vm, &in);
+        break;
       case GVM_OP_FACTORIAL:
         rc = op_factorial(vm, &in);
         break;
@@ -292,6 +418,51 @@ static int run_dispatch_switch(graphion_vm *vm) {
         break;
       case GVM_OP_COPY_GLOBAL:
         rc = op_copy_global(vm, &in);
+        break;
+      case GVM_OP_LIST_NEW:
+        rc = op_list_new(vm, &in);
+        break;
+      case GVM_OP_LIST_APPEND:
+        rc = op_list_append(vm, &in);
+        break;
+      case GVM_OP_LIST_GET:
+        rc = op_list_get(vm, &in);
+        break;
+      case GVM_OP_DICT_NEW:
+        rc = op_dict_new(vm, &in);
+        break;
+      case GVM_OP_DICT_SET:
+        rc = op_dict_set(vm, &in);
+        break;
+      case GVM_OP_DICT_GET:
+        rc = op_dict_get(vm, &in);
+        break;
+      case GVM_OP_DICT_SET_KEY:
+        rc = op_dict_set_key(vm, &in);
+        break;
+      case GVM_OP_TUPLE_NEW:
+        rc = op_tuple_new(vm, &in);
+        break;
+      case GVM_OP_TUPLE_APPEND:
+        rc = op_tuple_append(vm, &in);
+        break;
+      case GVM_OP_SET_NEW:
+        rc = op_set_new(vm, &in);
+        break;
+      case GVM_OP_SET_ADD:
+        rc = op_set_add(vm, &in);
+        break;
+      case GVM_OP_SET_CONTAINS:
+        rc = op_set_contains(vm, &in);
+        break;
+      case GVM_OP_GRAPH_NEW:
+        rc = op_graph_new(vm, &in);
+        break;
+      case GVM_OP_HYPERGRAPH_NEW:
+        rc = op_hypergraph_new(vm, &in);
+        break;
+      case GVM_OP_STRUCT_NEW:
+        rc = op_struct_new(vm, &in);
         break;
       case GVM_OP_PRINT_CONST:
         rc = op_print_const(vm, &in);

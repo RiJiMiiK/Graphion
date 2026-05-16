@@ -21,6 +21,7 @@ By the end of this tutorial, you will know how to:
 - make decisions with `if` and `match`
 - use strings and comments
 - work with `bits` values
+- create basic containers
 - call a few useful builtins
 
 ## Your First Script
@@ -56,7 +57,7 @@ That is the basic rhythm of the language: compute values, store them, then print
 
 ## Variables And Values
 
-Graphion currently works mainly with scalar values.
+Graphion starts with scalar values.
 
 ```gion
 count = 42
@@ -91,6 +92,22 @@ Expected output:
 ```
 
 A good mental model is: the right side is evaluated first, then its result is stored on the left.
+
+Graphion also has non-scalar values when you need to group data:
+
+```gion
+numbers = [1, 2, 3]
+profile = {"name": "Alice", "score": 42}
+pair = ("Alice", 42)
+unique = set(1, 2, 2, 3)
+
+print(numbers[0])
+print(profile["name"])
+print(pair)
+print(unique)
+```
+
+Graphs, hypergraphs, and structs are covered in the type and language reference pages because their syntax has more rules.
 
 ## Doing Arithmetic
 
@@ -455,6 +472,7 @@ circumference=12.5664
 This is a good example of how Graphion currently feels:
 
 - scalar values
+- containers when values need structure
 - expressions
 - a bit of branching
 - a bit of formatting through `print(...)`

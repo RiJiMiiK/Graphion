@@ -2,113 +2,150 @@
 
 > The rebuild is governed by [docs/runtime/core/REBUILD_CHARTER.md](docs/runtime/core/REBUILD_CHARTER.md).
 
-This roadmap is temporarily focused on project and code hygiene after the `feat/gion-arithmetic` lane.
-Everything above the final future section belongs to the active maintenance lane.
-Future language additions stay isolated at the end for traceability and are not part of the current execution lane.
+## Current lane
 
-## Current focus
+This branch is for active work on non-scalar language types.
 
-The current active lane is hygiene, maintainability, and project health.
+### Non-scalar language types
 
-## Immediate problems
-
-### Build health and portability
-
-- [x] restore a clean `-Werror` build on the Windows GCC / MinGW toolchain
-- [x] add a regression check for the scalar builtin `isinf` / `isfinite` warning path
-- [x] decide explicitly whether Windows GCC / MinGW is a supported toolchain
-- [x] if Windows GCC / MinGW is not supported, document the supported Windows toolchain clearly
-
-### Safety and correctness
-
-- [x] add the missing invalid-register guard in the affected scalar builtin path
-- [x] add a VM regression test that the affected builtin returns `GVM_ERR_INVALID_REG` on malformed bytecode
-- [x] review neighboring scalar builtin opcodes for similar defensive-check gaps
-- [x] keep malformed-bytecode behavior consistent across scalar, graph, and hypergraph opcode families
-- [x] replace the pseudo-private Discord security contact path with a genuinely private reporting channel or explicitly downgrade the wording in `SECURITY.md` and issue templates
-
-## Maintenance irritants
-
-### Roadmap and docs consistency
-
-- [x] resync `README.md` with the implemented `.gion` scalar surface
-- [x] keep `ROADMAP.md` focused on the active maintenance lane while preserving future language work below
-- [x] remove duplicated or drifted builtin entries in the user docs
-- [x] make the documented current scope consistent across README, docs, examples, and roadmap
-- [x] review docs wording so the public entry points match the post-`gion-arithmetic` project state
-- [x] align `.github/ISSUE_TEMPLATE/config.yml` support links with the current `README.md` / `SECURITY.md` contact policy
-
-### Test robustness
-
-- [x] replace fixed temporary output filenames in tests with unique per-test temp paths
-- [x] make the test suite safe to run in parallel without file collisions
-- [x] reduce repeated file-open / file-read / cleanup boilerplate through shared test helpers
-- [x] split the single `graphion_tests` CTest entry into smaller logical test targets or suites
-- [x] reduce the manual maintenance burden of the central test registry in `tests/runner/test_main.c`
-
-### CI and checks
-
-- [x] run the docs build on pull requests, not only on pushes to `main`
-- [x] extend `cspell` coverage to `ROADMAP.md`, `examples/README.md`, and maintained project docs outside `docs/`
-- [x] extend link-check coverage to roadmap and examples entry points
-- [x] align the local quality-gate scripts across Bash and PowerShell
-- [x] decide whether `clang-tidy` and `cppcheck` should stay `src`-only or also cover part of `tests`
-- [x] keep sanitize, warning, static-analysis, and docs expectations documented in one obvious place
-- [x] retire or repurpose `check_asm_safety.py` and the related assembly-only gate after removal of the VM ASM path
-- [x] remove stale assembly-safety references from maintainer notes, local helpers, and CI if the asm gate is dropped
-- [x] align the `cppcheck` option set between CI and the local quality-gate scripts
-- [x] decide whether the local repo gate should mirror the Docker-based `lychee` workflow or document the intentional tool mismatch
-- [x] replace the floating Docker `lychee:latest` usage with a deterministic image reference that is actually published
-- [x] keep the local repo gate and `links-check` workflow aligned on the same pinned `lychee` image reference
-
-## Opportunistic improvements
-
-### Code health
-
-- [x] remove duplicated CMake logic such as the repeated VM dispatch block
-- [x] improve runtime error wording where distinct failures currently collapse into overly generic messages
-- [x] normalize formatting and indentation drift in recently expanded scalar code and tests
-- [x] split oversized files in the scalar/runtime path into smaller units
-- [x] reduce builtin duplication between parser, VM, docs, and tests where a shared definition table or helper layer makes sense
-- [x] review the project code for obvious legacy or dead paths after the hygiene lane
-  - current audit did not find a major dead-code block in `src/`; remaining legacy signs are mostly in repository/workflow config, not in the VM/runtime/parser core
-- [x] continue splitting oversized interpreter and test files such as `src/runtime/interpreter/expr.c`, `tests/gion/test_gion_scalars.c`, and `tests/vm/test_vm_scalars.c`
-- [x] continue splitting oversized files such as `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar.c`, `tests/gion/test_gion_scalars.c`, `tests/gion/test_gion_operators.c`, and `tests/vm/test_vm_scalars.c`
-- [x] review the remaining VM fastpaths and decide which ones are still worth carrying
-  - keep `arith_only_fastpath`, `weighted_sum_fastpath`, and `frontier_fastpath`
-  - remove `value_move_fastpath`, `global_materialize_fastpath`, and `global_print_fastpath`
-- [x] reduce duplication between the remaining fastpath executors and the main VM execution path where practical
-- [x] add targeted coverage or simplification for the remaining fastpath planner / executor combinations
-- [x] remove small structural drift such as duplicated includes in `src/vm/internal/core/fastpath_plan.c`
-- [x] split the still-oversized scalar math test monolith in `tests/gion/test_gion_scalar_math_suite.c`
-- [x] split the still-oversized VM suites in `tests/vm/test_vm_logic_bits.c` and `tests/vm/test_vm_graph_ops.c`
-- [x] continue slimming the remaining near-1k code units such as `src/vm/internal/opcodes/op_scalar.c`, `src/runtime/interpreter/source.c`, `src/runtime/interpreter/expr.c`, `src/vm/internal/opcodes/op_scalar_math_builtins.c`, and `tests/vm/test_vm_scalar_builtins_misc.c`
-- [x] factor the repeated `frontier_is_bound` helper logic shared across `src/vm/vm.c`, `src/vm/internal/core/fastpath_exec.c`, `src/vm/internal/opcodes/op_frontier.c`, and `src/vm/internal/opcodes/op_graph.c`
-
-### Repository hygiene
-
-- [x] keep root-level local build and debug artefacts ignored consistently
-- [x] review whether repo-health checks should assert a few more actively maintained files
-- [x] keep local helper scripts and CI workflows aligned so the same quality bar is enforceable both locally and in CI
-
-### Solo-dev simplification
-
-- [x] review whether `CODEOWNERS` still adds value with a single maintainer, or remove it from the required repo-health baseline
-- [x] review whether `.github/pull_request_template.md` and PR-title enforcement still justify their maintenance cost for a solo workflow
-- [x] review whether PR auto-labeling and label-sync automation still provide enough value for a solo-maintained repo
-- [x] review whether `contributors-sync.yml` and `CONTRIBUTORS.md` automation are still worth keeping while the project is effectively solo-maintained
-- [x] review whether `stale.yml` and `monthly-audit.yml` reduce workload or mostly create repo noise in a solo-maintainer workflow
-- [x] review whether issue templates, RFC discussion templates, and contributor-oriented labels such as `good first issue`, `help wanted`, and `triage` still match the actual maintenance model
-- [x] review whether `MAINTAINERS.md` and `OWNERSHIP.md` should stay separate or collapse into a single lightweight maintainer note
-- [x] review whether `SUPPORT.md` and `SECURITY_CONTACTS.md` should stay separate or merge into `README.md` / `SECURITY.md`
+- [x] add `list` as the first non-scalar container type
+  - literals
+  - runtime / VM representation
+  - basic operations such as indexing, equality, printing, and `len`
+  - tests, docs, and examples
+- [x] add `dict` as the second non-scalar container type
+  - recommended first version with `string` keys
+  - literals
+  - runtime / VM representation
+  - basic operations such as lookup, equality, printing, and `len`
+  - tests, docs, and examples
+- [x] `tuple`
+  - useful for fixed-size structured returns if `list` is too loose semantically
+- [x] `set`
+  - especially relevant for graph-oriented membership, uniqueness, and frontier-like value sets
+- [x] first-class `graph` values in `.gion`
+  - distinct from backend-only VM/runtime support
+  - [x] create an empty graph with `graph Name;`
+  - [x] create graph values with node blocks
+  - [x] support string node names with quoted literals
+  - [x] support node variables that resolve to `string` names or integer IDs
+  - [x] support explicit numeric node IDs without creating implicit gap nodes
+  - [x] support undirected edges with `node - node`
+  - [x] support directed edges with `node -> node`
+  - [x] support bidirectional directed edges with `node <-> node`
+  - [x] reject mixing directed syntax with undirected `-` edges in the same graph
+  - [x] create missing endpoint nodes when an edge references them
+  - [x] support node attributes as dict values
+  - [x] support `defaults node` and enforce a shared node attribute schema
+  - [x] support edge attributes as dict values
+  - [x] support compact edge weights with reserved numeric `weight`
+  - [x] support edge attribute expressions that evaluate to `int`, `float`, or `dict`
+  - [x] support `defaults edge` and enforce a shared edge attribute schema
+  - [x] print useful graph summaries
+  - [x] cover graph declarations, attrs, edges, warnings, docs, and examples
+  - [x] add `.gion` graph inspection operations
+    - node count
+    - edge count
+    - directedness / orientation information
+    - weightedness information
+  - [x] add `.gion` graph attribute lookup operations
+    - node attributes
+    - edge attributes
+    - reserved edge `weight`
+  - [x] add basic graph membership/query operations
+    - node exists
+    - edge exists
+    - neighbors / adjacency
+  - [x] decide and add the first mutation surface after initialization
+    - add node
+    - add edge
+  - [x] add graph attribute mutation after initialization
+    - update node attributes
+    - update edge attributes
+    - update reserved edge `weight`
+  - [x] add graph removal mutation after initialization
+    - remove node
+    - remove edge
+    - define how node removal affects incident edges and attributes
+  - [x] add graph listing/query operations
+    - list nodes / node IDs
+    - list edges
+    - expose enough graph contents to inspect a value without knowing names or IDs ahead of time
+  - [x] clarify directed adjacency semantics
+    - `neighbors(...)` means incoming plus outgoing adjacency
+    - `indegree(...)` and `outdegree(...)` expose incoming / outgoing node IDs
+  - [x] harden graph mutation error coverage
+    - unknown attribute keys
+    - invalid `weight` types
+    - missing nodes / edges
+    - partial attribute patches on nodes / edges added after defaults
+- [x] first-class `hypergraph` values in `.gion`
+  - distinct from backend-only VM/runtime support
+  - [x] create an empty hypergraph with `hypergraph Name;`
+  - [x] create hypergraph values with vertex blocks
+  - [x] support vertex attributes and `defaults vertex`
+  - [x] support hyperedges as vertex lists with `[vertex, ...]`
+  - [x] support hyperedge attributes and `defaults hyperedge`
+  - [x] decide how `.gion` addresses hyperedges after initialization
+    - implicit stable numeric hyperedge IDs / indexes
+    - IDs are assigned in declaration order
+    - IDs are not user-provided in the first version
+    - IDs should not be renumbered or reused after removal
+  - [x] add `.gion` hypergraph inspection operations
+    - vertex count
+    - hyperedge count
+    - vertex / hyperedge attribute schema information
+  - [x] add `.gion` hypergraph attribute lookup operations
+    - vertex attributes
+    - hyperedge attributes
+  - [x] add basic hypergraph membership/query operations
+    - vertex exists
+    - hyperedge exists
+    - hyperedges incident to a vertex
+    - vertices contained in a hyperedge
+  - [x] add hypergraph listing/query operations
+    - list vertices / vertex IDs
+    - list hyperedges
+    - expose each hyperedge as a vertex list
+  - [x] decide and add the first hypergraph mutation surface after initialization
+    - add vertex
+    - add hyperedge
+  - [x] add hypergraph attribute mutation after initialization
+    - update vertex attributes
+    - update hyperedge attributes
+  - [x] add hypergraph removal mutation after initialization
+    - remove vertex
+    - remove hyperedge
+    - define how vertex removal affects incident hyperedges and attributes
+  - [x] harden hypergraph error coverage
+    - unknown attribute keys
+    - missing vertices / hyperedges
+    - invalid hyperedge vertex lists
+    - partial attribute patches on vertices / hyperedges added after defaults
+- [x] `struct`
+  - fixed-field typed composite for cases where `dict` is too dynamic
+  - declaration syntax: `struct Name:`
+  - required fields with `field: type`
+  - defaulted fields with `field: type = value`
+  - instance syntax: `Name {"field": value}`
+  - missing required fields, unknown fields, and wrong field types are runtime errors
 
 ## Future additions gated by other features
 
-These items stay visible for traceability, but they are intentionally outside the current maintenance lane.
+These items stay visible for traceability and future planning.
+
+### Toolchain and platform
 
 - [ ] optional future support for Windows GCC / MinGW
   - only if the project later chooses to support it as a first-class toolchain
   - would require adding it to CI and keeping its warning policy green
+
+### Builtins gated by future types
+
+- [ ] future `path` value type
+  - reserved for traversal builtins such as `shortest_path`, `bfs_path`, or `dfs_path`
+  - not user-constructible directly in the first version
+  - intended print shape: `path(1 -> 2 -> 4)`
 - [ ] builtin `modf(x)`
   - needs a multi-value return shape such as a future list/tuple-like type
 - [ ] builtin `cis(x)`
