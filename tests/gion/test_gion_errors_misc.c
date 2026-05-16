@@ -264,28 +264,62 @@ int test_gion_copy_chains_and_blank_lines(void) {
 }
 
 int test_gion_late_line_error_diagnostics(void) {
-  const char *source =
-      "count = 42\n"
-      "ratio = 3.5\n"
-      "print(count)\n"
-      "print(ratio)\n"
-      "name =\n";
-  graphion_runtime_scope scope;
-  graphion_runtime_diagnostic diagnostic;
-  int rc;
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    const char *message;
+  } cases[] = {
+      {"count = 42\n"
+       "ratio = 3.5\n"
+       "print(count)\n"
+       "print(ratio)\n"
+       "name =\n",
+       GINT_ERR_PARSE,
+       5U,
+       "expected expression after '='"},
+      {"first = 1\n"
+       "second = first\n"
+       "third = missing\n",
+       GINT_ERR_UNKNOWN_OPERAND,
+       3U,
+       "unknown operand 'missing'"},
+      {"ready = true\n"
+       "value = \"ready\" if\n"
+       "    ready else \"bad\"\n",
+       GINT_ERR_PARSE,
+       2U,
+       "multiline assignment expression requires grouping parentheses"},
+      {"value = 1\n"
+       "match value:\n"
+       "    1:\n"
+       "    2:\n"
+       "print(value)\n",
+       GINT_ERR_PARSE,
+       3U,
+       "expected indented block after match case"},
+  };
+  size_t i;
 
-  graphion_runtime_scope_init(&scope);
-  rc = graphion_interpret_source(source, &scope, &diagnostic);
-  if (rc != GINT_ERR_PARSE) {
-    return finish_scope_test(&scope, 1);
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != 1U) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
   }
-  if (diagnostic.line != 5U || diagnostic.column != 1U) {
-    return finish_scope_test(&scope, 2);
-  }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected expression after '='") != 0) {
-    return finish_scope_test(&scope, 3);
-  }
-  return finish_scope_test(&scope, 0);
+  return 0;
 }
 
 int test_gion_unexpected_indentation_errors(void) {

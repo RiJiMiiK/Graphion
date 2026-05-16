@@ -23,7 +23,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] replace unexpected prefix-token fallbacks such as `value = !` with token-specific messages
   - [x] replace late execution parse fallbacks that still surface as `expected scalar literal`
 - [ ] improve line and column precision
-  - [ ] keep current line accuracy for late source errors
+  - [x] keep current line accuracy for late source errors
   - [ ] report useful columns for assignment operator errors
   - [ ] report useful columns for unknown identifiers in expressions
   - [ ] report useful columns for missing delimiters in `print`, grouped expressions, indexing, lists, dicts, tuples, and sets
