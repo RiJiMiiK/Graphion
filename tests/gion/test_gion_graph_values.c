@@ -690,7 +690,7 @@ int test_gion_hypergraph_error_coverage(void) {
        "    \"Alice\"\n"
        "set_vertex_attrs(H, \"Bob\", {\"label\": \"missing\"})\n",
        GINT_ERR_RUN,
-       "failed to execute VM program"},
+       "invalid node id"},
       {"hypergraph H:\n"
        "    [\"Alice\", \"Bob\"]\n"
        "set_hyperedge_attrs(H, 9, {\"kind\": \"missing\"})\n",
@@ -700,7 +700,7 @@ int test_gion_hypergraph_error_coverage(void) {
        "    \"Alice\"\n"
        "remove_vertex(H, \"Bob\")\n",
        GINT_ERR_RUN,
-       "failed to execute VM program"},
+       "invalid node id"},
       {"hypergraph H:\n"
        "    [\"Alice\", \"Bob\"]\n"
        "remove_hyperedge(H, 0)\n"
@@ -1738,7 +1738,7 @@ int test_gion_graph_mutation_error_coverage(void) {
       {"graph G:\n"
        "    1\n"
        "remove_node(G, 2)\n",
-       "failed to execute VM program"},
+       "invalid node id"},
       {"graph G:\n"
        "    1\n"
        "    2\n"

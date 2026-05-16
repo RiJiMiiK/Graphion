@@ -99,6 +99,7 @@
   X(gion_unexpected_indentation_errors)                \
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \
+  X(gion_unmapped_vm_error_diagnostics)                \
   X(gion_warning_comments_are_ignored)                 \
   X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_if_elif_else_control_flow)                    \

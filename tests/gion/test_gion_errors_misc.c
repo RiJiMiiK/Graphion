@@ -478,6 +478,36 @@ int test_gion_comment_errors(void) {
   return 0;
 }
 
+int test_gion_unmapped_vm_error_diagnostics(void) {
+  graphion_runtime_program program;
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_program_init(&program);
+  graphion_runtime_scope_init(&scope);
+  program.program[0].op = GVM_OP_MOV_IMM;
+  program.program[0].a = 17U;
+  program.program[0].b = 0U;
+  program.program[0].imm = 1;
+  program.program_len = 1U;
+
+  rc = graphion_execute_program(&program, &scope, &diagnostic, NULL);
+  graphion_runtime_program_dispose(&program);
+  graphion_runtime_scope_dispose(&scope);
+  if (rc != GINT_ERR_RUN) {
+    return 1;
+  }
+  if (diagnostic.line != 1U || diagnostic.column != 1U) {
+    return 2;
+  }
+  if (diagnostic.message == NULL ||
+      strcmp(diagnostic.message, "unmapped VM runtime error: GVM_ERR_INVALID_MOV_IMM_REG") != 0) {
+    return 3;
+  }
+  return 0;
+}
+
 int test_gion_warning_comments_are_ignored(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

@@ -208,6 +208,7 @@ Current `v0.x` status:
 
 - VM errors are exposed as named results in `src/vm/vm.h`
 - numeric stability is still best-effort, not frozen
+- VM errors without a `.gion`-specific message surface as `unmapped VM runtime error: GVM_ERR_*`
 
 ### Generic VM codes
 

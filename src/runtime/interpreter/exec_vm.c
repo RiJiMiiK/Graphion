@@ -31,6 +31,8 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
                                      unsigned int line,
                                      unsigned int column,
                                      int vm_rc) {
+  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
   if (vm_rc == GVM_ERR_DIVIDE_BY_ZERO) {
     return fail(diagnostic, line, column, "division by zero", GINT_ERR_RUN);
   }
@@ -105,6 +107,9 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
   if (vm_rc == GVM_ERR_INDEX_OUT_OF_RANGE) {
     return fail(diagnostic, line, column, "list index out of range", GINT_ERR_RUN);
   }
+  if (vm_rc == GVM_ERR_INVALID_NODE_ID) {
+    return fail(diagnostic, line, column, "invalid node id", GINT_ERR_RUN);
+  }
   if (vm_rc == GVM_ERR_INVALID_HYPEREDGE_ID) {
     return fail(diagnostic, line, column, "invalid hyperedge id", GINT_ERR_RUN);
   }
@@ -114,7 +119,67 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
   if (vm_rc == GVM_ERR_TYPE_MISMATCH) {
     return fail(diagnostic, line, column, "incompatible operand types", GINT_ERR_RUN);
   }
-  return fail(diagnostic, line, column, "failed to execute VM program", GINT_ERR_RUN);
+
+  switch (vm_rc) {
+    case GVM_ERR_INVALID_ARG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_ARG");
+      break;
+    case GVM_ERR_INVALID_MOV_IMM_REG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_MOV_IMM_REG");
+      break;
+    case GVM_ERR_INVALID_REG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_REG");
+      break;
+    case GVM_ERR_UNKNOWN_OPCODE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_UNKNOWN_OPCODE");
+      break;
+    case GVM_ERR_CSR_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_UNBOUND");
+      break;
+    case GVM_ERR_INVALID_BFS_SOURCE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_BFS_SOURCE");
+      break;
+    case GVM_ERR_BFS_RUNTIME:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_BFS_RUNTIME");
+      break;
+    case GVM_ERR_HYPERGRAPH_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_HYPERGRAPH_UNBOUND");
+      break;
+    case GVM_ERR_FRONTIER_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_FRONTIER_UNBOUND");
+      break;
+    case GVM_ERR_FRONTIER_OVERFLOW:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_FRONTIER_OVERFLOW");
+      break;
+    case GVM_ERR_INVALID_FRONTIER_VALUE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_FRONTIER_VALUE");
+      break;
+    case GVM_ERR_CSR_WEIGHTS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_WEIGHTS_UNBOUND");
+      break;
+    case GVM_ERR_CSR_EDGE_ATTRS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_EDGE_ATTRS_UNBOUND");
+      break;
+    case GVM_ERR_CONST_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CONST_UNBOUND");
+      break;
+    case GVM_ERR_GLOBALS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_GLOBALS_UNBOUND");
+      break;
+    case GVM_ERR_INVALID_CONST_INDEX:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_CONST_INDEX");
+      break;
+    case GVM_ERR_INVALID_GLOBAL_INDEX:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_GLOBAL_INDEX");
+      break;
+    case GVM_ERR_OUTPUT_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_OUTPUT_UNBOUND");
+      break;
+    default:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: code %d", vm_rc);
+      break;
+  }
+  return fail(diagnostic, line, column, message, GINT_ERR_RUN);
 }
 
 static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
