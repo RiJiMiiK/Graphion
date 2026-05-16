@@ -352,7 +352,7 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = trunc(1 + 2\n", GINT_ERR_PARSE, "expected ')' after trunc argument"},
       {"value = sign()\n", GINT_ERR_PARSE, "expected sign argument"},
       {"value = sign(1 + 2\n", GINT_ERR_PARSE, "expected ')' after sign argument"},
-      {"value = !\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"value = !\n", GINT_ERR_PARSE, "expected expression before '!'"},
       {"value = len()\n", GINT_ERR_PARSE, "expected len argument"},
       {"value = len(\"x\"\n", GINT_ERR_PARSE, "expected ')' after len argument"},
       {"value = (1 + 2\n", GINT_ERR_PARSE, "expected ')' after expression"},

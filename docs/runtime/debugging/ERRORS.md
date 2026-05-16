@@ -60,6 +60,7 @@ Typical messages include:
 - `expected expression after '='`
 - `expected expression after '+'`
 - `expected expression after '+='`
+- `expected expression before '!'`
 - `expected expression before '=='`
 - `expected ')' after expression`
 - `unexpected trailing tokens after assignment`

@@ -1068,6 +1068,9 @@ Examples:
 `expected expression before '=='`
 : parse error when an expression starts with an infix operator
 
+`expected expression before '!'`
+: parse error when an expression starts with the postfix factorial operator
+
 `unknown variable 'count'`
 : compound assignment target does not exist
 

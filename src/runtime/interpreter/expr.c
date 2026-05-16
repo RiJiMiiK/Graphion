@@ -78,6 +78,8 @@ static const char *expression_operator_at(const char *cursor) {
       return "|";
     case '^':
       return "^";
+    case '!':
+      return "!";
     case '<':
       return "<";
     case '>':
