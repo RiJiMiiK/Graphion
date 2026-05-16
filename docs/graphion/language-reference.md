@@ -1062,6 +1062,9 @@ Examples:
 `unknown graph variable 'G'`
 : graph mutation target does not exist
 
+`unknown hypergraph variable 'H'`
+: hypergraph mutation target does not exist
+
 `unknown operand 'missing'`
 : expression references a missing value
 

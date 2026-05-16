@@ -14,7 +14,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] name the missing identifier in unknown operand diagnostics
   - [x] name the missing assignment or indexed-assignment target in unknown variable diagnostics
   - [x] name unknown graph variables in graph mutation diagnostics
-  - [ ] name unknown hypergraph variables in hypergraph mutation diagnostics
+  - [x] name unknown hypergraph variables in hypergraph mutation diagnostics
   - [ ] replace ambiguous parse fallbacks such as `expected scalar literal` where a more specific message is available
   - [ ] replace broad messages such as `unsupported assignment expression` for obvious trailing tokens
   - [ ] replace unmapped VM failures with a stable diagnostic that includes the VM result class

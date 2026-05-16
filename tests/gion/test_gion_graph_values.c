@@ -768,6 +768,44 @@ int test_gion_hypergraph_error_coverage(void) {
     }
   }
 
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("add_vertex(Missing, 1)\n", &scope,
+                                   &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 250;
+    }
+    if (diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unknown hypergraph variable 'Missing'") !=
+            0) {
+      return 251;
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("set_vertex_attrs(Missing, 1, {})\n",
+                                   &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 252;
+    }
+    if (diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unknown hypergraph variable 'Missing'") !=
+            0) {
+      return 253;
+    }
+  }
+
   graphion_runtime_scope_init(&defaults_scope);
   if (test_capture_gion_output(vertex_defaults_source,
                                "gion_hypergraph_error_vertex_defaults.txt",

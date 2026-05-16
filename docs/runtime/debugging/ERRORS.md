@@ -67,6 +67,8 @@ Current distinction:
   - example: `count += 1` when `count` is not defined
 - `unknown graph variable 'G'`
   - used when a graph mutation statement references a graph variable that does not exist
+- `unknown hypergraph variable 'H'`
+  - used when a hypergraph mutation statement references a hypergraph variable that does not exist
 - `unknown operand 'missing'`
   - used when an expression references a missing value
   - examples:
