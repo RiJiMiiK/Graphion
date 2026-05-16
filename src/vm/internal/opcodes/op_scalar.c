@@ -2232,14 +2232,16 @@ int op_graph_node_count(graphion_vm *vm, const graphion_insn *in) {
 
 int op_graph_edge_count(graphion_vm *vm, const graphion_insn *in) {
   const graphion_graph_value *graph;
+  size_t count;
   int rc;
 
   rc = graph_reg_value(vm, in, &graph);
   if (rc != GVM_OK) {
     return rc;
   }
+  count = graph->edge_count;
   vm_value_dispose_owned(&vm->regs[in->a]);
-  vm_value_set_int(&vm->regs[in->a], (int64_t)graph->edge_count);
+  vm_value_set_int(&vm->regs[in->a], (int64_t)count);
   return GVM_OK;
 }
 
@@ -2654,6 +2656,7 @@ static int graph_dict_set_string(graphion_vm_value *dict, const char *key, const
 
 int op_graph_node_ids(graphion_vm *vm, const graphion_insn *in) {
   const graphion_graph_value *graph;
+  graphion_vm_value list;
   size_t i;
   int rc;
 
@@ -2661,17 +2664,21 @@ int op_graph_node_ids(graphion_vm *vm, const graphion_insn *in) {
   if (rc != GVM_OK) {
     return rc;
   }
-  vm_value_dispose_owned(&vm->regs[in->a]);
-  rc = vm_reg_set_empty_list(vm, in->a);
+  memset(&list, 0, sizeof(list));
+  list.kind = GVM_VALUE_NONE;
+  rc = vm_value_set_empty_list_value(&list);
   if (rc != GVM_OK) {
     return rc;
   }
   for (i = 0U; i < graph->node_count; ++i) {
-    rc = vm_list_append_int(vm, in->a, (int64_t)graph->nodes[i].id);
+    rc = graph_list_append_int_value(&list, (int64_t)graph->nodes[i].id);
     if (rc != GVM_OK) {
+      vm_value_dispose_owned(&list);
       return rc;
     }
   }
+  vm_value_dispose_owned(&vm->regs[in->a]);
+  vm->regs[in->a] = list;
   return GVM_OK;
 }
 
