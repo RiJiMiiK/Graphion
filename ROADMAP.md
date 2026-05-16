@@ -4,131 +4,48 @@
 
 ## Current lane
 
-This branch is for active work on non-scalar language types.
+This branch is for active work on Graphion/Gion diagnostics: parser and frontend errors,
+runtime/interpreter errors, VM-originated failures that surface through `.gion`, and debug warnings.
 
-### Non-scalar language types
+### Diagnostics and warnings
 
-- [x] add `list` as the first non-scalar container type
-  - literals
-  - runtime / VM representation
-  - basic operations such as indexing, equality, printing, and `len`
-  - tests, docs, and examples
-- [x] add `dict` as the second non-scalar container type
-  - recommended first version with `string` keys
-  - literals
-  - runtime / VM representation
-  - basic operations such as lookup, equality, printing, and `len`
-  - tests, docs, and examples
-- [x] `tuple`
-  - useful for fixed-size structured returns if `list` is too loose semantically
-- [x] `set`
-  - especially relevant for graph-oriented membership, uniqueness, and frontier-like value sets
-- [x] first-class `graph` values in `.gion`
-  - distinct from backend-only VM/runtime support
-  - [x] create an empty graph with `graph Name;`
-  - [x] create graph values with node blocks
-  - [x] support string node names with quoted literals
-  - [x] support node variables that resolve to `string` names or integer IDs
-  - [x] support explicit numeric node IDs without creating implicit gap nodes
-  - [x] support undirected edges with `node - node`
-  - [x] support directed edges with `node -> node`
-  - [x] support bidirectional directed edges with `node <-> node`
-  - [x] reject mixing directed syntax with undirected `-` edges in the same graph
-  - [x] create missing endpoint nodes when an edge references them
-  - [x] support node attributes as dict values
-  - [x] support `defaults node` and enforce a shared node attribute schema
-  - [x] support edge attributes as dict values
-  - [x] support compact edge weights with reserved numeric `weight`
-  - [x] support edge attribute expressions that evaluate to `int`, `float`, or `dict`
-  - [x] support `defaults edge` and enforce a shared edge attribute schema
-  - [x] print useful graph summaries
-  - [x] cover graph declarations, attrs, edges, warnings, docs, and examples
-  - [x] add `.gion` graph inspection operations
-    - node count
-    - edge count
-    - directedness / orientation information
-    - weightedness information
-  - [x] add `.gion` graph attribute lookup operations
-    - node attributes
-    - edge attributes
-    - reserved edge `weight`
-  - [x] add basic graph membership/query operations
-    - node exists
-    - edge exists
-    - neighbors / adjacency
-  - [x] decide and add the first mutation surface after initialization
-    - add node
-    - add edge
-  - [x] add graph attribute mutation after initialization
-    - update node attributes
-    - update edge attributes
-    - update reserved edge `weight`
-  - [x] add graph removal mutation after initialization
-    - remove node
-    - remove edge
-    - define how node removal affects incident edges and attributes
-  - [x] add graph listing/query operations
-    - list nodes / node IDs
-    - list edges
-    - expose enough graph contents to inspect a value without knowing names or IDs ahead of time
-  - [x] clarify directed adjacency semantics
-    - `neighbors(...)` means incoming plus outgoing adjacency
-    - `indegree(...)` and `outdegree(...)` expose incoming / outgoing node IDs
-  - [x] harden graph mutation error coverage
-    - unknown attribute keys
-    - invalid `weight` types
-    - missing nodes / edges
-    - partial attribute patches on nodes / edges added after defaults
-- [x] first-class `hypergraph` values in `.gion`
-  - distinct from backend-only VM/runtime support
-  - [x] create an empty hypergraph with `hypergraph Name;`
-  - [x] create hypergraph values with vertex blocks
-  - [x] support vertex attributes and `defaults vertex`
-  - [x] support hyperedges as vertex lists with `[vertex, ...]`
-  - [x] support hyperedge attributes and `defaults hyperedge`
-  - [x] decide how `.gion` addresses hyperedges after initialization
-    - implicit stable numeric hyperedge IDs / indexes
-    - IDs are assigned in declaration order
-    - IDs are not user-provided in the first version
-    - IDs should not be renumbered or reused after removal
-  - [x] add `.gion` hypergraph inspection operations
-    - vertex count
-    - hyperedge count
-    - vertex / hyperedge attribute schema information
-  - [x] add `.gion` hypergraph attribute lookup operations
-    - vertex attributes
-    - hyperedge attributes
-  - [x] add basic hypergraph membership/query operations
-    - vertex exists
-    - hyperedge exists
-    - hyperedges incident to a vertex
-    - vertices contained in a hyperedge
-  - [x] add hypergraph listing/query operations
-    - list vertices / vertex IDs
-    - list hyperedges
-    - expose each hyperedge as a vertex list
-  - [x] decide and add the first hypergraph mutation surface after initialization
-    - add vertex
-    - add hyperedge
-  - [x] add hypergraph attribute mutation after initialization
-    - update vertex attributes
-    - update hyperedge attributes
-  - [x] add hypergraph removal mutation after initialization
-    - remove vertex
-    - remove hyperedge
-    - define how vertex removal affects incident hyperedges and attributes
-  - [x] harden hypergraph error coverage
-    - unknown attribute keys
-    - missing vertices / hyperedges
-    - invalid hyperedge vertex lists
-    - partial attribute patches on vertices / hyperedges added after defaults
-- [x] `struct`
-  - fixed-field typed composite for cases where `dict` is too dynamic
-  - declaration syntax: `struct Name:`
-  - required fields with `field: type`
-  - defaulted fields with `field: type = value`
-  - instance syntax: `Name {"field": value}`
-  - missing required fields, unknown fields, and wrong field types are runtime errors
+- [ ] audit current diagnostic sources before changing behavior
+  - parser/frontend diagnostics in `src/parser`
+  - runtime/interpreter diagnostics in `src/runtime`
+  - VM errors that are translated into `.gion` runtime errors
+  - CLI formatting in `src/main.c`
+  - debug warning collection and emission for `-d`
+  - existing tests and docs that lock current messages
+- [ ] make common `.gion` errors more actionable
+  - name the missing identifier in unknown operand diagnostics
+  - name the missing assignment or indexed-assignment target in unknown variable diagnostics
+  - replace ambiguous parse fallbacks such as `expected scalar literal` where a more specific message is available
+  - replace broad messages such as `unsupported assignment expression` for obvious trailing tokens
+- [ ] improve line and column precision
+  - keep current line accuracy for late source errors
+  - report useful columns for assignment operator errors
+  - report useful columns for missing delimiters in `print`, grouped expressions, indexing, lists, dicts, tuples, and sets
+  - report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
+  - report useful columns for graph and hypergraph declaration/body errors
+- [ ] align parse/runtime categories where user-visible behavior is surprising
+  - distinguish syntax errors from name resolution errors in `print(...)`
+  - distinguish graph declaration syntax errors from expression/name resolution errors
+  - keep runtime type/domain errors separate from frontend parse errors
+  - document intentional subsystem-local result codes
+- [ ] harden debug warnings exposed by `-d`
+  - verify warning directives are either intentionally ignored or implemented consistently
+  - document current `-d` behavior
+  - ensure warnings include stable `warning:line:column: message` output
+  - add coverage for warning capacity and warning collection failures
+- [ ] improve test coverage for diagnostics
+  - add focused parser/frontend tests for message text and line/column pairs
+  - add runtime/interpreter tests for representative runtime errors across scalar and non-scalar values
+  - add CLI-path tests where formatting differs from direct API diagnostics
+  - keep tests scoped to user-visible behavior, not internal implementation details
+- [ ] update documentation when diagnostics change
+  - `docs/runtime/debugging/ERRORS.md`
+  - Graphion language reference diagnostics section
+  - examples or tutorial notes only when user-facing behavior changes
 
 ## Future additions gated by other features
 
