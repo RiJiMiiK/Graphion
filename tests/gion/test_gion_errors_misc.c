@@ -282,7 +282,7 @@ int test_gion_late_line_error_diagnostics(void) {
   if (diagnostic.line != 5U || diagnostic.column != 1U) {
     return finish_scope_test(&scope, 2);
   }
-  if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected scalar literal") != 0) {
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "expected expression after '='") != 0) {
     return finish_scope_test(&scope, 3);
   }
   return finish_scope_test(&scope, 0);

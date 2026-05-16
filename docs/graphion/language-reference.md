@@ -1056,6 +1056,9 @@ Current high-level error classes:
 
 Examples:
 
+`expected expression after '='`
+: parse error for an assignment with no right-hand expression
+
 `expected expression after '+'`
 : parse error for a missing right-hand operand after an operator
 

@@ -57,6 +57,7 @@ Typical messages include:
 - `expected abs argument`
 - `expected min first argument`
 - `expected match case literal`
+- `expected expression after '='`
 - `expected expression after '+'`
 - `expected expression after '+='`
 - `expected expression before '=='`

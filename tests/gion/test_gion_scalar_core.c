@@ -313,7 +313,7 @@ int test_gion_assignment_syntax_errors(void) {
   } cases[] = {
       {"count 42\n", GINT_ERR_PARSE, "expected '='"},
       {"= 42\n", GINT_ERR_PARSE, "expected identifier"},
-      {"count =\n", GINT_ERR_PARSE, "expected scalar literal"},
+      {"count =\n", GINT_ERR_PARSE, "expected expression after '='"},
       {"count = 42 +\n", GINT_ERR_PARSE, "expected expression after '+'"},
       {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'nope'"},
   };
