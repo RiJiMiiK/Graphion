@@ -1002,12 +1002,11 @@ int vm_value_dict_merge_defaults(graphion_vm_value *value, const graphion_vm_val
     }
     graphion_vm_init(&vm);
     vm.regs[0] = *value;
-    rc = vm_value_clone(&vm.regs[1], &defaults_dict->entries[i].value);
-    if (rc == GVM_OK) {
-      rc = vm_dict_set_reg(&vm, 0U, key, 1U);
-    }
+    vm.regs[1] = defaults_dict->entries[i].value;
+    rc = vm_dict_set_reg(&vm, 0U, key, 1U);
     *value = vm.regs[0];
     vm.regs[0].kind = GVM_VALUE_NONE;
+    vm.regs[1].kind = GVM_VALUE_NONE;
     graphion_vm_dispose(&vm);
     if (rc != GVM_OK) {
       return rc;
@@ -1070,12 +1069,11 @@ int vm_value_dict_set_clone(graphion_vm_value *value, const char *key, const gra
   }
   graphion_vm_init(&vm);
   vm.regs[0] = *value;
-  rc = vm_value_clone(&vm.regs[1], src);
-  if (rc == GVM_OK) {
-    rc = vm_dict_set_reg(&vm, 0U, key, 1U);
-  }
+  vm.regs[1] = *src;
+  rc = vm_dict_set_reg(&vm, 0U, key, 1U);
   *value = vm.regs[0];
   vm.regs[0].kind = GVM_VALUE_NONE;
+  vm.regs[1].kind = GVM_VALUE_NONE;
   graphion_vm_dispose(&vm);
   return rc;
 }
