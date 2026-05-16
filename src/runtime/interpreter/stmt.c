@@ -30,6 +30,13 @@ static int fail_unknown_hypergraph_variable(
   return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_VARIABLE);
 }
 
+static unsigned int source_column(const char *line_text, const char *cursor) {
+  if (line_text == NULL || cursor == NULL || cursor < line_text) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - line_text) + 1U;
+}
+
 static const char *assignment_operator_text(char assign_op,
                                             int power_assign,
                                             int floor_div_assign,
@@ -73,6 +80,7 @@ static int remap_missing_assignment_rhs_error(
     int rc,
     graphion_runtime_diagnostic *diagnostic,
     unsigned int line,
+    unsigned int column,
     const char *op,
     int remap_prefix_token) {
   char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
@@ -83,7 +91,7 @@ static int remap_missing_assignment_rhs_error(
        (remap_prefix_token &&
         strncmp(diagnostic->message, "expected expression before ", 27U) == 0))) {
     snprintf(message, sizeof(message), "expected expression after '%s'", op);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, column, message, GINT_ERR_PARSE);
   }
   return rc;
 }
@@ -106,6 +114,7 @@ int parse_assignment(const char *line_text,
   int bit_xor_assign = 0;
   int bit_shl_assign = 0;
   int bit_shr_assign = 0;
+  unsigned int assign_op_column;
   int rc;
 
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
@@ -140,6 +149,7 @@ int parse_assignment(const char *line_text,
     cursor++;
     skip_spaces(&cursor);
   }
+  assign_op_column = source_column(line_text, cursor);
   if (cursor[0] == '*' && cursor[1] == '*' && cursor[2] == '=') {
     assign_op = '*';
     power_assign = 1;
@@ -175,10 +185,10 @@ int parse_assignment(const char *line_text,
   } else if (*cursor == '=') {
     cursor++;
   } else {
-    return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected '='", GINT_ERR_PARSE);
   }
   if (indexed_target && assign_op != '=') {
-    return fail(diagnostic, line, 1U, "compound indexed assignment is not supported", GINT_ERR_PARSE);
+    return fail(diagnostic, line, assign_op_column, "compound indexed assignment is not supported", GINT_ERR_PARSE);
   }
   if (!indexed_target && assign_op == '=') {
     rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
@@ -204,6 +214,7 @@ int parse_assignment(const char *line_text,
         rc,
         diagnostic,
         line,
+        assign_op_column,
         assignment_operator_text(assign_op,
                                  power_assign,
                                  floor_div_assign,
@@ -213,7 +224,7 @@ int parse_assignment(const char *line_text,
   }
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after assignment", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "unexpected trailing tokens after assignment", GINT_ERR_PARSE);
   }
   if (assign_op != '=') {
     rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);

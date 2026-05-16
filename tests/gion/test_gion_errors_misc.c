@@ -144,10 +144,11 @@ int test_gion_invalid_identifier_errors(void) {
 int test_gion_trailing_token_errors(void) {
   static const struct {
     const char *source;
+    unsigned int expected_column;
     const char *message;
   } cases[] = {
-      {"count = 42 extra\n", "unexpected trailing tokens after assignment"},
-      {"name = \"x\" extra\n", "unexpected trailing tokens after assignment"},
+      {"count = 42 extra\n", 12U, "unexpected trailing tokens after assignment"},
+      {"name = \"x\" extra\n", 12U, "unexpected trailing tokens after assignment"},
   };
   size_t i;
 
@@ -161,7 +162,7 @@ int test_gion_trailing_token_errors(void) {
     if (rc != GINT_ERR_PARSE) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.line != 1U) {
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
@@ -268,6 +269,7 @@ int test_gion_late_line_error_diagnostics(void) {
     const char *source;
     int expected_rc;
     unsigned int expected_line;
+    unsigned int expected_column;
     const char *message;
   } cases[] = {
       {"count = 42\n"
@@ -277,18 +279,21 @@ int test_gion_late_line_error_diagnostics(void) {
        "name =\n",
        GINT_ERR_PARSE,
        5U,
+       6U,
        "expected expression after '='"},
       {"first = 1\n"
        "second = first\n"
        "third = missing\n",
        GINT_ERR_UNKNOWN_OPERAND,
        3U,
+       1U,
        "unknown operand 'missing'"},
       {"ready = true\n"
        "value = \"ready\" if\n"
        "    ready else \"bad\"\n",
        GINT_ERR_PARSE,
        2U,
+       1U,
        "multiline assignment expression requires grouping parentheses"},
       {"value = 1\n"
        "match value:\n"
@@ -297,6 +302,7 @@ int test_gion_late_line_error_diagnostics(void) {
        "print(value)\n",
        GINT_ERR_PARSE,
        3U,
+       1U,
        "expected indented block after match case"},
   };
   size_t i;
@@ -311,7 +317,7 @@ int test_gion_late_line_error_diagnostics(void) {
     if (rc != cases[i].expected_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.line != cases[i].expected_line || diagnostic.column != 1U) {
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {

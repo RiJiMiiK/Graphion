@@ -5,6 +5,13 @@
 #include "runtime/interpreter/program.h"
 #include "vm/internal/core/value.h"
 
+static unsigned int source_column(const char *line_text, const char *cursor) {
+  if (line_text == NULL || cursor == NULL || cursor < line_text) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - line_text) + 1U;
+}
+
 typedef struct {
   uint32_t from;
   uint32_t to;
@@ -2630,7 +2637,7 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
   } else if (*rhs_cursor == '=') {
     rhs_cursor++;
   } else {
-    return fail(diagnostic, line, 1U, "expected '='", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(cursor, rhs_cursor), "expected '='", GINT_ERR_PARSE);
   }
   skip_spaces(&rhs_cursor);
   multiline_allowed = *rhs_cursor == '(' ? 1 : 0;
