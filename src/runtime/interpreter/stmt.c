@@ -30,6 +30,62 @@ static int fail_unknown_hypergraph_variable(
   return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_VARIABLE);
 }
 
+static const char *assignment_operator_text(char assign_op,
+                                            int power_assign,
+                                            int floor_div_assign,
+                                            int bit_shl_assign,
+                                            int bit_shr_assign) {
+  if (power_assign) {
+    return "**=";
+  }
+  if (floor_div_assign) {
+    return "//=";
+  }
+  if (bit_shl_assign) {
+    return "<<=";
+  }
+  if (bit_shr_assign) {
+    return ">>=";
+  }
+  switch (assign_op) {
+    case '+':
+      return "+=";
+    case '-':
+      return "-=";
+    case '*':
+      return "*=";
+    case '/':
+      return "/=";
+    case '%':
+      return "%=";
+    case '&':
+      return "&=";
+    case '|':
+      return "|=";
+    case '^':
+      return "^=";
+    default:
+      return "=";
+  }
+}
+
+static int remap_missing_assignment_rhs_error(
+    int rc,
+    graphion_runtime_diagnostic *diagnostic,
+    unsigned int line,
+    const char *op) {
+  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
+  if (rc == GINT_ERR_PARSE && diagnostic != NULL &&
+      diagnostic->message != NULL &&
+      (strcmp(diagnostic->message, "expected scalar literal") == 0 ||
+       strncmp(diagnostic->message, "expected expression before ", 27U) == 0)) {
+    snprintf(message, sizeof(message), "expected expression after '%s'", op);
+    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+  }
+  return rc;
+}
+
 int parse_assignment(const char *line_text,
                             graphion_runtime_program *program,
                             unsigned int line,
@@ -136,6 +192,17 @@ int parse_assignment(const char *line_text,
   }
   rc = parse_expression(&cursor, program, &expr, indexed_target ? 2U : 0U, line, diagnostic);
   if (rc != GINT_OK) {
+    if (assign_op != '=') {
+      return remap_missing_assignment_rhs_error(
+          rc,
+          diagnostic,
+          line,
+          assignment_operator_text(assign_op,
+                                   power_assign,
+                                   floor_div_assign,
+                                   bit_shl_assign,
+                                   bit_shr_assign));
+    }
     return rc;
   }
   skip_spaces(&cursor);

@@ -106,10 +106,10 @@ int test_gion_and_syntax_errors(void) {
     int alternate_rc;
     const char *message;
   } cases[] = {
-      {"value = true and\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = and true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'and'"},
-      {"print(true and )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"if true and:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = true and\n", GINT_ERR_PARSE, 0, "expected expression after 'and'"},
+      {"value = and true\n", GINT_ERR_PARSE, 0, "expected expression before 'and'"},
+      {"print(true and )\n", GINT_ERR_PARSE, 0, "expected expression after 'and'"},
+      {"if true and:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected expression after 'and'"},
   };
   size_t i;
 
@@ -233,10 +233,10 @@ int test_gion_or_syntax_errors(void) {
     int alternate_rc;
     const char *message;
   } cases[] = {
-      {"value = true or\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = or true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'or'"},
-      {"print(true or )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"if true or:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = true or\n", GINT_ERR_PARSE, 0, "expected expression after 'or'"},
+      {"value = or true\n", GINT_ERR_PARSE, 0, "expected expression before 'or'"},
+      {"print(true or )\n", GINT_ERR_PARSE, 0, "expected expression after 'or'"},
+      {"if true or:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected expression after 'or'"},
   };
   size_t i;
 
@@ -358,9 +358,9 @@ int test_gion_not_syntax_errors(void) {
     int alternate_rc;
     const char *message;
   } cases[] = {
-      {"value = not\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"print(not )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"if not:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = not\n", GINT_ERR_PARSE, 0, "expected expression after 'not'"},
+      {"print(not )\n", GINT_ERR_PARSE, 0, "expected expression after 'not'"},
+      {"if not:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected expression after 'not'"},
   };
   size_t i;
 
@@ -476,10 +476,10 @@ int test_gion_nand_syntax_errors(void) {
     int alternate_rc;
     const char *message;
   } cases[] = {
-      {"value = true nand\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = nand true\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'nand'"},
-      {"print(true nand )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"if true nand:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = true nand\n", GINT_ERR_PARSE, 0, "expected expression after 'nand'"},
+      {"value = nand true\n", GINT_ERR_PARSE, 0, "expected expression before 'nand'"},
+      {"print(true nand )\n", GINT_ERR_PARSE, 0, "expected expression after 'nand'"},
+      {"if true nand:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected expression after 'nand'"},
   };
   size_t i;
 
@@ -595,10 +595,10 @@ int test_gion_nor_syntax_errors(void) {
     int alternate_rc;
     const char *message;
   } cases[] = {
-      {"value = false nor\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"value = nor false\n", GINT_ERR_UNKNOWN_OPERAND, GINT_ERR_PARSE, "unknown operand 'nor'"},
-      {"print(false nor )\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
-      {"if false nor:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected scalar literal"},
+      {"value = false nor\n", GINT_ERR_PARSE, 0, "expected expression after 'nor'"},
+      {"value = nor false\n", GINT_ERR_PARSE, 0, "expected expression before 'nor'"},
+      {"print(false nor )\n", GINT_ERR_PARSE, 0, "expected expression after 'nor'"},
+      {"if false nor:\n    print(1)\n", GINT_ERR_PARSE, 0, "expected expression after 'nor'"},
   };
   size_t i;
 

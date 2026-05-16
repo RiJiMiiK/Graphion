@@ -18,7 +18,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] replace ambiguous parse fallbacks such as `expected scalar literal` where a more specific message is available
   - [x] replace broad messages such as `unsupported assignment expression` for obvious trailing tokens
   - [x] replace unmapped VM failures with a stable diagnostic that includes the VM result class
-  - [ ] replace operator-missing operand fallbacks with operator-specific messages
+  - [x] replace operator-missing operand fallbacks with operator-specific messages
 - [ ] improve line and column precision
   - [ ] keep current line accuracy for late source errors
   - [ ] report useful columns for assignment operator errors

@@ -1056,6 +1056,15 @@ Current high-level error classes:
 
 Examples:
 
+`expected expression after '+'`
+: parse error for a missing right-hand operand after an operator
+
+`expected expression after '+='`
+: parse error for a missing right-hand operand after a compound assignment operator
+
+`expected expression before '=='`
+: parse error when an expression starts with an infix operator
+
 `unknown variable 'count'`
 : compound assignment target does not exist
 

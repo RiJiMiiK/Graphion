@@ -57,6 +57,9 @@ Typical messages include:
 - `expected abs argument`
 - `expected min first argument`
 - `expected match case literal`
+- `expected expression after '+'`
+- `expected expression after '+='`
+- `expected expression before '=='`
 - `expected ')' after expression`
 - `unexpected trailing tokens after assignment`
 
@@ -120,7 +123,18 @@ value = 1 + * 2
 Typical result:
 
 - parse failure
-- message similar to `expected scalar literal` or a context-specific message such as `expected min first argument`
+- message `expected expression after '+'`
+
+Input:
+
+```gion
+value = == 1
+```
+
+Typical result:
+
+- parse failure
+- message `expected expression before '=='`
 
 ### Unknown operand
 
