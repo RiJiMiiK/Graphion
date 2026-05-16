@@ -65,6 +65,8 @@ Current distinction:
 - `unknown variable 'count'`
   - typically used when the target of a mutation-style operation does not exist yet
   - example: `count += 1` when `count` is not defined
+- `unknown graph variable 'G'`
+  - used when a graph mutation statement references a graph variable that does not exist
 - `unknown operand 'missing'`
   - used when an expression references a missing value
   - examples:

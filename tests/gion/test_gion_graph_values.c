@@ -1745,6 +1745,38 @@ int test_gion_graph_mutation_error_coverage(void) {
     }
   }
 
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("add_node(Missing, 1)\n", &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 250;
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown graph variable 'Missing'") != 0) {
+      return 251;
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("set_node_attrs(Missing, 1, {})\n", &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 252;
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown graph variable 'Missing'") != 0) {
+      return 253;
+    }
+  }
+
   graphion_runtime_scope_init(&defaults_scope);
   if (test_capture_gion_output(node_defaults_source,
                                "gion_graph_mutation_node_defaults.txt",

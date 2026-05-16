@@ -1059,6 +1059,9 @@ Examples:
 `unknown variable 'count'`
 : compound assignment target does not exist
 
+`unknown graph variable 'G'`
+: graph mutation target does not exist
+
 `unknown operand 'missing'`
 : expression references a missing value
 

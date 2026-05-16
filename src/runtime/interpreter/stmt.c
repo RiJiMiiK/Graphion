@@ -11,6 +11,15 @@ static int fail_unknown_variable(graphion_runtime_diagnostic *diagnostic,
   return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_VARIABLE);
 }
 
+static int fail_unknown_graph_variable(graphion_runtime_diagnostic *diagnostic,
+                                       unsigned int line,
+                                       const char *name) {
+  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
+  snprintf(message, sizeof(message), "unknown graph variable '%s'", name);
+  return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_VARIABLE);
+}
+
 int parse_assignment(const char *line_text,
                             graphion_runtime_program *program,
                             unsigned int line,
@@ -552,7 +561,7 @@ static int parse_graph_mutation_statement(const char *line_text,
   }
   graph_index = program_find_global_index(program, graph_name);
   if (graph_index < 0) {
-    return fail(diagnostic, line, 1U, "unknown graph variable", GINT_ERR_UNKNOWN_VARIABLE);
+    return fail_unknown_graph_variable(diagnostic, line, graph_name);
   }
   skip_spaces(&cursor);
   if (*cursor != ',') {
@@ -768,7 +777,7 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
   }
   graph_index = program_find_global_index(program, graph_name);
   if (graph_index < 0) {
-    return fail(diagnostic, line, 1U, "unknown graph variable", GINT_ERR_UNKNOWN_VARIABLE);
+    return fail_unknown_graph_variable(diagnostic, line, graph_name);
   }
   for (i = 0U; i < (size_t)arg_count; ++i) {
     skip_spaces(&cursor);
