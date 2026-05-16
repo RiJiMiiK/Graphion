@@ -146,8 +146,8 @@ int test_gion_trailing_token_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"count = 42 extra\n", "unsupported assignment expression"},
-      {"name = \"x\" extra\n", "unsupported assignment expression"},
+      {"count = 42 extra\n", "unexpected trailing tokens after assignment"},
+      {"name = \"x\" extra\n", "unexpected trailing tokens after assignment"},
   };
   size_t i;
 

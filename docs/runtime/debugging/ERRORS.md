@@ -58,7 +58,7 @@ Typical messages include:
 - `expected min first argument`
 - `expected match case literal`
 - `expected ')' after expression`
-- `unsupported assignment expression`
+- `unexpected trailing tokens after assignment`
 
 ### 2. Unknown name errors
 

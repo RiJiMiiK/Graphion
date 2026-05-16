@@ -203,7 +203,7 @@ int test_gion_arithmetic_syntax_errors(void) {
       {"value = 1 % % 2\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 2 **\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value = 2 //\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"value = 1 + 2 3\n", GINT_ERR_PARSE, "unsupported assignment expression"},
+      {"value = 1 + 2 3\n", GINT_ERR_PARSE, "unexpected trailing tokens after assignment"},
       {"value = 1\nvalue +=\n", GINT_ERR_PARSE, "expected scalar literal"},
       {"value + 2\n", GINT_ERR_PARSE, "expected '='"},
       {"value = abs()\n", GINT_ERR_PARSE, "expected abs argument"},

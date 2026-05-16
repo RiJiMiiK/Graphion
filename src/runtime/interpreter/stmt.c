@@ -140,7 +140,7 @@ int parse_assignment(const char *line_text,
   }
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unsupported assignment expression", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "unexpected trailing tokens after assignment", GINT_ERR_PARSE);
   }
   if (assign_op != '=') {
     rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, (int32_t)target_index, line, diagnostic);
