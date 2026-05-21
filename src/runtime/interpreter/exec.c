@@ -306,6 +306,7 @@ static int runtime_graph_id_from_value(runtime_graph_builder *builder,
 }
 
 static int parse_graph_node_ref(const char **cursor,
+                                const char *line_text,
                                 runtime_graph_builder *builder,
                                 const graphion_runtime_scope *scope,
                                 int fail_if_existing_id,
@@ -322,16 +323,17 @@ static int parse_graph_node_ref(const char **cursor,
   skip_spaces(cursor);
 
   if (**cursor == '"') {
+    const char *name_start = *cursor;
     size_t len = 0U;
     (*cursor)++;
     while ((*cursor)[len] != '\0' && (*cursor)[len] != '"') {
       len++;
     }
     if ((*cursor)[len] != '"') {
-      return fail(diagnostic, line, 1U, "unterminated string literal", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, name_start), "unterminated string literal", GINT_ERR_PARSE);
     }
     if (len >= sizeof(name)) {
-      return fail(diagnostic, line, 1U, "graph node name too long", GINT_ERR_CAPACITY);
+      return fail(diagnostic, line, source_column(line_text, name_start), "graph node name too long", GINT_ERR_CAPACITY);
     }
     memcpy(name, *cursor, len);
     name[len] = '\0';
@@ -344,15 +346,16 @@ static int parse_graph_node_ref(const char **cursor,
   }
 
   if (**cursor == '-' || (**cursor >= '0' && **cursor <= '9')) {
+    const char *id_start = *cursor;
     int64_t id = strtoll(*cursor, &end, 10);
     if (end == *cursor) {
-      return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, *cursor), "expected graph node name or id", GINT_ERR_PARSE);
     }
     if (id < 0) {
-      return fail(diagnostic, line, 1U, "graph node id must be non-negative", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, id_start), "graph node id must be non-negative", GINT_ERR_PARSE);
     }
     if ((uint64_t)id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
-      return fail(diagnostic, line, 1U, "graph node id is too large", GINT_ERR_CAPACITY);
+      return fail(diagnostic, line, source_column(line_text, id_start), "graph node id is too large", GINT_ERR_CAPACITY);
     }
     *cursor = end;
     *id_out = (uint32_t)id;
@@ -360,25 +363,30 @@ static int parse_graph_node_ref(const char **cursor,
   }
 
   if (is_ident_start_char(**cursor)) {
+    const char *name_start = *cursor;
     const graphion_runtime_value *value;
     size_t len = 0U;
     while (is_ident_char((*cursor)[len])) {
       len++;
     }
     if (len >= sizeof(name)) {
-      return fail(diagnostic, line, 1U, "graph node name too long", GINT_ERR_CAPACITY);
+      return fail(diagnostic, line, source_column(line_text, name_start), "graph node name too long", GINT_ERR_CAPACITY);
     }
     memcpy(name, *cursor, len);
     name[len] = '\0';
     *cursor += len;
     value = graphion_runtime_scope_find(scope, name);
     if (value == NULL) {
-      return fail(diagnostic, line, 1U, "unknown graph node variable", GINT_ERR_UNKNOWN_VARIABLE);
+      return fail(diagnostic,
+                  line,
+                  source_column(line_text, name_start),
+                  "unknown graph node variable",
+                  GINT_ERR_UNKNOWN_VARIABLE);
     }
     return runtime_graph_id_from_value(builder, value, fail_if_existing_id, assign_named_ids, id_out, line, diagnostic);
   }
 
-  return fail(diagnostic, line, 1U, "expected graph node name or id", GINT_ERR_PARSE);
+  return fail(diagnostic, line, source_column(line_text, *cursor), "expected graph node name or id", GINT_ERR_PARSE);
 }
 
 static int graph_block_line_has_edge(const char *text) {
@@ -969,7 +977,11 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
   }
   skip_spaces(&cursor);
   if (strncmp(cursor, "defaults", 8U) != 0 || is_ident_char(cursor[8])) {
-    return fail(diagnostic, line, 1U, "expected 'defaults vertex'", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "expected 'defaults vertex'",
+                GINT_ERR_PARSE);
   }
   cursor += 8;
   skip_spaces(&cursor);
@@ -997,7 +1009,11 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
     vm_value_dispose_owned(&defaults);
     return rc;
   }
-  return fail(diagnostic, line, 1U, "expected 'vertex' or 'hyperedge' after defaults", GINT_ERR_PARSE);
+  return fail(diagnostic,
+              line,
+              source_column(text, cursor),
+              "expected 'vertex' or 'hyperedge' after defaults",
+              GINT_ERR_PARSE);
 }
 
 static int parse_hypergraph_edge_line(const char *text,
@@ -1051,7 +1067,11 @@ static int parse_hypergraph_edge_line(const char *text,
     scan++;
   }
   if (depth != 0) {
-    return fail(diagnostic, line, 1U, "expected ']' after hyperedge vertex list", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(list_start, scan),
+                "expected ']' after hyperedge vertex list",
+                GINT_ERR_PARSE);
   }
   list_len = (size_t)(scan - list_start);
   if (list_len >= sizeof(list_text)) {
@@ -1071,11 +1091,15 @@ static int parse_hypergraph_edge_line(const char *text,
   }
   if (!vm_value_list_length(&vertices, &vertex_count)) {
     vm_value_dispose_owned(&vertices);
-    return fail(diagnostic, line, 1U, "hyperedge must be a list of vertices", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(list_start, list_start), "hyperedge must be a list of vertices", GINT_ERR_PARSE);
   }
   if (vertex_count == 0U) {
     vm_value_dispose_owned(&vertices);
-    return fail(diagnostic, line, 1U, "hyperedge must contain at least one vertex", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(list_start, list_start),
+                "hyperedge must contain at least one vertex",
+                GINT_ERR_PARSE);
   }
   if (vertex_count > GRAPHION_RUNTIME_PROGRAM_MAX) {
     vm_value_dispose_owned(&vertices);
@@ -1158,7 +1182,7 @@ static int parse_graph_attr_defaults_line(const char *text,
   }
   skip_spaces(&cursor);
   if (strncmp(cursor, "defaults", 8U) != 0 || is_ident_char(cursor[8])) {
-    return fail(diagnostic, line, 1U, "expected 'defaults node'", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected 'defaults node'", GINT_ERR_PARSE);
   }
   cursor += 8;
   skip_spaces(&cursor);
@@ -1186,7 +1210,11 @@ static int parse_graph_attr_defaults_line(const char *text,
     vm_value_dispose_owned(&defaults);
     return rc;
   }
-  return fail(diagnostic, line, 1U, "expected 'node' or 'edge' after defaults", GINT_ERR_PARSE);
+  return fail(diagnostic,
+              line,
+              source_column(text, cursor),
+              "expected 'node' or 'edge' after defaults",
+              GINT_ERR_PARSE);
 }
 
 static int validate_graph_edge_attrs(const graphion_vm_value *attrs,
@@ -1285,6 +1313,7 @@ static int parse_graph_block_line(const char *text,
   }
 
   rc = parse_graph_node_ref(&cursor,
+                            text,
                             builder,
                             scope,
                             reserve_only && !has_edge ? 1 : 0,
@@ -1320,20 +1349,32 @@ static int parse_graph_block_line(const char *text,
     bidirectional = 1;
     cursor += 3;
   } else {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph node", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after graph node",
+                GINT_ERR_PARSE);
   }
   if (directed_syntax) {
     if (builder->has_undirected_edges) {
-      return fail(diagnostic, line, 1U, "directed graph cannot use undirected '-' edges", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  source_column(text, cursor),
+                  "directed graph cannot use undirected '-' edges",
+                  GINT_ERR_PARSE);
     }
     builder->has_directed_edges = 1;
   } else {
     if (builder->has_directed_edges) {
-      return fail(diagnostic, line, 1U, "directed graph cannot use undirected '-' edges", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  source_column(text, cursor),
+                  "directed graph cannot use undirected '-' edges",
+                  GINT_ERR_PARSE);
     }
     builder->has_undirected_edges = 1;
   }
-  rc = parse_graph_node_ref(&cursor, builder, scope, 0, !reserve_only, &right, line, diagnostic);
+  rc = parse_graph_node_ref(&cursor, text, builder, scope, 0, !reserve_only, &right, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -1387,7 +1428,7 @@ static int parse_graph_name_from_header(const char *text,
   }
   cursor += 5;
   if (*cursor != ' ' && *cursor != '\t') {
-    return fail(diagnostic, line, 1U, "expected graph name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected graph name", GINT_ERR_PARSE);
   }
   rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
   if (rc != GINT_OK) {
@@ -1398,12 +1439,16 @@ static int parse_graph_name_from_header(const char *text,
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after graph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected ':' after graph declaration", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after graph declaration",
+                GINT_ERR_PARSE);
   }
   return GINT_OK;
 }
@@ -1421,7 +1466,7 @@ static int parse_hypergraph_name_from_header(const char *text,
   }
   cursor += 10;
   if (*cursor != ' ' && *cursor != '\t') {
-    return fail(diagnostic, line, 1U, "expected hypergraph name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected hypergraph name", GINT_ERR_PARSE);
   }
   rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
   if (rc != GINT_OK) {
@@ -1432,12 +1477,20 @@ static int parse_hypergraph_name_from_header(const char *text,
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after hypergraph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "expected ':' after hypergraph declaration",
+                GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after hypergraph declaration",
+                GINT_ERR_PARSE);
   }
   return GINT_OK;
 }
@@ -1774,7 +1827,15 @@ static int parse_hypergraph_vertex_line(const char *text,
   if (text == NULL || builder == NULL || scope == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
-  rc = parse_graph_node_ref(&cursor, builder, scope, reserve_only ? 1 : 0, !reserve_only, &vertex_id, line, diagnostic);
+  rc = parse_graph_node_ref(&cursor,
+                            text,
+                            builder,
+                            scope,
+                            reserve_only ? 1 : 0,
+                            !reserve_only,
+                            &vertex_id,
+                            line,
+                            diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
@@ -1786,7 +1847,11 @@ static int parse_hypergraph_vertex_line(const char *text,
     return parse_hypergraph_vertex_attrs(cursor, builder, vertex_id, scope, line, diagnostic);
   }
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph vertex", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after hypergraph vertex",
+                GINT_ERR_PARSE);
   }
   (void)vertex_id;
   return GINT_OK;
@@ -2151,7 +2216,16 @@ static int collect_graph_block(const runtime_source_line *lines,
 
   body_start = find_next_nonblank_line(lines, count, start_index + 1U);
   if (body_start >= count || lines[body_start].indent <= current_indent) {
-    return fail(diagnostic, line, 1U, "expected indented graph node block", GINT_ERR_PARSE);
+    const char *header = line_content(&lines[start_index]);
+    const char *cursor = header;
+    while (*cursor != '\0') {
+      cursor++;
+    }
+    return fail(diagnostic,
+                line,
+                source_column(header, cursor),
+                "expected indented graph node block",
+                GINT_ERR_PARSE);
   }
   body_indent = lines[body_start].indent;
   body_end = scan_block_end(lines, count, body_start, body_indent);
@@ -2258,7 +2332,16 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
 
   body_start = find_next_nonblank_line(lines, count, start_index + 1U);
   if (body_start >= count || lines[body_start].indent <= current_indent) {
-    return fail(diagnostic, line, 1U, "expected indented hypergraph vertex block", GINT_ERR_PARSE);
+    const char *header = line_content(&lines[start_index]);
+    const char *cursor = header;
+    while (*cursor != '\0') {
+      cursor++;
+    }
+    return fail(diagnostic,
+                line,
+                source_column(header, cursor),
+                "expected indented hypergraph vertex block",
+                GINT_ERR_PARSE);
   }
   body_indent = lines[body_start].indent;
   body_end = scan_block_end(lines, count, body_start, body_indent);

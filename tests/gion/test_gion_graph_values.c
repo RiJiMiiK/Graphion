@@ -2009,3 +2009,68 @@ int test_gion_graph_declaration_syntax_errors(void) {
   }
   return 0;
 }
+
+int test_gion_graph_declaration_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"graph;\n", GINT_ERR_PARSE, 1U, 6U, "expected graph name"},
+      {"graph G\n", GINT_ERR_PARSE, 1U, 8U, "expected ';' or ':' after graph declaration"},
+      {"graph G; extra\n", GINT_ERR_PARSE, 1U, 10U, "unexpected trailing tokens after graph declaration"},
+      {"graph G:\n", GINT_ERR_PARSE, 1U, 9U, "expected indented graph node block"},
+      {"graph G:\n    ?\n", GINT_ERR_PARSE, 2U, 1U, "expected graph node name or id"},
+      {"graph G:\n    \"alpha\" extra\n", GINT_ERR_PARSE, 2U, 9U, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    defaults other {\"weight\": 1}\n    1 - 2\n",
+       GINT_ERR_PARSE,
+       2U,
+       10U,
+       "expected 'node' or 'edge' after defaults"},
+      {"graph G:\n    1 -\n", GINT_ERR_PARSE, 2U, 4U, "expected graph node name or id"},
+      {"hypergraph;\n", GINT_ERR_PARSE, 1U, 11U, "expected hypergraph name"},
+      {"hypergraph H\n", GINT_ERR_PARSE, 1U, 13U, "expected ';' after hypergraph declaration"},
+      {"hypergraph H; extra\n",
+       GINT_ERR_PARSE,
+       1U,
+       15U,
+       "unexpected trailing tokens after hypergraph declaration"},
+      {"hypergraph H:\n", GINT_ERR_PARSE, 1U, 14U, "expected indented hypergraph vertex block"},
+      {"hypergraph H:\n    ?\n", GINT_ERR_PARSE, 2U, 1U, "expected graph node name or id"},
+      {"hypergraph H:\n    \"Alice\" extra\n",
+       GINT_ERR_PARSE,
+       2U,
+       9U,
+       "unexpected trailing tokens after hypergraph vertex"},
+      {"hypergraph H:\n    [1, 2\n", GINT_ERR_PARSE, 2U, 6U, "expected ']' after hyperedge vertex list"},
+      {"hypergraph H:\n    []\n", GINT_ERR_PARSE, 2U, 1U, "hyperedge must contain at least one vertex"},
+      {"hypergraph H:\n    defaults other {}\n",
+       GINT_ERR_PARSE,
+       2U,
+       10U,
+       "expected 'vertex' or 'hyperedge' after defaults"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != cases[i].expected_rc) {
+      return (int)(100 + i);
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return (int)(200 + i);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(300 + i);
+    }
+  }
+  return 0;
+}

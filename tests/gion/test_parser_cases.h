@@ -88,6 +88,7 @@
   X(gion_graph_mutation_error_coverage)                \
   X(gion_graph_numeric_id_gap_warnings)                \
   X(gion_graph_declaration_syntax_errors)              \
+  X(gion_graph_declaration_column_diagnostics)         \
   X(gion_print_syntax_errors)                          \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \

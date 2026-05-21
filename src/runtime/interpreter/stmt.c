@@ -526,7 +526,7 @@ int parse_graph_declaration_with_node_count(const char *line_text,
   }
   cursor += 5;
   if (*cursor != ' ' && *cursor != '\t') {
-    return fail(diagnostic, line, 1U, "expected graph name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected graph name", GINT_ERR_PARSE);
   }
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
   if (rc != GINT_OK) {
@@ -539,12 +539,20 @@ int parse_graph_declaration_with_node_count(const char *line_text,
   if (*cursor == ':') {
     block_declaration = 1;
   } else if (*cursor != ';') {
-    return fail(diagnostic, line, 1U, "expected ';' or ':' after graph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(line_text, cursor),
+                "expected ';' or ':' after graph declaration",
+                GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after graph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(line_text, cursor),
+                "unexpected trailing tokens after graph declaration",
+                GINT_ERR_PARSE);
   }
   rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
   if (rc != GINT_OK) {
@@ -585,7 +593,7 @@ static int parse_hypergraph_declaration(const char *line_text,
   }
   cursor += 10;
   if (*cursor != ' ' && *cursor != '\t') {
-    return fail(diagnostic, line, 1U, "expected hypergraph name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected hypergraph name", GINT_ERR_PARSE);
   }
   rc = parse_identifier_token(&cursor, target, sizeof(target), line, diagnostic);
   if (rc != GINT_OK) {
@@ -596,12 +604,20 @@ static int parse_hypergraph_declaration(const char *line_text,
   }
   skip_spaces(&cursor);
   if (*cursor != ';') {
-    return fail(diagnostic, line, 1U, "expected ';' after hypergraph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(line_text, cursor),
+                "expected ';' after hypergraph declaration",
+                GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after hypergraph declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(line_text, cursor),
+                "unexpected trailing tokens after hypergraph declaration",
+                GINT_ERR_PARSE);
   }
   rc = program_find_or_add_global(program, target, line, diagnostic, &target_index);
   if (rc != GINT_OK) {
