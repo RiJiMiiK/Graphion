@@ -677,7 +677,7 @@ int test_gion_warning_comments_are_ignored(void) {
   if (strcmp(report.items[0].message, "match case can never match a string value") != 0) {
     return 15;
   }
-  if (report.items[0].line != 2U) {
+  if (report.items[0].line != 2U || report.items[0].column != 5U) {
     return 16;
   }
 

@@ -9,6 +9,12 @@ static unsigned int source_column(const char *line_text, const char *cursor) {
   return (unsigned int)(cursor - line_text) + 1U;
 }
 
+typedef struct {
+  unsigned int line;
+  unsigned int column;
+  int set;
+} warning_source_position;
+
 int process_file_level_directives(const char *source,
                                   graphion_runtime_warning_report *report,
                                   graphion_runtime_diagnostic *diagnostic) {
@@ -117,7 +123,11 @@ int collect_match_warnings(const runtime_source_line *lines,
                    sizeof(message),
                    "match case can never match a %s value",
                    scalar_kind_name(&match_literal));
-          rc = add_warning(report, lines[clause_index].line, 1U, message, diagnostic);
+          rc = add_warning(report,
+                           lines[clause_index].line,
+                           source_column(lines[clause_index].text, line_content(&lines[clause_index])),
+                           message,
+                           diagnostic);
           runtime_match_case_value_dispose(&case_value);
           if (rc != GINT_OK) {
             graphion_runtime_program_dispose(&program);
@@ -176,9 +186,11 @@ static void add_graph_warning_name(char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAP
 }
 
 static void collect_one_graph_ref_for_warning(const char **cursor,
+                                              const runtime_source_line *line,
                                               unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX],
                                               char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAPHION_RUNTIME_NAME_MAX],
-                                              size_t *name_count) {
+                                              size_t *name_count,
+                                              warning_source_position *first_numeric_ref) {
   if (cursor == NULL || *cursor == NULL) {
     return;
   }
@@ -196,11 +208,17 @@ static void collect_one_graph_ref_for_warning(const char **cursor,
     return;
   }
   if (**cursor >= '0' && **cursor <= '9') {
+    const char *id_start = *cursor;
     char *end = NULL;
     const long id = strtol(*cursor, &end, 10);
     if (end != *cursor && (*end == '\0' || !is_ident_char(*end)) && id >= 0 &&
         (unsigned long)id < GRAPHION_RUNTIME_PROGRAM_MAX) {
       used_ids[(size_t)id] = 1U;
+      if (first_numeric_ref != NULL && !first_numeric_ref->set && line != NULL) {
+        first_numeric_ref->line = line->line;
+        first_numeric_ref->column = source_column(line->text, id_start);
+        first_numeric_ref->set = 1;
+      }
     }
     if (end != NULL && end > *cursor) {
       *cursor = end;
@@ -218,27 +236,32 @@ static void collect_one_graph_ref_for_warning(const char **cursor,
   }
 }
 
-static void collect_graph_refs_from_graph_line(const char *text,
+static void collect_graph_refs_from_graph_line(const runtime_source_line *line,
                                                unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX],
                                                char names[GRAPHION_RUNTIME_PROGRAM_MAX][GRAPHION_RUNTIME_NAME_MAX],
-                                               size_t *name_count) {
-  const char *cursor = text;
+                                               size_t *name_count,
+                                               warning_source_position *first_numeric_ref) {
+  const char *cursor;
 
+  if (line == NULL) {
+    return;
+  }
+  cursor = line->text;
   skip_spaces(&cursor);
   if (strncmp(cursor, "defaults", 8U) == 0 && !is_ident_char(cursor[8])) {
     return;
   }
-  collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
+  collect_one_graph_ref_for_warning(&cursor, line, used_ids, names, name_count, first_numeric_ref);
   skip_spaces(&cursor);
   if (*cursor == '-') {
     cursor++;
     if (*cursor == '>') {
       cursor++;
     }
-    collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
+    collect_one_graph_ref_for_warning(&cursor, line, used_ids, names, name_count, first_numeric_ref);
   } else if (cursor[0] == '<' && cursor[1] == '-' && cursor[2] == '>') {
     cursor += 3;
-    collect_one_graph_ref_for_warning(&cursor, used_ids, names, name_count);
+    collect_one_graph_ref_for_warning(&cursor, line, used_ids, names, name_count, first_numeric_ref);
   }
 }
 
@@ -350,6 +373,7 @@ int collect_graph_warnings(const runtime_source_line *lines,
   for (i = 0U; i < count; ++i) {
     unsigned char used_ids[GRAPHION_RUNTIME_PROGRAM_MAX];
     char named_refs[GRAPHION_RUNTIME_PROGRAM_MAX][GRAPHION_RUNTIME_NAME_MAX];
+    warning_source_position first_numeric_ref = {0U, 0U, 0};
     size_t named_ref_count = 0U;
     size_t body_start;
     size_t body_end;
@@ -367,14 +391,18 @@ int collect_graph_warnings(const runtime_source_line *lines,
     body_end = scan_block_end(lines, count, body_start, lines[body_start].indent);
     for (j = body_start; j < body_end; ++j) {
       if (!line_is_blank(&lines[j]) && lines[j].indent == lines[body_start].indent) {
-        collect_graph_refs_from_graph_line(line_content(&lines[j]), used_ids, named_refs, &named_ref_count);
+        collect_graph_refs_from_graph_line(&lines[j], used_ids, named_refs, &named_ref_count, &first_numeric_ref);
       }
     }
     fill_named_graph_warning_ids(used_ids, named_ref_count);
     {
       char warning_message[128];
       if (build_graph_numeric_gap_warning(used_ids, warning_message, sizeof(warning_message))) {
-        const int rc = add_warning(report, lines[i].line, 1U, warning_message, diagnostic);
+        const int rc = add_warning(report,
+                                   first_numeric_ref.set ? first_numeric_ref.line : lines[i].line,
+                                   first_numeric_ref.set ? first_numeric_ref.column : 1U,
+                                   warning_message,
+                                   diagnostic);
         if (rc != GINT_OK) {
           return rc;
         }

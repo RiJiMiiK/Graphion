@@ -1862,7 +1862,7 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 2;
   }
-  if (report.items[0].line != 1U ||
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
       strcmp(report.items[0].message, "graph numeric node ids have gaps; missing ids: 0, 2") != 0) {
     return 3;
   }
@@ -1874,7 +1874,8 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 5;
   }
-  if (strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 0") != 0) {
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 0") != 0) {
     return 6;
   }
 
@@ -1911,7 +1912,8 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 12;
   }
-  if (strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 2") != 0) {
+  if (report.items[0].line != 3U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 2") != 0) {
     return 13;
   }
 
@@ -1925,6 +1927,9 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   }
   if (!report.enabled || report.count != 1U) {
     return 15;
+  }
+  if (report.items[0].line != 3U || report.items[0].column != 5U) {
+    return 16;
   }
   return 0;
 }
