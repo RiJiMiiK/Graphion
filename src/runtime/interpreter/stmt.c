@@ -209,6 +209,7 @@ int parse_assignment(const char *line_text,
     skip_spaces(&trimmed_expr_start);
     if (assign_op == '=' && *trimmed_expr_start != '\0') {
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+      point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -299,12 +300,12 @@ int parse_print(const char *line_text,
   cursor += 5;
   skip_spaces(&cursor);
   if (*cursor != '(') {
-    return fail(diagnostic, line, 1U, "expected '(' after print", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected '(' after print", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor == ')' || *cursor == '\0') {
-    return fail(diagnostic, line, 1U, "expected print argument", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected print argument", GINT_ERR_PARSE);
   }
   {
     const char *scan = cursor;
@@ -449,6 +450,7 @@ int parse_print(const char *line_text,
           rc = parse_expression(&segment_cursor, program, &part_expr, 0U, line, diagnostic);
           if (rc != GINT_OK) {
             point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+            point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             return rc;
           }
@@ -488,6 +490,7 @@ int parse_print(const char *line_text,
   rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -672,7 +675,7 @@ static int parse_graph_mutation_statement(const char *line_text,
   if (*cursor != '(') {
     char message[96];
     snprintf(message, sizeof(message), "expected '(' after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
@@ -687,11 +690,14 @@ static int parse_graph_mutation_statement(const char *line_text,
   if (*cursor != ',') {
     char message[128];
     snprintf(message, sizeof(message), "expected ',' after %s graph", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &first, 1U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   rc = ensure_expr_in_reg(program, &first, 1U, line, diagnostic);
@@ -703,14 +709,14 @@ static int parse_graph_mutation_statement(const char *line_text,
     if (*cursor != ')') {
       char message[128];
       snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
-      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
     }
     cursor++;
     skip_spaces(&cursor);
     if (*cursor != '\0') {
       char message[128];
       snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
-      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
     }
     rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
     if (rc != GINT_OK) {
@@ -725,11 +731,14 @@ static int parse_graph_mutation_statement(const char *line_text,
   if (*cursor != ',') {
     char message[128];
     snprintf(message, sizeof(message), "expected ',' between %s endpoints", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &second, 2U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   rc = ensure_expr_in_reg(program, &second, 2U, line, diagnostic);
@@ -740,14 +749,14 @@ static int parse_graph_mutation_statement(const char *line_text,
   if (*cursor != ')') {
     char message[128];
     snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     char message[128];
     snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   if (rc != GINT_OK) {
@@ -798,7 +807,7 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
   if (*cursor != '(') {
     char message[96];
     snprintf(message, sizeof(message), "expected '(' after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
@@ -813,11 +822,14 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
   if (*cursor != ',') {
     char message[128];
     snprintf(message, sizeof(message), "expected ',' after %s hypergraph", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &arg, 1U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   rc = ensure_expr_in_reg(program, &arg, 1U, line, diagnostic);
@@ -828,14 +840,14 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
   if (*cursor != ')') {
     char message[128];
     snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     char message[128];
     snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   if (rc != GINT_OK) {
@@ -888,7 +900,7 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
   if (*cursor != '(') {
     char message[96];
     snprintf(message, sizeof(message), "expected '(' after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
@@ -904,11 +916,14 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
     if (*cursor != ',') {
       char message[128];
       snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
-      return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
     }
     cursor++;
     rc = parse_expression(&cursor, program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
     if (rc != GINT_OK) {
+      point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+      point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+      point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
     rc = ensure_expr_in_reg(program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
@@ -920,14 +935,14 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
   if (*cursor != ')') {
     char message[128];
     snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     char message[128];
     snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   if (rc != GINT_OK) {
@@ -977,7 +992,7 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
   if (*cursor != '(') {
     char message[96];
     snprintf(message, sizeof(message), "expected '(' after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_identifier_token(&cursor, graph_name, sizeof(graph_name), line, diagnostic);
@@ -992,11 +1007,14 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
   if (*cursor != ',') {
     char message[128];
     snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &target, 1U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   rc = ensure_expr_in_reg(program, &target, 1U, line, diagnostic);
@@ -1007,11 +1025,14 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
   if (*cursor != ',') {
     char message[128];
     snprintf(message, sizeof(message), "expected ',' between %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   rc = parse_expression(&cursor, program, &attrs, 2U, line, diagnostic);
   if (rc != GINT_OK) {
+    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   rc = ensure_expr_in_reg(program, &attrs, 2U, line, diagnostic);
@@ -1022,14 +1043,14 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
   if (*cursor != ')') {
     char message[128];
     snprintf(message, sizeof(message), "expected ')' after %s arguments", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     char message[128];
     snprintf(message, sizeof(message), "unexpected trailing tokens after %s", name);
-    return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, 0U, 0U, graph_index, line, diagnostic);
   if (rc != GINT_OK) {

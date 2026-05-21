@@ -11,10 +11,10 @@ int test_gion_print_syntax_errors(void) {
     unsigned int expected_column;
     const char *message;
   } cases[] = {
-      {"print = 42\n", GINT_ERR_PARSE, 1U, "expected '(' after print"},
-      {"print\n", GINT_ERR_PARSE, 1U, "expected '(' after print"},
-      {"print(\n", GINT_ERR_PARSE, 1U, "expected print argument"},
-      {"print()\n", GINT_ERR_PARSE, 1U, "expected print argument"},
+      {"print = 42\n", GINT_ERR_PARSE, 7U, "expected '(' after print"},
+      {"print\n", GINT_ERR_PARSE, 6U, "expected '(' after print"},
+      {"print(\n", GINT_ERR_PARSE, 7U, "expected print argument"},
+      {"print()\n", GINT_ERR_PARSE, 7U, "expected print argument"},
       {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
       {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
   };
@@ -77,6 +77,54 @@ int test_gion_print_syntax_errors(void) {
     graphion_runtime_scope_dispose(&scope);
   }
 
+  return 0;
+}
+
+int test_gion_builtin_call_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"value = abs()\n", 1U, 13U, "expected abs argument"},
+      {"value = abs(1 + 2\n", 1U, 18U, "expected ')' after abs argument"},
+      {"value = min(1 2)\n", 1U, 15U, "expected ',' between min arguments"},
+      {"value = min(1,)\n", 1U, 15U, "expected min second argument"},
+      {"value = fma(1, 2)\n", 1U, 17U, "expected ',' after fma second argument"},
+      {"graph G:\n    1\nadd_node G, 2)\n", 3U, 10U, "expected '(' after add_node"},
+      {"graph G:\n    1\nadd_node(G)\n", 3U, 11U, "expected ',' after add_node graph"},
+      {"graph G:\n    1\n    2\nadd_edge(G, 1)\n", 4U, 14U, "expected ',' between add_edge endpoints"},
+      {"graph G:\n    1\nadd_node(G, 2) extra\n", 3U, 16U, "unexpected trailing tokens after add_node"},
+      {"hypergraph H:\n    1\nadd_vertex H, 2)\n", 3U, 12U, "expected '(' after add_vertex"},
+      {"hypergraph H:\n    1\nadd_vertex(H)\n", 3U, 13U, "expected ',' after add_vertex hypergraph"},
+      {"hypergraph H:\n    1\nadd_vertex(H, 2) extra\n", 3U, 18U, "unexpected trailing tokens after add_vertex"},
+      {"graph G:\n    1\nset_node_attrs(G)\n", 3U, 17U, "expected ',' between set_node_attrs arguments"},
+      {"hypergraph H:\n    1\nset_vertex_attrs(H, 1)\n",
+       3U,
+       22U,
+       "expected ',' between set_vertex_attrs arguments"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
   return 0;
 }
 

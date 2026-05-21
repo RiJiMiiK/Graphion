@@ -90,6 +90,7 @@
   X(gion_graph_declaration_syntax_errors)              \
   X(gion_graph_declaration_column_diagnostics)         \
   X(gion_print_syntax_errors)                          \
+  X(gion_builtin_call_column_diagnostics)              \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \
   X(gion_trailing_token_errors)                        \

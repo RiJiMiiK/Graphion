@@ -173,6 +173,19 @@ void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
   }
 }
 
+void point_builtin_argument_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
+                                                 const char *source_text,
+                                                 const char *cursor,
+                                                 unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      cursor == NULL || cursor < source_text ||
+      strncmp(diagnostic->message, "expected ", 9U) != 0 ||
+      strstr(diagnostic->message, " argument") == NULL) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(cursor - source_text);
+}
+
 static int message_is_delimiter_diagnostic(const char *message) {
   return strncmp(message, "expected ')'", 12U) == 0 ||
          strncmp(message, "expected ']'", 12U) == 0 ||
