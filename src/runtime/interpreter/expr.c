@@ -23,6 +23,13 @@ static int parse_comparison_expression(const char **cursor,
                                        unsigned int line,
                                        graphion_runtime_diagnostic *diagnostic);
 
+static unsigned int expression_column(const char *segment_start, const char *cursor) {
+  if (segment_start == NULL || cursor == NULL || cursor < segment_start) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - segment_start) + 1U;
+}
+
 static const char *expression_operator_at(const char *cursor) {
   skip_spaces(&cursor);
   if (cursor[0] == '*' && cursor[1] == '*') {
@@ -1108,6 +1115,7 @@ int parse_expression(const char **cursor,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (ternary_scan == 1 || ternary_scan == 2) {
+    const char *expression_start = *cursor;
     char true_segment[512];
     char condition_segment[512];
     char false_segment[512];
@@ -1124,24 +1132,44 @@ int parse_expression(const char **cursor,
       return rc;
     }
     if (true_segment[0] == '\0') {
-      return fail(diagnostic, line, 1U, "expected expression before ternary if", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, expression_start),
+                  "expected expression before ternary if",
+                  GINT_ERR_PARSE);
     }
     rc = copy_trimmed_segment(condition_start, condition_end, condition_segment, sizeof(condition_segment), line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
     if (condition_segment[0] == '\0') {
-      return fail(diagnostic, line, 1U, "expected condition after ternary if", GINT_ERR_PARSE);
+      const char *missing_condition = condition_start;
+      skip_spaces(&missing_condition);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, missing_condition),
+                  "expected condition after ternary if",
+                  GINT_ERR_PARSE);
     }
     if (ternary_scan == 2) {
-      return fail(diagnostic, line, 1U, "expected else in ternary expression", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, condition_end),
+                  "expected else in ternary expression",
+                  GINT_ERR_PARSE);
     }
     rc = copy_trimmed_segment(false_start, expr_end, false_segment, sizeof(false_segment), line, diagnostic);
     if (rc != GINT_OK) {
       return rc;
     }
     if (false_segment[0] == '\0') {
-      return fail(diagnostic, line, 1U, "expected expression after ternary else", GINT_ERR_PARSE);
+      const char *missing_false_branch = false_start;
+      skip_spaces(&missing_false_branch);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, missing_false_branch),
+                  "expected expression after ternary else",
+                  GINT_ERR_PARSE);
     }
 
     segment_cursor = condition_segment;
@@ -1151,7 +1179,12 @@ int parse_expression(const char **cursor,
     }
     skip_spaces(&segment_cursor);
     if (*segment_cursor != '\0') {
-      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary condition", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, condition_start) +
+                      (unsigned int)(segment_cursor - condition_segment),
+                  "unexpected trailing tokens in ternary condition",
+                  GINT_ERR_PARSE);
     }
     rc = ensure_expr_in_reg(program, &condition_result, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
@@ -1170,7 +1203,12 @@ int parse_expression(const char **cursor,
     }
     skip_spaces(&segment_cursor);
     if (*segment_cursor != '\0') {
-      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary true branch", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, expression_start) +
+                      (unsigned int)(segment_cursor - true_segment),
+                  "unexpected trailing tokens in ternary true branch",
+                  GINT_ERR_PARSE);
     }
     rc = ensure_expr_in_reg(program, &branch_result, target_reg, line, diagnostic);
     if (rc != GINT_OK) {
@@ -1193,7 +1231,12 @@ int parse_expression(const char **cursor,
     }
     skip_spaces(&segment_cursor);
     if (*segment_cursor != '\0') {
-      return fail(diagnostic, line, 1U, "unexpected trailing tokens in ternary else branch", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  expression_column(expression_start, false_start) +
+                      (unsigned int)(segment_cursor - false_segment),
+                  "unexpected trailing tokens in ternary else branch",
+                  GINT_ERR_PARSE);
     }
     rc = ensure_expr_in_reg(program, &branch_result, target_reg, line, diagnostic);
     if (rc != GINT_OK) {

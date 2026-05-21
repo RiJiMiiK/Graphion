@@ -114,6 +114,7 @@
   X(gion_ternary_expressions)                          \
   X(gion_ternary_runtime_errors)                       \
   X(gion_ternary_syntax_errors)                        \
+  X(gion_ternary_column_diagnostics)                   \
   X(gion_boolean_short_circuit)                        \
   X(gion_boolean_short_circuit_runtime_errors)         \
   X(gion_equality_expressions)                         \

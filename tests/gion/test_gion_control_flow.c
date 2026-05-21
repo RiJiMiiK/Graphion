@@ -676,6 +676,42 @@ int test_gion_ternary_syntax_errors(void) {
   return 0;
 }
 
+int test_gion_ternary_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"value = \"ready\" if ready\n", 26U, "expected else in ternary expression"},
+      {"value = if ready else \"bad\"\n", 9U, "expected expression before ternary if"},
+      {"value = \"ready\" if else \"bad\"\n", 21U, "expected condition after ternary if"},
+      {"value = \"ready\" if ready else\n", 31U, "expected expression after ternary else"},
+      {"print(\"ready\" if ready)\n", 23U, "expected else in ternary expression"},
+      {"print(\"ready\" if else \"bad\")\n", 18U, "expected condition after ternary if"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_boolean_short_circuit(void) {
   const char *source =
       "safe_and = false and 2\n"

@@ -210,6 +210,7 @@ int parse_assignment(const char *line_text,
     if (assign_op == '=' && *trimmed_expr_start != '\0') {
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+      point_ternary_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -451,6 +452,7 @@ int parse_print(const char *line_text,
           if (rc != GINT_OK) {
             point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
             point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
+            point_ternary_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             return rc;
           }
@@ -487,12 +489,16 @@ int parse_print(const char *line_text,
       return program_emit(program, GVM_OP_PRINT_NEWLINE, 0U, 0U, 0, line, diagnostic);
     }
   }
-  rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
-  if (rc != GINT_OK) {
-    point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
-    point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
-    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
-    return rc;
+  {
+    const char *expr_start = cursor;
+    rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
+    if (rc != GINT_OK) {
+      point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+      point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+      point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+      point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+      return rc;
+    }
   }
   skip_spaces(&cursor);
   if (*cursor != ')') {
@@ -693,12 +699,16 @@ static int parse_graph_mutation_statement(const char *line_text,
     return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *expr_start = cursor;
   rc = parse_expression(&cursor, program, &first, 1U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
+  }
   }
   rc = ensure_expr_in_reg(program, &first, 1U, line, diagnostic);
   if (rc != GINT_OK) {
@@ -734,12 +744,16 @@ static int parse_graph_mutation_statement(const char *line_text,
     return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *expr_start = cursor;
   rc = parse_expression(&cursor, program, &second, 2U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
+  }
   }
   rc = ensure_expr_in_reg(program, &second, 2U, line, diagnostic);
   if (rc != GINT_OK) {
@@ -825,12 +839,16 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
     return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *expr_start = cursor;
   rc = parse_expression(&cursor, program, &arg, 1U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
+  }
   }
   rc = ensure_expr_in_reg(program, &arg, 1U, line, diagnostic);
   if (rc != GINT_OK) {
@@ -919,12 +937,16 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
       return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
     }
     cursor++;
+    {
+      const char *expr_start = cursor;
     rc = parse_expression(&cursor, program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
     if (rc != GINT_OK) {
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+      point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
+    }
     }
     rc = ensure_expr_in_reg(program, &args[i], (uint8_t)(i + 1U), line, diagnostic);
     if (rc != GINT_OK) {
@@ -1010,12 +1032,16 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
     return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *expr_start = cursor;
   rc = parse_expression(&cursor, program, &target, 1U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
+  }
   }
   rc = ensure_expr_in_reg(program, &target, 1U, line, diagnostic);
   if (rc != GINT_OK) {
@@ -1028,12 +1054,16 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
     return fail(diagnostic, line, source_column(line_text, cursor), message, GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *expr_start = cursor;
   rc = parse_expression(&cursor, program, &attrs, 2U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
+    point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
+  }
   }
   rc = ensure_expr_in_reg(program, &attrs, 2U, line, diagnostic);
   if (rc != GINT_OK) {

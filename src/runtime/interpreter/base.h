@@ -28,6 +28,10 @@ void point_builtin_argument_diagnostic_at_cursor(graphion_runtime_diagnostic *di
                                                  const char *source_text,
                                                  const char *cursor,
                                                  unsigned int base_column);
+void point_ternary_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *source_text,
+                                           const char *segment_start,
+                                           unsigned int base_column);
 void point_delimiter_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
                                           const char *source_text,
                                           const char *cursor,
