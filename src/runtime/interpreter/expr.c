@@ -235,7 +235,7 @@ static int try_parse_struct_instance_literal(const char **cursor,
   global_index = program_find_global_index(program, type_name);
   if (global_index < 0) {
     *cursor = saved;
-    return fail(diagnostic, line, 1U, "unknown struct type", GINT_ERR_UNKNOWN_VARIABLE);
+    return fail(diagnostic, line, expression_column(saved, saved), "unknown struct type", GINT_ERR_UNKNOWN_VARIABLE);
   }
   *cursor = scan;
   rc = program_emit(program, GVM_OP_LOAD_GLOBAL, base_reg, 0U, global_index, line, diagnostic);

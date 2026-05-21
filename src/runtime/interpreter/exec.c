@@ -1508,23 +1508,31 @@ static int parse_struct_name_from_header(const char *text,
   }
   cursor += 6;
   if (*cursor != ' ' && *cursor != '\t') {
-    return fail(diagnostic, line, 1U, "expected struct name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected struct name", GINT_ERR_PARSE);
   }
+  {
+    const char *name_start = cursor;
+    skip_spaces(&name_start);
   rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
   if (is_reserved_name(target)) {
-    return fail(diagnostic, line, 1U, "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+    return fail(diagnostic, line, source_column(text, name_start), "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
+  }
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after struct declaration", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected ':' after struct declaration", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after struct declaration", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after struct declaration",
+                GINT_ERR_PARSE);
   }
   return GINT_OK;
 }
@@ -2110,30 +2118,40 @@ static int parse_struct_field_line(const char *text,
     return fail(diagnostic, line, 1U, "too many struct fields", GINT_ERR_CAPACITY);
   }
   field = &builder->fields[builder->field_count];
+  {
+    const char *field_start = cursor;
   rc = parse_identifier_token(&cursor, field->name, sizeof(field->name), line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
   for (i = 0U; i < builder->field_count; ++i) {
     if (strcmp(builder->fields[i].name, field->name) == 0) {
-      return fail(diagnostic, line, 1U, "duplicate struct field", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(text, field_start), "duplicate struct field", GINT_ERR_PARSE);
     }
+  }
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after struct field name", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, cursor), "expected ':' after struct field name", GINT_ERR_PARSE);
   }
   cursor++;
+  {
+    const char *type_start = cursor;
+    skip_spaces(&type_start);
   rc = parse_identifier_token(&cursor, field->type_name, sizeof(field->type_name), line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
   }
   if (!runtime_struct_type_name_is_supported(field->type_name, scope)) {
-    return fail(diagnostic, line, 1U, "unsupported struct field type", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(text, type_start), "unsupported struct field type", GINT_ERR_PARSE);
+  }
   }
   skip_spaces(&cursor);
   if (*cursor == '=') {
+    const char *default_start;
     cursor++;
+    default_start = cursor;
+    skip_spaces(&default_start);
     vm_value_set_none(&field->default_value);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &field->default_value);
     if (rc != GINT_OK) {
@@ -2141,11 +2159,19 @@ static int parse_struct_field_line(const char *text,
     }
     if (!runtime_value_matches_struct_type(&field->default_value, field->type_name)) {
       vm_value_dispose_owned(&field->default_value);
-      return fail(diagnostic, line, 1U, "struct field default has wrong type", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  source_column(text, default_start),
+                  "struct field default has wrong type",
+                  GINT_ERR_PARSE);
     }
     field->has_default = 1U;
   } else if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after struct field", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, cursor),
+                "unexpected trailing tokens after struct field",
+                GINT_ERR_PARSE);
   }
   builder->field_count += 1U;
   return GINT_OK;
@@ -2171,7 +2197,16 @@ static int collect_struct_block(const runtime_source_line *lines,
   runtime_struct_builder_init(builder);
   body_start = find_next_nonblank_line(lines, count, start_index + 1U);
   if (body_start >= count || lines[body_start].indent <= current_indent) {
-    return fail(diagnostic, line, 1U, "expected indented struct field block", GINT_ERR_PARSE);
+    const char *header = line_content(&lines[start_index]);
+    const char *cursor = header;
+    while (*cursor != '\0') {
+      cursor++;
+    }
+    return fail(diagnostic,
+                line,
+                source_column(header, cursor),
+                "expected indented struct field block",
+                GINT_ERR_PARSE);
   }
   body_indent = lines[body_start].indent;
   body_end = scan_block_end(lines, count, body_start, body_indent);
@@ -2614,7 +2649,11 @@ static int execute_struct_instance_assignment(const char *statement_source,
   }
   skip_spaces(&cursor);
   if (*cursor != '{') {
-    return fail(diagnostic, line, 1U, "expected struct instance field dictionary", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(statement_source, cursor),
+                "expected struct instance field dictionary",
+                GINT_ERR_PARSE);
   }
   dict_start = cursor;
   rc = evaluate_expression_text_to_value(dict_start, strlen(dict_start), scope, line, diagnostic, &overrides);
@@ -2623,15 +2662,27 @@ static int execute_struct_instance_assignment(const char *statement_source,
   }
   if (overrides.kind != GVM_VALUE_DICT) {
     vm_value_dispose_owned(&overrides);
-    return fail(diagnostic, line, 1U, "struct instance fields must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(statement_source, dict_start),
+                "struct instance fields must be a dict literal",
+                GINT_ERR_PARSE);
   }
   rc = vm_value_instantiate_struct(&instance, type_value, &overrides);
   vm_value_dispose_owned(&overrides);
   if (rc == GVM_ERR_MISSING_KEY) {
-    return fail(diagnostic, line, 1U, "missing or unknown struct field", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                source_column(statement_source, dict_start),
+                "missing or unknown struct field",
+                GINT_ERR_RUN);
   }
   if (rc == GVM_ERR_TYPE_MISMATCH) {
-    return fail(diagnostic, line, 1U, "struct field value has wrong type", GINT_ERR_RUN);
+    return fail(diagnostic,
+                line,
+                source_column(statement_source, dict_start),
+                "struct field value has wrong type",
+                GINT_ERR_RUN);
   }
   if (rc != GVM_OK) {
     return fail(diagnostic, line, 1U, "failed to create struct instance", GINT_ERR_CAPACITY);

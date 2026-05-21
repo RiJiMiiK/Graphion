@@ -32,7 +32,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] report useful columns for warnings emitted by `-d`
   - [x] report useful columns for builtin/function call syntax errors
   - [x] report useful columns for ternary expression errors
-  - [ ] report useful columns for struct declaration/body/instance errors
+  - [x] report useful columns for struct declaration/body/instance errors
   - [ ] report useful columns for block-shape and indentation diagnostics
 - [ ] align parse/runtime categories where user-visible behavior is surprising
   - [ ] distinguish syntax errors from name resolution errors in `print(...)`

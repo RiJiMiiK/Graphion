@@ -141,3 +141,57 @@ int test_gion_struct_syntax_errors(void) {
   }
   return 0;
 }
+
+int test_gion_struct_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"struct Player;\n", GINT_ERR_PARSE, 1U, 14U, "struct declaration requires ':' and an indented field block"},
+      {"struct Player:\n", GINT_ERR_PARSE, 1U, 15U, "expected indented struct field block"},
+      {"struct Player:\n    id int\n", GINT_ERR_PARSE, 2U, 4U, "expected ':' after struct field name"},
+      {"struct Player:\n    id: int\n    id: string\n", GINT_ERR_PARSE, 3U, 1U, "duplicate struct field"},
+      {"struct Player:\n    id: int = \"one\"\n", GINT_ERR_PARSE, 2U, 11U, "struct field default has wrong type"},
+      {"struct Player:\n    id: strnig\n", GINT_ERR_PARSE, 2U, 5U, "unsupported struct field type"},
+      {"struct Player:\n    id: int\n\np = Player\n",
+       GINT_ERR_PARSE,
+       4U,
+       11U,
+       "expected struct instance field dictionary"},
+      {"p = Missing {}\n", GINT_ERR_UNKNOWN_VARIABLE, 1U, 5U, "unknown struct type"},
+      {"struct Player:\n    id: int\n\np = Player {}\n",
+       GINT_ERR_RUN,
+       4U,
+       12U,
+       "missing or unknown struct field"},
+      {"struct Player:\n    id: int\n\np = Player {\"id\": \"one\"}\n",
+       GINT_ERR_RUN,
+       4U,
+       12U,
+       "struct field value has wrong type"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != cases[i].expected_rc) {
+      return (int)(900 + i);
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return (int)(1000 + i);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(1100 + i);
+    }
+  }
+  return 0;
+}

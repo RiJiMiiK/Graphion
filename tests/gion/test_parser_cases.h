@@ -59,6 +59,7 @@
   X(gion_struct_declarations_and_instances)            \
   X(gion_struct_runtime_errors)                        \
   X(gion_struct_syntax_errors)                         \
+  X(gion_struct_column_diagnostics)                    \
   X(gion_empty_graph_declaration)                      \
   X(gion_empty_hypergraph_declaration)                 \
   X(gion_hypergraph_vertex_block_declaration)          \

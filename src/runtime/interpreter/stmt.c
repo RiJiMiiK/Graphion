@@ -211,6 +211,7 @@ int parse_assignment(const char *line_text,
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_ternary_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
+      point_struct_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -453,6 +454,7 @@ int parse_print(const char *line_text,
             point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
             point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             point_ternary_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
+            point_struct_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             return rc;
           }
@@ -496,6 +498,7 @@ int parse_print(const char *line_text,
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+      point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -706,6 +709,7 @@ static int parse_graph_mutation_statement(const char *line_text,
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+    point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -751,6 +755,7 @@ static int parse_graph_mutation_statement(const char *line_text,
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+    point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -846,6 +851,7 @@ static int parse_hypergraph_mutation_statement(const char *line_text,
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+    point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -944,6 +950,7 @@ static int parse_graph_attr_mutation_statement(const char *line_text,
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+      point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -1039,6 +1046,7 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+    point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -1061,6 +1069,7 @@ static int parse_hypergraph_attr_mutation_statement(const char *line_text,
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
     point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+    point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
     point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
@@ -1126,7 +1135,16 @@ int parse_statement_line(const char *line_text,
   if (strncmp(line_cursor, "print", 5U) == 0 && !is_ident_char(line_cursor[5])) {
     rc = parse_print(line_cursor, scope, program, line, diagnostic);
   } else if (strncmp(line_cursor, "struct", 6U) == 0 && !is_ident_char(line_cursor[6])) {
-    rc = fail(diagnostic, line, 1U, "struct declaration requires ':' and an indented field block", GINT_ERR_PARSE);
+    const char *cursor = line_cursor + 6;
+    skip_spaces(&cursor);
+    while (*cursor != '\0' && *cursor != ':' && *cursor != ';') {
+      cursor++;
+    }
+    rc = fail(diagnostic,
+              line,
+              source_column(line_cursor, cursor),
+              "struct declaration requires ':' and an indented field block",
+              GINT_ERR_PARSE);
   } else if (strncmp(line_cursor, "hypergraph", 10U) == 0 && !is_ident_char(line_cursor[10])) {
     rc = parse_hypergraph_declaration(line_cursor, program, line, diagnostic);
   } else if (strncmp(line_cursor, "graph", 5U) == 0 && !is_ident_char(line_cursor[5])) {
