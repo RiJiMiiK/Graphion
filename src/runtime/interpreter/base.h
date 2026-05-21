@@ -24,6 +24,10 @@ int add_warning(graphion_runtime_warning_report *report,
 void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
                                       const char *source_text,
                                       unsigned int base_column);
+void point_delimiter_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
+                                          const char *source_text,
+                                          const char *cursor,
+                                          unsigned int base_column);
 void vm_value_set_none(graphion_vm_value *value);
 void runtime_free_string(char **text);
 void skip_spaces(const char **cursor);

@@ -144,7 +144,7 @@ int parse_assignment(const char *line_text,
     }
     skip_spaces(&cursor);
     if (*cursor != ']') {
-      return fail(diagnostic, line, 1U, "expected ']' after assignment target index", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, cursor), "expected ']' after assignment target index", GINT_ERR_PARSE);
     }
     cursor++;
     skip_spaces(&cursor);
@@ -209,6 +209,7 @@ int parse_assignment(const char *line_text,
     skip_spaces(&trimmed_expr_start);
     if (assign_op == '=' && *trimmed_expr_start != '\0') {
       point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+      point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
     return remap_missing_assignment_rhs_error(
@@ -448,6 +449,7 @@ int parse_print(const char *line_text,
           rc = parse_expression(&segment_cursor, program, &part_expr, 0U, line, diagnostic);
           if (rc != GINT_OK) {
             point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+            point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             return rc;
           }
           skip_spaces(&segment_cursor);
@@ -473,7 +475,7 @@ int parse_print(const char *line_text,
         part_start = part_cursor;
       }
       if (*cursor != ')') {
-        return fail(diagnostic, line, 1U, "expected ')' after print argument", GINT_ERR_PARSE);
+        return fail(diagnostic, line, source_column(line_text, cursor), "expected ')' after print argument", GINT_ERR_PARSE);
       }
       cursor++;
       skip_spaces(&cursor);
@@ -486,11 +488,12 @@ int parse_print(const char *line_text,
   rc = parse_expression(&cursor, program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
     point_unknown_operand_diagnostic(diagnostic, line_text, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
     return rc;
   }
   skip_spaces(&cursor);
   if (*cursor != ')') {
-    return fail(diagnostic, line, 1U, "expected ')' after print argument", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected ')' after print argument", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);

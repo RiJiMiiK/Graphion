@@ -173,6 +173,30 @@ void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
   }
 }
 
+static int message_is_delimiter_diagnostic(const char *message) {
+  return strncmp(message, "expected ')'", 12U) == 0 ||
+         strncmp(message, "expected ']'", 12U) == 0 ||
+         strncmp(message, "expected ','", 12U) == 0 ||
+         strncmp(message, "expected ':'", 12U) == 0 ||
+         strncmp(message, "expected '('", 12U) == 0 ||
+         strncmp(message, "expected '['", 12U) == 0 ||
+         strncmp(message, "expected '{'", 12U) == 0 ||
+         strcmp(message, "empty tuple literal is not supported") == 0 ||
+         strncmp(message, "trailing comma is not allowed", 29U) == 0;
+}
+
+void point_delimiter_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
+                                          const char *source_text,
+                                          const char *cursor,
+                                          unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      cursor == NULL || cursor < source_text ||
+      !message_is_delimiter_diagnostic(diagnostic->message)) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(cursor - source_text);
+}
+
 int is_reserved_name(const char *name) {
   if (is_scalar_builtin_name(name)) {
     return 1;

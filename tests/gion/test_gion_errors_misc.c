@@ -227,6 +227,45 @@ int test_gion_unknown_identifier_column_diagnostics(void) {
   return 0;
 }
 
+int test_gion_delimiter_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"print(1 + 2\n", 1U, 12U, "expected ')' after print argument"},
+      {"value = (1 + 2\n", 1U, 15U, "expected ')' after expression"},
+      {"items = [1]\nvalue = items[0\n", 2U, 16U, "expected ']' after index expression"},
+      {"items = [1 2]\n", 1U, 12U, "expected ',' or ']' after list element"},
+      {"data = {\"a\" 1}\n", 1U, 13U, "expected ':' after dict key"},
+      {"data = {\"a\": 1 \"b\": 2}\n", 1U, 16U, "expected ',' or '}' after dict entry"},
+      {"value = (1, 2 3)\n", 1U, 15U, "expected ',' or ')' after tuple element"},
+      {"items = set(1 2)\n", 1U, 15U, "expected ',' or ')' after set element"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_reassignment_and_type_change(void) {
   const char *source =
       "value = 1\n"

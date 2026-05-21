@@ -94,6 +94,7 @@
   X(gion_trailing_token_errors)                        \
   X(gion_reference_before_definition_errors)           \
   X(gion_unknown_identifier_column_diagnostics)         \
+  X(gion_delimiter_column_diagnostics)                  \
   X(gion_reassignment_and_type_change)                 \
   X(gion_copy_chains_and_blank_lines)                  \
   X(gion_late_line_error_diagnostics)                  \
