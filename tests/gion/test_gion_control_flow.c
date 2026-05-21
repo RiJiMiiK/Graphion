@@ -329,6 +329,51 @@ int test_gion_if_elif_else_errors(void) {
   return 0;
 }
 
+int test_gion_control_header_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true\n    print(1)\n", 1U, 8U, "expected ':' after if condition"},
+      {"if :\n    print(1)\n", 1U, 4U, "expected condition after if"},
+      {"if true: extra\n    print(1)\n", 1U, 10U, "unexpected trailing tokens after condition"},
+      {"if false:\n    print(1)\nelif true\n    print(2)\n", 3U, 10U, "expected ':' after elif condition"},
+      {"if false:\n    print(1)\nelif :\n    print(2)\n", 3U, 6U, "expected condition after elif"},
+      {"if false:\n    print(1)\nelse\n    print(2)\n", 3U, 5U, "expected ':' after else"},
+      {"if false:\n    print(1)\nelse: extra\n    print(2)\n", 3U, 7U, "unexpected trailing tokens after else"},
+      {"match:\n    1:\n        print(1)\n", 1U, 6U, "expected expression after match"},
+      {"match 1\n    1:\n        print(1)\n", 1U, 8U, "expected ':' after match expression"},
+      {"match 1: extra\n    1:\n        print(1)\n", 1U, 10U, "unexpected trailing tokens after match"},
+      {"match 1:\n    1\n        print(1)\n", 2U, 2U, "expected ':' after match case"},
+      {"match 1:\n    1: extra\n        print(1)\n", 2U, 4U, "unexpected trailing tokens after match case"},
+      {"match 1:\n    default\n        print(1)\n", 2U, 8U, "expected ':' after default"},
+      {"match 1:\n    default: extra\n        print(1)\n", 2U, 10U, "unexpected trailing tokens after default"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_match_control_flow(void) {
   const char *source =
       "status = \"ready\"\n"

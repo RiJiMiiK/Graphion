@@ -106,6 +106,7 @@
   X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
+  X(gion_control_header_column_diagnostics)            \
   X(gion_match_control_flow)                           \
   X(gion_match_errors)                                 \
   X(gion_ternary_expressions)                          \

@@ -52,6 +52,13 @@ const char *line_content(const runtime_source_line *line) {
   return cursor;
 }
 
+static unsigned int source_column(const char *line_text, const char *cursor) {
+  if (line_text == NULL || cursor == NULL || cursor < line_text) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - line_text) + 1U;
+}
+
 int line_starts_with_keyword(const runtime_source_line *line, const char *keyword) {
   const char *cursor = line_content(line);
   const size_t len = strlen(keyword);
@@ -360,7 +367,7 @@ int collect_control_condition_text(const runtime_source_line *lines,
   if (*cursor == '\0') {
     return fail(diagnostic,
                 line,
-                1U,
+                source_column(line_content(start_line), cursor),
                 strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
                 GINT_ERR_PARSE);
   }
@@ -431,12 +438,16 @@ int collect_control_condition_text(const runtime_source_line *lines,
         }
         skip_spaces(&tail);
         if (*tail != '\0') {
-          return fail(diagnostic, lines[i].line, 1U, "unexpected trailing tokens after condition", GINT_ERR_PARSE);
+          return fail(diagnostic,
+                      lines[i].line,
+                      source_column(line_content(&lines[i]), tail),
+                      "unexpected trailing tokens after condition",
+                      GINT_ERR_PARSE);
         }
         if (write_index == 0U) {
           return fail(diagnostic,
-                      line,
-                      1U,
+                      lines[i].line,
+                      source_column(line_content(&lines[i]), scan),
                       strcmp(keyword, "if") == 0 ? "expected condition after if" : "expected condition after elif",
                       GINT_ERR_PARSE);
         }
@@ -458,13 +469,13 @@ int collect_control_condition_text(const runtime_source_line *lines,
         }
         return fail(diagnostic,
                     line,
-                    1U,
+                    source_column(line_content(start_line), scan),
                     strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
                     GINT_ERR_PARSE);
       }
       return fail(diagnostic,
                   lines[i].line,
-                  1U,
+                  source_column(line_content(&lines[i]), scan),
                   strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
                   GINT_ERR_PARSE);
     }
@@ -472,7 +483,7 @@ int collect_control_condition_text(const runtime_source_line *lines,
 
   return fail(diagnostic,
               line,
-              1U,
+              source_column(line_content(start_line), cursor),
               strcmp(keyword, "if") == 0 ? "expected ':' after if condition" : "expected ':' after elif condition",
               GINT_ERR_PARSE);
 }
@@ -480,18 +491,19 @@ int collect_control_condition_text(const runtime_source_line *lines,
 int parse_else_header(const char *cursor,
                              unsigned int line,
                              graphion_runtime_diagnostic *diagnostic) {
+  const char *line_text = cursor;
   if (strncmp(cursor, "else", 4U) != 0 || is_ident_char(cursor[4])) {
     return fail(diagnostic, line, 1U, "invalid else header", GINT_ERR_PARSE);
   }
   cursor += 4;
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after else", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected ':' after else", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after else", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "unexpected trailing tokens after else", GINT_ERR_PARSE);
   }
   return GINT_OK;
 }

@@ -2,6 +2,13 @@
 
 #include "runtime/interpreter/source.h"
 
+static unsigned int source_column(const char *line_text, const char *cursor) {
+  if (line_text == NULL || cursor == NULL || cursor < line_text) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - line_text) + 1U;
+}
+
 int process_file_level_directives(const char *source,
                                   graphion_runtime_warning_report *report,
                                   graphion_runtime_diagnostic *diagnostic) {
@@ -451,7 +458,7 @@ int collect_match_expression_text(const runtime_source_line *lines,
   cursor += 5;
   skip_spaces(&cursor);
   if (*cursor == '\0') {
-    return fail(diagnostic, line, 1U, "expected expression after match", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_content(start_line), cursor), "expected expression after match", GINT_ERR_PARSE);
   }
 
   multiline_allowed = *cursor == '(' ? 1 : 0;
@@ -519,10 +526,18 @@ int collect_match_expression_text(const runtime_source_line *lines,
         }
         skip_spaces(&tail);
         if (*tail != '\0') {
-          return fail(diagnostic, lines[i].line, 1U, "unexpected trailing tokens after match", GINT_ERR_PARSE);
+          return fail(diagnostic,
+                      lines[i].line,
+                      source_column(line_content(&lines[i]), tail),
+                      "unexpected trailing tokens after match",
+                      GINT_ERR_PARSE);
         }
         if (write_index == 0U) {
-          return fail(diagnostic, line, 1U, "expected expression after match", GINT_ERR_PARSE);
+          return fail(diagnostic,
+                      lines[i].line,
+                      source_column(line_content(&lines[i]), scan),
+                      "expected expression after match",
+                      GINT_ERR_PARSE);
         }
         buffer[write_index] = '\0';
         *header_end_index_out = i;
@@ -537,13 +552,25 @@ int collect_match_expression_text(const runtime_source_line *lines,
 
     if (depth == 0) {
       if (i == start_index) {
-        return fail(diagnostic, line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+        return fail(diagnostic,
+                    line,
+                    source_column(line_content(start_line), scan),
+                    "expected ':' after match expression",
+                    GINT_ERR_PARSE);
       }
-      return fail(diagnostic, lines[i].line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  source_column(line_content(&lines[i]), scan),
+                  "expected ':' after match expression",
+                  GINT_ERR_PARSE);
     }
   }
 
-  return fail(diagnostic, line, 1U, "expected ':' after match expression", GINT_ERR_PARSE);
+  return fail(diagnostic,
+              line,
+              source_column(line_content(start_line), cursor),
+              "expected ':' after match expression",
+              GINT_ERR_PARSE);
 }
 
 int parse_match_case_header(const char *cursor,
@@ -552,6 +579,7 @@ int parse_match_case_header(const char *cursor,
                             unsigned int line,
                             graphion_runtime_diagnostic *diagnostic) {
   graphion_runtime_program program;
+  const char *line_text = cursor;
   int rc;
 
   if (cursor == NULL || value_out == NULL || owned_value == NULL) {
@@ -565,20 +593,24 @@ int parse_match_case_header(const char *cursor,
     if (rc == GINT_ERR_PARSE && diagnostic != NULL &&
         diagnostic->message != NULL &&
         strcmp(diagnostic->message, "expected scalar literal") == 0) {
-      return fail(diagnostic, line, 1U, "expected match case literal", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, cursor), "expected match case literal", GINT_ERR_PARSE);
     }
     return rc;
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
     graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "expected ':' after match case", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected ':' after match case", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after match case", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(line_text, cursor),
+                "unexpected trailing tokens after match case",
+                GINT_ERR_PARSE);
   }
   rc = runtime_match_case_value_clone(owned_value, value_out, line, diagnostic);
   graphion_runtime_program_dispose(&program);
@@ -592,18 +624,19 @@ int parse_match_case_header(const char *cursor,
 int parse_default_header(const char *cursor,
                          unsigned int line,
                          graphion_runtime_diagnostic *diagnostic) {
+  const char *line_text = cursor;
   if (strncmp(cursor, "default", 7U) != 0 || is_ident_char(cursor[7])) {
     return fail(diagnostic, line, 1U, "invalid default header", GINT_ERR_PARSE);
   }
   cursor += 7;
   skip_spaces(&cursor);
   if (*cursor != ':') {
-    return fail(diagnostic, line, 1U, "expected ':' after default", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "expected ':' after default", GINT_ERR_PARSE);
   }
   cursor++;
   skip_spaces(&cursor);
   if (*cursor != '\0') {
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after default", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(line_text, cursor), "unexpected trailing tokens after default", GINT_ERR_PARSE);
   }
   return GINT_OK;
 }

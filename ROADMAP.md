@@ -27,7 +27,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] report useful columns for assignment operator errors
   - [x] report useful columns for unknown identifiers in expressions
   - [x] report useful columns for missing delimiters in `print`, grouped expressions, indexing, lists, dicts, tuples, and sets
-  - [ ] report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
+  - [x] report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
   - [ ] report useful columns for graph and hypergraph declaration/body errors
   - [ ] report useful columns for warnings emitted by `-d`
 - [ ] align parse/runtime categories where user-visible behavior is surprising
