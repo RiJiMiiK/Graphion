@@ -30,6 +30,10 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] report useful columns for control headers (`if`, `elif`, `else`, `match`, `default`)
   - [x] report useful columns for graph and hypergraph declaration/body errors
   - [x] report useful columns for warnings emitted by `-d`
+  - [ ] report useful columns for builtin/function call syntax errors
+  - [ ] report useful columns for ternary expression errors
+  - [ ] report useful columns for struct declaration/body/instance errors
+  - [ ] report useful columns for block-shape and indentation diagnostics
 - [ ] align parse/runtime categories where user-visible behavior is surprising
   - [ ] distinguish syntax errors from name resolution errors in `print(...)`
   - [ ] distinguish graph declaration syntax errors from expression/name resolution errors
