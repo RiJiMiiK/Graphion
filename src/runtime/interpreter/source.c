@@ -379,7 +379,16 @@ int collect_control_condition_text(const runtime_source_line *lines,
 
     if (i > start_index) {
       if (!multiline_allowed) {
-        return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+        const char *start_content = line_content(start_line);
+        const char *start_end = start_content;
+        while (*start_end != '\0') {
+          start_end++;
+        }
+        return fail(diagnostic,
+                    line,
+                    source_column(start_content, start_end),
+                    "multiline condition requires grouping parentheses",
+                    GINT_ERR_PARSE);
       }
       if (write_index + 1U >= buffer_size) {
         return fail(diagnostic, line, 1U, "source line too long", GINT_ERR_CAPACITY);
@@ -465,7 +474,11 @@ int collect_control_condition_text(const runtime_source_line *lines,
     if (depth == 0) {
       if (i == start_index) {
         if (condition_line_looks_incomplete(buffer, write_index)) {
-          return fail(diagnostic, line, 1U, "multiline condition requires grouping parentheses", GINT_ERR_PARSE);
+          return fail(diagnostic,
+                      line,
+                      source_column(line_content(start_line), scan),
+                      "multiline condition requires grouping parentheses",
+                      GINT_ERR_PARSE);
         }
         return fail(diagnostic,
                     line,

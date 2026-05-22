@@ -374,6 +374,58 @@ int test_gion_control_header_column_diagnostics(void) {
   return 0;
 }
 
+int test_gion_multiline_grouping_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true and\n    false:\n    print(1)\n",
+       1U,
+       12U,
+       "multiline condition requires grouping parentheses"},
+      {"if false:\n    print(1)\nelif true and\n    false:\n    print(2)\n",
+       3U,
+       14U,
+       "multiline condition requires grouping parentheses"},
+      {"value = \"ready\" if\n    ready else \"bad\"\n",
+       1U,
+       19U,
+       "multiline assignment expression requires grouping parentheses"},
+      {"value = \"ready\" if ready else\n    \"bad\"\n",
+       1U,
+       30U,
+       "multiline assignment expression requires grouping parentheses"},
+      {"value = (\n    \"ready\"\n    if ready\n    else \"bad\"\n", 4U, 11U, "expected ')' after expression"},
+      {"match value and\n    true:\n        print(1)\n",
+       1U,
+       16U,
+       "multiline match expression requires grouping parentheses"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_block_shape_column_diagnostics(void) {
   static const struct {
     const char *source;

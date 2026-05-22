@@ -2769,6 +2769,8 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
   int in_string = 0;
   int multiline_allowed = 0;
   int saw_nonblank_continuation = 0;
+  unsigned int last_scanned_line = line;
+  unsigned int last_scanned_column = 1U;
   int rc;
 
   if (lines == NULL || start_index >= count || buffer == NULL || buffer_size == 0U || end_index_out == NULL) {
@@ -2834,7 +2836,16 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
       }
       saw_nonblank_continuation = 1;
       if (!multiline_allowed) {
-        return fail(diagnostic, line, 1U, "multiline assignment expression requires grouping parentheses", GINT_ERR_PARSE);
+        const char *start_content = line_content(start_line);
+        const char *start_end = start_content;
+        while (*start_end != '\0') {
+          start_end++;
+        }
+        return fail(diagnostic,
+                    line,
+                    source_column(start_content, start_end),
+                    "multiline assignment expression requires grouping parentheses",
+                    GINT_ERR_PARSE);
       }
       if (write_index > 0U && buffer[write_index - 1U] != ' ') {
         if (write_index + 1U >= buffer_size) {
@@ -2891,6 +2902,8 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
       buffer[write_index++] = *scan;
       scan++;
     }
+    last_scanned_line = lines[i].line;
+    last_scanned_column = source_column(line_content(&lines[i]), scan);
 
     while (write_index > 0U &&
            (buffer[write_index - 1U] == ' ' || buffer[write_index - 1U] == '\t' || buffer[write_index - 1U] == '\r')) {
@@ -2899,7 +2912,11 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
     if (depth == 0) {
       if (i == start_index && ternary_line_looks_incomplete(buffer, write_index) &&
           find_next_nonblank_line(lines, count, i + 1U) < count) {
-        return fail(diagnostic, line, 1U, "multiline assignment expression requires grouping parentheses", GINT_ERR_PARSE);
+        return fail(diagnostic,
+                    line,
+                    source_column(line_content(start_line), scan),
+                    "multiline assignment expression requires grouping parentheses",
+                    GINT_ERR_PARSE);
       }
       buffer[write_index] = '\0';
       *end_index_out = i;
@@ -2912,7 +2929,7 @@ static int collect_assignment_statement_text(const runtime_source_line *lines,
     *end_index_out = start_index;
     return GINT_OK;
   }
-  return fail(diagnostic, line, 1U, "expected ')' after expression", GINT_ERR_PARSE);
+  return fail(diagnostic, last_scanned_line, last_scanned_column, "expected ')' after expression", GINT_ERR_PARSE);
 }
 
 static int execute_statement_source_line(const runtime_source_line *lines,

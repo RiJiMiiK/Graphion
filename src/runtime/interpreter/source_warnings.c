@@ -495,7 +495,16 @@ int collect_match_expression_text(const runtime_source_line *lines,
 
     if (i > start_index) {
       if (!multiline_allowed) {
-        return fail(diagnostic, line, 1U, "multiline match expression requires grouping parentheses", GINT_ERR_PARSE);
+        const char *start_content = line_content(start_line);
+        const char *start_end = start_content;
+        while (*start_end != '\0') {
+          start_end++;
+        }
+        return fail(diagnostic,
+                    line,
+                    source_column(start_content, start_end),
+                    "multiline match expression requires grouping parentheses",
+                    GINT_ERR_PARSE);
       }
       if (write_index > 0U && buffer[write_index - 1U] != ' ') {
         if (write_index + 1U >= buffer_size) {
@@ -580,6 +589,13 @@ int collect_match_expression_text(const runtime_source_line *lines,
 
     if (depth == 0) {
       if (i == start_index) {
+        if (condition_line_looks_incomplete(buffer, write_index) && find_next_nonblank_line(lines, count, i + 1U) < count) {
+          return fail(diagnostic,
+                      line,
+                      source_column(line_content(start_line), scan),
+                      "multiline match expression requires grouping parentheses",
+                      GINT_ERR_PARSE);
+        }
         return fail(diagnostic,
                     line,
                     source_column(line_content(start_line), scan),

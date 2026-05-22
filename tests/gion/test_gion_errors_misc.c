@@ -415,7 +415,7 @@ int test_gion_late_line_error_diagnostics(void) {
        "    ready else \"bad\"\n",
        GINT_ERR_PARSE,
        2U,
-       1U,
+       19U,
        "multiline assignment expression requires grouping parentheses"},
       {"value = 1\n"
        "match value:\n"
