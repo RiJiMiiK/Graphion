@@ -37,6 +37,14 @@ No positive warning codes are currently used.
 
 Current source execution has three broad families of failures.
 
+Source diagnostics carry a source position:
+
+- `line` is one-based and points to the physical `.gion` source line
+- `column` is one-based and points to the most useful token or boundary for the error
+- CLI errors are printed as `error:line:column: message`
+
+Column precision is best-effort but intentionally user-facing. Common syntax and runtime diagnostics now point at the relevant assignment operator, missing identifier, delimiter, builtin argument, control header, block boundary, graph/hypergraph body item, literal token, or remaining expression token instead of defaulting to column 1. Diagnostics that describe whole-line failures, resource limits, or internal argument failures may still use column 1.
+
 ### 1. Parse errors
 
 These are raised when the source form itself is invalid or unsupported.
@@ -52,7 +60,6 @@ Examples:
 Typical messages include:
 
 - `expected '='`
-- `expected scalar literal`
 - `expected print argument`
 - `expected abs argument`
 - `expected min first argument`
@@ -65,6 +72,8 @@ Typical messages include:
 - `expected expression before '=='`
 - `expected ')' after expression`
 - `unexpected trailing tokens after assignment`
+- `unexpected trailing tokens after expression`
+- `multiline condition requires grouping parentheses`
 
 ### 2. Unknown name errors
 
@@ -127,6 +136,7 @@ Typical result:
 
 - parse failure
 - message `expected expression after '+'`
+- position on the `+` operator
 
 Input:
 
@@ -138,6 +148,7 @@ Typical result:
 
 - parse failure
 - message `expected expression before '=='`
+- position on the `==` operator
 
 ### Unknown operand
 
@@ -151,6 +162,7 @@ Typical result:
 
 - source/runtime failure
 - message `unknown operand 'missing'`
+- position on `missing`
 
 ### Unknown variable
 
@@ -164,6 +176,7 @@ Typical result:
 
 - source/runtime failure
 - message `unknown variable 'count'`
+- position on `count`
 
 ### Runtime arithmetic error
 

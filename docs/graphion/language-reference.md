@@ -930,6 +930,35 @@ The current diagnostic is:
 `unterminated block comment`
 : parse error when `/*` does not have a matching closing `*/`
 
+## Diagnostics
+
+Graphion reports user-facing `.gion` errors with a one-based line and column.
+
+CLI errors use this shape:
+
+```text
+error:line:column: message
+```
+
+The column points at the most useful token or boundary for the current error. For example, diagnostics usually point at:
+
+- the assignment operator or missing assignment target
+- an unknown identifier in an expression
+- a missing delimiter in `print`, grouped expressions, indexing, lists, dicts, tuples, or sets
+- a control header token such as `if`, `elif`, `else`, `match`, or `default`
+- a graph, hypergraph, or struct declaration/body item
+- a builtin argument or separator
+- an invalid literal token
+- the remaining token for trailing expression text
+
+Debug warnings printed with `-d` use the same one-based source-position convention:
+
+```text
+warning:line:column: message
+```
+
+Some whole-line, capacity, or internal failures can still report column 1 because there is no more specific source token.
+
 ## Expressions And Operators
 
 See [Operators](operators.md) for:

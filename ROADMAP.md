@@ -22,7 +22,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] replace bare assignment RHS fallbacks such as `count =` with assignment-specific messages
   - [x] replace unexpected prefix-token fallbacks such as `value = !` with token-specific messages
   - [x] replace late execution parse fallbacks that still surface as `expected scalar literal`
-- [ ] improve line and column precision
+- [x] improve line and column precision
   - [x] keep current line accuracy for late source errors
   - [x] report useful columns for assignment operator errors
   - [x] report useful columns for unknown identifiers in expressions
@@ -62,8 +62,8 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [ ] add CLI-path tests where formatting differs from direct API diagnostics
   - [ ] keep tests scoped to user-visible behavior, not internal implementation details
 - [ ] update documentation when diagnostics change
-  - [ ] update `docs/runtime/debugging/ERRORS.md`
-  - [ ] update Graphion language reference diagnostics section
+  - [x] update `docs/runtime/debugging/ERRORS.md`
+  - [x] update Graphion language reference diagnostics section
   - [ ] update examples or tutorial notes only when user-facing behavior changes
 
 ## Future additions gated by other features
