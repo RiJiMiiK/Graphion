@@ -29,6 +29,7 @@ static int parse_named_unary_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
@@ -79,6 +80,7 @@ static int parse_named_binary_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
@@ -147,6 +149,7 @@ static int parse_log_constant_base_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
@@ -198,6 +201,7 @@ static int parse_clamp_builtin(const char **cursor,
 
   skip_spaces(&after_name);
   if (*after_name != '(') {
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, "expected '(' after clamp", GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
@@ -274,6 +278,7 @@ static int parse_fma_builtin(const char **cursor,
 
   skip_spaces(&after_name);
   if (*after_name != '(') {
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, "expected '(' after fma", GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;

@@ -180,7 +180,11 @@ void point_builtin_argument_diagnostic_at_cursor(graphion_runtime_diagnostic *di
   if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
       cursor == NULL || cursor < source_text ||
       strncmp(diagnostic->message, "expected ", 9U) != 0 ||
-      strstr(diagnostic->message, " argument") == NULL) {
+      (strstr(diagnostic->message, " argument") == NULL &&
+       strstr(diagnostic->message, "expected '(' after ") == NULL &&
+       strstr(diagnostic->message, "expected clamp value") == NULL &&
+       strstr(diagnostic->message, "expected clamp lower bound") == NULL &&
+       strstr(diagnostic->message, "expected clamp upper bound") == NULL)) {
     return;
   }
   diagnostic->column = base_column + (unsigned int)(cursor - source_text);

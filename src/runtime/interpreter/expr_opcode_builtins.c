@@ -34,6 +34,7 @@ static int parse_named_unary_opcode_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
@@ -84,6 +85,7 @@ static int parse_named_binary_opcode_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;

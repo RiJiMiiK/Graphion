@@ -88,10 +88,16 @@ int test_gion_builtin_call_column_diagnostics(void) {
     const char *message;
   } cases[] = {
       {"value = abs()\n", 1U, 13U, "expected abs argument"},
+      {"value = abs 1)\n", 1U, 13U, "expected '(' after abs"},
       {"value = abs(1 + 2\n", 1U, 18U, "expected ')' after abs argument"},
       {"value = min(1 2)\n", 1U, 15U, "expected ',' between min arguments"},
       {"value = min(1,)\n", 1U, 15U, "expected min second argument"},
+      {"value = sqrt 1)\n", 1U, 14U, "expected '(' after sqrt"},
+      {"value = clamp()\n", 1U, 15U, "expected clamp value"},
+      {"value = clamp(1,)\n", 1U, 17U, "expected clamp lower bound"},
+      {"value = clamp(1, 2,)\n", 1U, 20U, "expected clamp upper bound"},
       {"value = fma(1, 2)\n", 1U, 17U, "expected ',' after fma second argument"},
+      {"value = fma 1, 2, 3)\n", 1U, 13U, "expected '(' after fma"},
       {"graph G:\n    1\nadd_node G, 2)\n", 3U, 10U, "expected '(' after add_node"},
       {"graph G:\n    1\nadd_node(G)\n", 3U, 11U, "expected ',' after add_node graph"},
       {"graph G:\n    1\n    2\nadd_edge(G, 1)\n", 4U, 14U, "expected ',' between add_edge endpoints"},

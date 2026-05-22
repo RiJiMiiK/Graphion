@@ -115,6 +115,7 @@ static int try_parse_unary_direct_builtin(const direct_builtin_spec *specs,
     after_name = *cursor + strlen(specs[i].name);
     skip_spaces(&after_name);
     if (*after_name != '(') {
+      *cursor = after_name;
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
@@ -169,6 +170,7 @@ static int try_parse_binary_direct_builtin(const direct_builtin_spec *specs,
     after_name = *cursor + strlen(specs[i].name);
     skip_spaces(&after_name);
     if (*after_name != '(') {
+      *cursor = after_name;
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
@@ -241,6 +243,7 @@ static int try_parse_ternary_direct_builtin(const direct_builtin_spec *specs,
     after_name = *cursor + strlen(specs[i].name);
     skip_spaces(&after_name);
     if (*after_name != '(') {
+      *cursor = after_name;
       return fail_expected_open_paren_for_builtin(diagnostic, line, specs[i].name);
     }
     *cursor = after_name + 1;
