@@ -424,7 +424,7 @@ int test_gion_late_line_error_diagnostics(void) {
        "print(value)\n",
        GINT_ERR_PARSE,
        3U,
-       1U,
+       3U,
        "expected indented block after match case"},
   };
   size_t i;

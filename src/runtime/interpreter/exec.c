@@ -12,6 +12,27 @@ static unsigned int source_column(const char *line_text, const char *cursor) {
   return (unsigned int)(cursor - line_text) + 1U;
 }
 
+static unsigned int runtime_line_content_column(const runtime_source_line *line) {
+  if (line == NULL) {
+    return 1U;
+  }
+  return source_column(line->text, line_content(line));
+}
+
+static unsigned int runtime_line_end_column(const runtime_source_line *line) {
+  const char *content;
+  const char *cursor;
+  if (line == NULL) {
+    return 1U;
+  }
+  content = line_content(line);
+  cursor = content;
+  while (*cursor != '\0') {
+    cursor++;
+  }
+  return source_column(content, cursor);
+}
+
 typedef struct {
   uint32_t from;
   uint32_t to;
@@ -2216,7 +2237,11 @@ static int collect_struct_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     rc = parse_struct_field_line(line_content(&lines[i]), builder, scope, lines[i].line, diagnostic);
     if (rc != GINT_OK) {
@@ -2272,7 +2297,11 @@ static int collect_graph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (!graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -2290,7 +2319,11 @@ static int collect_graph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -2308,7 +2341,11 @@ static int collect_graph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -2388,7 +2425,11 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (!graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -2406,7 +2447,11 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -2424,7 +2469,11 @@ static int collect_hypergraph_block(const runtime_source_line *lines,
       continue;
     }
     if (lines[i].indent != body_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (graph_block_line_is_defaults(line_content(&lines[i]))) {
       continue;
@@ -3070,7 +3119,11 @@ static int execute_if_chain(const runtime_source_line *lines,
       break;
     }
     if (seen_else && (line_is_elif_clause(clause_line) || is_else_clause)) {
-      return fail(diagnostic, clause_line->line, 1U, "else must be last in if chain", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  clause_line->line,
+                  runtime_line_content_column(clause_line),
+                  "else must be last in if chain",
+                  GINT_ERR_PARSE);
     }
     if (is_else_clause) {
       int rc = parse_else_header(cursor, clause_line->line, diagnostic);
@@ -3079,13 +3132,21 @@ static int execute_if_chain(const runtime_source_line *lines,
       }
       body_start = find_next_nonblank_line(lines, count, clause_index + 1U);
       if (body_start >= count || lines[body_start].indent <= current_indent) {
-        return fail(diagnostic, clause_line->line, 1U, "expected indented block after else", GINT_ERR_PARSE);
+        return fail(diagnostic,
+                    clause_line->line,
+                    runtime_line_end_column(clause_line),
+                    "expected indented block after else",
+                    GINT_ERR_PARSE);
       }
       body_indent = lines[body_start].indent;
       body_end = scan_block_end(lines, count, body_start, body_indent);
       if (body_end < count && !line_is_blank(&lines[body_end]) && lines[body_end].indent > current_indent &&
           lines[body_end].indent < body_indent) {
-        return fail(diagnostic, lines[body_end].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+        return fail(diagnostic,
+                    lines[body_end].line,
+                    runtime_line_content_column(&lines[body_end]),
+                    "unexpected indentation",
+                    GINT_ERR_PARSE);
       }
       seen_else = 1;
       if (!branch_taken) {
@@ -3116,7 +3177,7 @@ static int execute_if_chain(const runtime_source_line *lines,
       if (body_start >= count || lines[body_start].indent <= current_indent) {
         return fail(diagnostic,
                     clause_line->line,
-                    1U,
+                    runtime_line_end_column(clause_line),
                     line_is_elif_clause(clause_line) ? "expected indented block after elif" :
                     "expected indented block after if",
                     GINT_ERR_PARSE);
@@ -3125,7 +3186,11 @@ static int execute_if_chain(const runtime_source_line *lines,
       body_end = scan_block_end(lines, count, body_start, body_indent);
       if (body_end < count && !line_is_blank(&lines[body_end]) && lines[body_end].indent > current_indent &&
           lines[body_end].indent < body_indent) {
-        return fail(diagnostic, lines[body_end].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+        return fail(diagnostic,
+                    lines[body_end].line,
+                    runtime_line_content_column(&lines[body_end]),
+                    "unexpected indentation",
+                    GINT_ERR_PARSE);
       }
       if (!branch_taken) {
         int condition_true = 0;
@@ -3205,7 +3270,11 @@ static int execute_match_statement(const runtime_source_line *lines,
 
   clause_index = find_next_nonblank_line(lines, count, header_end_index + 1U);
   if (clause_index >= count || lines[clause_index].indent <= current_indent) {
-    rc = fail(diagnostic, lines[*index].line, 1U, "expected indented match block", GINT_ERR_PARSE);
+    rc = fail(diagnostic,
+              lines[*index].line,
+              runtime_line_end_column(&lines[*index]),
+              "expected indented match block",
+              GINT_ERR_PARSE);
     goto cleanup;
   }
   branch_indent = lines[clause_index].indent;
@@ -3226,14 +3295,22 @@ static int execute_match_statement(const runtime_source_line *lines,
       break;
     }
     if (lines[clause_index].indent > branch_indent) {
-      rc = fail(diagnostic, lines[clause_index].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      rc = fail(diagnostic,
+                lines[clause_index].line,
+                runtime_line_content_column(&lines[clause_index]),
+                "unexpected indentation",
+                GINT_ERR_PARSE);
       goto cleanup;
     }
 
     if (line_is_default_clause(&lines[clause_index])) {
       is_default = 1;
       if (seen_default) {
-        rc = fail(diagnostic, lines[clause_index].line, 1U, "default can only appear once", GINT_ERR_PARSE);
+        rc = fail(diagnostic,
+                  lines[clause_index].line,
+                  runtime_line_content_column(&lines[clause_index]),
+                  "default can only appear once",
+                  GINT_ERR_PARSE);
         goto cleanup;
       }
       rc = parse_default_header(line_content(&lines[clause_index]), lines[clause_index].line, diagnostic);
@@ -3291,7 +3368,11 @@ static int execute_match_statement(const runtime_source_line *lines,
         }
       }
       if (label_index == label_start) {
-        rc = fail(diagnostic, lines[clause_index].line, 1U, "expected match case or default", GINT_ERR_PARSE);
+        rc = fail(diagnostic,
+                  lines[clause_index].line,
+                  runtime_line_content_column(&lines[clause_index]),
+                  "expected match case or default",
+                  GINT_ERR_PARSE);
         goto cleanup;
       }
     }
@@ -3300,7 +3381,7 @@ static int execute_match_statement(const runtime_source_line *lines,
     if (body_start >= count || lines[body_start].indent <= branch_indent) {
       rc = fail(diagnostic,
                 lines[label_start].line,
-                1U,
+                runtime_line_end_column(&lines[label_start]),
                 is_default ? "expected indented block after default" : "expected indented block after match case",
                 GINT_ERR_PARSE);
       goto cleanup;
@@ -3309,7 +3390,11 @@ static int execute_match_statement(const runtime_source_line *lines,
 
     if (is_default && find_next_nonblank_line(lines, count, body_end) < count &&
         lines[find_next_nonblank_line(lines, count, body_end)].indent == branch_indent) {
-      rc = fail(diagnostic, lines[label_start].line, 1U, "default must be last in match", GINT_ERR_PARSE);
+      rc = fail(diagnostic,
+                lines[label_start].line,
+                runtime_line_content_column(&lines[label_start]),
+                "default must be last in match",
+                GINT_ERR_PARSE);
       goto cleanup;
     }
 
@@ -3354,16 +3439,32 @@ int execute_block(const runtime_source_line *lines,
       break;
     }
     if (lines[i].indent > block_indent) {
-      return fail(diagnostic, lines[i].line, 1U, "unexpected indentation", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  block_indent == 0U ? 1U : runtime_line_content_column(&lines[i]),
+                  "unexpected indentation",
+                  GINT_ERR_PARSE);
     }
     if (line_is_elif_clause(&lines[i])) {
-      return fail(diagnostic, lines[i].line, 1U, "elif without matching if", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "elif without matching if",
+                  GINT_ERR_PARSE);
     }
     if (line_is_else_clause(&lines[i])) {
-      return fail(diagnostic, lines[i].line, 1U, "else without matching if", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "else without matching if",
+                  GINT_ERR_PARSE);
     }
     if (line_is_default_clause(&lines[i])) {
-      return fail(diagnostic, lines[i].line, 1U, "default without matching match", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  lines[i].line,
+                  runtime_line_content_column(&lines[i]),
+                  "default without matching match",
+                  GINT_ERR_PARSE);
     }
     if (line_is_if_clause(&lines[i])) {
       int rc = execute_if_chain(lines, count, &i, block_indent, scope, diagnostic, output);

@@ -374,6 +374,87 @@ int test_gion_control_header_column_diagnostics(void) {
   return 0;
 }
 
+int test_gion_block_shape_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true:\nprint(1)\n", GINT_ERR_PARSE, 1U, 9U, "expected indented block after if"},
+      {"if false:\n    print(1)\nelif true:\nprint(2)\n",
+       GINT_ERR_PARSE,
+       3U,
+       11U,
+       "expected indented block after elif"},
+      {"if false:\n    print(1)\nelse:\nprint(2)\n",
+       GINT_ERR_PARSE,
+       3U,
+       6U,
+       "expected indented block after else"},
+      {"if true:\n    print(1)\n  print(2)\n", GINT_ERR_PARSE, 3U, 3U, "unexpected indentation"},
+      {"if true:\n    if false:\n        print(1)\n      print(2)\n",
+       GINT_ERR_PARSE,
+       4U,
+       7U,
+       "unexpected indentation"},
+      {"if true:\n    elif false:\n        print(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "elif without matching if"},
+      {"if true:\n    else:\n        print(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "else without matching if"},
+      {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n",
+       GINT_ERR_PARSE,
+       6U,
+       1U,
+       "else must be last in if chain"},
+      {"match 1:\nprint(1)\n", GINT_ERR_PARSE, 1U, 9U, "expected indented match block"},
+      {"match 1:\n    1:\n    2:\nprint(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       3U,
+       "expected indented block after match case"},
+      {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "default must be last in match"},
+      {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "default must be last in match"},
+      {"default:\n    print(1)\n", GINT_ERR_PARSE, 1U, 1U, "default without matching match"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_match_control_flow(void) {
   const char *source =
       "status = \"ready\"\n"
