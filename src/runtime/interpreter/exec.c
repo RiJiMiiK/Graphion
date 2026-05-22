@@ -42,6 +42,15 @@ static void point_diagnostic_at(graphion_runtime_diagnostic *diagnostic,
   diagnostic->column = source_column(line_text, cursor);
 }
 
+static void offset_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *line_text,
+                                           const char *segment_start) {
+  if (diagnostic == NULL || line_text == NULL || segment_start == NULL || segment_start < line_text) {
+    return;
+  }
+  diagnostic->column = source_column(line_text, segment_start) + diagnostic->column - 1U;
+}
+
 typedef struct {
   uint32_t from;
   uint32_t to;
@@ -979,6 +988,7 @@ static int parse_graph_node_attrs(const char *text,
   vm_value_set_none(&attrs);
   rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &attrs);
   if (rc != GINT_OK) {
+    offset_diagnostic_from_segment(diagnostic, text, text);
     return rc;
   }
   rc = runtime_graph_set_node_attrs(builder, node_id, &attrs, line, diagnostic);
@@ -1001,6 +1011,7 @@ static int parse_hypergraph_vertex_attrs(const char *text,
   vm_value_set_none(&attrs);
   rc = evaluate_expression_text_to_value(text, strlen(text), scope, line, diagnostic, &attrs);
   if (rc != GINT_OK) {
+    offset_diagnostic_from_segment(diagnostic, text, text);
     return rc;
   }
   rc = runtime_hypergraph_set_vertex_attrs(builder, vertex_id, &attrs, line, diagnostic);
@@ -1039,6 +1050,7 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
     vm_value_set_none(&defaults);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
     if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     rc = runtime_hypergraph_set_vertex_attr_defaults(builder, &defaults, line, diagnostic);
@@ -1054,6 +1066,7 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
     vm_value_set_none(&defaults);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
     if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     rc = runtime_hypergraph_set_hyperedge_attr_defaults(builder, &defaults, line, diagnostic);
@@ -1141,6 +1154,7 @@ static int parse_hypergraph_edge_line(const char *text,
   vm_value_set_none(&attrs);
   rc = evaluate_expression_text_to_value(list_text, strlen(list_text), scope, line, diagnostic, &vertices);
   if (rc != GINT_OK) {
+    offset_diagnostic_from_segment(diagnostic, list_start, list_start);
     return rc;
   }
   if (!vm_value_list_length(&vertices, &vertex_count)) {
@@ -1195,6 +1209,7 @@ static int parse_hypergraph_edge_line(const char *text,
     if (has_attrs) {
       rc = evaluate_expression_text_to_value(attrs_text, strlen(attrs_text), scope, line, diagnostic, &attrs);
       if (rc != GINT_OK) {
+        offset_diagnostic_from_segment(diagnostic, text, attrs_text);
         vm_value_dispose_owned(&vertices);
         return rc;
       }
@@ -1249,6 +1264,7 @@ static int parse_graph_attr_defaults_line(const char *text,
     vm_value_set_none(&defaults);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
     if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     rc = runtime_graph_set_node_attr_defaults(builder, &defaults, line, diagnostic);
@@ -1264,6 +1280,7 @@ static int parse_graph_attr_defaults_line(const char *text,
     vm_value_set_none(&defaults);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &defaults);
     if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     rc = runtime_graph_set_edge_attr_defaults(builder, &defaults, line, diagnostic);
@@ -1316,6 +1333,7 @@ static int parse_graph_edge_attrs(const char *text,
   vm_value_set_none(&expression_value);
   rc = evaluate_expression_text_to_value(expression_text, strlen(expression_text), scope, line, diagnostic, &expression_value);
   if (rc != GINT_OK) {
+    offset_diagnostic_from_segment(diagnostic, text, expression_text);
     return rc;
   }
   if (expression_value.kind == GVM_VALUE_DICT) {
@@ -1454,7 +1472,7 @@ static int parse_graph_block_line(const char *text,
     }
     rc = parse_graph_edge_attrs(cursor, scope, line, diagnostic, &edge_attrs);
     if (rc != GINT_OK) {
-      point_diagnostic_at(diagnostic, text, cursor);
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     has_edge_attrs = 1;
@@ -2225,6 +2243,7 @@ static int parse_struct_field_line(const char *text,
     vm_value_set_none(&field->default_value);
     rc = evaluate_expression_text_to_value(cursor, strlen(cursor), scope, line, diagnostic, &field->default_value);
     if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
       return rc;
     }
     if (!runtime_value_matches_struct_type(&field->default_value, field->type_name)) {
@@ -2756,6 +2775,7 @@ static int execute_struct_instance_assignment(const char *statement_source,
   dict_start = cursor;
   rc = evaluate_expression_text_to_value(dict_start, strlen(dict_start), scope, line, diagnostic, &overrides);
   if (rc != GINT_OK) {
+    offset_diagnostic_from_segment(diagnostic, statement_source, dict_start);
     return rc;
   }
   if (overrides.kind != GVM_VALUE_DICT) {

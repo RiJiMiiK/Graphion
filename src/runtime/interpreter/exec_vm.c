@@ -198,6 +198,13 @@ static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
                                         scope->global_count);
 }
 
+static unsigned int expression_buffer_column(const char *buffer, const char *cursor) {
+  if (buffer == NULL || cursor == NULL || cursor < buffer) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - buffer) + 1U;
+}
+
 static int execute_condition_program(const graphion_runtime_program *program,
                                      graphion_runtime_scope *scope,
                                      uint8_t reg_index,
@@ -271,7 +278,11 @@ int evaluate_expression_text_to_value(const char *expression_text,
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after expression", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                expression_buffer_column(expression_buffer, cursor),
+                "unexpected trailing tokens after expression",
+                GINT_ERR_PARSE);
   }
   if (expr.kind == EXPR_RESULT_LITERAL) {
     rc = vm_value_clone(value_out, &program.const_pool[expr.const_index]);
