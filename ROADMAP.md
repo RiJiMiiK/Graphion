@@ -40,7 +40,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] report useful columns for literal parser errors still surfaced through direct operand parsing
   - [x] report useful columns for VM expression trailing-token diagnostics
 - [ ] align parse/runtime categories where user-visible behavior is surprising
-- [x] distinguish syntax errors from name resolution errors in `print(...)`
+  - [x] distinguish syntax errors from name resolution errors in `print(...)`
   - [ ] distinguish graph declaration syntax errors from expression/name resolution errors
   - [ ] keep runtime type/domain errors separate from frontend parse errors
   - [ ] decide whether parser/frontend `GFE_*` errors need a diagnostic object or remain code-only
