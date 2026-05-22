@@ -33,6 +33,15 @@ static unsigned int runtime_line_end_column(const runtime_source_line *line) {
   return source_column(content, cursor);
 }
 
+static void point_diagnostic_at(graphion_runtime_diagnostic *diagnostic,
+                                const char *line_text,
+                                const char *cursor) {
+  if (diagnostic == NULL || line_text == NULL || cursor == NULL || diagnostic->column != 1U) {
+    return;
+  }
+  diagnostic->column = source_column(line_text, cursor);
+}
+
 typedef struct {
   uint32_t from;
   uint32_t to;
@@ -380,7 +389,13 @@ static int parse_graph_node_ref(const char **cursor,
     }
     *cursor = end;
     *id_out = (uint32_t)id;
-    return runtime_graph_mark_id(builder, (uint32_t)id, fail_if_existing_id, line, diagnostic);
+    {
+      const int rc = runtime_graph_mark_id(builder, (uint32_t)id, fail_if_existing_id, line, diagnostic);
+      if (rc != GINT_OK) {
+        point_diagnostic_at(diagnostic, line_text, id_start);
+      }
+      return rc;
+    }
   }
 
   if (is_ident_start_char(**cursor)) {
@@ -404,7 +419,13 @@ static int parse_graph_node_ref(const char **cursor,
                   "unknown graph node variable",
                   GINT_ERR_UNKNOWN_VARIABLE);
     }
-    return runtime_graph_id_from_value(builder, value, fail_if_existing_id, assign_named_ids, id_out, line, diagnostic);
+    {
+      const int rc = runtime_graph_id_from_value(builder, value, fail_if_existing_id, assign_named_ids, id_out, line, diagnostic);
+      if (rc != GINT_OK) {
+        point_diagnostic_at(diagnostic, line_text, name_start);
+      }
+      return rc;
+    }
   }
 
   return fail(diagnostic, line, source_column(line_text, *cursor), "expected graph node name or id", GINT_ERR_PARSE);
@@ -961,6 +982,9 @@ static int parse_graph_node_attrs(const char *text,
     return rc;
   }
   rc = runtime_graph_set_node_attrs(builder, node_id, &attrs, line, diagnostic);
+  if (rc != GINT_OK) {
+    point_diagnostic_at(diagnostic, text, text);
+  }
   vm_value_dispose_owned(&attrs);
   return rc;
 }
@@ -980,6 +1004,9 @@ static int parse_hypergraph_vertex_attrs(const char *text,
     return rc;
   }
   rc = runtime_hypergraph_set_vertex_attrs(builder, vertex_id, &attrs, line, diagnostic);
+  if (rc != GINT_OK) {
+    point_diagnostic_at(diagnostic, text, text);
+  }
   vm_value_dispose_owned(&attrs);
   return rc;
 }
@@ -1015,6 +1042,9 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
       return rc;
     }
     rc = runtime_hypergraph_set_vertex_attr_defaults(builder, &defaults, line, diagnostic);
+    if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, cursor);
+    }
     vm_value_dispose_owned(&defaults);
     return rc;
   }
@@ -1027,6 +1057,9 @@ static int parse_hypergraph_attr_defaults_line(const char *text,
       return rc;
     }
     rc = runtime_hypergraph_set_hyperedge_attr_defaults(builder, &defaults, line, diagnostic);
+    if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, cursor);
+    }
     vm_value_dispose_owned(&defaults);
     return rc;
   }
@@ -1166,6 +1199,9 @@ static int parse_hypergraph_edge_line(const char *text,
         return rc;
       }
       rc = runtime_hypergraph_set_hyperedge_attrs(builder, builder->hyperedge_count, &attrs, line, diagnostic);
+      if (rc != GINT_OK) {
+        point_diagnostic_at(diagnostic, text, attrs_text);
+      }
       vm_value_dispose_owned(&attrs);
       if (rc != GINT_OK) {
         vm_value_dispose_owned(&vertices);
@@ -1216,6 +1252,9 @@ static int parse_graph_attr_defaults_line(const char *text,
       return rc;
     }
     rc = runtime_graph_set_node_attr_defaults(builder, &defaults, line, diagnostic);
+    if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, cursor);
+    }
     vm_value_dispose_owned(&defaults);
     return rc;
   }
@@ -1228,6 +1267,9 @@ static int parse_graph_attr_defaults_line(const char *text,
       return rc;
     }
     rc = runtime_graph_set_edge_attr_defaults(builder, &defaults, line, diagnostic);
+    if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, cursor);
+    }
     vm_value_dispose_owned(&defaults);
     return rc;
   }
@@ -1284,6 +1326,7 @@ static int parse_graph_edge_attrs(const char *text,
     }
     rc = validate_graph_edge_attrs(attrs_out, line, diagnostic);
     if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, expression_text);
       vm_value_dispose_owned(attrs_out);
       return rc;
     }
@@ -1291,7 +1334,11 @@ static int parse_graph_edge_attrs(const char *text,
   }
   if (expression_value.kind != GVM_VALUE_INT && expression_value.kind != GVM_VALUE_FLOAT) {
     vm_value_dispose_owned(&expression_value);
-    return fail(diagnostic, line, 1U, "graph edge weight expression must be int, float, or dict", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                source_column(text, expression_text),
+                "graph edge weight expression must be int, float, or dict",
+                GINT_ERR_PARSE);
   }
   vm_value_dispose_owned(&expression_value);
   {
@@ -1306,6 +1353,7 @@ static int parse_graph_edge_attrs(const char *text,
   }
   rc = validate_graph_edge_attrs(attrs_out, line, diagnostic);
   if (rc != GINT_OK) {
+    point_diagnostic_at(diagnostic, text, expression_text);
     vm_value_dispose_owned(attrs_out);
     return rc;
   }
@@ -1406,6 +1454,7 @@ static int parse_graph_block_line(const char *text,
     }
     rc = parse_graph_edge_attrs(cursor, scope, line, diagnostic, &edge_attrs);
     if (rc != GINT_OK) {
+      point_diagnostic_at(diagnostic, text, cursor);
       return rc;
     }
     has_edge_attrs = 1;
