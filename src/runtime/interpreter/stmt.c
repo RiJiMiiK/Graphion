@@ -212,6 +212,7 @@ int parse_assignment(const char *line_text,
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_ternary_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
       point_struct_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
+      point_literal_diagnostic_from_segment(diagnostic, line_text, trimmed_expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }
@@ -455,6 +456,7 @@ int parse_print(const char *line_text,
             point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             point_ternary_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_struct_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
+            point_literal_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
             return rc;
           }
@@ -499,6 +501,7 @@ int parse_print(const char *line_text,
       point_builtin_argument_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       point_ternary_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
+      point_literal_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
       return rc;
     }

@@ -320,6 +320,44 @@ int test_gion_delimiter_column_diagnostics(void) {
   return 0;
 }
 
+int test_gion_literal_parser_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"value = 0b\n", 1U, 11U, "expected binary digits after 0b"},
+      {"value = 0b102\n", 1U, 13U, "invalid bits literal"},
+      {"data = {a: 1}\n", 1U, 9U, "dict literal keys must be string literals"},
+      {"items = [1,]\n", 1U, 12U, "trailing comma is not allowed in list literal"},
+      {"value = ()\n", 1U, 9U, "empty tuple literal is not supported"},
+      {"pair = (1,)\n", 1U, 11U, "trailing comma is not allowed in tuple literal"},
+      {"items = set(1,)\n", 1U, 15U, "trailing comma is not allowed in set literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_reassignment_and_type_change(void) {
   const char *source =
       "value = 1\n"

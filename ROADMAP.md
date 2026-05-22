@@ -37,7 +37,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] report useful columns for multiline condition, assignment, and match grouping diagnostics
   - [x] report useful columns for scalar and math builtin argument syntax errors
   - [x] report useful columns for graph and hypergraph body semantic errors
-  - [ ] report useful columns for literal parser errors still surfaced through direct operand parsing
+  - [x] report useful columns for literal parser errors still surfaced through direct operand parsing
   - [ ] report useful columns for VM expression trailing-token diagnostics
 - [ ] align parse/runtime categories where user-visible behavior is surprising
   - [ ] distinguish syntax errors from name resolution errors in `print(...)`

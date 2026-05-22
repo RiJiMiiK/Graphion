@@ -214,6 +214,26 @@ void point_struct_diagnostic_from_segment(graphion_runtime_diagnostic *diagnosti
   diagnostic->column = base_column + (unsigned int)(segment_start - source_text) + diagnostic->column - 1U;
 }
 
+static int message_is_literal_parser_diagnostic(const char *message) {
+  return strstr(message, "literal") != NULL ||
+         strcmp(message, "dict literal keys must be string literals") == 0 ||
+         strcmp(message, "expected binary digits after 0b") == 0 ||
+         strcmp(message, "bits literal too wide") == 0 ||
+         strcmp(message, "expected set literal") == 0;
+}
+
+void point_literal_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *source_text,
+                                           const char *segment_start,
+                                           unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      segment_start == NULL || segment_start < source_text ||
+      !message_is_literal_parser_diagnostic(diagnostic->message)) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(segment_start - source_text) + diagnostic->column - 1U;
+}
+
 static int message_is_delimiter_diagnostic(const char *message) {
   return strncmp(message, "expected ')'", 12U) == 0 ||
          strncmp(message, "expected ']'", 12U) == 0 ||

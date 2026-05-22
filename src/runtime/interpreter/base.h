@@ -36,6 +36,10 @@ void point_struct_diagnostic_from_segment(graphion_runtime_diagnostic *diagnosti
                                           const char *source_text,
                                           const char *segment_start,
                                           unsigned int base_column);
+void point_literal_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *source_text,
+                                           const char *segment_start,
+                                           unsigned int base_column);
 void point_delimiter_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
                                           const char *source_text,
                                           const char *cursor,
