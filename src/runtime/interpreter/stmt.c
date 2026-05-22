@@ -76,6 +76,62 @@ static const char *assignment_operator_text(char assign_op,
   }
 }
 
+static int remap_print_name_resolution_syntax_error(
+    int rc,
+    graphion_runtime_diagnostic *diagnostic,
+    const char *line_text,
+    const char *argument_start,
+    unsigned int line) {
+  const char *scan = argument_start;
+  const char *tail;
+  int depth = 0;
+  int in_string = 0;
+
+  if (rc != GINT_ERR_UNKNOWN_OPERAND && rc != GINT_ERR_UNKNOWN_VARIABLE) {
+    return rc;
+  }
+  while (*scan != '\0') {
+    if (in_string) {
+      if (*scan == '"') {
+        in_string = 0;
+      }
+      scan++;
+      continue;
+    }
+    if (*scan == '"') {
+      in_string = 1;
+      scan++;
+      continue;
+    }
+    if (*scan == '(') {
+      depth++;
+      scan++;
+      continue;
+    }
+    if (*scan == ')') {
+      if (depth == 0) {
+        break;
+      }
+      depth--;
+      scan++;
+      continue;
+    }
+    scan++;
+  }
+  if (in_string) {
+    return rc;
+  }
+  if (*scan != ')') {
+    return fail(diagnostic, line, source_column(line_text, scan), "expected ')' after print argument", GINT_ERR_PARSE);
+  }
+  tail = scan + 1;
+  skip_spaces(&tail);
+  if (*tail != '\0') {
+    return fail(diagnostic, line, source_column(line_text, tail), "unexpected trailing tokens after print", GINT_ERR_PARSE);
+  }
+  return rc;
+}
+
 static int remap_missing_assignment_rhs_error(
     int rc,
     graphion_runtime_diagnostic *diagnostic,
@@ -294,6 +350,7 @@ int parse_print(const char *line_text,
                        unsigned int line,
                        graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = line_text;
+  const char *argument_start;
   parsed_expr_result expr;
   int rc;
   skip_spaces(&cursor);
@@ -310,6 +367,7 @@ int parse_print(const char *line_text,
   if (*cursor == ')' || *cursor == '\0') {
     return fail(diagnostic, line, source_column(line_text, cursor), "expected print argument", GINT_ERR_PARSE);
   }
+  argument_start = cursor;
   {
     const char *scan = cursor;
     int depth = 0;
@@ -458,7 +516,7 @@ int parse_print(const char *line_text,
             point_struct_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_literal_diagnostic_from_segment(diagnostic, line_text, part_start, 1U);
             point_delimiter_diagnostic_at_cursor(diagnostic, line_text, part_start + (segment_cursor - segment), 1U);
-            return rc;
+            return remap_print_name_resolution_syntax_error(rc, diagnostic, line_text, argument_start, line);
           }
           skip_spaces(&segment_cursor);
           if (*segment_cursor != '\0') {
@@ -503,7 +561,7 @@ int parse_print(const char *line_text,
       point_struct_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_literal_diagnostic_from_segment(diagnostic, line_text, expr_start, 1U);
       point_delimiter_diagnostic_at_cursor(diagnostic, line_text, cursor, 1U);
-      return rc;
+      return remap_print_name_resolution_syntax_error(rc, diagnostic, line_text, argument_start, line);
     }
   }
   skip_spaces(&cursor);

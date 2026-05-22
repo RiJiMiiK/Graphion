@@ -15,8 +15,12 @@ int test_gion_print_syntax_errors(void) {
       {"print\n", GINT_ERR_PARSE, 6U, "expected '(' after print"},
       {"print(\n", GINT_ERR_PARSE, 7U, "expected print argument"},
       {"print()\n", GINT_ERR_PARSE, 7U, "expected print argument"},
-      {"print(count\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
-      {"print(count) extra\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
+      {"print(count\n", GINT_ERR_PARSE, 12U, "expected ')' after print argument"},
+      {"print(count) extra\n", GINT_ERR_PARSE, 14U, "unexpected trailing tokens after print"},
+      {"print(count)\n", GINT_ERR_UNKNOWN_OPERAND, 7U, "unknown operand 'count'"},
+      {"print(\"x\" + missing\n", GINT_ERR_PARSE, 20U, "expected ')' after print argument"},
+      {"print(\"x\" + missing) extra\n", GINT_ERR_PARSE, 22U, "unexpected trailing tokens after print"},
+      {"print(\"x\" + missing)\n", GINT_ERR_UNKNOWN_OPERAND, 13U, "unknown operand 'missing'"},
   };
   size_t i;
 

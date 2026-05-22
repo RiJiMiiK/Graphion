@@ -61,6 +61,7 @@ Typical messages include:
 
 - `expected '='`
 - `expected print argument`
+- `expected ')' after print argument`
 - `expected abs argument`
 - `expected min first argument`
 - `expected match case literal`
@@ -71,9 +72,12 @@ Typical messages include:
 - `expected expression before '!'`
 - `expected expression before '=='`
 - `expected ')' after expression`
+- `unexpected trailing tokens after print`
 - `unexpected trailing tokens after assignment`
 - `unexpected trailing tokens after expression`
 - `multiline condition requires grouping parentheses`
+
+Malformed `print(...)` calls report their syntax error before name resolution. For example, `print(missing` reports the missing `)` instead of `unknown operand 'missing'`, while a complete call such as `print(missing)` reports the unknown operand.
 
 ### 2. Unknown name errors
 
