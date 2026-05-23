@@ -155,7 +155,9 @@ Responsibilities:
 
 This layer is VM tooling infrastructure, not the `.gion` language frontend. In
 particular, `GFE_*` results from `graphion_parse_source_to_ir(...)` are not
-the source diagnostics printed for `.gion` programs.
+the source diagnostics printed for `.gion` programs, and `GBC_*` results from
+`graphion_decode_bytecode(...)` describe tooling/decoder failures rather than
+user source errors.
 
 ## Current `.gion` Surface In Architectural Terms
 

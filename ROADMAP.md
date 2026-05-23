@@ -44,7 +44,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] distinguish graph declaration syntax errors from expression/name resolution errors
   - [x] keep runtime type/domain errors separate from frontend parse errors
   - [x] decide whether parser/frontend `GFE_*` errors need a diagnostic object or remain code-only
-  - [ ] decide whether bytecode decode `GBC_*` errors need user-facing text or remain code-only
+  - [x] decide whether bytecode decode `GBC_*` errors need user-facing text or remain code-only
   - [ ] document intentional subsystem-local result codes
 - [ ] harden debug warnings exposed by `-d`
   - [ ] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule

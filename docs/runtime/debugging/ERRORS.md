@@ -267,6 +267,8 @@ Codes:
 | `-2` | `GBC_ERR_TRUNCATED` | Input is not a whole number of instructions |
 | `-3` | `GBC_ERR_CAPACITY` | Output instruction buffer is too small |
 
+Decision for `v0.x`: `GBC_*` remains a code-only result family and does not gain user-facing message text or a source diagnostic object. The decoder is used by VM-facing tests/tooling and has no bytecode CLI input path today. Revisit this decision if Graphion later exposes bytecode loading, validation, disassembly, or editor diagnostics as a supported user workflow.
+
 ## VM runtime errors
 
 APIs:
