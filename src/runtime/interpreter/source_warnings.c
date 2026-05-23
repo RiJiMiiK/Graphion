@@ -22,6 +22,7 @@ int process_file_level_directives(const char *source,
     clear_diagnostic(diagnostic);
     return GINT_ERR_INVALID_ARG;
   }
+  /* No file-level warning directives are supported in v0.x; comments stay inert. */
   (void)source;
   (void)report;
   return GINT_OK;

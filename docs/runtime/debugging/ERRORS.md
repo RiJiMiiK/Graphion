@@ -33,6 +33,13 @@ That means the same numeric value may mean different things in different APIs.
 
 No positive warning codes are currently used.
 
+## Debug warnings
+
+Warnings are collected and emitted only for CLI execution with `-d`.
+File comments do not configure warning collection in `v0.x`: forms such as
+`# graphion: warnings=off` and `# graphion: unknown=off` are ordinary comments
+and are intentionally ignored by `process_file_level_directives(...)`.
+
 ## `.gion` source/runtime errors
 
 Current source execution has three broad families of failures.

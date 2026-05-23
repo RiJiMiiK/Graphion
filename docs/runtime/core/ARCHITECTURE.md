@@ -179,6 +179,11 @@ Implemented today at the user-language level:
 - `bits` literals and bitwise operators
 - scalar builtins and constants
 
+Debug warnings currently have no source-level configuration surface:
+`process_file_level_directives(...)` intentionally treats comment-shaped
+warning directives as inert comments in `v0.x`. Only CLI `-d` controls
+whether collected warnings are emitted.
+
 Current scalar value kinds:
 
 - `int`
