@@ -52,9 +52,10 @@ In repository terms, that currently means:
 - hold the scalar opcode semantics used by the current language subset
 - also contain broader VM families not yet fully exposed by `.gion`
 
-4. `src/parser/bytecode.*`
-- decode fixed-width bytecode for VM-facing tools and tests
+4. `src/parser/frontend.*` and `src/parser/bytecode.*`
+- parse textual IR/assembly and decode fixed-width bytecode for VM-facing tools and tests
 - document and enforce the VM instruction encoding contract
+- remain separate from the user-facing `.gion` frontend in `src/runtime/interpreter/*`
 
 5. `src/runtime/arena.*`
 - provide temporary allocation support for runtime/frontend work
@@ -140,16 +141,21 @@ Important architectural rule:
 
 Relevant files:
 
+- `src/parser/frontend.c`
+- `src/parser/frontend.h`
 - `src/parser/bytecode.c`
 - `src/parser/bytecode.h`
 
 Responsibilities:
 
+- parse the compact textual IR/assembly syntax used by VM-facing tests and examples
 - decode the fixed-width instruction stream
 - support VM-facing tests and tooling
 - keep the bytecode contract explicit and testable
 
-This layer is VM tooling infrastructure, not the `.gion` language frontend.
+This layer is VM tooling infrastructure, not the `.gion` language frontend. In
+particular, `GFE_*` results from `graphion_parse_source_to_ir(...)` are not
+the source diagnostics printed for `.gion` programs.
 
 ## Current `.gion` Surface In Architectural Terms
 

@@ -223,6 +223,29 @@ Typical result:
 - runtime failure
 - message `factorial requires non-negative integer input`
 
+## Textual IR frontend errors
+
+These codes belong to the small textual IR/assembly parser used by VM-facing tests and tooling. Despite the `frontend` filename, this is not the user-facing `.gion` parser.
+
+API:
+
+- `graphion_parse_source_to_ir(...)`
+
+Header:
+
+- `src/parser/frontend.h`
+
+Codes:
+
+| Code | Symbol | Meaning |
+| --- | --- | --- |
+| `0` | `GFE_OK` | Success |
+| `-1` | `GFE_ERR_INVALID_ARG` | Null pointer or invalid API argument |
+| `-2` | `GFE_ERR_CAPACITY` | Output IR buffer is too small |
+| `-3` | `GFE_ERR_PARSE` | Invalid textual IR instruction or operands |
+
+Decision for `v0.x`: `GFE_*` remains a code-only result family and does not gain a line/column diagnostic object. It has no `.gion` CLI or runtime entry path today, while `.gion` errors already use `graphion_runtime_diagnostic`. Revisit this decision only if textual IR becomes a supported user-facing input format or a tool needs detailed source feedback.
+
 ## Bytecode decode errors
 
 These matter mainly for VM-oriented tooling and tests.
