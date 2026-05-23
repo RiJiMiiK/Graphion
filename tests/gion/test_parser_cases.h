@@ -109,6 +109,7 @@
   X(gion_vm_load_failure_is_runtime_diagnostic)         \
   X(gion_warning_comments_are_ignored)                 \
   X(gion_warning_comments_are_ignored_from_path)       \
+  X(gion_warning_report_output_format)                 \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
   X(gion_control_header_column_diagnostics)            \

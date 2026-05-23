@@ -845,3 +845,39 @@ int test_gion_warning_comments_are_ignored_from_path(void) {
 
   return 0;
 }
+
+int test_gion_warning_report_output_format(void) {
+  const char *expected =
+      "warning:2:5: first warning\n"
+      "warning:17:23: second warning\n";
+  char path[512];
+  char output[256];
+  graphion_runtime_warning_report report;
+  FILE *fp = NULL;
+
+  graphion_runtime_warning_report_init(&report);
+  report.count = 2U;
+  report.items[0].line = 2U;
+  report.items[0].column = 5U;
+  memcpy(report.items[0].message, "first warning", sizeof("first warning"));
+  report.items[1].line = 17U;
+  report.items[1].column = 23U;
+  memcpy(report.items[1].message, "second warning", sizeof("second warning"));
+
+  fp = test_open_temp_output(path, sizeof(path), "gion_warning_report_output_format.txt");
+  if (fp == NULL) {
+    return 1;
+  }
+  graphion_emit_warning_report(&report, fp);
+  fclose(fp);
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    test_cleanup_temp_path(path);
+    return 2;
+  }
+  test_cleanup_temp_path(path);
+  normalize_text_newlines(output);
+  if (strcmp(output, expected) != 0) {
+    return 3;
+  }
+  return 0;
+}

@@ -52,7 +52,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule
   - [x] decide how CLI should handle `-d` warning collection failures before execution
   - [x] document current `-d` behavior
-  - [ ] ensure warnings include stable `warning:line:column: message` output
+  - [x] ensure warnings include stable `warning:line:column: message` output
   - [ ] add coverage for impossible literal `match` warnings
   - [ ] add coverage for graph numeric node-id gap warnings
   - [ ] add coverage for warning capacity and warning collection failures
