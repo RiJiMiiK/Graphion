@@ -50,7 +50,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] decide whether unused result codes remain reserved or should be removed/documented
 - [ ] harden debug warnings exposed by `-d`
   - [x] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule
-  - [ ] decide how CLI should handle `-d` warning collection failures before execution
+  - [x] decide how CLI should handle `-d` warning collection failures before execution
   - [ ] document current `-d` behavior
   - [ ] ensure warnings include stable `warning:line:column: message` output
   - [ ] add coverage for impossible literal `match` warnings

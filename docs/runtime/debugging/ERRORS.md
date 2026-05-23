@@ -39,6 +39,9 @@ Warnings are collected and emitted only for CLI execution with `-d`.
 File comments do not configure warning collection in `v0.x`: forms such as
 `# graphion: warnings=off` and `# graphion: unknown=off` are ordinary comments
 and are intentionally ignored by `process_file_level_directives(...)`.
+If warning collection fails under `-d`, the CLI reports that diagnostic and
+stops before executing the program; it does not silently continue without the
+requested warning analysis.
 
 ## `.gion` source/runtime errors
 

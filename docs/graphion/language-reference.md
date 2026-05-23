@@ -872,6 +872,8 @@ Warnings are not controlled by comments. The CLI prints warnings only in debug m
 ```
 
 Without `-d`, the program runs normally and warnings are not printed to the terminal.
+With `-d`, warning collection happens before program execution. If collection
+fails, Graphion reports the error and does not execute the program.
 
 ### Line Comments
 
