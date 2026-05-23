@@ -194,6 +194,13 @@ if(GRAPHION_ENABLE_TESTS)
   set_tests_properties(graphion_tests_core PROPERTIES LABELS "core")
   add_test(NAME graphion_tests_graph COMMAND graphion_tests --suite graph)
   set_tests_properties(graphion_tests_graph PROPERTIES LABELS "graph;hypergraph")
+  add_test(NAME graphion_cli_debug_warnings
+    COMMAND ${CMAKE_COMMAND}
+      "-DGRAPHION_CLI=$<TARGET_FILE:graphion>"
+      "-DGRAPHION_CLI_TEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/cli_debug_warnings"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli/test_debug_warnings.cmake"
+  )
+  set_tests_properties(graphion_cli_debug_warnings PROPERTIES LABELS "gion;cli")
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)
