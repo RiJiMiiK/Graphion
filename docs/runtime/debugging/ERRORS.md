@@ -330,16 +330,33 @@ Current arithmetic notes:
 | `-12` | `GVM_ERR_FRONTIER_OVERFLOW` | Frontier output would exceed configured capacity |
 | `-13` | `GVM_ERR_INVALID_FRONTIER_VALUE` | Frontier value or mapped result violated the documented range contract |
 
-## Interpretation rule
+## Subsystem-local result codes
 
-Always interpret an error in the context of the API that returned it.
+Result codes are intentionally owned by the API family that returns them.
+Graphion does not define a cross-subsystem numeric error namespace in `v0.x`.
 
-Example:
+| Family | Owner and representative API | Purpose | User-facing policy |
+| --- | --- | --- | --- |
+| `GENTRY_*` | `src/runtime/entry.h`, `graphion_run_gion_path(...)` | `.gion` file entry, I/O, and execution boundary | CLI-facing entry result; source details are carried through `graphion_runtime_diagnostic` when available |
+| `GINT_*` | `src/runtime/interpreter.h`, `graphion_interpret_source(...)` | `.gion` interpretation failures | Language-facing result family; pair with `graphion_runtime_diagnostic` for line, column, and message |
+| `GFE_*` | `src/parser/frontend.h`, `graphion_parse_source_to_ir(...)` | Textual IR/assembly parsing | Tooling-only and code-only in `v0.x` |
+| `GIR_*` | `src/compiler/ir.h`, `graphion_ir_lower_to_bytecode(...)` | IR-to-bytecode lowering | Tooling/backend result; remains code-only unless a supported tool exposes it |
+| `GBC_*` | `src/parser/bytecode.h`, `graphion_decode_bytecode(...)` | Bytecode decoding | Tooling-only and code-only in `v0.x` |
+| `GVM_*` | `src/vm/vm.h`, `graphion_vm_run(...)` | VM loading and opcode execution | Raw VM callers receive the code; failures crossing into `.gion` are translated to interpreter diagnostics |
 
-- `-3` can mean a parse failure in one subsystem
-- and an invalid register error in another
+Graph and hypergraph kernel APIs currently return local `int` status values rather
+than a public named result family. When their failures reach the language surface,
+the interpreter or VM layer owns the user-facing diagnostic.
 
-So callers should not treat the current project as if it already had one fully unified error-code namespace.
+Always interpret a result in the context of the API that returned it. For example,
+`-3` is `GFE_ERR_PARSE`, `GIR_ERR_INVALID_OPCODE`, `GBC_ERR_CAPACITY`, or
+`GVM_ERR_INVALID_REG` depending on its owning API.
+
+Translation at the language boundary follows these rules:
+
+- `.gion` execution reports through `GENTRY_*` and `GINT_*`, with a runtime diagnostic where source context exists
+- VM failures surfaced during `.gion` execution are mapped to language diagnostics; an unmapped failure retains its named `GVM_ERR_*` class in the stable fallback message
+- tooling APIs return their own family and are not formatted as `.gion` source diagnostics
 
 ## Stability policy
 
@@ -347,7 +364,7 @@ So callers should not treat the current project as if it already had one fully u
 
 Current behavior:
 
-- subsystem-local codes are acceptable
+- subsystem-local codes are intentional
 - numeric assignments may still evolve
 - externally visible changes should still be documented and tested
 

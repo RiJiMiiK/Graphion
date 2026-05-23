@@ -244,6 +244,12 @@ At a high level, error ownership is split like this:
   - execution result codes
   - type/runtime/domain failures during opcode execution
 
+Result-code ownership is intentionally subsystem-local in `v0.x`.
+`GENTRY_*` and `GINT_*` own the `.gion`/CLI boundary, while `GFE_*`,
+`GIR_*`, `GBC_*`, and `GVM_*` keep their textual IR, lowering, bytecode,
+or VM meanings. Backend failures are translated only when they cross into
+the language-facing interpreter path.
+
 User-visible behavior is documented in:
 
 - [ERRORS.md](../debugging/ERRORS.md)
