@@ -250,6 +250,10 @@ Result-code ownership is intentionally subsystem-local in `v0.x`.
 or VM meanings. Backend failures are translated only when they cross into
 the language-facing interpreter path.
 
+`GENTRY_ERR_LOWER`, `GENTRY_ERR_LOAD`, `GINT_ERR_CALL`, and
+`GINT_ERR_RETURN` are reserved enum members in `v0.x`; the current runtime
+does not emit them as observable outcomes.
+
 User-visible behavior is documented in:
 
 - [ERRORS.md](../debugging/ERRORS.md)

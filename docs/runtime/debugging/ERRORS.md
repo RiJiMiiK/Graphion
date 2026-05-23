@@ -363,6 +363,23 @@ Translation at the language boundary follows these rules:
 - VM failures surfaced during `.gion` execution are mapped to language diagnostics; an unmapped failure retains its named `GVM_ERR_*` class in the stable fallback message
 - tooling APIs return their own family and are not formatted as `.gion` source diagnostics
 
+### Reserved result symbols
+
+Some declared result symbols are intentionally retained but are not emitted by
+the current `v0.x` implementation:
+
+| Symbol | Owner | Current status |
+| --- | --- | --- |
+| `GENTRY_ERR_LOWER` | `graphion_entry_result` | Reserved for a future distinct source-to-runtime lowering failure at the entry boundary |
+| `GENTRY_ERR_LOAD` | `graphion_entry_result` | Reserved for a future distinct prepared-program or VM loading failure at the entry boundary |
+| `GINT_ERR_CALL` | `graphion_interpreter_result` | Reserved for future language call failure reporting |
+| `GINT_ERR_RETURN` | `graphion_interpreter_result` | Reserved for future language return/control-flow failure reporting |
+
+Decision for `v0.x`: retain these names as reserved members of their
+subsystem-local enums, but do not treat them as supported observable outcomes
+until an implementation path and tests produce them. Current VM load failures
+exposed by interpreter execution remain `GINT_ERR_RUN`.
+
 ## Stability policy
 
 ### `v0.x`

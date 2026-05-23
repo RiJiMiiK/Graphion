@@ -47,7 +47,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] decide whether bytecode decode `GBC_*` errors need user-facing text or remain code-only
   - [x] document intentional subsystem-local result codes
   - [x] classify VM load failures exposed through interpreter APIs as runtime/infrastructure errors rather than parse errors
-  - [ ] decide whether unused result codes remain reserved or should be removed/documented
+  - [x] decide whether unused result codes remain reserved or should be removed/documented
 - [ ] harden debug warnings exposed by `-d`
   - [ ] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule
   - [ ] decide how CLI should handle `-d` warning collection failures before execution
