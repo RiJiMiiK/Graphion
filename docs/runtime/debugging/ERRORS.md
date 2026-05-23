@@ -111,6 +111,12 @@ Examples:
 - modulo by zero
 - arithmetic with non-numeric operands
 - invalid mixed operation outside the allowed `print(...)` coercion behavior
+- a graph node or hypergraph vertex expression that does not evaluate to `int` or `string`
+- a graph edge `weight` value that is not numeric
+- an empty hyperedge or non-dictionary hyperedge attributes
+- a graph/hypergraph body whose evaluated attributes violate its declared schema
+- a graph body whose evaluated edges violate its orientation or node-id constraints
+- a `struct` field default whose value has the wrong declared type
 
 Typical messages include:
 
@@ -127,6 +133,15 @@ Typical messages include:
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
 - `factorial requires non-negative integer input`
+- `graph node variable must be int or string`
+- `graph edge weight must be int or float`
+- `hyperedge must contain at least one vertex`
+- `hypergraph hyperedge attributes must be a dict literal`
+- `graph node attributes must use declared default keys`
+- `directed graph cannot use undirected '-' edges`
+- `struct field default has wrong type`
+
+Graph, hypergraph, and struct declaration bodies may evaluate values while building the declared object. Missing delimiters, malformed body entries, malformed headers, and malformed field syntax remain parse failures. Once declaration input has valid syntax, rejected value types, duplicate graph data, or graph/hypergraph object invariants are runtime failures.
 
 ## Current `.gion` behavior examples
 

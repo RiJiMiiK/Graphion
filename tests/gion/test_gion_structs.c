@@ -119,7 +119,7 @@ int test_gion_struct_syntax_errors(void) {
       {"struct Player:\n", GINT_ERR_PARSE, "expected indented struct field block"},
       {"struct Player:\n    id int\n", GINT_ERR_PARSE, "expected ':' after struct field name"},
       {"struct Player:\n    id: int\n    id: string\n", GINT_ERR_PARSE, "duplicate struct field"},
-      {"struct Player:\n    id: int = \"one\"\n", GINT_ERR_PARSE, "struct field default has wrong type"},
+      {"struct Player:\n    id: int = \"one\"\n", GINT_ERR_RUN, "struct field default has wrong type"},
       {"struct Player:\n    id: strnig\n", GINT_ERR_PARSE, "unsupported struct field type"},
   };
   size_t i;
@@ -154,7 +154,7 @@ int test_gion_struct_column_diagnostics(void) {
       {"struct Player:\n", GINT_ERR_PARSE, 1U, 15U, "expected indented struct field block"},
       {"struct Player:\n    id int\n", GINT_ERR_PARSE, 2U, 4U, "expected ':' after struct field name"},
       {"struct Player:\n    id: int\n    id: string\n", GINT_ERR_PARSE, 3U, 1U, "duplicate struct field"},
-      {"struct Player:\n    id: int = \"one\"\n", GINT_ERR_PARSE, 2U, 11U, "struct field default has wrong type"},
+      {"struct Player:\n    id: int = \"one\"\n", GINT_ERR_RUN, 2U, 11U, "struct field default has wrong type"},
       {"struct Player:\n    id: strnig\n", GINT_ERR_PARSE, 2U, 5U, "unsupported struct field type"},
       {"struct Player:\n    id: int\n\np = Player\n",
        GINT_ERR_PARSE,

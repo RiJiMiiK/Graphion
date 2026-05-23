@@ -1120,3 +1120,23 @@ Examples:
 
 `incompatible operand types`
 : runtime type error for numeric operators
+
+`graph node variable must be int or string`
+: runtime type error when a graph or hypergraph body resolves a node/vertex expression to another value type
+
+`graph edge weight must be int or float`
+: runtime type error when a parsed graph edge attribute supplies a non-numeric `weight`
+
+`hyperedge must contain at least one vertex`
+: runtime domain error for a syntactically valid empty hyperedge
+
+`struct field default has wrong type`
+: runtime type error after a parsed struct field default is evaluated
+
+`graph node attributes must use declared default keys`
+: runtime domain error after evaluated graph attributes violate declared defaults
+
+`directed graph cannot use undirected '-' edges`
+: runtime domain error while building a graph whose parsed edge entries conflict in orientation
+
+Declaration syntax errors, such as missing delimiters, malformed headers, or malformed body entries, remain parse errors. Type and domain checks on successfully parsed declaration values and graph/hypergraph invariants are runtime errors.

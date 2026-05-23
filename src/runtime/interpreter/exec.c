@@ -301,7 +301,7 @@ static int runtime_graph_mark_id(runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "graph node id is too large", GINT_ERR_CAPACITY);
   }
   if (builder->used_ids[id] && fail_if_exists) {
-    return fail(diagnostic, line, 1U, "duplicate graph node id", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "duplicate graph node id", GINT_ERR_RUN);
   }
   builder->used_ids[id] = 1U;
   if (!builder->has_nodes || id > builder->max_id) {
@@ -399,7 +399,7 @@ static int runtime_graph_id_from_value(runtime_graph_builder *builder,
   }
   if (value->kind == GVM_VALUE_INT) {
     if (value->as.int_value < 0) {
-      return fail(diagnostic, line, 1U, "graph node id must be non-negative", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "graph node id must be non-negative", GINT_ERR_RUN);
     }
     if ((uint64_t)value->as.int_value >= GRAPHION_RUNTIME_PROGRAM_MAX) {
       return fail(diagnostic, line, 1U, "graph node id is too large", GINT_ERR_CAPACITY);
@@ -415,7 +415,7 @@ static int runtime_graph_id_from_value(runtime_graph_builder *builder,
     }
     return runtime_graph_add_named_node(builder, name, id_out, line, diagnostic);
   }
-  return fail(diagnostic, line, 1U, "graph node variable must be int or string", GINT_ERR_PARSE);
+  return fail(diagnostic, line, 1U, "graph node variable must be int or string", GINT_ERR_RUN);
 }
 
 static int parse_graph_node_ref(const char **cursor,
@@ -465,7 +465,7 @@ static int parse_graph_node_ref(const char **cursor,
       return fail(diagnostic, line, source_column(line_text, *cursor), "expected graph node name or id", GINT_ERR_PARSE);
     }
     if (id < 0) {
-      return fail(diagnostic, line, source_column(line_text, id_start), "graph node id must be non-negative", GINT_ERR_PARSE);
+      return fail(diagnostic, line, source_column(line_text, id_start), "graph node id must be non-negative", GINT_ERR_RUN);
     }
     if ((uint64_t)id >= GRAPHION_RUNTIME_PROGRAM_MAX) {
       return fail(diagnostic, line, source_column(line_text, id_start), "graph node id is too large", GINT_ERR_CAPACITY);
@@ -555,7 +555,7 @@ static int runtime_graph_set_node_attrs(runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (attrs->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "graph node attributes must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "graph node attributes must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, attrs);
@@ -581,10 +581,10 @@ static int runtime_graph_set_node_attr_defaults(runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (builder->has_node_attr_defaults) {
-    return fail(diagnostic, line, 1U, "duplicate graph node attribute defaults", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "duplicate graph node attribute defaults", GINT_ERR_RUN);
   }
   if (defaults->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "graph node attribute defaults must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "graph node attribute defaults must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, defaults);
@@ -608,7 +608,7 @@ static int runtime_hypergraph_set_vertex_attrs(runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (attrs->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "hypergraph vertex attributes must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "hypergraph vertex attributes must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, attrs);
@@ -634,10 +634,10 @@ static int runtime_hypergraph_set_vertex_attr_defaults(runtime_graph_builder *bu
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (builder->has_node_attr_defaults) {
-    return fail(diagnostic, line, 1U, "duplicate hypergraph vertex attribute defaults", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "duplicate hypergraph vertex attribute defaults", GINT_ERR_RUN);
   }
   if (defaults->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "hypergraph vertex attribute defaults must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "hypergraph vertex attribute defaults must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, defaults);
@@ -660,7 +660,7 @@ static int runtime_graph_set_edge_attr_defaults(runtime_graph_builder *builder,
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (builder->has_edge_attr_defaults) {
-    return fail(diagnostic, line, 1U, "duplicate graph edge attribute defaults", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "duplicate graph edge attribute defaults", GINT_ERR_RUN);
   }
   rc = validate_graph_edge_attrs(defaults, line, diagnostic);
   if (rc != GINT_OK) {
@@ -715,10 +715,10 @@ static int runtime_hypergraph_set_hyperedge_attr_defaults(runtime_graph_builder 
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (builder->has_edge_attr_defaults) {
-    return fail(diagnostic, line, 1U, "duplicate hypergraph hyperedge attribute defaults", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "duplicate hypergraph hyperedge attribute defaults", GINT_ERR_RUN);
   }
   if (defaults->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "hypergraph hyperedge attribute defaults must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "hypergraph hyperedge attribute defaults must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, defaults);
@@ -742,7 +742,7 @@ static int runtime_hypergraph_set_hyperedge_attrs(runtime_graph_builder *builder
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   if (attrs->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must be a dict literal", GINT_ERR_RUN);
   }
   vm_value_set_none(&cloned);
   rc = vm_value_clone(&cloned, attrs);
@@ -797,7 +797,7 @@ static int apply_graph_node_attr_defaults(runtime_graph_builder *builder,
     } else {
       int rc;
       if (!vm_value_dict_keys_subset(&builder->node_attrs[i], &builder->node_attr_defaults)) {
-        return fail(diagnostic, line, 1U, "graph node attributes must use declared default keys", GINT_ERR_PARSE);
+        return fail(diagnostic, line, 1U, "graph node attributes must use declared default keys", GINT_ERR_RUN);
       }
       rc = vm_value_dict_merge_defaults(&builder->node_attrs[i], &builder->node_attr_defaults);
       if (rc != GVM_OK) {
@@ -828,7 +828,7 @@ static int apply_graph_edge_attr_defaults(runtime_graph_builder *builder,
     } else {
       int rc;
       if (!vm_value_dict_keys_subset(&builder->edges[i].attrs, &builder->edge_attr_defaults)) {
-        return fail(diagnostic, line, 1U, "graph edge attributes must use declared default keys", GINT_ERR_PARSE);
+        return fail(diagnostic, line, 1U, "graph edge attributes must use declared default keys", GINT_ERR_RUN);
       }
       rc = vm_value_dict_merge_defaults(&builder->edges[i].attrs, &builder->edge_attr_defaults);
       if (rc != GVM_OK) {
@@ -859,7 +859,7 @@ static int validate_graph_node_attr_schema(const runtime_graph_builder *builder,
   }
   for (i = reference_id + 1U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
     if (builder->used_ids[i] && !graph_node_attr_keys_match(builder, reference_id, i)) {
-      return fail(diagnostic, line, 1U, "graph node attributes must use the same keys", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "graph node attributes must use the same keys", GINT_ERR_RUN);
     }
   }
   return GINT_OK;
@@ -892,7 +892,7 @@ static int apply_hypergraph_vertex_attr_defaults(runtime_graph_builder *builder,
     } else {
       int rc;
       if (!vm_value_dict_keys_subset(&builder->node_attrs[i], &builder->node_attr_defaults)) {
-        return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use declared default keys", GINT_ERR_PARSE);
+        return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use declared default keys", GINT_ERR_RUN);
       }
       rc = vm_value_dict_merge_defaults(&builder->node_attrs[i], &builder->node_attr_defaults);
       if (rc != GVM_OK) {
@@ -926,7 +926,7 @@ static int validate_hypergraph_vertex_attr_schema(const runtime_graph_builder *b
   }
   for (i = reference_id + 1U; i < GRAPHION_RUNTIME_PROGRAM_MAX; ++i) {
     if (builder->used_ids[i] && !graph_node_attr_keys_match(builder, reference_id, i)) {
-      return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use the same keys", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "hypergraph vertex attributes must use the same keys", GINT_ERR_RUN);
     }
   }
   return GINT_OK;
@@ -968,7 +968,7 @@ static int validate_graph_edge_attr_schema(const runtime_graph_builder *builder,
   }
   for (i = 0U; i < builder->edge_count; ++i) {
     if (!graph_edge_attr_keys_match(builder, reference_index, i)) {
-      return fail(diagnostic, line, 1U, "graph edge attributes must use the same keys", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "graph edge attributes must use the same keys", GINT_ERR_RUN);
     }
   }
   return GINT_OK;
@@ -1010,7 +1010,7 @@ static int apply_hypergraph_hyperedge_attr_defaults(runtime_graph_builder *build
     } else {
       int rc;
       if (!vm_value_dict_keys_subset(&builder->hyperedges[i].attrs, &builder->edge_attr_defaults)) {
-        return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use declared default keys", GINT_ERR_PARSE);
+        return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use declared default keys", GINT_ERR_RUN);
       }
       rc = vm_value_dict_merge_defaults(&builder->hyperedges[i].attrs, &builder->edge_attr_defaults);
       if (rc != GVM_OK) {
@@ -1044,7 +1044,7 @@ static int validate_hypergraph_hyperedge_attr_schema(const runtime_graph_builder
   }
   for (i = 0U; i < builder->hyperedge_count; ++i) {
     if (!hypergraph_hyperedge_attr_keys_match(builder, reference_index, i)) {
-      return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use the same keys", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "hypergraph hyperedge attributes must use the same keys", GINT_ERR_RUN);
     }
   }
   return GINT_OK;
@@ -1237,7 +1237,7 @@ static int parse_hypergraph_edge_line(const char *text,
   }
   if (!vm_value_list_length(&vertices, &vertex_count)) {
     vm_value_dispose_owned(&vertices);
-    return fail(diagnostic, line, source_column(list_start, list_start), "hyperedge must be a list of vertices", GINT_ERR_PARSE);
+    return fail(diagnostic, line, source_column(list_start, list_start), "hyperedge must be a list of vertices", GINT_ERR_RUN);
   }
   if (vertex_count == 0U) {
     vm_value_dispose_owned(&vertices);
@@ -1245,7 +1245,7 @@ static int parse_hypergraph_edge_line(const char *text,
                 line,
                 source_column(list_start, list_start),
                 "hyperedge must contain at least one vertex",
-                GINT_ERR_PARSE);
+                GINT_ERR_RUN);
   }
   if (vertex_count > GRAPHION_RUNTIME_PROGRAM_MAX) {
     vm_value_dispose_owned(&vertices);
@@ -1270,7 +1270,7 @@ static int parse_hypergraph_edge_line(const char *text,
     rc = vm_value_list_clone_item(&vertices, i, &vertex_value);
     if (rc != GVM_OK) {
       vm_value_dispose_owned(&vertices);
-      return fail(diagnostic, line, 1U, "invalid hyperedge vertex", GINT_ERR_PARSE);
+      return fail(diagnostic, line, 1U, "invalid hyperedge vertex", GINT_ERR_RUN);
     }
     rc = runtime_graph_id_from_value(builder, &vertex_value, 0, !reserve_only, &vertex_id, line, diagnostic);
     vm_value_dispose_owned(&vertex_value);
@@ -1385,13 +1385,13 @@ static int validate_graph_edge_attrs(const graphion_vm_value *attrs,
   int has_weight = 0;
 
   if (attrs == NULL || attrs->kind != GVM_VALUE_DICT) {
-    return fail(diagnostic, line, 1U, "graph edge attributes must be a dict literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "graph edge attributes must be a dict literal", GINT_ERR_RUN);
   }
   if (!vm_value_dict_key_kind(attrs, "weight", &weight_kind, &has_weight)) {
-    return fail(diagnostic, line, 1U, "invalid graph edge attributes", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "invalid graph edge attributes", GINT_ERR_RUN);
   }
   if (has_weight && weight_kind != GVM_VALUE_INT && weight_kind != GVM_VALUE_FLOAT) {
-    return fail(diagnostic, line, 1U, "graph edge weight must be int or float", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "graph edge weight must be int or float", GINT_ERR_RUN);
   }
   return GINT_OK;
 }
@@ -1438,7 +1438,7 @@ static int parse_graph_edge_attrs(const char *text,
                 line,
                 source_column(text, expression_text),
                 "graph edge weight expression must be int, float, or dict",
-                GINT_ERR_PARSE);
+                GINT_ERR_RUN);
   }
   vm_value_dispose_owned(&expression_value);
   {
@@ -1530,7 +1530,7 @@ static int parse_graph_block_line(const char *text,
                   line,
                   source_column(text, cursor),
                   "directed graph cannot use undirected '-' edges",
-                  GINT_ERR_PARSE);
+                  GINT_ERR_RUN);
     }
     builder->has_directed_edges = 1;
   } else {
@@ -1539,7 +1539,7 @@ static int parse_graph_block_line(const char *text,
                   line,
                   source_column(text, cursor),
                   "directed graph cannot use undirected '-' edges",
-                  GINT_ERR_PARSE);
+                  GINT_ERR_RUN);
     }
     builder->has_undirected_edges = 1;
   }
@@ -2334,7 +2334,7 @@ static int parse_struct_field_line(const char *text,
                   line,
                   source_column(text, default_start),
                   "struct field default has wrong type",
-                  GINT_ERR_PARSE);
+                  GINT_ERR_RUN);
     }
     field->has_default = 1U;
   } else if (*cursor != '\0') {

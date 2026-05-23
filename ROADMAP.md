@@ -42,7 +42,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
 - [ ] align parse/runtime categories where user-visible behavior is surprising
   - [x] distinguish syntax errors from name resolution errors in `print(...)`
   - [x] distinguish graph declaration syntax errors from expression/name resolution errors
-  - [ ] keep runtime type/domain errors separate from frontend parse errors
+  - [x] keep runtime type/domain errors separate from frontend parse errors
   - [ ] decide whether parser/frontend `GFE_*` errors need a diagnostic object or remain code-only
   - [ ] decide whether bytecode decode `GBC_*` errors need user-facing text or remain code-only
   - [ ] document intentional subsystem-local result codes
