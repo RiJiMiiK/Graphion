@@ -43,6 +43,23 @@ If warning collection fails under `-d`, the CLI reports that diagnostic and
 stops before executing the program; it does not silently continue without the
 requested warning analysis.
 
+Current `-d` behavior:
+
+- warnings are collected before program execution
+- collected warnings are written to `stderr`, before normal program output
+- each emitted warning currently uses `warning:line:column: message`
+- without `-d`, the same program executes without emitting debug warnings
+
+The current warning collector emits:
+
+- an unreachable literal `match` case when its scalar type cannot match the literal matched value
+- numeric graph node-id gap warnings after named graph-node IDs are accounted for
+
+Examples of current messages:
+
+- `match case can never match a string value`
+- `graph numeric node ids have gaps; missing id: 0`
+
 ## `.gion` source/runtime errors
 
 Current source execution has three broad families of failures.

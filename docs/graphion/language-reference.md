@@ -875,6 +875,14 @@ Without `-d`, the program runs normally and warnings are not printed to the term
 With `-d`, warning collection happens before program execution. If collection
 fails, Graphion reports the error and does not execute the program.
 
+Currently, `-d` can report:
+
+- literal `match` cases whose type can never match the scalar literal being matched
+- gaps in explicit numeric graph node IDs, after named-node IDs are assigned
+
+Warnings are written to the diagnostic stream before normal program output.
+They do not prevent execution unless warning collection itself fails.
+
 ### Line Comments
 
 `#` ignores the rest of the current line.
