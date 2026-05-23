@@ -846,6 +846,47 @@ int test_gion_warning_comments_are_ignored_from_path(void) {
   return 0;
 }
 
+int test_gion_impossible_literal_match_warnings(void) {
+  graphion_runtime_warning_report report;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  rc = graphion_collect_source_warnings("match \"a\":\n"
+                                        "    1:\n"
+                                        "        print(1)\n"
+                                        "    false:\n"
+                                        "        print(2)\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 1;
+  }
+  if (report.count != 2U) {
+    return 2;
+  }
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "match case can never match a string value") != 0) {
+    return 3;
+  }
+  if (report.items[1].line != 4U || report.items[1].column != 5U ||
+      strcmp(report.items[1].message, "match case can never match a string value") != 0) {
+    return 4;
+  }
+
+  rc = graphion_collect_source_warnings("match 1:\n"
+                                        "    1.0:\n"
+                                        "        print(1)\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 5;
+  }
+  if (report.count != 0U) {
+    return 6;
+  }
+  return 0;
+}
+
 int test_gion_warning_report_output_format(void) {
   const char *expected =
       "warning:2:5: first warning\n"
