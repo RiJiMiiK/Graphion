@@ -106,6 +106,7 @@
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \
   X(gion_unmapped_vm_error_diagnostics)                \
+  X(gion_vm_load_failure_is_runtime_diagnostic)         \
   X(gion_warning_comments_are_ignored)                 \
   X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_if_elif_else_control_flow)                    \

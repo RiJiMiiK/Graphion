@@ -718,6 +718,30 @@ int test_gion_unmapped_vm_error_diagnostics(void) {
   return 0;
 }
 
+int test_gion_vm_load_failure_is_runtime_diagnostic(void) {
+  graphion_runtime_program program;
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  int rc;
+
+  graphion_runtime_program_init(&program);
+  graphion_runtime_scope_init(&scope);
+
+  rc = graphion_execute_program(&program, &scope, &diagnostic, NULL);
+  graphion_runtime_program_dispose(&program);
+  graphion_runtime_scope_dispose(&scope);
+  if (rc != GINT_ERR_RUN) {
+    return 1;
+  }
+  if (diagnostic.line != 1U || diagnostic.column != 1U) {
+    return 2;
+  }
+  if (diagnostic.message == NULL || strcmp(diagnostic.message, "failed to load VM program") != 0) {
+    return 3;
+  }
+  return 0;
+}
+
 int test_gion_warning_comments_are_ignored(void) {
   graphion_runtime_warning_report report;
   graphion_runtime_diagnostic diagnostic;

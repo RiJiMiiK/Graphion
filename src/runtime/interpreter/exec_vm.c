@@ -227,7 +227,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_RUN);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
@@ -361,7 +361,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_PARSE);
+    return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_RUN);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {

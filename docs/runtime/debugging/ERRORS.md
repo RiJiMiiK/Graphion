@@ -143,6 +143,10 @@ Typical messages include:
 
 Graph, hypergraph, and struct declaration bodies may evaluate values while building the declared object. Missing delimiters, malformed body entries, malformed headers, and malformed field syntax remain parse failures. Once declaration input has valid syntax, rejected value types, duplicate graph data, or graph/hypergraph object invariants are runtime failures.
 
+An interpreter API failure while loading an already prepared VM program is also a
+runtime/infrastructure failure, reported as `failed to load VM program`; it is not
+classified as a `.gion` parse error.
+
 ## Current `.gion` behavior examples
 
 ### Parse error
@@ -285,6 +289,7 @@ Current `v0.x` status:
 - VM errors are exposed as named results in `src/vm/vm.h`
 - numeric stability is still best-effort, not frozen
 - VM errors without a `.gion`-specific message surface as `unmapped VM runtime error: GVM_ERR_*`
+- VM load failures crossing through interpreter execution APIs surface as `GINT_ERR_RUN`
 
 ### Generic VM codes
 
