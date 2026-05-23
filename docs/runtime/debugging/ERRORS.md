@@ -79,6 +79,8 @@ Typical messages include:
 
 Malformed `print(...)` calls report their syntax error before name resolution. For example, `print(missing` reports the missing `)` instead of `unknown operand 'missing'`, while a complete call such as `print(missing)` reports the unknown operand.
 
+Embedded expressions in graph and hypergraph declaration bodies follow the same rule. A malformed attribute dictionary or grouped edge-weight expression reports its delimiter/trailing-comma error before an unresolved value inside it; a syntactically complete expression still reports the unresolved operand.
+
 ### 2. Unknown name errors
 
 These are raised when source evaluation references a name that does not exist.
