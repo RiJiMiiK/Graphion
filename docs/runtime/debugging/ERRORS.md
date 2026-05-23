@@ -81,6 +81,10 @@ Malformed `print(...)` calls report their syntax error before name resolution. F
 
 Embedded expressions in graph and hypergraph declaration bodies follow the same rule. A malformed attribute dictionary or grouped edge-weight expression reports its delimiter/trailing-comma error before an unresolved value inside it; a syntactically complete expression still reports the unresolved operand.
 
+Assigning to a reserved name is a source-level rejection. The interpreter uses
+`GINT_ERR_RESERVED_NAME` for the specific diagnostic, and the `.gion` file
+entry boundary classifies it with parse failures as `GENTRY_ERR_PARSE`.
+
 ### 2. Unknown name errors
 
 These are raised when source evaluation references a name that does not exist.

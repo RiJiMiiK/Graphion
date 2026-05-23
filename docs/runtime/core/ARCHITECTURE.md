@@ -254,6 +254,10 @@ the language-facing interpreter path.
 `GINT_ERR_RETURN` are reserved enum members in `v0.x`; the current runtime
 does not emit them as observable outcomes.
 
+Reserved-name assignment is rejected during source handling:
+`GINT_ERR_RESERVED_NAME` is translated to `GENTRY_ERR_PARSE` at the
+`.gion` file-entry boundary rather than being presented as a runtime failure.
+
 User-visible behavior is documented in:
 
 - [ERRORS.md](../debugging/ERRORS.md)
