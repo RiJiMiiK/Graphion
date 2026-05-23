@@ -55,7 +55,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] ensure warnings include stable `warning:line:column: message` output
   - [x] add coverage for impossible literal `match` warnings
   - [x] add coverage for graph numeric node-id gap warnings
-  - [ ] add coverage for warning capacity and warning collection failures
+  - [x] add coverage for warning capacity and warning collection failures
 - [ ] improve test coverage for diagnostics
   - [ ] add focused parser/frontend tests for result-code diagnostics
   - [ ] add runtime/interpreter tests for exact message and line/column pairs

@@ -922,3 +922,59 @@ int test_gion_warning_report_output_format(void) {
   }
   return 0;
 }
+
+int test_gion_warning_capacity_failures(void) {
+  char source[4096];
+  char path[512];
+  size_t offset = 0U;
+  size_t i;
+  graphion_runtime_warning_report report;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  offset = (size_t)snprintf(source, sizeof(source), "match \"a\":\n");
+  for (i = 0U; i <= GRAPHION_RUNTIME_WARNING_MAX; ++i) {
+    const int written = snprintf(source + offset,
+                                 sizeof(source) - offset,
+                                 "    %lu:\n"
+                                 "        print(1)\n",
+                                 (unsigned long)i);
+    if (written < 0 || (size_t)written >= sizeof(source) - offset) {
+      return 1;
+    }
+    offset += (size_t)written;
+  }
+
+  rc = graphion_collect_source_warnings(source, &report, &diagnostic);
+  if (rc != GINT_ERR_CAPACITY) {
+    return 2;
+  }
+  if (report.count != 0U) {
+    return 3;
+  }
+  if (diagnostic.line != 66U || diagnostic.column != 5U ||
+      diagnostic.message == NULL || strcmp(diagnostic.message, "warning capacity exceeded") != 0) {
+    return 4;
+  }
+
+  fp = test_open_temp_output(path, sizeof(path), "gion_warning_capacity_failure.gion");
+  if (fp == NULL) {
+    return 5;
+  }
+  fputs(source, fp);
+  fclose(fp);
+  rc = graphion_collect_gion_path_warnings(path, &report, &diagnostic);
+  test_cleanup_temp_path(path);
+  if (rc != GENTRY_ERR_RUN) {
+    return 6;
+  }
+  if (report.count != 0U) {
+    return 7;
+  }
+  if (diagnostic.line != 66U || diagnostic.column != 5U ||
+      diagnostic.message == NULL || strcmp(diagnostic.message, "warning capacity exceeded") != 0) {
+    return 8;
+  }
+  return 0;
+}

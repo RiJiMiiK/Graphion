@@ -111,6 +111,7 @@
   X(gion_warning_comments_are_ignored_from_path)       \
   X(gion_impossible_literal_match_warnings)            \
   X(gion_warning_report_output_format)                 \
+  X(gion_warning_capacity_failures)                    \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
   X(gion_control_header_column_diagnostics)            \
