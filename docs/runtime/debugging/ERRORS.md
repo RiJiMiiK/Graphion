@@ -49,6 +49,8 @@ Current `-d` behavior:
 - collected warnings are written to `stderr`, before normal program output
 - each emitted warning currently uses `warning:line:column: message`
 - without `-d`, the same program executes without emitting debug warnings
+- at most 32 warnings are collected; the next warning produces
+  `error:line:column: warning capacity exceeded` and prevents execution
 
 The current warning collector emits:
 

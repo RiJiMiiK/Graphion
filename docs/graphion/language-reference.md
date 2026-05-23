@@ -882,6 +882,9 @@ Currently, `-d` can report:
 
 Warnings are written to the diagnostic stream before normal program output.
 They do not prevent execution unless warning collection itself fails.
+The current collector accepts at most 32 warnings in one run; if a later
+warning exceeds that limit, `-d` reports `warning capacity exceeded` as an
+error and does not execute the program.
 
 ### Line Comments
 

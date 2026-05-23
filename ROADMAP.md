@@ -48,7 +48,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] document intentional subsystem-local result codes
   - [x] classify VM load failures exposed through interpreter APIs as runtime/infrastructure errors rather than parse errors
   - [x] decide whether unused result codes remain reserved or should be removed/documented
-- [ ] harden debug warnings exposed by `-d`
+- [x] harden debug warnings exposed by `-d`
   - [x] make `process_file_level_directives` either implement supported warning directives or reject/ignore them by documented rule
   - [x] decide how CLI should handle `-d` warning collection failures before execution
   - [x] document current `-d` behavior
