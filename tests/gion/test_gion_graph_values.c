@@ -1946,6 +1946,21 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.items[0].line != 3U || report.items[0].column != 5U) {
     return 16;
   }
+
+  rc = graphion_collect_source_warnings("graph G:\n"
+                                        "    5\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 17;
+  }
+  if (report.count != 1U) {
+    return 18;
+  }
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing ids: 0, 1, 2, 3, ...") != 0) {
+    return 19;
+  }
   return 0;
 }
 
