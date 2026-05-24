@@ -10,7 +10,7 @@ not introduce a large new language type.
 
 ### Complex conditions
 
-- [ ] audit existing condition evaluation before changing behavior
+- [x] audit existing condition evaluation before changing behavior
   - [x] trace `if`, `elif`, and `else` through the runtime/interpreter
   - [x] trace ternary conditions through expression compilation and VM jumps
   - [x] trace boolean operators and VM conditional jumps for shared truth rules
