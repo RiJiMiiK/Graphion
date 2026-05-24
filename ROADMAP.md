@@ -12,7 +12,7 @@ not introduce a large new language type.
 
 - [ ] audit existing condition evaluation before changing behavior
   - [x] trace `if`, `elif`, and `else` through the runtime/interpreter
-  - [ ] trace ternary conditions through expression compilation and VM jumps
+  - [x] trace ternary conditions through expression compilation and VM jumps
   - [ ] trace boolean operators and VM conditional jumps for shared truth rules
   - [ ] decide whether `match` needs changes or only documentation for this scope
 - [ ] define official truth rules for existing first-class complex values
