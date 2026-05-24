@@ -1773,7 +1773,8 @@ int vm_collection_contains_reg(graphion_vm *vm, uint8_t collection_reg, uint8_t 
   if (vm == NULL || !is_valid_reg(collection_reg) || !is_valid_reg(value_reg)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (vm->regs[collection_reg].kind != GVM_VALUE_SET && vm->regs[collection_reg].kind != GVM_VALUE_LIST) {
+  if (vm->regs[collection_reg].kind != GVM_VALUE_SET && vm->regs[collection_reg].kind != GVM_VALUE_LIST &&
+      vm->regs[collection_reg].kind != GVM_VALUE_TUPLE) {
     return GVM_ERR_TYPE_MISMATCH;
   }
   collection = (graphion_vm_list *)vm->regs[collection_reg].as.ref_value;

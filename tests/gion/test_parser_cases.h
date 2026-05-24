@@ -53,6 +53,7 @@
   X(gion_dict_runtime_errors)                          \
   X(gion_dict_syntax_errors)                           \
   X(gion_tuple_literals_and_prints)                    \
+  X(gion_tuple_contains_conditions)                    \
   X(gion_tuple_runtime_errors)                         \
   X(gion_tuple_syntax_errors)                          \
   X(gion_set_literals_and_prints)                      \

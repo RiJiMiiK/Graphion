@@ -23,7 +23,7 @@ not introduce a large new language type.
   - `list`, `dict`, `tuple`, `set`, and `struct` already support deep `==` / `!=` results that can be used as conditions.
 - [ ] define the official complex predicate API
   - [x] list: implement `contains(list, value)` for membership; keep ordered deep `==` / `!=` as valid conditions
-  - [ ] tuple: decide membership spelling and equality behavior in conditions
+  - [x] tuple: implement `contains(tuple, value)` for membership; keep ordered deep `==` / `!=` as valid conditions
   - [ ] set: keep `contains(set, value)` and decide whether any alias is needed
   - [ ] dict: define key-existence predicate without requiring throwing indexing
   - [ ] graph: keep `has_node` / `has_edge` and define condition examples around them
@@ -39,6 +39,7 @@ not introduce a large new language type.
 - [ ] add targeted `.gion` coverage
   - [ ] predicate conditions for each supported complex type
   - [x] list: cover `contains(list, value)` in `if`, `elif`, ternary, and boolean operators
+  - [x] tuple: cover `contains(tuple, value)` in `if`, `elif`, ternary, and boolean operators
   - [ ] equality/inequality conditions for supported complex values
   - [ ] missing key/field/member checks that should return `false` instead of throwing
   - [ ] unsupported predicate combinations with stable diagnostics
