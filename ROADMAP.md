@@ -20,7 +20,7 @@ not introduce a large new language type.
   - [x] graph: false when it has no visible nodes and no logical edges, true otherwise
   - [x] hypergraph: false when it has no visible vertices and no active hyperedges, true otherwise
   - [x] struct: instances are always true
-  - [ ] scalars: keep compatibility for `bool` and accepted `int` values, and keep unsupported scalar types explicit
+  - [x] scalars: accept `bool` and only `int` values `0` / `1`; keep unsupported scalar conditions explicit
 - [ ] implement one shared truth conversion path
   - [ ] move condition truth conversion into a VM/core helper usable by interpreter and VM paths
   - [ ] align `evaluate_condition_text` with VM conditional jumps
