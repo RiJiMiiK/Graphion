@@ -498,6 +498,43 @@ int test_gion_late_line_error_diagnostics(void) {
   return 0;
 }
 
+int test_gion_runtime_diagnostic_exact_pairs(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"count =\n", GINT_ERR_PARSE, 1U, 7U, "expected expression after '='"},
+      {"name = \"graphion\n", GINT_ERR_PARSE, 1U, 8U, "unterminated string literal"},
+      {"first = 1\nsecond = missing\n", GINT_ERR_UNKNOWN_OPERAND, 2U, 10U, "unknown operand 'missing'"},
+      {"/* open\nnext = 1\n", GINT_ERR_PARSE, 1U, 1U, "unterminated block comment"},
+      {"  count = 42\n", GINT_ERR_PARSE, 1U, 1U, "unexpected indentation"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_unexpected_indentation_errors(void) {
   static const struct {
     const char *source;
