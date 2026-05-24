@@ -34,9 +34,13 @@ static int parse_named_unary_opcode_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, NULL);
+  }
   rc = parse_expression(cursor, program, &value, base_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -81,9 +85,13 @@ static int parse_named_binary_opcode_builtin(const char **cursor,
     char message[96];
 
     snprintf(message, sizeof(message), "expected '(' after %s", name);
+    *cursor = after_name;
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   *cursor = after_name + 1;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, "first");
+  }
   rc = parse_expression(cursor, program, &lhs, target_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;
@@ -96,6 +104,9 @@ static int parse_named_binary_opcode_builtin(const char **cursor,
     return fail(diagnostic, line, 1U, message, GINT_ERR_PARSE);
   }
   (*cursor)++;
+  if (expr_cursor_starts_missing_argument(*cursor)) {
+    return fail_expected_builtin_argument(diagnostic, line, name, "second");
+  }
   rc = parse_expression(cursor, program, &rhs, scratch_reg, line, diagnostic);
   if (rc != GINT_OK) {
     return rc;

@@ -31,6 +31,8 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
                                      unsigned int line,
                                      unsigned int column,
                                      int vm_rc) {
+  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
   if (vm_rc == GVM_ERR_DIVIDE_BY_ZERO) {
     return fail(diagnostic, line, column, "division by zero", GINT_ERR_RUN);
   }
@@ -105,6 +107,9 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
   if (vm_rc == GVM_ERR_INDEX_OUT_OF_RANGE) {
     return fail(diagnostic, line, column, "list index out of range", GINT_ERR_RUN);
   }
+  if (vm_rc == GVM_ERR_INVALID_NODE_ID) {
+    return fail(diagnostic, line, column, "invalid node id", GINT_ERR_RUN);
+  }
   if (vm_rc == GVM_ERR_INVALID_HYPEREDGE_ID) {
     return fail(diagnostic, line, column, "invalid hyperedge id", GINT_ERR_RUN);
   }
@@ -114,7 +119,67 @@ static int fail_for_vm_runtime_error(graphion_runtime_diagnostic *diagnostic,
   if (vm_rc == GVM_ERR_TYPE_MISMATCH) {
     return fail(diagnostic, line, column, "incompatible operand types", GINT_ERR_RUN);
   }
-  return fail(diagnostic, line, column, "failed to execute VM program", GINT_ERR_RUN);
+
+  switch (vm_rc) {
+    case GVM_ERR_INVALID_ARG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_ARG");
+      break;
+    case GVM_ERR_INVALID_MOV_IMM_REG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_MOV_IMM_REG");
+      break;
+    case GVM_ERR_INVALID_REG:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_REG");
+      break;
+    case GVM_ERR_UNKNOWN_OPCODE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_UNKNOWN_OPCODE");
+      break;
+    case GVM_ERR_CSR_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_UNBOUND");
+      break;
+    case GVM_ERR_INVALID_BFS_SOURCE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_BFS_SOURCE");
+      break;
+    case GVM_ERR_BFS_RUNTIME:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_BFS_RUNTIME");
+      break;
+    case GVM_ERR_HYPERGRAPH_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_HYPERGRAPH_UNBOUND");
+      break;
+    case GVM_ERR_FRONTIER_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_FRONTIER_UNBOUND");
+      break;
+    case GVM_ERR_FRONTIER_OVERFLOW:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_FRONTIER_OVERFLOW");
+      break;
+    case GVM_ERR_INVALID_FRONTIER_VALUE:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_FRONTIER_VALUE");
+      break;
+    case GVM_ERR_CSR_WEIGHTS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_WEIGHTS_UNBOUND");
+      break;
+    case GVM_ERR_CSR_EDGE_ATTRS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CSR_EDGE_ATTRS_UNBOUND");
+      break;
+    case GVM_ERR_CONST_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_CONST_UNBOUND");
+      break;
+    case GVM_ERR_GLOBALS_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_GLOBALS_UNBOUND");
+      break;
+    case GVM_ERR_INVALID_CONST_INDEX:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_CONST_INDEX");
+      break;
+    case GVM_ERR_INVALID_GLOBAL_INDEX:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_INVALID_GLOBAL_INDEX");
+      break;
+    case GVM_ERR_OUTPUT_UNBOUND:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: GVM_ERR_OUTPUT_UNBOUND");
+      break;
+    default:
+      snprintf(message, sizeof(message), "unmapped VM runtime error: code %d", vm_rc);
+      break;
+  }
+  return fail(diagnostic, line, column, message, GINT_ERR_RUN);
 }
 
 static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
@@ -131,6 +196,13 @@ static void bind_scope_to_vm(graphion_vm *vm, graphion_runtime_scope *scope) {
   graphion_vm_bind_global_string_owners(vm,
                                         scope->global_count > 0U ? scope->owned_string_values : empty_global_owners,
                                         scope->global_count);
+}
+
+static unsigned int expression_buffer_column(const char *buffer, const char *cursor) {
+  if (buffer == NULL || cursor == NULL || cursor < buffer) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - buffer) + 1U;
 }
 
 static int execute_condition_program(const graphion_runtime_program *program,
@@ -155,7 +227,7 @@ static int execute_condition_program(const graphion_runtime_program *program,
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_PARSE);
+    return fail(diagnostic, line, 1U, "failed to load VM program", GINT_ERR_RUN);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {
@@ -198,13 +270,20 @@ int evaluate_expression_text_to_value(const char *expression_text,
   }
   rc = parse_expression(&cursor, &program, &expr, 0U, line, diagnostic);
   if (rc != GINT_OK) {
+    const char *source_cursor = expression_text + (cursor - expression_buffer);
+    point_unknown_operand_diagnostic(diagnostic, expression_text, 1U);
+    point_delimiter_diagnostic_at_cursor(diagnostic, expression_text, source_cursor, 1U);
     graphion_runtime_program_dispose(&program);
     return rc;
   }
   skip_spaces(&cursor);
   if (*cursor != '\0') {
     graphion_runtime_program_dispose(&program);
-    return fail(diagnostic, line, 1U, "unexpected trailing tokens after expression", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                expression_buffer_column(expression_buffer, cursor),
+                "unexpected trailing tokens after expression",
+                GINT_ERR_PARSE);
   }
   if (expr.kind == EXPR_RESULT_LITERAL) {
     rc = vm_value_clone(value_out, &program.const_pool[expr.const_index]);
@@ -283,7 +362,7 @@ int graphion_execute_prepared_program_with_sink(const graphion_runtime_program *
   rc = graphion_vm_load(&vm, program->program, program->program_len);
   if (rc != GVM_OK) {
     graphion_vm_dispose(&vm);
-    return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_PARSE);
+    return fail(diagnostic, 1U, 1U, "failed to load VM program", GINT_ERR_RUN);
   }
   rc = graphion_vm_run(&vm);
   if (rc != GVM_OK) {

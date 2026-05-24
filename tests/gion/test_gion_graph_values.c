@@ -690,7 +690,7 @@ int test_gion_hypergraph_error_coverage(void) {
        "    \"Alice\"\n"
        "set_vertex_attrs(H, \"Bob\", {\"label\": \"missing\"})\n",
        GINT_ERR_RUN,
-       "failed to execute VM program"},
+       "invalid node id"},
       {"hypergraph H:\n"
        "    [\"Alice\", \"Bob\"]\n"
        "set_hyperedge_attrs(H, 9, {\"kind\": \"missing\"})\n",
@@ -700,7 +700,7 @@ int test_gion_hypergraph_error_coverage(void) {
        "    \"Alice\"\n"
        "remove_vertex(H, \"Bob\")\n",
        GINT_ERR_RUN,
-       "failed to execute VM program"},
+       "invalid node id"},
       {"hypergraph H:\n"
        "    [\"Alice\", \"Bob\"]\n"
        "remove_hyperedge(H, 0)\n"
@@ -709,12 +709,27 @@ int test_gion_hypergraph_error_coverage(void) {
        "invalid hyperedge id"},
       {"hypergraph H:\n"
        "    []\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "hyperedge must contain at least one vertex"},
       {"hypergraph H:\n"
        "    [\"Alice\", true]\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph node variable must be int or string"},
+      {"hypergraph H:\n"
+       "    defaults vertex 1\n"
+       "    \"Alice\"\n",
+       GINT_ERR_RUN,
+       "hypergraph vertex attribute defaults must be a dict literal"},
+      {"hypergraph H:\n"
+       "    defaults hyperedge 1\n"
+       "    [\"Alice\"]\n",
+       GINT_ERR_RUN,
+       "hypergraph hyperedge attribute defaults must be a dict literal"},
+      {"hypergraph H:\n"
+       "    defaults vertex {\"label\": \"unknown\"}\n"
+       "    \"Alice\" {\"score\": 1}\n",
+       GINT_ERR_RUN,
+       "hypergraph vertex attributes must use declared default keys"},
       {"hypergraph H:\n"
        "    defaults vertex {\"label\": \"unknown\", \"score\": 0}\n"
        "    \"Alice\"\n"
@@ -765,6 +780,44 @@ int test_gion_hypergraph_error_coverage(void) {
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, error_cases[i].message) != 0) {
       return (int)(200 + i);
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("add_vertex(Missing, 1)\n", &scope,
+                                   &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 250;
+    }
+    if (diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unknown hypergraph variable 'Missing'") !=
+            0) {
+      return 251;
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("set_vertex_attrs(Missing, 1, {})\n",
+                                   &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 252;
+    }
+    if (diagnostic.message == NULL ||
+        strcmp(diagnostic.message, "unknown hypergraph variable 'Missing'") !=
+            0) {
+      return 253;
     }
   }
 
@@ -1700,7 +1753,7 @@ int test_gion_graph_mutation_error_coverage(void) {
       {"graph G:\n"
        "    1\n"
        "remove_node(G, 2)\n",
-       "failed to execute VM program"},
+       "invalid node id"},
       {"graph G:\n"
        "    1\n"
        "    2\n"
@@ -1742,6 +1795,38 @@ int test_gion_graph_mutation_error_coverage(void) {
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, error_cases[i].message) != 0) {
       return (int)(200 + i);
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("add_node(Missing, 1)\n", &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 250;
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown graph variable 'Missing'") != 0) {
+      return 251;
+    }
+  }
+
+  {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source("set_node_attrs(Missing, 1, {})\n", &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != GINT_ERR_UNKNOWN_VARIABLE) {
+      return 252;
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, "unknown graph variable 'Missing'") != 0) {
+      return 253;
     }
   }
 
@@ -1792,7 +1877,7 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 2;
   }
-  if (report.items[0].line != 1U ||
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
       strcmp(report.items[0].message, "graph numeric node ids have gaps; missing ids: 0, 2") != 0) {
     return 3;
   }
@@ -1804,7 +1889,8 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 5;
   }
-  if (strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 0") != 0) {
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 0") != 0) {
     return 6;
   }
 
@@ -1841,7 +1927,8 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   if (report.count != 1U) {
     return 12;
   }
-  if (strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 2") != 0) {
+  if (report.items[0].line != 3U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing id: 2") != 0) {
     return 13;
   }
 
@@ -1855,6 +1942,24 @@ int test_gion_graph_numeric_id_gap_warnings(void) {
   }
   if (!report.enabled || report.count != 1U) {
     return 15;
+  }
+  if (report.items[0].line != 3U || report.items[0].column != 5U) {
+    return 16;
+  }
+
+  rc = graphion_collect_source_warnings("graph G:\n"
+                                        "    5\n",
+                                        &report,
+                                        &diagnostic);
+  if (rc != GINT_OK) {
+    return 17;
+  }
+  if (report.count != 1U) {
+    return 18;
+  }
+  if (report.items[0].line != 2U || report.items[0].column != 5U ||
+      strcmp(report.items[0].message, "graph numeric node ids have gaps; missing ids: 0, 1, 2, 3, ...") != 0) {
+    return 19;
   }
   return 0;
 }
@@ -1870,55 +1975,70 @@ int test_gion_graph_declaration_syntax_errors(void) {
       {"graph G\n", GINT_ERR_PARSE, "expected ';' or ':' after graph declaration"},
       {"graph G; extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph declaration"},
       {"graph G:\n", GINT_ERR_PARSE, "expected indented graph node block"},
-      {"graph G:\n    -1\n", GINT_ERR_PARSE, "graph node id must be non-negative"},
-      {"graph G:\n    1\n    1\n", GINT_ERR_PARSE, "duplicate graph node id"},
+      {"graph G:\n    -1\n", GINT_ERR_RUN, "graph node id must be non-negative"},
+      {"graph G:\n    1\n    1\n", GINT_ERR_RUN, "duplicate graph node id"},
       {"graph G:\n    ?\n", GINT_ERR_PARSE, "expected graph node name or id"},
       {"graph G:\n    alpha\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown graph node variable"},
-      {"flag = true\ngraph G:\n    flag\n", GINT_ERR_PARSE, "graph node variable must be int or string"},
+      {"flag = true\ngraph G:\n    flag\n", GINT_ERR_RUN, "graph node variable must be int or string"},
       {"graph G:\n    \"alpha\" extra\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
       {"graph G:\n    \"alpha\" {\"a\": 1,}\n", GINT_ERR_PARSE, "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    \"alpha\" {\"a\": missing,}\n", GINT_ERR_PARSE, "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    \"alpha\" {\"a\": missing}\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'missing'"},
       {"graph G:\n    \"alpha\" [1]\n", GINT_ERR_PARSE, "unexpected trailing tokens after graph node"},
       {"graph G:\n    \"alpha\" {\"a\": 1}\n    \"beta\" {\"b\": 2}\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph node attributes must use the same keys"},
       {"graph G:\n    \"alpha\" {\"a\": 1}\n    \"beta\"\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph node attributes must use the same keys"},
       {"graph G:\n    defaults node {\"a\": 0}\n    \"alpha\" {\"b\": 1}\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph node attributes must use declared default keys"},
-      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    \"alpha\"\n",
+      {"graph G:\n    defaults node 1\n    \"alpha\"\n",
+       GINT_ERR_RUN,
+       "graph node attribute defaults must be a dict literal"},
+      {"graph G:\n    defaults node {\"a\": missing,}\n    \"alpha\"\n",
        GINT_ERR_PARSE,
+       "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    \"alpha\"\n",
+       GINT_ERR_RUN,
        "duplicate graph node attribute defaults"},
       {"graph G:\n    defaults edge {\"weight\": \"heavy\"}\n    1 - 2\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph edge weight must be int or float"},
+      {"graph G:\n    defaults edge true\n    1 - 2\n",
+       GINT_ERR_RUN,
+       "graph edge attributes must be a dict literal"},
       {"graph G:\n    defaults edge {\"weight\": 1}\n    defaults edge {\"weight\": 2}\n    1 - 2\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "duplicate graph edge attribute defaults"},
       {"graph G:\n    defaults edge {\"weight\": 1}\n    1 - 2 {\"kind\": \"path\"}\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph edge attributes must use declared default keys"},
       {"graph G:\n    defaults other {\"weight\": 1}\n    1 - 2\n",
        GINT_ERR_PARSE,
        "expected 'node' or 'edge' after defaults"},
-      {"graph G:\n    1 - 2 {\"weight\": \"heavy\"}\n", GINT_ERR_PARSE, "graph edge weight must be int or float"},
+      {"graph G:\n    1 - 2 {\"weight\": \"heavy\"}\n", GINT_ERR_RUN, "graph edge weight must be int or float"},
       {"text = \"heavy\"\ngraph G:\n    1 - 2 text\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph edge weight expression must be int, float, or dict"},
       {"graph G:\n    1 - 2 {\"weight\": 1}\n    2 - 3\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph edge attributes must use the same keys"},
       {"graph G:\n    1 - 2 {\"weight\": 1}\n    2 - 3 {\"kind\": \"path\"}\n",
-       GINT_ERR_PARSE,
+       GINT_ERR_RUN,
        "graph edge attributes must use the same keys"},
       {"graph G:\n    1 - 2 {\"kind\": \"path\",}\n",
        GINT_ERR_PARSE,
        "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    1 - 2 {\"weight\": missing,}\n",
+       GINT_ERR_PARSE,
+       "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    1 - 2 (missing\n", GINT_ERR_PARSE, "expected ')' after expression"},
       {"graph G:\n    1 -\n", GINT_ERR_PARSE, "expected graph node name or id"},
-      {"graph G:\n    1 - 2 extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
-      {"graph G:\n    1 -> 2\n    2 - 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
-      {"graph G:\n    1 - 2\n    2 -> 3\n", GINT_ERR_PARSE, "directed graph cannot use undirected '-' edges"},
+      {"graph G:\n    1 - 2 extra\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand 'extra'"},
+      {"graph G:\n    1 -> 2\n    2 - 3\n", GINT_ERR_RUN, "directed graph cannot use undirected '-' edges"},
+      {"graph G:\n    1 - 2\n    2 -> 3\n", GINT_ERR_RUN, "directed graph cannot use undirected '-' edges"},
   };
   size_t i;
 
@@ -1935,6 +2055,142 @@ int test_gion_graph_declaration_syntax_errors(void) {
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
       return (int)(200 + i);
+    }
+  }
+  return 0;
+}
+
+int test_gion_graph_declaration_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"graph;\n", GINT_ERR_PARSE, 1U, 6U, "expected graph name"},
+      {"graph G\n", GINT_ERR_PARSE, 1U, 8U, "expected ';' or ':' after graph declaration"},
+      {"graph G; extra\n", GINT_ERR_PARSE, 1U, 10U, "unexpected trailing tokens after graph declaration"},
+      {"graph G:\n", GINT_ERR_PARSE, 1U, 9U, "expected indented graph node block"},
+      {"graph G:\n    ?\n", GINT_ERR_PARSE, 2U, 1U, "expected graph node name or id"},
+      {"graph G:\n    \"alpha\" extra\n", GINT_ERR_PARSE, 2U, 9U, "unexpected trailing tokens after graph node"},
+      {"graph G:\n    \"alpha\" {\"a\": missing,}\n",
+       GINT_ERR_PARSE,
+       2U,
+       23U,
+       "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    defaults other {\"weight\": 1}\n    1 - 2\n",
+       GINT_ERR_PARSE,
+       2U,
+       10U,
+       "expected 'node' or 'edge' after defaults"},
+      {"graph G:\n    defaults node {\"a\": 0}\n    defaults node {\"a\": 1}\n    \"alpha\"\n",
+       GINT_ERR_RUN,
+       3U,
+       15U,
+       "duplicate graph node attribute defaults"},
+      {"graph G:\n    defaults node {\"a\": 0} extra\n    \"alpha\"\n",
+       GINT_ERR_PARSE,
+       2U,
+       24U,
+       "unexpected trailing tokens after expression"},
+      {"graph G:\n    defaults node {\"a\": missing,}\n    \"alpha\"\n",
+       GINT_ERR_PARSE,
+       2U,
+       29U,
+       "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    defaults edge {\"weight\": \"heavy\"}\n    1 - 2\n",
+       GINT_ERR_RUN,
+       2U,
+       15U,
+       "graph edge weight must be int or float"},
+      {"graph G:\n    1 - 2 {\"weight\": \"heavy\"}\n",
+       GINT_ERR_RUN,
+       2U,
+       7U,
+       "graph edge weight must be int or float"},
+      {"text = \"heavy\"\ngraph G:\n    1 - 2 text\n",
+       GINT_ERR_RUN,
+       3U,
+       7U,
+       "graph edge weight expression must be int, float, or dict"},
+      {"graph G:\n    1 - 2 3 4\n",
+       GINT_ERR_PARSE,
+       2U,
+       9U,
+       "unexpected trailing tokens after expression"},
+      {"graph G:\n    1 - 2 {\"weight\": missing,}\n",
+       GINT_ERR_PARSE,
+       2U,
+       26U,
+       "trailing comma is not allowed in dict literal"},
+      {"graph G:\n    1 - 2 (missing\n", GINT_ERR_PARSE, 2U, 15U, "expected ')' after expression"},
+      {"graph G:\n    1 -\n", GINT_ERR_PARSE, 2U, 4U, "expected graph node name or id"},
+      {"hypergraph;\n", GINT_ERR_PARSE, 1U, 11U, "expected hypergraph name"},
+      {"hypergraph H\n", GINT_ERR_PARSE, 1U, 13U, "expected ';' after hypergraph declaration"},
+      {"hypergraph H; extra\n",
+       GINT_ERR_PARSE,
+       1U,
+       15U,
+       "unexpected trailing tokens after hypergraph declaration"},
+      {"hypergraph H:\n", GINT_ERR_PARSE, 1U, 14U, "expected indented hypergraph vertex block"},
+      {"hypergraph H:\n    ?\n", GINT_ERR_PARSE, 2U, 1U, "expected graph node name or id"},
+      {"hypergraph H:\n    \"Alice\" extra\n",
+       GINT_ERR_PARSE,
+       2U,
+       9U,
+       "unexpected trailing tokens after hypergraph vertex"},
+      {"hypergraph H:\n    \"Alice\" {\"a\": missing,}\n",
+       GINT_ERR_PARSE,
+       2U,
+       23U,
+       "trailing comma is not allowed in dict literal"},
+      {"hypergraph H:\n    \"Alice\" {\"a\": missing}\n",
+       GINT_ERR_UNKNOWN_OPERAND,
+       2U,
+       15U,
+       "unknown operand 'missing'"},
+      {"hypergraph H:\n    [1, 2\n", GINT_ERR_PARSE, 2U, 6U, "expected ']' after hyperedge vertex list"},
+      {"hypergraph H:\n    []\n", GINT_ERR_RUN, 2U, 1U, "hyperedge must contain at least one vertex"},
+      {"hypergraph H:\n    defaults other {}\n",
+       GINT_ERR_PARSE,
+       2U,
+       10U,
+       "expected 'vertex' or 'hyperedge' after defaults"},
+      {"hypergraph H:\n    defaults vertex {\"a\": 0}\n    defaults vertex {\"a\": 1}\n    \"Alice\"\n",
+       GINT_ERR_RUN,
+       3U,
+       17U,
+       "duplicate hypergraph vertex attribute defaults"},
+      {"hypergraph H:\n    [1] [\"bad\"]\n",
+       GINT_ERR_RUN,
+       2U,
+       5U,
+       "hypergraph hyperedge attributes must be a dict literal"},
+      {"hypergraph H:\n    [1] {\"a\": missing,}\n",
+       GINT_ERR_PARSE,
+       2U,
+       19U,
+       "trailing comma is not allowed in dict literal"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    graphion_runtime_scope_dispose(&scope);
+    if (rc != cases[i].expected_rc) {
+      return (int)(100 + i);
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return (int)(200 + i);
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return (int)(300 + i);
     }
   }
   return 0;

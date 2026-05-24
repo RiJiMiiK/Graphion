@@ -872,6 +872,19 @@ Warnings are not controlled by comments. The CLI prints warnings only in debug m
 ```
 
 Without `-d`, the program runs normally and warnings are not printed to the terminal.
+With `-d`, warning collection happens before program execution. If collection
+fails, Graphion reports the error and does not execute the program.
+
+Currently, `-d` can report:
+
+- literal `match` cases whose type can never match the scalar literal being matched
+- gaps in explicit numeric graph node IDs, after named-node IDs are assigned
+
+Warnings are written to the diagnostic stream before normal program output.
+They do not prevent execution unless warning collection itself fails.
+The current collector accepts at most 32 warnings in one run; if a later
+warning exceeds that limit, `-d` reports `warning capacity exceeded` as an
+error and does not execute the program.
 
 ### Line Comments
 
@@ -929,6 +942,35 @@ The current diagnostic is:
 
 `unterminated block comment`
 : parse error when `/*` does not have a matching closing `*/`
+
+## Diagnostics
+
+Graphion reports user-facing `.gion` errors with a one-based line and column.
+
+CLI errors use this shape:
+
+```text
+error:line:column: message
+```
+
+The column points at the most useful token or boundary for the current error. For example, diagnostics usually point at:
+
+- the assignment operator or missing assignment target
+- an unknown identifier in an expression
+- a missing delimiter in `print`, grouped expressions, indexing, lists, dicts, tuples, or sets
+- a control header token such as `if`, `elif`, `else`, `match`, or `default`
+- a graph, hypergraph, or struct declaration/body item
+- a builtin argument or separator
+- an invalid literal token
+- the remaining token for trailing expression text
+
+Debug warnings printed with `-d` use the same one-based source-position convention:
+
+```text
+warning:line:column: message
+```
+
+Some whole-line, capacity, or internal failures can still report column 1 because there is no more specific source token.
 
 ## Expressions And Operators
 
@@ -1056,10 +1098,34 @@ Current high-level error classes:
 
 Examples:
 
-`unknown variable`
+`expected expression after '='`
+: parse error for an assignment with no right-hand expression
+
+`expected expression after '+'`
+: parse error for a missing right-hand operand after an operator
+
+`expected expression after '+='`
+: parse error for a missing right-hand operand after a compound assignment operator
+
+`expected expression before '=='`
+: parse error when an expression starts with an infix operator
+
+`expected expression before '!'`
+: parse error when an expression starts with the postfix factorial operator
+
+`expected match case or default`
+: parse error when a `match` block contains no valid case or `default` clause
+
+`unknown variable 'count'`
 : compound assignment target does not exist
 
-`unknown operand`
+`unknown graph variable 'G'`
+: graph mutation target does not exist
+
+`unknown hypergraph variable 'H'`
+: hypergraph mutation target does not exist
+
+`unknown operand 'missing'`
 : expression references a missing value
 
 `division by zero`
@@ -1067,3 +1133,23 @@ Examples:
 
 `incompatible operand types`
 : runtime type error for numeric operators
+
+`graph node variable must be int or string`
+: runtime type error when a graph or hypergraph body resolves a node/vertex expression to another value type
+
+`graph edge weight must be int or float`
+: runtime type error when a parsed graph edge attribute supplies a non-numeric `weight`
+
+`hyperedge must contain at least one vertex`
+: runtime domain error for a syntactically valid empty hyperedge
+
+`struct field default has wrong type`
+: runtime type error after a parsed struct field default is evaluated
+
+`graph node attributes must use declared default keys`
+: runtime domain error after evaluated graph attributes violate declared defaults
+
+`directed graph cannot use undirected '-' edges`
+: runtime domain error while building a graph whose parsed edge entries conflict in orientation
+
+Declaration syntax errors, such as missing delimiters, malformed headers, or malformed body entries, remain parse errors. Type and domain checks on successfully parsed declaration values and graph/hypergraph invariants are runtime errors.

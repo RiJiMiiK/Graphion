@@ -150,7 +150,10 @@ int test_gion_unknown_variable_errors(void) {
   if (diagnostic.message == NULL) {
     return finish_scope_test(&scope, 2);
   }
-  return finish_scope_test(&scope, strcmp(diagnostic.message, "unknown operand") == 0 ? 0 : 3);
+  if (diagnostic.column != 8U) {
+    return finish_scope_test(&scope, 3);
+  }
+  return finish_scope_test(&scope, strcmp(diagnostic.message, "unknown operand 'missing'") == 0 ? 0 : 4);
 }
 
 int test_gion_partial_execution_stops_at_first_unsupported_line(void) {
@@ -309,13 +312,14 @@ int test_gion_assignment_syntax_errors(void) {
   static const struct {
     const char *source;
     int expected_rc;
+    unsigned int expected_column;
     const char *message;
   } cases[] = {
-      {"count 42\n", GINT_ERR_PARSE, "expected '='"},
-      {"= 42\n", GINT_ERR_PARSE, "expected identifier"},
-      {"count =\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 42 +\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, "unknown operand"},
+      {"count 42\n", GINT_ERR_PARSE, 7U, "expected '='"},
+      {"= 42\n", GINT_ERR_PARSE, 1U, "expected identifier"},
+      {"count =\n", GINT_ERR_PARSE, 7U, "expected expression after '='"},
+      {"count = 42 +\n", GINT_ERR_PARSE, 1U, "expected expression after '+'"},
+      {"count = nope\n", GINT_ERR_UNKNOWN_OPERAND, 9U, "unknown operand 'nope'"},
   };
   size_t i;
 
@@ -329,7 +333,7 @@ int test_gion_assignment_syntax_errors(void) {
     if (rc != cases[i].expected_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.line != 1U) {
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {

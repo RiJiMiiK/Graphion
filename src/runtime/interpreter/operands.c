@@ -11,6 +11,13 @@ int parse_expression(const char **cursor,
                      unsigned int line,
                      graphion_runtime_diagnostic *diagnostic);
 
+static unsigned int operand_column(const char *literal_start, const char *cursor) {
+  if (literal_start == NULL || cursor == NULL || cursor < literal_start) {
+    return 1U;
+  }
+  return (unsigned int)(cursor - literal_start) + 1U;
+}
+
 int parse_identifier_token(const char **cursor,
                                   char *buffer,
                                   size_t buffer_size,
@@ -85,12 +92,14 @@ int parse_list_literal(const char **cursor,
                               graphion_runtime_diagnostic *diagnostic) {
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  const char *literal_start;
   int rc;
 
   if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   skip_spaces(cursor);
+  literal_start = *cursor;
   if (**cursor != '[') {
     return fail(diagnostic, line, 1U, "expected '[' to start list literal", GINT_ERR_PARSE);
   }
@@ -129,12 +138,20 @@ int parse_list_literal(const char **cursor,
       break;
     }
     if (**cursor != ',') {
-      return fail(diagnostic, line, 1U, "expected ',' or ']' after list element", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "expected ',' or ']' after list element",
+                  GINT_ERR_PARSE);
     }
     (*cursor)++;
     skip_spaces(cursor);
     if (**cursor == ']') {
-      return fail(diagnostic, line, 1U, "trailing comma is not allowed in list literal", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "trailing comma is not allowed in list literal",
+                  GINT_ERR_PARSE);
     }
   }
 
@@ -153,12 +170,14 @@ int parse_dict_literal(const char **cursor,
                               graphion_runtime_diagnostic *diagnostic) {
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  const char *literal_start;
   int rc;
 
   if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   skip_spaces(cursor);
+  literal_start = *cursor;
   if (**cursor != '{') {
     return fail(diagnostic, line, 1U, "expected '{' to start dict literal", GINT_ERR_PARSE);
   }
@@ -183,7 +202,11 @@ int parse_dict_literal(const char **cursor,
 
     vm_value_set_none(&key_value);
     if (**cursor != '"') {
-      return fail(diagnostic, line, 1U, "dict literal keys must be string literals", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "dict literal keys must be string literals",
+                  GINT_ERR_PARSE);
     }
     rc = parse_string_literal(program, cursor, &key_value, line, diagnostic);
     if (rc != GINT_OK) {
@@ -195,7 +218,11 @@ int parse_dict_literal(const char **cursor,
     }
     skip_spaces(cursor);
     if (**cursor != ':') {
-      return fail(diagnostic, line, 1U, "expected ':' after dict key", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "expected ':' after dict key",
+                  GINT_ERR_PARSE);
     }
     (*cursor)++;
     rc = parse_expression(cursor, program, &value_expr, scratch_reg, line, diagnostic);
@@ -216,12 +243,20 @@ int parse_dict_literal(const char **cursor,
       break;
     }
     if (**cursor != ',') {
-      return fail(diagnostic, line, 1U, "expected ',' or '}' after dict entry", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "expected ',' or '}' after dict entry",
+                  GINT_ERR_PARSE);
     }
     (*cursor)++;
     skip_spaces(cursor);
     if (**cursor == '}') {
-      return fail(diagnostic, line, 1U, "trailing comma is not allowed in dict literal", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "trailing comma is not allowed in dict literal",
+                  GINT_ERR_PARSE);
     }
   }
 
@@ -240,19 +275,25 @@ int parse_tuple_literal(const char **cursor,
                                graphion_runtime_diagnostic *diagnostic) {
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  const char *literal_start;
   int rc;
 
   if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   skip_spaces(cursor);
+  literal_start = *cursor;
   if (**cursor != '(') {
     return fail(diagnostic, line, 1U, "expected '(' to start tuple literal", GINT_ERR_PARSE);
   }
   (*cursor)++;
   skip_spaces(cursor);
   if (**cursor == ')') {
-    return fail(diagnostic, line, 1U, "empty tuple literal is not supported", GINT_ERR_PARSE);
+    return fail(diagnostic,
+                line,
+                operand_column(literal_start, *cursor),
+                "empty tuple literal is not supported",
+                GINT_ERR_PARSE);
   }
   rc = program_emit(program, GVM_OP_TUPLE_NEW, target_reg, 0U, 0, line, diagnostic);
   if (rc != GINT_OK) {
@@ -280,12 +321,20 @@ int parse_tuple_literal(const char **cursor,
       break;
     }
     if (**cursor != ',') {
-      return fail(diagnostic, line, 1U, "expected ',' or ')' after tuple element", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "expected ',' or ')' after tuple element",
+                  GINT_ERR_PARSE);
     }
     (*cursor)++;
     skip_spaces(cursor);
     if (**cursor == ')') {
-      return fail(diagnostic, line, 1U, "trailing comma is not allowed in tuple literal", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "trailing comma is not allowed in tuple literal",
+                  GINT_ERR_PARSE);
     }
   }
 
@@ -304,19 +353,21 @@ int parse_set_literal(const char **cursor,
                              graphion_runtime_diagnostic *diagnostic) {
   const uint8_t target_reg = base_reg;
   const uint8_t scratch_reg = (uint8_t)(base_reg + 1U);
+  const char *literal_start;
   int rc;
 
   if (cursor == NULL || *cursor == NULL || program == NULL || result_out == NULL) {
     return fail(diagnostic, line, 1U, "invalid runtime argument", GINT_ERR_INVALID_ARG);
   }
   skip_spaces(cursor);
+  literal_start = *cursor;
   if (strncmp(*cursor, "set", 3U) != 0 || is_ident_char((*cursor)[3])) {
-    return fail(diagnostic, line, 1U, "expected set literal", GINT_ERR_PARSE);
+    return fail(diagnostic, line, operand_column(literal_start, *cursor), "expected set literal", GINT_ERR_PARSE);
   }
   *cursor += 3;
   skip_spaces(cursor);
   if (**cursor != '(') {
-    return fail(diagnostic, line, 1U, "expected '(' after set", GINT_ERR_PARSE);
+    return fail(diagnostic, line, operand_column(literal_start, *cursor), "expected '(' after set", GINT_ERR_PARSE);
   }
   (*cursor)++;
   rc = program_emit(program, GVM_OP_SET_NEW, target_reg, 0U, 0, line, diagnostic);
@@ -354,12 +405,20 @@ int parse_set_literal(const char **cursor,
       break;
     }
     if (**cursor != ',') {
-      return fail(diagnostic, line, 1U, "expected ',' or ')' after set element", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "expected ',' or ')' after set element",
+                  GINT_ERR_PARSE);
     }
     (*cursor)++;
     skip_spaces(cursor);
     if (**cursor == ')') {
-      return fail(diagnostic, line, 1U, "trailing comma is not allowed in set literal", GINT_ERR_PARSE);
+      return fail(diagnostic,
+                  line,
+                  operand_column(literal_start, *cursor),
+                  "trailing comma is not allowed in set literal",
+                  GINT_ERR_PARSE);
     }
   }
 
@@ -439,18 +498,18 @@ int parse_scalar_literal(graphion_runtime_program *program,
     uint8_t width = 0U;
 
     if (*scan != '0' && *scan != '1') {
-      return fail(diagnostic, line, 1U, "expected binary digits after 0b", GINT_ERR_PARSE);
+      return fail(diagnostic, line, operand_column(start, scan), "expected binary digits after 0b", GINT_ERR_PARSE);
     }
     while (*scan == '0' || *scan == '1') {
       if (width == 64U) {
-        return fail(diagnostic, line, 1U, "bits literal too wide", GINT_ERR_PARSE);
+        return fail(diagnostic, line, operand_column(start, scan), "bits literal too wide", GINT_ERR_PARSE);
       }
       bits_value = (bits_value << 1U) | (uint64_t)(*scan - '0');
       width++;
       scan++;
     }
     if (isdigit((unsigned char)*scan)) {
-      return fail(diagnostic, line, 1U, "invalid bits literal", GINT_ERR_PARSE);
+      return fail(diagnostic, line, operand_column(start, scan), "invalid bits literal", GINT_ERR_PARSE);
     }
     vm_value_set_none(value_out);
     value_out->kind = GVM_VALUE_BITS;
@@ -476,13 +535,13 @@ int parse_scalar_literal(graphion_runtime_program *program,
       }
     }
     if (scan == start || (*start == '-' && scan == start + 1 && !isdigit((unsigned char)start[1]))) {
-      return fail(diagnostic, line, 1U, "expected scalar literal", GINT_ERR_PARSE);
+      return fail(diagnostic, line, operand_column(start, scan), "expected scalar literal", GINT_ERR_PARSE);
     }
     if (saw_dot) {
       double as_float;
       as_float = strtod(start, &end);
       if (end != scan) {
-        return fail(diagnostic, line, 1U, "invalid float literal", GINT_ERR_PARSE);
+        return fail(diagnostic, line, operand_column(start, end), "invalid float literal", GINT_ERR_PARSE);
       }
       value_out->kind = GVM_VALUE_FLOAT;
       value_out->as.float_value = as_float;
@@ -490,7 +549,7 @@ int parse_scalar_literal(graphion_runtime_program *program,
       long long as_int;
       as_int = strtoll(start, &end, 10);
       if (end != scan) {
-        return fail(diagnostic, line, 1U, "invalid integer literal", GINT_ERR_PARSE);
+        return fail(diagnostic, line, operand_column(start, end), "invalid integer literal", GINT_ERR_PARSE);
       }
       value_out->kind = GVM_VALUE_INT;
       value_out->as.int_value = (int64_t)as_int;
@@ -498,7 +557,7 @@ int parse_scalar_literal(graphion_runtime_program *program,
     *cursor = scan;
     return GINT_OK;
   }
-  return fail(diagnostic, line, 1U, "expected scalar literal", GINT_ERR_PARSE);
+  return fail(diagnostic, line, operand_column(start, start), "expected scalar literal", GINT_ERR_PARSE);
 }
 
 int parse_operand(const char **cursor,
@@ -528,7 +587,9 @@ int parse_operand(const char **cursor,
       int index;
       index = program_find_global_index(program, name);
       if (index < 0) {
-        return fail(diagnostic, line, 1U, "unknown operand", GINT_ERR_UNKNOWN_OPERAND);
+        char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+        snprintf(message, sizeof(message), "unknown operand '%s'", name);
+        return fail(diagnostic, line, 1U, message, GINT_ERR_UNKNOWN_OPERAND);
       }
       operand_out->kind = OPERAND_GLOBAL;
       operand_out->global_index = (size_t)index;

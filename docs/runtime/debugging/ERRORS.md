@@ -33,9 +33,46 @@ That means the same numeric value may mean different things in different APIs.
 
 No positive warning codes are currently used.
 
+## Debug warnings
+
+Warnings are collected and emitted only for CLI execution with `-d`.
+File comments do not configure warning collection in `v0.x`: forms such as
+`# graphion: warnings=off` and `# graphion: unknown=off` are ordinary comments
+and are intentionally ignored by `process_file_level_directives(...)`.
+If warning collection fails under `-d`, the CLI reports that diagnostic and
+stops before executing the program; it does not silently continue without the
+requested warning analysis.
+
+Current `-d` behavior:
+
+- warnings are collected before program execution
+- collected warnings are written to `stderr`, before normal program output
+- each emitted warning currently uses `warning:line:column: message`
+- without `-d`, the same program executes without emitting debug warnings
+- at most 32 warnings are collected; the next warning produces
+  `error:line:column: warning capacity exceeded` and prevents execution
+
+The current warning collector emits:
+
+- an unreachable literal `match` case when its scalar type cannot match the literal matched value
+- numeric graph node-id gap warnings after named graph-node IDs are accounted for
+
+Examples of current messages:
+
+- `match case can never match a string value`
+- `graph numeric node ids have gaps; missing id: 0`
+
 ## `.gion` source/runtime errors
 
 Current source execution has three broad families of failures.
+
+Source diagnostics carry a source position:
+
+- `line` is one-based and points to the physical `.gion` source line
+- `column` is one-based and points to the most useful token or boundary for the error
+- CLI errors are printed as `error:line:column: message`
+
+Column precision is best-effort but intentionally user-facing. Common syntax and runtime diagnostics now point at the relevant assignment operator, missing identifier, delimiter, builtin argument, control header, block boundary, graph/hypergraph body item, literal token, or remaining expression token instead of defaulting to column 1. Diagnostics that describe whole-line failures, resource limits, or internal argument failures may still use column 1.
 
 ### 1. Parse errors
 
@@ -52,9 +89,30 @@ Examples:
 Typical messages include:
 
 - `expected '='`
-- `expected scalar literal`
+- `expected print argument`
+- `expected ')' after print argument`
+- `expected abs argument`
+- `expected min first argument`
+- `expected match case literal`
+- `expected match case or default`
+- `expected expression after '='`
+- `expected expression after '+'`
+- `expected expression after '+='`
+- `expected expression before '!'`
+- `expected expression before '=='`
 - `expected ')' after expression`
-- `unsupported assignment expression`
+- `unexpected trailing tokens after print`
+- `unexpected trailing tokens after assignment`
+- `unexpected trailing tokens after expression`
+- `multiline condition requires grouping parentheses`
+
+Malformed `print(...)` calls report their syntax error before name resolution. For example, `print(missing` reports the missing `)` instead of `unknown operand 'missing'`, while a complete call such as `print(missing)` reports the unknown operand.
+
+Embedded expressions in graph and hypergraph declaration bodies follow the same rule. A malformed attribute dictionary or grouped edge-weight expression reports its delimiter/trailing-comma error before an unresolved value inside it; a syntactically complete expression still reports the unresolved operand.
+
+Assigning to a reserved name is a source-level rejection. The interpreter uses
+`GINT_ERR_RESERVED_NAME` for the specific diagnostic, and the `.gion` file
+entry boundary classifies it with parse failures as `GENTRY_ERR_PARSE`.
 
 ### 2. Unknown name errors
 
@@ -62,10 +120,14 @@ These are raised when source evaluation references a name that does not exist.
 
 Current distinction:
 
-- `unknown variable`
+- `unknown variable 'count'`
   - typically used when the target of a mutation-style operation does not exist yet
   - example: `count += 1` when `count` is not defined
-- `unknown operand`
+- `unknown graph variable 'G'`
+  - used when a graph mutation statement references a graph variable that does not exist
+- `unknown hypergraph variable 'H'`
+  - used when a hypergraph mutation statement references a hypergraph variable that does not exist
+- `unknown operand 'missing'`
   - used when an expression references a missing value
   - examples:
     - `copy = missing`
@@ -82,6 +144,12 @@ Examples:
 - modulo by zero
 - arithmetic with non-numeric operands
 - invalid mixed operation outside the allowed `print(...)` coercion behavior
+- a graph node or hypergraph vertex expression that does not evaluate to `int` or `string`
+- a graph edge `weight` value that is not numeric
+- an empty hyperedge or non-dictionary hyperedge attributes
+- a graph/hypergraph body whose evaluated attributes violate its declared schema
+- a graph body whose evaluated edges violate its orientation or node-id constraints
+- a `struct` field default whose value has the wrong declared type
 
 Typical messages include:
 
@@ -98,6 +166,19 @@ Typical messages include:
 - `ln requires strictly positive input`
 - `log requires x > 0 and base > 0 with base != 1`
 - `factorial requires non-negative integer input`
+- `graph node variable must be int or string`
+- `graph edge weight must be int or float`
+- `hyperedge must contain at least one vertex`
+- `hypergraph hyperedge attributes must be a dict literal`
+- `graph node attributes must use declared default keys`
+- `directed graph cannot use undirected '-' edges`
+- `struct field default has wrong type`
+
+Graph, hypergraph, and struct declaration bodies may evaluate values while building the declared object. Missing delimiters, malformed body entries, malformed headers, and malformed field syntax remain parse failures. Once declaration input has valid syntax, rejected value types, duplicate graph data, or graph/hypergraph object invariants are runtime failures.
+
+An interpreter API failure while loading an already prepared VM program is also a
+runtime/infrastructure failure, reported as `failed to load VM program`; it is not
+classified as a `.gion` parse error.
 
 ## Current `.gion` behavior examples
 
@@ -112,7 +193,20 @@ value = 1 + * 2
 Typical result:
 
 - parse failure
-- message similar to `expected scalar literal`
+- message `expected expression after '+'`
+- position on the `+` operator
+
+Input:
+
+```gion
+value = == 1
+```
+
+Typical result:
+
+- parse failure
+- message `expected expression before '=='`
+- position on the `==` operator
 
 ### Unknown operand
 
@@ -125,7 +219,8 @@ value = missing
 Typical result:
 
 - source/runtime failure
-- message `unknown operand`
+- message `unknown operand 'missing'`
+- position on `missing`
 
 ### Unknown variable
 
@@ -138,7 +233,8 @@ count += 1
 Typical result:
 
 - source/runtime failure
-- message `unknown variable`
+- message `unknown variable 'count'`
+- position on `count`
 
 ### Runtime arithmetic error
 
@@ -164,6 +260,29 @@ Typical result:
 - runtime failure
 - message `factorial requires non-negative integer input`
 
+## Textual IR frontend errors
+
+These codes belong to the small textual IR/assembly parser used by VM-facing tests and tooling. Despite the `frontend` filename, this is not the user-facing `.gion` parser.
+
+API:
+
+- `graphion_parse_source_to_ir(...)`
+
+Header:
+
+- `src/parser/frontend.h`
+
+Codes:
+
+| Code | Symbol | Meaning |
+| --- | --- | --- |
+| `0` | `GFE_OK` | Success |
+| `-1` | `GFE_ERR_INVALID_ARG` | Null pointer or invalid API argument |
+| `-2` | `GFE_ERR_CAPACITY` | Output IR buffer is too small |
+| `-3` | `GFE_ERR_PARSE` | Invalid textual IR instruction or operands |
+
+Decision for `v0.x`: `GFE_*` remains a code-only result family and does not gain a line/column diagnostic object. It has no `.gion` CLI or runtime entry path today, while `.gion` errors already use `graphion_runtime_diagnostic`. Revisit this decision only if textual IR becomes a supported user-facing input format or a tool needs detailed source feedback.
+
 ## Bytecode decode errors
 
 These matter mainly for VM-oriented tooling and tests.
@@ -185,6 +304,8 @@ Codes:
 | `-2` | `GBC_ERR_TRUNCATED` | Input is not a whole number of instructions |
 | `-3` | `GBC_ERR_CAPACITY` | Output instruction buffer is too small |
 
+Decision for `v0.x`: `GBC_*` remains a code-only result family and does not gain user-facing message text or a source diagnostic object. The decoder is used by VM-facing tests/tooling and has no bytecode CLI input path today. Revisit this decision if Graphion later exposes bytecode loading, validation, disassembly, or editor diagnostics as a supported user workflow.
+
 ## VM runtime errors
 
 APIs:
@@ -200,6 +321,8 @@ Current `v0.x` status:
 
 - VM errors are exposed as named results in `src/vm/vm.h`
 - numeric stability is still best-effort, not frozen
+- VM errors without a `.gion`-specific message surface as `unmapped VM runtime error: GVM_ERR_*`
+- VM load failures crossing through interpreter execution APIs surface as `GINT_ERR_RUN`
 
 ### Generic VM codes
 
@@ -245,16 +368,65 @@ Current arithmetic notes:
 | `-12` | `GVM_ERR_FRONTIER_OVERFLOW` | Frontier output would exceed configured capacity |
 | `-13` | `GVM_ERR_INVALID_FRONTIER_VALUE` | Frontier value or mapped result violated the documented range contract |
 
-## Interpretation rule
+## Subsystem-local result codes
 
-Always interpret an error in the context of the API that returned it.
+Result codes are intentionally owned by the API family that returns them.
+Graphion does not define a cross-subsystem numeric error namespace in `v0.x`.
 
-Example:
+| Family | Owner and representative API | Purpose | User-facing policy |
+| --- | --- | --- | --- |
+| `GENTRY_*` | `src/runtime/entry.h`, `graphion_run_gion_path(...)` | `.gion` file entry, I/O, and execution boundary | CLI-facing entry result; source details are carried through `graphion_runtime_diagnostic` when available |
+| `GINT_*` | `src/runtime/interpreter.h`, `graphion_interpret_source(...)` | `.gion` interpretation failures | Language-facing result family; pair with `graphion_runtime_diagnostic` for line, column, and message |
+| `GFE_*` | `src/parser/frontend.h`, `graphion_parse_source_to_ir(...)` | Textual IR/assembly parsing | Tooling-only and code-only in `v0.x` |
+| `GIR_*` | `src/compiler/ir.h`, `graphion_ir_lower_to_bytecode(...)` | IR-to-bytecode lowering | Tooling/backend result; remains code-only unless a supported tool exposes it |
+| `GBC_*` | `src/parser/bytecode.h`, `graphion_decode_bytecode(...)` | Bytecode decoding | Tooling-only and code-only in `v0.x` |
+| `GVM_*` | `src/vm/vm.h`, `graphion_vm_run(...)` | VM loading and opcode execution | Raw VM callers receive the code; failures crossing into `.gion` are translated to interpreter diagnostics |
 
-- `-3` can mean a parse failure in one subsystem
-- and an invalid register error in another
+Graph and hypergraph kernel APIs currently return local `int` status values rather
+than a public named result family. When their failures reach the language surface,
+the interpreter or VM layer owns the user-facing diagnostic.
 
-So callers should not treat the current project as if it already had one fully unified error-code namespace.
+Always interpret a result in the context of the API that returned it. For example,
+`-3` is `GFE_ERR_PARSE`, `GIR_ERR_INVALID_OPCODE`, `GBC_ERR_CAPACITY`, or
+`GVM_ERR_INVALID_REG` depending on its owning API.
+
+Translation at the language boundary follows these rules:
+
+- `.gion` execution reports through `GENTRY_*` and `GINT_*`, with a runtime diagnostic where source context exists
+- VM failures surfaced during `.gion` execution are mapped to language diagnostics; an unmapped failure retains its named `GVM_ERR_*` class in the stable fallback message
+- tooling APIs return their own family and are not formatted as `.gion` source diagnostics
+
+## Diagnostic test coverage
+
+Diagnostic tests intentionally focus on behavior that users or tool callers can
+observe:
+
+- direct `.gion` APIs assert result classes, messages, and line/column pairs
+- CLI tests assert stdout/stderr formatting, exit status, and `-d` warning output
+- VM failures that cross into `.gion` execution are asserted through their
+  translated runtime diagnostic text
+- subsystem-local internals remain covered by their owning VM, parser, or core
+  tests rather than by `.gion` diagnostic tests
+
+This keeps diagnostic coverage stable around the language contract while still
+allowing parser, runtime, and VM implementation details to evolve.
+
+### Reserved result symbols
+
+Some declared result symbols are intentionally retained but are not emitted by
+the current `v0.x` implementation:
+
+| Symbol | Owner | Current status |
+| --- | --- | --- |
+| `GENTRY_ERR_LOWER` | `graphion_entry_result` | Reserved for a future distinct source-to-runtime lowering failure at the entry boundary |
+| `GENTRY_ERR_LOAD` | `graphion_entry_result` | Reserved for a future distinct prepared-program or VM loading failure at the entry boundary |
+| `GINT_ERR_CALL` | `graphion_interpreter_result` | Reserved for future language call failure reporting |
+| `GINT_ERR_RETURN` | `graphion_interpreter_result` | Reserved for future language return/control-flow failure reporting |
+
+Decision for `v0.x`: retain these names as reserved members of their
+subsystem-local enums, but do not treat them as supported observable outcomes
+until an implementation path and tests produce them. Current VM load failures
+exposed by interpreter execution remain `GINT_ERR_RUN`.
 
 ## Stability policy
 
@@ -262,7 +434,7 @@ So callers should not treat the current project as if it already had one fully u
 
 Current behavior:
 
-- subsystem-local codes are acceptable
+- subsystem-local codes are intentional
 - numeric assignments may still evolve
 - externally visible changes should still be documented and tested
 

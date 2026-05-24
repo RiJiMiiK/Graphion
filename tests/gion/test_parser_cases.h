@@ -8,6 +8,7 @@
   X(parser_rejects_truncated_input)                    \
   X(frontend_parse_and_ir_lowering)                    \
   X(frontend_rejects_invalid_source)                   \
+  X(frontend_result_code_diagnostics)                  \
   X(frontend_source_to_vm_execution)                   \
   X(frontend_reference_graph_execution_examples)       \
   X(gion_source_path_detection)                        \
@@ -59,6 +60,7 @@
   X(gion_struct_declarations_and_instances)            \
   X(gion_struct_runtime_errors)                        \
   X(gion_struct_syntax_errors)                         \
+  X(gion_struct_column_diagnostics)                    \
   X(gion_empty_graph_declaration)                      \
   X(gion_empty_hypergraph_declaration)                 \
   X(gion_hypergraph_vertex_block_declaration)          \
@@ -88,26 +90,43 @@
   X(gion_graph_mutation_error_coverage)                \
   X(gion_graph_numeric_id_gap_warnings)                \
   X(gion_graph_declaration_syntax_errors)              \
+  X(gion_graph_declaration_column_diagnostics)         \
   X(gion_print_syntax_errors)                          \
+  X(gion_builtin_call_column_diagnostics)              \
   X(gion_unterminated_string_errors)                   \
   X(gion_invalid_identifier_errors)                    \
   X(gion_trailing_token_errors)                        \
   X(gion_reference_before_definition_errors)           \
+  X(gion_unknown_identifier_column_diagnostics)         \
+  X(gion_delimiter_column_diagnostics)                  \
+  X(gion_literal_parser_column_diagnostics)             \
   X(gion_reassignment_and_type_change)                 \
   X(gion_copy_chains_and_blank_lines)                  \
   X(gion_late_line_error_diagnostics)                  \
+  X(gion_runtime_diagnostic_exact_pairs)               \
+  X(gion_representative_runtime_error_diagnostics)     \
+  X(gion_vm_to_runtime_mapping_diagnostics)            \
   X(gion_unexpected_indentation_errors)                \
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \
+  X(gion_unmapped_vm_error_diagnostics)                \
+  X(gion_vm_load_failure_is_runtime_diagnostic)         \
   X(gion_warning_comments_are_ignored)                 \
   X(gion_warning_comments_are_ignored_from_path)       \
+  X(gion_impossible_literal_match_warnings)            \
+  X(gion_warning_report_output_format)                 \
+  X(gion_warning_capacity_failures)                    \
   X(gion_if_elif_else_control_flow)                    \
   X(gion_if_elif_else_errors)                          \
+  X(gion_control_header_column_diagnostics)            \
+  X(gion_multiline_grouping_column_diagnostics)        \
+  X(gion_block_shape_column_diagnostics)               \
   X(gion_match_control_flow)                           \
   X(gion_match_errors)                                 \
   X(gion_ternary_expressions)                          \
   X(gion_ternary_runtime_errors)                       \
   X(gion_ternary_syntax_errors)                        \
+  X(gion_ternary_column_diagnostics)                   \
   X(gion_boolean_short_circuit)                        \
   X(gion_boolean_short_circuit_runtime_errors)         \
   X(gion_equality_expressions)                         \

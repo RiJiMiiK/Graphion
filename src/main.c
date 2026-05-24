@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv) {
   graphion_runtime_scope *scope;
-  graphion_runtime_diagnostic diagnostic;
+  graphion_runtime_diagnostic diagnostic = {0};
   graphion_runtime_warning_report warnings;
   const char *path;
   int debug_warnings = 0;
@@ -35,9 +35,25 @@ int main(int argc, char **argv) {
   }
   if (debug_warnings) {
     rc = graphion_collect_gion_path_warnings(path, &warnings, &diagnostic);
-    if (rc == GENTRY_OK) {
-      graphion_emit_warning_report(&warnings, stderr);
+    if (rc == GENTRY_ERR_EXTENSION) {
+      fprintf(stderr, "error: source file must use the .gion extension\n");
+      free(scope);
+      return 2;
     }
+    if (rc != GENTRY_OK) {
+      if (diagnostic.message != NULL) {
+        fprintf(stderr,
+                "error:%u:%u: %s\n",
+                diagnostic.line,
+                diagnostic.column,
+                diagnostic.message);
+      } else {
+        fprintf(stderr, "error: failed to collect warnings for '%s' (rc=%d)\n", path, rc);
+      }
+      free(scope);
+      return 3;
+    }
+    graphion_emit_warning_report(&warnings, stderr);
   }
   rc = graphion_run_gion_path(path, scope, &diagnostic);
   if (rc == GENTRY_ERR_EXTENSION) {

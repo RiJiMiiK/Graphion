@@ -52,9 +52,10 @@ In repository terms, that currently means:
 - hold the scalar opcode semantics used by the current language subset
 - also contain broader VM families not yet fully exposed by `.gion`
 
-4. `src/parser/bytecode.*`
-- decode fixed-width bytecode for VM-facing tools and tests
+4. `src/parser/frontend.*` and `src/parser/bytecode.*`
+- parse textual IR/assembly and decode fixed-width bytecode for VM-facing tools and tests
 - document and enforce the VM instruction encoding contract
+- remain separate from the user-facing `.gion` frontend in `src/runtime/interpreter/*`
 
 5. `src/runtime/arena.*`
 - provide temporary allocation support for runtime/frontend work
@@ -140,16 +141,23 @@ Important architectural rule:
 
 Relevant files:
 
+- `src/parser/frontend.c`
+- `src/parser/frontend.h`
 - `src/parser/bytecode.c`
 - `src/parser/bytecode.h`
 
 Responsibilities:
 
+- parse the compact textual IR/assembly syntax used by VM-facing tests and examples
 - decode the fixed-width instruction stream
 - support VM-facing tests and tooling
 - keep the bytecode contract explicit and testable
 
-This layer is VM tooling infrastructure, not the `.gion` language frontend.
+This layer is VM tooling infrastructure, not the `.gion` language frontend. In
+particular, `GFE_*` results from `graphion_parse_source_to_ir(...)` are not
+the source diagnostics printed for `.gion` programs, and `GBC_*` results from
+`graphion_decode_bytecode(...)` describe tooling/decoder failures rather than
+user source errors.
 
 ## Current `.gion` Surface In Architectural Terms
 
@@ -170,6 +178,13 @@ Implemented today at the user-language level:
 - comments and debug-mode warnings
 - `bits` literals and bitwise operators
 - scalar builtins and constants
+
+Debug warnings currently have no source-level configuration surface:
+`process_file_level_directives(...)` intentionally treats comment-shaped
+warning directives as inert comments in `v0.x`. Only CLI `-d` controls
+whether collected warnings are emitted.
+When `-d` warning collection fails, the CLI stops before source execution and
+reports the collection diagnostic rather than running without requested analysis.
 
 Current scalar value kinds:
 
@@ -235,6 +250,20 @@ At a high level, error ownership is split like this:
 - VM layer
   - execution result codes
   - type/runtime/domain failures during opcode execution
+
+Result-code ownership is intentionally subsystem-local in `v0.x`.
+`GENTRY_*` and `GINT_*` own the `.gion`/CLI boundary, while `GFE_*`,
+`GIR_*`, `GBC_*`, and `GVM_*` keep their textual IR, lowering, bytecode,
+or VM meanings. Backend failures are translated only when they cross into
+the language-facing interpreter path.
+
+`GENTRY_ERR_LOWER`, `GENTRY_ERR_LOAD`, `GINT_ERR_CALL`, and
+`GINT_ERR_RETURN` are reserved enum members in `v0.x`; the current runtime
+does not emit them as observable outcomes.
+
+Reserved-name assignment is rejected during source handling:
+`GINT_ERR_RESERVED_NAME` is translated to `GENTRY_ERR_PARSE` at the
+`.gion` file-entry boundary rather than being presented as a runtime failure.
 
 User-visible behavior is documented in:
 

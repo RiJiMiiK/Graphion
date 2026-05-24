@@ -201,54 +201,60 @@ int test_gion_compound_assignment_errors(void) {
   static const struct {
     const char *source;
     int expected_rc;
+    unsigned int expected_column;
     const char *message;
   } cases[] = {
-      {"count += 1\n", GINT_ERR_UNKNOWN_VARIABLE, "unknown variable"},
-      {"count = 1\ncount +=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount -=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount *=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount /=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount //=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount %=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount **=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"mask = 0b11\nmask &=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"merge = 0b11\nmerge |=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"flip = 0b11\nflip ^=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"shift = 0b11\nshift <<=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"shift = 0b11\nshift >>=\n", GINT_ERR_PARSE, "expected scalar literal"},
-      {"count = 1\ncount /= 0\n", GINT_ERR_RUN, "division by zero"},
-      {"count = 1\ncount //= 0\n", GINT_ERR_RUN, "division by zero"},
-      {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, "division by zero"},
-      {"count = 1\ncount %= 0\n", GINT_ERR_RUN, "division by zero"},
-      {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"count += 1\n", GINT_ERR_UNKNOWN_VARIABLE, 1U, "unknown variable 'count'"},
+      {"count = 1\ncount +=\n", GINT_ERR_PARSE, 7U, "expected expression after '+='"},
+      {"count = 1\ncount -=\n", GINT_ERR_PARSE, 7U, "expected expression after '-='"},
+      {"count = 1\ncount *=\n", GINT_ERR_PARSE, 7U, "expected expression after '*='"},
+      {"count = 1\ncount /=\n", GINT_ERR_PARSE, 7U, "expected expression after '/='"},
+      {"count = 1\ncount //=\n", GINT_ERR_PARSE, 7U, "expected expression after '//='"},
+      {"count = 1\ncount %=\n", GINT_ERR_PARSE, 7U, "expected expression after '%='"},
+      {"count = 1\ncount **=\n", GINT_ERR_PARSE, 7U, "expected expression after '**='"},
+      {"mask = 0b11\nmask &=\n", GINT_ERR_PARSE, 6U, "expected expression after '&='"},
+      {"merge = 0b11\nmerge |=\n", GINT_ERR_PARSE, 7U, "expected expression after '|='"},
+      {"flip = 0b11\nflip ^=\n", GINT_ERR_PARSE, 6U, "expected expression after '^='"},
+      {"shift = 0b11\nshift <<=\n", GINT_ERR_PARSE, 7U, "expected expression after '<<='"},
+      {"shift = 0b11\nshift >>=\n", GINT_ERR_PARSE, 7U, "expected expression after '>>='"},
+      {"count = 1\ncount /= 0\n", GINT_ERR_RUN, 0U, "division by zero"},
+      {"count = 1\ncount //= 0\n", GINT_ERR_RUN, 0U, "division by zero"},
+      {"count = 1\ncount = count // 0\n", GINT_ERR_RUN, 0U, "division by zero"},
+      {"count = 1\ncount %= 0\n", GINT_ERR_RUN, 0U, "division by zero"},
+      {"count = 2\ncount **= \"x\"\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"count = 1\ncount += \"x\"\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
       {"mask = 0b10\nmask &= 0b0010\n",
        GINT_ERR_RUN,
+       0U,
        "bitwise operations require matching bits widths"},
-      {"mask = 0b10\nmask &= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"mask = 0b10\nmask &= 1\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
       {"merge = 0b10\nmerge |= 0b0010\n",
        GINT_ERR_RUN,
+       0U,
        "bitwise operations require matching bits widths"},
-      {"merge = 0b10\nmerge |= 1\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"merge = 0b10\nmerge |= 1\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
       {"flip = 0b10\nflip ^= 0b0010\n",
        GINT_ERR_RUN,
+       0U,
        "bitwise operations require matching bits widths"},
-      {"flip = 0b10\nflip ^= 1\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"shift = 0b10\nshift <<= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"shift = 0b10\nshift <<= 1.0\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"flip = 0b10\nflip ^= 1\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 0b0010\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"shift = 0b10\nshift <<= 1.0\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
       {"shift = 0b10\nshift <<= -1\n",
        GINT_ERR_RUN,
+       0U,
        "bit shifts require non-negative integer counts"},
-      {"shift = 0b10\nshift >>= 0b0010\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"shift = 0b10\nshift >>= 1.0\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"shift = 0b10\nshift >>= 0b0010\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"shift = 0b10\nshift >>= 1.0\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
       {"shift = 0b10\nshift >>= -1\n",
        GINT_ERR_RUN,
+       0U,
        "bit shifts require non-negative integer counts"},
-      {"value = \"Test \" + 7\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, "incompatible operand types"},
-      {"text = \"x\"\ntext %= 2\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"value = \"Test \" + 7\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"text = \"x\"\ntext -= \"y\"\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"text = \"x\"\ntext *= 2\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"text = \"x\"\ntext /= 2\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
+      {"text = \"x\"\ntext %= 2\n", GINT_ERR_RUN, 0U, "incompatible operand types"},
   };
   size_t i;
 
@@ -262,8 +268,11 @@ int test_gion_compound_assignment_errors(void) {
     if (rc != cases[i].expected_rc) {
       return finish_scope_test(&scope, (int)(1 + i * 10U));
     }
-    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+    if (cases[i].expected_column != 0U && diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
     graphion_runtime_scope_dispose(&scope);
   }

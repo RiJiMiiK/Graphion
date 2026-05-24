@@ -299,8 +299,8 @@ int test_gion_if_elif_else_errors(void) {
       {"if false:\n    print(1)\nelif true: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after condition"},
       {"if false:\n    print(1)\nelse\n    print(2)\n", GINT_ERR_PARSE, 3U, "expected ':' after else"},
       {"if false:\n    print(1)\nelse: extra\n    print(2)\n", GINT_ERR_PARSE, 3U, "unexpected trailing tokens after else"},
-      {"if nope:\n    print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
-      {"flag = false\nif flag:\n    print(1)\nelif nope:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_UNKNOWN_OPERAND, 4U, "unknown operand"},
+      {"if nope:\n    print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand 'nope'"},
+      {"flag = false\nif flag:\n    print(1)\nelif nope:\n    print(2)\nelse:\n    print(3)\n", GINT_ERR_UNKNOWN_OPERAND, 4U, "unknown operand 'nope'"},
   };
   size_t i;
 
@@ -319,6 +319,184 @@ int test_gion_if_elif_else_errors(void) {
       continue;
     }
     if (diagnostic.line != cases[i].expected_line) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_control_header_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true\n    print(1)\n", 1U, 8U, "expected ':' after if condition"},
+      {"if :\n    print(1)\n", 1U, 4U, "expected condition after if"},
+      {"if true: extra\n    print(1)\n", 1U, 10U, "unexpected trailing tokens after condition"},
+      {"if false:\n    print(1)\nelif true\n    print(2)\n", 3U, 10U, "expected ':' after elif condition"},
+      {"if false:\n    print(1)\nelif :\n    print(2)\n", 3U, 6U, "expected condition after elif"},
+      {"if false:\n    print(1)\nelse\n    print(2)\n", 3U, 5U, "expected ':' after else"},
+      {"if false:\n    print(1)\nelse: extra\n    print(2)\n", 3U, 7U, "unexpected trailing tokens after else"},
+      {"match:\n    1:\n        print(1)\n", 1U, 6U, "expected expression after match"},
+      {"match 1\n    1:\n        print(1)\n", 1U, 8U, "expected ':' after match expression"},
+      {"match 1: extra\n    1:\n        print(1)\n", 1U, 10U, "unexpected trailing tokens after match"},
+      {"match 1:\n    1\n        print(1)\n", 2U, 2U, "expected ':' after match case"},
+      {"match 1:\n    1: extra\n        print(1)\n", 2U, 4U, "unexpected trailing tokens after match case"},
+      {"match 1:\n    default\n        print(1)\n", 2U, 8U, "expected ':' after default"},
+      {"match 1:\n    default: extra\n        print(1)\n", 2U, 10U, "unexpected trailing tokens after default"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_multiline_grouping_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true and\n    false:\n    print(1)\n",
+       1U,
+       12U,
+       "multiline condition requires grouping parentheses"},
+      {"if false:\n    print(1)\nelif true and\n    false:\n    print(2)\n",
+       3U,
+       14U,
+       "multiline condition requires grouping parentheses"},
+      {"value = \"ready\" if\n    ready else \"bad\"\n",
+       1U,
+       19U,
+       "multiline assignment expression requires grouping parentheses"},
+      {"value = \"ready\" if ready else\n    \"bad\"\n",
+       1U,
+       30U,
+       "multiline assignment expression requires grouping parentheses"},
+      {"value = (\n    \"ready\"\n    if ready\n    else \"bad\"\n", 4U, 11U, "expected ')' after expression"},
+      {"match value and\n    true:\n        print(1)\n",
+       1U,
+       16U,
+       "multiline match expression requires grouping parentheses"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_block_shape_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    int expected_rc;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"if true:\nprint(1)\n", GINT_ERR_PARSE, 1U, 9U, "expected indented block after if"},
+      {"if false:\n    print(1)\nelif true:\nprint(2)\n",
+       GINT_ERR_PARSE,
+       3U,
+       11U,
+       "expected indented block after elif"},
+      {"if false:\n    print(1)\nelse:\nprint(2)\n",
+       GINT_ERR_PARSE,
+       3U,
+       6U,
+       "expected indented block after else"},
+      {"if true:\n    print(1)\n  print(2)\n", GINT_ERR_PARSE, 3U, 3U, "unexpected indentation"},
+      {"if true:\n    if false:\n        print(1)\n      print(2)\n",
+       GINT_ERR_PARSE,
+       4U,
+       7U,
+       "unexpected indentation"},
+      {"if true:\n    elif false:\n        print(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "elif without matching if"},
+      {"if true:\n    else:\n        print(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "else without matching if"},
+      {"flag = true\nif flag:\n    print(1)\nelse:\n    print(2)\nelif false:\n    print(3)\n",
+       GINT_ERR_PARSE,
+       6U,
+       1U,
+       "else must be last in if chain"},
+      {"match 1:\nprint(1)\n", GINT_ERR_PARSE, 1U, 9U, "expected indented match block"},
+      {"match 1:\n    1:\n    2:\nprint(1)\n",
+       GINT_ERR_PARSE,
+       2U,
+       3U,
+       "expected indented block after match case"},
+      {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "default must be last in match"},
+      {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n",
+       GINT_ERR_PARSE,
+       2U,
+       5U,
+       "default must be last in match"},
+      {"default:\n    print(1)\n", GINT_ERR_PARSE, 1U, 1U, "default without matching match"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != cases[i].expected_rc) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
@@ -482,8 +660,8 @@ int test_gion_match_errors(void) {
       {"match 1:\n    1:\n        print(1)\n    1.0:\n        print(2)\n", GINT_ERR_PARSE, 4U, "duplicate match case"},
       {"match 1:\n    default:\n        print(1)\n    2:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
       {"match 1:\n    default:\n        print(1)\n    default:\n        print(2)\n", GINT_ERR_PARSE, 2U, "default must be last in match"},
-      {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand"},
-      {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected scalar literal"},
+      {"match nope:\n    1:\n        print(1)\n", GINT_ERR_UNKNOWN_OPERAND, 1U, "unknown operand 'nope'"},
+      {"match 1:\n    abs(1):\n        print(1)\n", GINT_ERR_PARSE, 2U, "expected match case literal"},
   };
   size_t i;
 
@@ -625,6 +803,42 @@ int test_gion_ternary_syntax_errors(void) {
     }
     if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
       return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
+int test_gion_ternary_column_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"value = \"ready\" if ready\n", 26U, "expected else in ternary expression"},
+      {"value = if ready else \"bad\"\n", 9U, "expected expression before ternary if"},
+      {"value = \"ready\" if else \"bad\"\n", 21U, "expected condition after ternary if"},
+      {"value = \"ready\" if ready else\n", 31U, "expected expression after ternary else"},
+      {"print(\"ready\" if ready)\n", 23U, "expected else in ternary expression"},
+      {"print(\"ready\" if else \"bad\")\n", 18U, "expected condition after ternary if"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_PARSE) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != 1U || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
     }
     graphion_runtime_scope_dispose(&scope);
   }

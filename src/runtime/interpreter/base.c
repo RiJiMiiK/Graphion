@@ -143,6 +143,121 @@ int is_ident_char(char ch) {
   return is_ident_start_char(ch) || (ch >= '0' && ch <= '9');
 }
 
+void point_unknown_operand_diagnostic(graphion_runtime_diagnostic *diagnostic,
+                                      const char *source_text,
+                                      unsigned int base_column) {
+  const char *prefix = "unknown operand '";
+  const char *name_start;
+  const char *name_end;
+  const char *scan;
+  size_t prefix_len = strlen(prefix);
+  size_t name_len;
+
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      strncmp(diagnostic->message, prefix, prefix_len) != 0) {
+    return;
+  }
+  name_start = diagnostic->message + prefix_len;
+  name_end = strchr(name_start, '\'');
+  if (name_end == NULL || name_end == name_start) {
+    return;
+  }
+  name_len = (size_t)(name_end - name_start);
+  for (scan = source_text; *scan != '\0'; ++scan) {
+    if ((scan == source_text || !is_ident_char(scan[-1])) &&
+        strncmp(scan, name_start, name_len) == 0 &&
+        !is_ident_char(scan[name_len])) {
+      diagnostic->column = base_column + (unsigned int)(scan - source_text);
+      return;
+    }
+  }
+}
+
+void point_builtin_argument_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
+                                                 const char *source_text,
+                                                 const char *cursor,
+                                                 unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      cursor == NULL || cursor < source_text ||
+      strncmp(diagnostic->message, "expected ", 9U) != 0 ||
+      (strstr(diagnostic->message, " argument") == NULL &&
+       strstr(diagnostic->message, "expected '(' after ") == NULL &&
+       strstr(diagnostic->message, "expected clamp value") == NULL &&
+       strstr(diagnostic->message, "expected clamp lower bound") == NULL &&
+       strstr(diagnostic->message, "expected clamp upper bound") == NULL)) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(cursor - source_text);
+}
+
+void point_ternary_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *source_text,
+                                           const char *segment_start,
+                                           unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      segment_start == NULL || segment_start < source_text ||
+      strstr(diagnostic->message, "ternary") == NULL) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(segment_start - source_text) + diagnostic->column - 1U;
+}
+
+void point_struct_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                          const char *source_text,
+                                          const char *segment_start,
+                                          unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      segment_start == NULL || segment_start < source_text ||
+      strstr(diagnostic->message, "struct") == NULL) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(segment_start - source_text) + diagnostic->column - 1U;
+}
+
+static int message_is_literal_parser_diagnostic(const char *message) {
+  return strstr(message, "literal") != NULL ||
+         strcmp(message, "dict literal keys must be string literals") == 0 ||
+         strcmp(message, "expected binary digits after 0b") == 0 ||
+         strcmp(message, "bits literal too wide") == 0 ||
+         strcmp(message, "expected set literal") == 0;
+}
+
+void point_literal_diagnostic_from_segment(graphion_runtime_diagnostic *diagnostic,
+                                           const char *source_text,
+                                           const char *segment_start,
+                                           unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      segment_start == NULL || segment_start < source_text ||
+      !message_is_literal_parser_diagnostic(diagnostic->message)) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(segment_start - source_text) + diagnostic->column - 1U;
+}
+
+static int message_is_delimiter_diagnostic(const char *message) {
+  return strncmp(message, "expected ')'", 12U) == 0 ||
+         strncmp(message, "expected ']'", 12U) == 0 ||
+         strncmp(message, "expected ','", 12U) == 0 ||
+         strncmp(message, "expected ':'", 12U) == 0 ||
+         strncmp(message, "expected '('", 12U) == 0 ||
+         strncmp(message, "expected '['", 12U) == 0 ||
+         strncmp(message, "expected '{'", 12U) == 0 ||
+         strcmp(message, "empty tuple literal is not supported") == 0 ||
+         strncmp(message, "trailing comma is not allowed", 29U) == 0;
+}
+
+void point_delimiter_diagnostic_at_cursor(graphion_runtime_diagnostic *diagnostic,
+                                          const char *source_text,
+                                          const char *cursor,
+                                          unsigned int base_column) {
+  if (diagnostic == NULL || diagnostic->message == NULL || source_text == NULL ||
+      cursor == NULL || cursor < source_text ||
+      !message_is_delimiter_diagnostic(diagnostic->message)) {
+    return;
+  }
+  diagnostic->column = base_column + (unsigned int)(cursor - source_text);
+}
+
 int is_reserved_name(const char *name) {
   if (is_scalar_builtin_name(name)) {
     return 1;

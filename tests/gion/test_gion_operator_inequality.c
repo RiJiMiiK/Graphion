@@ -150,10 +150,10 @@ int test_gion_inequality_syntax_errors(void) {
     const char *source;
     const char *message;
   } cases[] = {
-      {"value = 1 !=\n", "expected scalar literal"},
-      {"value = != 1\n", "expected scalar literal"},
-      {"print(1 != )\n", "expected scalar literal"},
-      {"if 1 !=:\n    print(1)\n", "expected scalar literal"},
+      {"value = 1 !=\n", "expected expression after '!='"},
+      {"value = != 1\n", "expected expression before '!='"},
+      {"print(1 != )\n", "expected expression after '!='"},
+      {"if 1 !=:\n    print(1)\n", "expected expression after '!='"},
   };
   size_t i;
 
