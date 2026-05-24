@@ -104,6 +104,7 @@
   X(gion_copy_chains_and_blank_lines)                  \
   X(gion_late_line_error_diagnostics)                  \
   X(gion_runtime_diagnostic_exact_pairs)               \
+  X(gion_representative_runtime_error_diagnostics)     \
   X(gion_unexpected_indentation_errors)                \
   X(gion_comments)                                     \
   X(gion_comment_errors)                               \

@@ -535,6 +535,60 @@ int test_gion_runtime_diagnostic_exact_pairs(void) {
   return 0;
 }
 
+int test_gion_representative_runtime_error_diagnostics(void) {
+  static const struct {
+    const char *source;
+    unsigned int expected_line;
+    unsigned int expected_column;
+    const char *message;
+  } cases[] = {
+      {"value = 1 / 0\n", 1U, 1U, "division by zero"},
+      {"items = [1, 2]\nprint(items[2])\n", 1U, 1U, "list index out of range"},
+      {"data = {\"a\": 1}\nprint(data[\"missing\"])\n", 1U, 1U, "dict key not found"},
+      {"items = set(1, 2)\nprint(items[0])\n", 1U, 1U, "incompatible operand types"},
+      {"pair = (1, 2)\nprint(pair[2])\n", 1U, 1U, "list index out of range"},
+      {"struct Player:\n"
+       "    id: int\n"
+       "\n"
+       "p = Player {}\n",
+       4U,
+       12U,
+       "missing or unknown struct field"},
+      {"graph G:\n"
+       "    1\n"
+       "remove_node(G, 2)\n",
+       1U,
+       1U,
+       "invalid node id"},
+      {"hypergraph H:\n"
+       "    []\n",
+       2U,
+       1U,
+       "hyperedge must contain at least one vertex"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.line != cases[i].expected_line || diagnostic.column != cases[i].expected_column) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(3 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_unexpected_indentation_errors(void) {
   static const struct {
     const char *source;
