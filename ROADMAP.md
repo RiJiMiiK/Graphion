@@ -14,7 +14,7 @@ not introduce a large new language type.
   - [x] trace `if`, `elif`, and `else` through the runtime/interpreter
   - [x] trace ternary conditions through expression compilation and VM jumps
   - [x] trace boolean operators and VM conditional jumps for shared truth rules
-  - [ ] decide whether `match` needs changes or only documentation for this scope
+  - [x] decide whether `match` needs changes or only documentation for this scope: documentation only
 - [ ] define official truth rules for existing first-class complex values
   - [ ] decide truthiness for `list`
   - [ ] decide truthiness for `dict`
