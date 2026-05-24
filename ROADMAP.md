@@ -17,7 +17,7 @@ not introduce a large new language type.
   - `match` is value-based scalar branching and does not need behavioral changes for this scope.
 - [ ] define official truth rules
   - [x] collections: empty is false, non-empty is true for `list`, `dict`, `tuple`, and `set`
-  - [ ] graph: define truth from visible node count and/or edge count
+  - [x] graph: false when it has no visible nodes and no logical edges, true otherwise
   - [ ] hypergraph: define truth from visible vertex count and/or active hyperedge count
   - [ ] struct: define whether instances are always true or field-count based
   - [ ] scalars: keep compatibility for `bool` and accepted `int` values, and keep unsupported scalar types explicit
