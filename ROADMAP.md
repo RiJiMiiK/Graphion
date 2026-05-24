@@ -16,7 +16,7 @@ not introduce a large new language type.
   - [x] trace boolean operators and VM conditional jumps for shared truth rules
   - [x] decide whether `match` needs changes or only documentation for this scope: documentation only
 - [ ] define official truth rules for existing first-class complex values
-  - [ ] decide truthiness for `list`
+  - [x] decide truthiness for `list`: empty is false, non-empty is true
   - [ ] decide truthiness for `dict`
   - [ ] decide truthiness for `tuple`
   - [ ] decide truthiness for `set`
