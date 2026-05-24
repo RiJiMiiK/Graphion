@@ -19,7 +19,7 @@ not introduce a large new language type.
   - [x] decide truthiness for `list`: empty is false, non-empty is true
   - [x] decide truthiness for `dict`: empty is false, non-empty is true
   - [x] decide truthiness for `tuple`: empty is false, non-empty is true
-  - [ ] decide truthiness for `set`
+  - [x] decide truthiness for `set`: empty is false, non-empty is true
   - [ ] decide truthiness for `graph`
   - [ ] decide truthiness for `hypergraph`
   - [ ] decide truthiness for `struct`
