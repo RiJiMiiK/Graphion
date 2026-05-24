@@ -17,7 +17,7 @@ not introduce a large new language type.
   - [x] decide whether `match` needs changes or only documentation for this scope: documentation only
 - [ ] define official truth rules for existing first-class complex values
   - [x] decide truthiness for `list`: empty is false, non-empty is true
-  - [ ] decide truthiness for `dict`
+  - [x] decide truthiness for `dict`: empty is false, non-empty is true
   - [ ] decide truthiness for `tuple`
   - [ ] decide truthiness for `set`
   - [ ] decide truthiness for `graph`
