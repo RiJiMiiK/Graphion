@@ -57,7 +57,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] add coverage for graph numeric node-id gap warnings
   - [x] add coverage for warning capacity and warning collection failures
   - [x] add CLI-path coverage for `-d` warning emission and fail-fast collection errors
-- [ ] improve test coverage for diagnostics
+- [x] improve test coverage for diagnostics
   - [x] add focused parser/frontend tests for result-code diagnostics
   - [x] add runtime/interpreter tests for exact message and line/column pairs
   - [x] add runtime/interpreter tests for representative runtime errors across scalar and non-scalar values

@@ -396,6 +396,21 @@ Translation at the language boundary follows these rules:
 - VM failures surfaced during `.gion` execution are mapped to language diagnostics; an unmapped failure retains its named `GVM_ERR_*` class in the stable fallback message
 - tooling APIs return their own family and are not formatted as `.gion` source diagnostics
 
+## Diagnostic test coverage
+
+Diagnostic tests intentionally focus on behavior that users or tool callers can
+observe:
+
+- direct `.gion` APIs assert result classes, messages, and line/column pairs
+- CLI tests assert stdout/stderr formatting, exit status, and `-d` warning output
+- VM failures that cross into `.gion` execution are asserted through their
+  translated runtime diagnostic text
+- subsystem-local internals remain covered by their owning VM, parser, or core
+  tests rather than by `.gion` diagnostic tests
+
+This keeps diagnostic coverage stable around the language contract while still
+allowing parser, runtime, and VM implementation details to evolve.
+
 ### Reserved result symbols
 
 Some declared result symbols are intentionally retained but are not emitted by
