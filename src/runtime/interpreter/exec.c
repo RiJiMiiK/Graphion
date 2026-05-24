@@ -1498,7 +1498,11 @@ static int parse_graph_block_line(const char *text,
     if (reserve_only) {
       return GINT_OK;
     }
-    return parse_graph_node_attrs(cursor, builder, left, scope, line, diagnostic);
+    rc = parse_graph_node_attrs(cursor, builder, left, scope, line, diagnostic);
+    if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
+    }
+    return rc;
   }
   if (*cursor == '\0' && !has_edge) {
     return GINT_OK;
@@ -2022,7 +2026,11 @@ static int parse_hypergraph_vertex_line(const char *text,
     if (reserve_only) {
       return GINT_OK;
     }
-    return parse_hypergraph_vertex_attrs(cursor, builder, vertex_id, scope, line, diagnostic);
+    rc = parse_hypergraph_vertex_attrs(cursor, builder, vertex_id, scope, line, diagnostic);
+    if (rc != GINT_OK) {
+      offset_diagnostic_from_segment(diagnostic, text, cursor);
+    }
+    return rc;
   }
   if (*cursor != '\0') {
     return fail(diagnostic,
