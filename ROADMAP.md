@@ -64,7 +64,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] add VM-to-runtime mapping tests for every `.gion`-visible `GVM_ERR_*`
   - [x] add CLI-path tests where formatting differs from direct API diagnostics
   - [x] keep tests scoped to user-visible behavior, not internal implementation details
-- [ ] update documentation when diagnostics change
+- [x] update documentation when diagnostics change
   - [x] update `docs/runtime/debugging/ERRORS.md`
   - [x] update Graphion language reference diagnostics section
   - [x] update examples or tutorial notes only when user-facing behavior changes
