@@ -19,7 +19,7 @@ not introduce a large new language type.
   - [x] collections: empty is false, non-empty is true for `list`, `dict`, `tuple`, and `set`
   - [x] graph: false when it has no visible nodes and no logical edges, true otherwise
   - [x] hypergraph: false when it has no visible vertices and no active hyperedges, true otherwise
-  - [ ] struct: define whether instances are always true or field-count based
+  - [x] struct: instances are always true
   - [ ] scalars: keep compatibility for `bool` and accepted `int` values, and keep unsupported scalar types explicit
 - [ ] implement one shared truth conversion path
   - [ ] move condition truth conversion into a VM/core helper usable by interpreter and VM paths
