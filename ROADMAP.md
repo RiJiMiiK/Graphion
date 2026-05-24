@@ -18,7 +18,7 @@ not introduce a large new language type.
 - [ ] define official truth rules for existing first-class complex values
   - [x] decide truthiness for `list`: empty is false, non-empty is true
   - [x] decide truthiness for `dict`: empty is false, non-empty is true
-  - [ ] decide truthiness for `tuple`
+  - [x] decide truthiness for `tuple`: empty is false, non-empty is true
   - [ ] decide truthiness for `set`
   - [ ] decide truthiness for `graph`
   - [ ] decide truthiness for `hypergraph`
