@@ -201,6 +201,13 @@ if(GRAPHION_ENABLE_TESTS)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli/test_debug_warnings.cmake"
   )
   set_tests_properties(graphion_cli_debug_warnings PROPERTIES LABELS "gion;cli")
+  add_test(NAME graphion_cli_diagnostics
+    COMMAND ${CMAKE_COMMAND}
+      "-DGRAPHION_CLI=$<TARGET_FILE:graphion>"
+      "-DGRAPHION_CLI_TEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/cli_diagnostics"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli/test_diagnostics.cmake"
+  )
+  set_tests_properties(graphion_cli_diagnostics PROPERTIES LABELS "gion;cli")
 endif()
 
 if(GRAPHION_ENABLE_FUZZING)
