@@ -10,42 +10,34 @@ not introduce a large new language type.
 
 ### Complex conditions
 
-- [x] audit existing condition evaluation before changing behavior
-  - [x] trace `if`, `elif`, and `else` through the runtime/interpreter
-  - [x] trace ternary conditions through expression compilation and VM jumps
-  - [x] trace boolean operators and VM conditional jumps for shared truth rules
-  - [x] decide whether `match` needs changes or only documentation for this scope: documentation only
-- [ ] define official truth rules for existing first-class complex values
-  - [x] decide truthiness for `list`: empty is false, non-empty is true
-  - [x] decide truthiness for `dict`: empty is false, non-empty is true
-  - [x] decide truthiness for `tuple`: empty is false, non-empty is true
-  - [x] decide truthiness for `set`: empty is false, non-empty is true
-  - [ ] decide truthiness for `graph`
-  - [ ] decide truthiness for `hypergraph`
-  - [ ] decide truthiness for `struct`
-  - [ ] keep scalar condition compatibility explicit for `bool` and accepted `int` values
-- [ ] implement complex condition behavior consistently
-  - [ ] centralize condition truth conversion where practical
-  - [ ] align runtime/interpreter direct condition evaluation with VM conditional jumps
-  - [ ] align ternary expression conditions with block condition rules
-  - [ ] keep unsupported condition types rejected with actionable diagnostics
-  - [ ] preserve ownership and disposal behavior for complex values during condition evaluation
-- [ ] verify comparisons and equality interactions
-  - [ ] ensure equality results remain boolean and work as conditions
-  - [ ] ensure complex value equality does not accidentally become implicit comparison ordering
-  - [ ] ensure boolean operators keep their intended accepted operand rules
+- [x] establish the current condition model
+  - Direct `if` / `elif` conditions are evaluated by the interpreter through `evaluate_condition_text`.
+  - Ternary expressions and short-circuit boolean operators compile through VM conditional jumps.
+  - VM boolean operators and conditional jumps share `vm_value_get_boolean`.
+  - `match` is value-based scalar branching and does not need behavioral changes for this scope.
+- [ ] define official truth rules
+  - [x] collections: empty is false, non-empty is true for `list`, `dict`, `tuple`, and `set`
+  - [ ] graph: define truth from visible node count and/or edge count
+  - [ ] hypergraph: define truth from visible vertex count and/or active hyperedge count
+  - [ ] struct: define whether instances are always true or field-count based
+  - [ ] scalars: keep compatibility for `bool` and accepted `int` values, and keep unsupported scalar types explicit
+- [ ] implement one shared truth conversion path
+  - [ ] move condition truth conversion into a VM/core helper usable by interpreter and VM paths
+  - [ ] align `evaluate_condition_text` with VM conditional jumps
+  - [ ] align `if`, `elif`, ternary expressions, and boolean operators on the same accepted value set
+  - [ ] preserve ownership and disposal behavior for complex values during truth conversion
+  - [ ] keep unsupported condition diagnostics actionable and stable
 - [ ] add targeted `.gion` coverage
-  - [ ] add `if` / `elif` / `else` tests for empty and non-empty complex values
-  - [ ] add ternary tests for complex values used as conditions
-  - [ ] add diagnostics tests for unsupported direct condition types
-  - [ ] add regression tests for existing scalar condition behavior
-  - [ ] add graph and hypergraph condition tests using representative empty and populated values
-  - [ ] add struct condition tests once the official rule is chosen
-- [ ] update user-facing documentation after behavior is stable
-  - [ ] document official condition truth rules in the language reference
+  - [ ] cover `if` / `elif` / `else` for empty and non-empty complex values
+  - [ ] cover ternary conditions for the same accepted complex values
+  - [ ] cover boolean operators with accepted and rejected complex values
+  - [ ] cover unsupported condition types and diagnostic messages
+  - [ ] preserve regression coverage for current scalar condition behavior
+- [ ] update user-facing documentation
+  - [ ] document official truth rules in the language reference
   - [ ] update operator documentation for boolean logic and conditions
-  - [ ] update type documentation where complex value truthiness is part of the type contract
-  - [ ] adjust examples only if the new behavior should be shown as recommended style
+  - [ ] update type documentation where truthiness becomes part of the value contract
+  - [ ] clarify that `match` remains value-based scalar branching, not truthiness-based branching
 
 ## Future additions gated by other features
 
