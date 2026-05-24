@@ -67,7 +67,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
 - [ ] update documentation when diagnostics change
   - [x] update `docs/runtime/debugging/ERRORS.md`
   - [x] update Graphion language reference diagnostics section
-  - [ ] update examples or tutorial notes only when user-facing behavior changes
+  - [x] update examples or tutorial notes only when user-facing behavior changes
 
 ## Future additions gated by other features
 
