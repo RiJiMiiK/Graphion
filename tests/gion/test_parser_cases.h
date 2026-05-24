@@ -8,6 +8,7 @@
   X(parser_rejects_truncated_input)                    \
   X(frontend_parse_and_ir_lowering)                    \
   X(frontend_rejects_invalid_source)                   \
+  X(frontend_result_code_diagnostics)                  \
   X(frontend_source_to_vm_execution)                   \
   X(frontend_reference_graph_execution_examples)       \
   X(gion_source_path_detection)                        \

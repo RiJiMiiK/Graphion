@@ -86,6 +86,66 @@ int test_frontend_rejects_invalid_source(void) {
   return 0;
 }
 
+int test_frontend_result_code_diagnostics(void) {
+  static const char *const parse_failures[] = {
+      "wat r0, 1\n",
+      "nop r0\n",
+      "mov r0\n",
+      "mov x0, 1\n",
+      "mov r256, 1\n",
+      "mov r0, nope\n",
+      "add r0, 1\n",
+      "add r0, r1, r2\n",
+  };
+  graphion_ir_insn ir[4];
+  size_t count = 123U;
+  size_t i;
+  int rc;
+
+  rc = graphion_parse_source_to_ir(NULL, ir, 4U, &count);
+  if (rc != GFE_ERR_INVALID_ARG) {
+    return 1;
+  }
+  rc = graphion_parse_source_to_ir("nop\n", NULL, 4U, &count);
+  if (rc != GFE_ERR_INVALID_ARG) {
+    return 2;
+  }
+  rc = graphion_parse_source_to_ir("nop\n", ir, 4U, NULL);
+  if (rc != GFE_ERR_INVALID_ARG) {
+    return 3;
+  }
+
+  for (i = 0U; i < sizeof(parse_failures) / sizeof(parse_failures[0]); ++i) {
+    count = 123U;
+    rc = graphion_parse_source_to_ir(parse_failures[i], ir, 4U, &count);
+    if (rc != GFE_ERR_PARSE) {
+      return (int)(10 + i);
+    }
+    if (count != 123U) {
+      return (int)(30 + i);
+    }
+  }
+
+  count = 123U;
+  rc = graphion_parse_source_to_ir("nop\nhalt\n", ir, 1U, &count);
+  if (rc != GFE_ERR_CAPACITY) {
+    return 50;
+  }
+  if (count != 123U) {
+    return 51;
+  }
+
+  count = 123U;
+  rc = graphion_parse_source_to_ir("\n# comment\n// comment\n", ir, 4U, &count);
+  if (rc != GFE_OK) {
+    return 60;
+  }
+  if (count != 0U) {
+    return 61;
+  }
+  return 0;
+}
+
 int test_frontend_source_to_vm_execution(void) {
   const char *source = "mov r0, 7\n"
                        "mov r1, 35\n"
