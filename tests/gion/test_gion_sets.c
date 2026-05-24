@@ -105,7 +105,7 @@ int test_gion_set_runtime_errors(void) {
     int expected_rc;
     const char *message;
   } cases[] = {
-      {"items = [1, 2]\nprint(contains(items, 1))\n", GINT_ERR_RUN, "incompatible operand types"},
+      {"items = {\"a\": 1}\nprint(contains(items, 1))\n", GINT_ERR_RUN, "incompatible operand types"},
       {"items = set(1, 2)\nprint(items[0])\n", GINT_ERR_RUN, "incompatible operand types"},
       {"items = set(1, 2)\nprint(items == [1, 2])\n", GINT_ERR_RUN, "incompatible operand types"},
   };

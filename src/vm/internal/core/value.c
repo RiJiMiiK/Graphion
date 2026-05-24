@@ -1719,17 +1719,19 @@ int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg) {
   return vm_list_append_value(tuple, &vm->regs[value_reg]);
 }
 
-static int vm_set_contains_value(const graphion_vm_list *set, const graphion_vm_value *value, int *contains_out) {
+static int vm_list_storage_contains_value(const graphion_vm_list *list,
+                                          const graphion_vm_value *value,
+                                          int *contains_out) {
   size_t i;
 
-  if (set == NULL || value == NULL || contains_out == NULL) {
+  if (list == NULL || value == NULL || contains_out == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
   *contains_out = 0;
-  for (i = 0U; i < set->count; ++i) {
+  for (i = 0U; i < list->count; ++i) {
     int compatible = 0;
     int equal = 0;
-    int rc = vm_values_deep_equal(&set->items[i], value, &compatible, &equal);
+    int rc = vm_values_deep_equal(&list->items[i], value, &compatible, &equal);
     if (rc != GVM_OK) {
       return rc;
     }
@@ -1756,34 +1758,34 @@ int vm_set_add_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg) {
   if (set == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
-  rc = vm_set_contains_value(set, &vm->regs[value_reg], &contains);
+  rc = vm_list_storage_contains_value(set, &vm->regs[value_reg], &contains);
   if (rc != GVM_OK || contains) {
     return rc;
   }
   return vm_list_append_value(set, &vm->regs[value_reg]);
 }
 
-int vm_set_contains_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg) {
-  graphion_vm_list *set;
+int vm_collection_contains_reg(graphion_vm *vm, uint8_t collection_reg, uint8_t value_reg) {
+  graphion_vm_list *collection;
   int contains = 0;
   int rc;
 
-  if (vm == NULL || !is_valid_reg(set_reg) || !is_valid_reg(value_reg)) {
+  if (vm == NULL || !is_valid_reg(collection_reg) || !is_valid_reg(value_reg)) {
     return GVM_ERR_INVALID_REG;
   }
-  if (vm->regs[set_reg].kind != GVM_VALUE_SET) {
+  if (vm->regs[collection_reg].kind != GVM_VALUE_SET && vm->regs[collection_reg].kind != GVM_VALUE_LIST) {
     return GVM_ERR_TYPE_MISMATCH;
   }
-  set = (graphion_vm_list *)vm->regs[set_reg].as.ref_value;
-  if (set == NULL) {
+  collection = (graphion_vm_list *)vm->regs[collection_reg].as.ref_value;
+  if (collection == NULL) {
     return GVM_ERR_INVALID_ARG;
   }
-  rc = vm_set_contains_value(set, &vm->regs[value_reg], &contains);
+  rc = vm_list_storage_contains_value(collection, &vm->regs[value_reg], &contains);
   if (rc != GVM_OK) {
     return rc;
   }
-  vm_free_owned_reg_string(vm, set_reg);
-  vm_value_set_bool(&vm->regs[set_reg], contains);
+  vm_free_owned_reg_string(vm, collection_reg);
+  vm_value_set_bool(&vm->regs[collection_reg], contains);
   return GVM_OK;
 }
 

@@ -46,6 +46,7 @@
   X(gion_bits_shr)                                     \
   X(gion_bits_shr_runtime_errors)                      \
   X(gion_list_literals_and_prints)                     \
+  X(gion_list_contains_conditions)                     \
   X(gion_list_runtime_errors)                          \
   X(gion_list_syntax_errors)                           \
   X(gion_dict_literals_and_prints)                     \

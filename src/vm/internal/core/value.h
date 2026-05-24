@@ -75,7 +75,7 @@ int vm_reg_set_empty_tuple(graphion_vm *vm, uint8_t reg);
 int vm_tuple_append_reg(graphion_vm *vm, uint8_t tuple_reg, uint8_t value_reg);
 int vm_reg_set_empty_set(graphion_vm *vm, uint8_t reg);
 int vm_set_add_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg);
-int vm_set_contains_reg(graphion_vm *vm, uint8_t set_reg, uint8_t value_reg);
+int vm_collection_contains_reg(graphion_vm *vm, uint8_t collection_reg, uint8_t value_reg);
 int vm_reg_set_empty_graph(graphion_vm *vm, uint8_t reg);
 int vm_reg_set_graph_node_count(graphion_vm *vm, uint8_t reg, size_t node_count);
 int vm_reg_set_empty_hypergraph(graphion_vm *vm, uint8_t reg);

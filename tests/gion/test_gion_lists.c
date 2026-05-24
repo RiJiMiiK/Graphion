@@ -89,6 +89,63 @@ int test_gion_list_literals_and_prints(void) {
   return finish_scope_test(&scope, 0);
 }
 
+int test_gion_list_contains_conditions(void) {
+  const char *source =
+      "items = [1, 2, [3]]\n"
+      "if_result = \"unset\"\n"
+      "elif_result = \"unset\"\n"
+      "if contains(items, 2):\n"
+      "    if_result = \"present\"\n"
+      "else:\n"
+      "    if_result = \"missing\"\n"
+      "if contains(items, 9):\n"
+      "    elif_result = \"bad\"\n"
+      "elif contains(items, [3]):\n"
+      "    elif_result = \"nested\"\n"
+      "else:\n"
+      "    elif_result = \"missing\"\n"
+      "ternary_result = \"yes\" if contains(items, [3]) else \"no\"\n"
+      "and_result = contains(items, 1) and contains(items, 2)\n"
+      "or_result = contains(items, 9) or contains(items, [3])\n"
+      "print(if_result)\n"
+      "print(elif_result)\n"
+      "print(ternary_result)\n"
+      "print(and_result)\n"
+      "print(or_result)\n";
+  char path[512];
+  char output[128];
+  graphion_runtime_scope scope;
+  graphion_runtime_diagnostic diagnostic;
+  FILE *fp = NULL;
+  int rc;
+
+  graphion_runtime_scope_init(&scope);
+  fp = test_open_temp_output(path, sizeof(path), "gion_list_contains_conditions.txt");
+  if (fp == NULL) {
+    return finish_scope_test(&scope, 1);
+  }
+  rc = graphion_interpret_source_with_output(source, &scope, &diagnostic, fp);
+  fclose(fp);
+  if (rc != GINT_OK) {
+    remove(path);
+    return finish_scope_test(&scope, 2);
+  }
+  if (!test_read_file_text(path, output, sizeof(output))) {
+    remove(path);
+    return finish_scope_test(&scope, 3);
+  }
+  remove(path);
+  if (strcmp(output,
+             "present\n"
+             "nested\n"
+             "yes\n"
+             "true\n"
+             "true\n") != 0) {
+    return finish_scope_test(&scope, 4);
+  }
+  return finish_scope_test(&scope, 0);
+}
+
 int test_gion_list_runtime_errors(void) {
   static const struct {
     const char *source;

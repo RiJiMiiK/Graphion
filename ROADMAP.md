@@ -13,31 +13,42 @@ not introduce a large new language type.
 - [x] establish the current condition model
   - Direct `if` / `elif` conditions are evaluated by the interpreter through `evaluate_condition_text`.
   - Ternary expressions and short-circuit boolean operators compile through VM conditional jumps.
-  - VM boolean operators and conditional jumps share `vm_value_get_boolean`.
-  - `match` is value-based scalar branching and does not need behavioral changes for this scope.
-- [ ] define official truth rules
-  - [x] collections: empty is false, non-empty is true for `list`, `dict`, `tuple`, and `set`
-  - [x] graph: false when it has no visible nodes and no logical edges, true otherwise
-  - [x] hypergraph: false when it has no visible vertices and no active hyperedges, true otherwise
-  - [x] struct: instances are always true
-  - [x] scalars: accept `bool` and only `int` values `0` / `1`; keep unsupported scalar conditions explicit
-- [ ] implement one shared truth conversion path
-  - [ ] move condition truth conversion into a VM/core helper usable by interpreter and VM paths
-  - [ ] align `evaluate_condition_text` with VM conditional jumps
-  - [ ] align `if`, `elif`, ternary expressions, and boolean operators on the same accepted value set
-  - [ ] preserve ownership and disposal behavior for complex values during truth conversion
-  - [ ] keep unsupported condition diagnostics actionable and stable
+  - VM boolean operators and conditional jumps currently accept only `bool` and `int` values `0` / `1`.
+  - `match` is value-based scalar branching, not predicate-based branching.
+- [x] map the existing complex predicate surface
+  - `set` already exposes membership through `contains(set, value)`.
+  - `graph` already exposes existence predicates through `has_node(graph, node)` and `has_edge(graph, from, to)`.
+  - `hypergraph` already exposes existence predicates through `has_vertex(hypergraph, vertex)` and `has_hyperedge(hypergraph, id)`.
+  - `list`, `tuple`, `dict`, and `struct` do not yet expose non-throwing membership/existence predicates.
+  - `list`, `dict`, `tuple`, `set`, and `struct` already support deep `==` / `!=` results that can be used as conditions.
+- [ ] define the official complex predicate API
+  - [x] list: implement `contains(list, value)` for membership; keep ordered deep `==` / `!=` as valid conditions
+  - [ ] tuple: decide membership spelling and equality behavior in conditions
+  - [ ] set: keep `contains(set, value)` and decide whether any alias is needed
+  - [ ] dict: define key-existence predicate without requiring throwing indexing
+  - [ ] graph: keep `has_node` / `has_edge` and define condition examples around them
+  - [ ] hypergraph: keep `has_vertex` / `has_hyperedge` and define condition examples around them
+  - [ ] struct: decide field-existence predicate or explicitly reject it
+  - [ ] decide whether `in` syntax belongs in this scope or is deferred
+- [ ] align predicate results across conditional contexts
+  - [ ] `if` / `elif` / `else`
+  - [ ] ternary conditions
+  - [ ] boolean operators and short-circuit behavior
+  - [ ] grouped multiline conditions
+  - [ ] diagnostics when predicates receive unsupported complex value combinations
 - [ ] add targeted `.gion` coverage
-  - [ ] cover `if` / `elif` / `else` for empty and non-empty complex values
-  - [ ] cover ternary conditions for the same accepted complex values
-  - [ ] cover boolean operators with accepted and rejected complex values
-  - [ ] cover unsupported condition types and diagnostic messages
-  - [ ] preserve regression coverage for current scalar condition behavior
+  - [ ] predicate conditions for each supported complex type
+  - [x] list: cover `contains(list, value)` in `if`, `elif`, ternary, and boolean operators
+  - [ ] equality/inequality conditions for supported complex values
+  - [ ] missing key/field/member checks that should return `false` instead of throwing
+  - [ ] unsupported predicate combinations with stable diagnostics
+  - [ ] regression coverage for existing scalar condition behavior
 - [ ] update user-facing documentation
-  - [ ] document official truth rules in the language reference
-  - [ ] update operator documentation for boolean logic and conditions
-  - [ ] update type documentation where truthiness becomes part of the value contract
-  - [ ] clarify that `match` remains value-based scalar branching, not truthiness-based branching
+  - [ ] document complex predicate APIs with `if` / `elif` examples
+  - [ ] document equality/inequality as valid complex condition inputs
+  - [ ] document unsupported predicate combinations and their diagnostics
+  - [ ] clarify that `match` remains value-based scalar branching
+  - [ ] keep truthiness decisions documented only if direct complex values become official conditions
 
 ## Future additions gated by other features
 

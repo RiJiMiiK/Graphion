@@ -344,7 +344,7 @@ int op_set_add(graphion_vm *vm, const graphion_insn *in) {
 }
 
 int op_set_contains(graphion_vm *vm, const graphion_insn *in) {
-  return vm_set_contains_reg(vm, in->a, in->b);
+  return vm_collection_contains_reg(vm, in->a, in->b);
 }
 
 int op_graph_new(graphion_vm *vm, const graphion_insn *in) {
