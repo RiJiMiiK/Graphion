@@ -11,7 +11,7 @@ not introduce a large new language type.
 ### Complex conditions
 
 - [ ] audit existing condition evaluation before changing behavior
-  - [ ] trace `if`, `elif`, and `else` through the runtime/interpreter
+  - [x] trace `if`, `elif`, and `else` through the runtime/interpreter
   - [ ] trace ternary conditions through expression compilation and VM jumps
   - [ ] trace boolean operators and VM conditional jumps for shared truth rules
   - [ ] decide whether `match` needs changes or only documentation for this scope
