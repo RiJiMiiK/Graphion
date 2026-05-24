@@ -589,6 +589,60 @@ int test_gion_representative_runtime_error_diagnostics(void) {
   return 0;
 }
 
+int test_gion_vm_to_runtime_mapping_diagnostics(void) {
+  static const struct {
+    const char *source;
+    const char *message;
+  } cases[] = {
+      {"value = 1 / 0\n", "division by zero"},
+      {"value = sqrt(-1)\n", "sqrt requires non-negative input"},
+      {"value = ln(0)\n", "ln requires strictly positive input"},
+      {"value = log(8, 1)\n", "log requires x > 0 and base > 0 with base != 1"},
+      {"value = asin(2)\n", "asin requires input in [-1, 1]"},
+      {"value = acos(2)\n", "acos requires input in [-1, 1]"},
+      {"value = acsc(0.5)\n", "acsc requires input <= -1 or >= 1"},
+      {"value = asec(0.5)\n", "asec requires input <= -1 or >= 1"},
+      {"value = acosh(0)\n", "acosh requires input >= 1"},
+      {"value = atanh(1)\n", "atanh requires input in (-1, 1)"},
+      {"value = log1p(-1)\n", "log1p requires input > -1"},
+      {"value = remainder(1, 0)\n", "remainder requires non-zero divisor"},
+      {"value = gamma(0)\n", "gamma is undefined at 0 and negative integers"},
+      {"value = lgamma(0)\n", "lgamma is undefined at 0 and negative integers"},
+      {"value = (-1)!\n", "factorial requires non-negative integer input"},
+      {"value = 0b10 & 0b0010\n", "bitwise operations require matching bits widths"},
+      {"value = 0b10 << -1\n", "bit shifts require non-negative integer counts"},
+      {"items = [1, 2]\nprint(items[2])\n", "list index out of range"},
+      {"graph G:\n"
+       "    1\n"
+       "print(node_attrs(G, 2))\n",
+       "invalid node id"},
+      {"hypergraph H:\n"
+       "    [\"Alice\", \"Bob\"]\n"
+       "print(hyperedge_vertices(H, 2))\n",
+       "invalid hyperedge id"},
+      {"data = {\"a\": 1}\nprint(data[\"missing\"])\n", "dict key not found"},
+      {"value = \"x\" + 1\n", "incompatible operand types"},
+  };
+  size_t i;
+
+  for (i = 0U; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    graphion_runtime_scope scope;
+    graphion_runtime_diagnostic diagnostic;
+    int rc;
+
+    graphion_runtime_scope_init(&scope);
+    rc = graphion_interpret_source(cases[i].source, &scope, &diagnostic);
+    if (rc != GINT_ERR_RUN) {
+      return finish_scope_test(&scope, (int)(1 + i * 10U));
+    }
+    if (diagnostic.message == NULL || strcmp(diagnostic.message, cases[i].message) != 0) {
+      return finish_scope_test(&scope, (int)(2 + i * 10U));
+    }
+    graphion_runtime_scope_dispose(&scope);
+  }
+  return 0;
+}
+
 int test_gion_unexpected_indentation_errors(void) {
   static const struct {
     const char *source;

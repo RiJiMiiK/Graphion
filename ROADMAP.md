@@ -61,7 +61,7 @@ runtime/interpreter errors, VM-originated failures that surface through `.gion`,
   - [x] add focused parser/frontend tests for result-code diagnostics
   - [x] add runtime/interpreter tests for exact message and line/column pairs
   - [x] add runtime/interpreter tests for representative runtime errors across scalar and non-scalar values
-  - [ ] add VM-to-runtime mapping tests for every `.gion`-visible `GVM_ERR_*`
+  - [x] add VM-to-runtime mapping tests for every `.gion`-visible `GVM_ERR_*`
   - [ ] add CLI-path tests where formatting differs from direct API diagnostics
   - [ ] keep tests scoped to user-visible behavior, not internal implementation details
 - [ ] update documentation when diagnostics change
