@@ -1674,7 +1674,6 @@ static int parse_struct_name_from_header(const char *text,
                                          unsigned int line,
                                          graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = text;
-  int rc;
 
   skip_spaces(&cursor);
   if (strncmp(cursor, "struct", 6U) != 0 || is_ident_char(cursor[6])) {
@@ -1686,14 +1685,20 @@ static int parse_struct_name_from_header(const char *text,
   }
   {
     const char *name_start = cursor;
+    int rc;
+
     skip_spaces(&name_start);
-  rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  if (is_reserved_name(target)) {
-    return fail(diagnostic, line, source_column(text, name_start), "reserved name cannot be assigned", GINT_ERR_RESERVED_NAME);
-  }
+    rc = parse_identifier_token(&cursor, target, GRAPHION_RUNTIME_NAME_MAX, line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (is_reserved_name(target)) {
+      return fail(diagnostic,
+                  line,
+                  source_column(text, name_start),
+                  "reserved name cannot be assigned",
+                  GINT_ERR_RESERVED_NAME);
+    }
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
@@ -2286,7 +2291,6 @@ static int parse_struct_field_line(const char *text,
                                    graphion_runtime_diagnostic *diagnostic) {
   const char *cursor = text;
   graphion_struct_field_value *field;
-  size_t i;
   int rc;
 
   if (text == NULL || builder == NULL || scope == NULL) {
@@ -2298,15 +2302,17 @@ static int parse_struct_field_line(const char *text,
   field = &builder->fields[builder->field_count];
   {
     const char *field_start = cursor;
-  rc = parse_identifier_token(&cursor, field->name, sizeof(field->name), line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  for (i = 0U; i < builder->field_count; ++i) {
-    if (strcmp(builder->fields[i].name, field->name) == 0) {
-      return fail(diagnostic, line, source_column(text, field_start), "duplicate struct field", GINT_ERR_PARSE);
+    size_t i;
+
+    rc = parse_identifier_token(&cursor, field->name, sizeof(field->name), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
     }
-  }
+    for (i = 0U; i < builder->field_count; ++i) {
+      if (strcmp(builder->fields[i].name, field->name) == 0) {
+        return fail(diagnostic, line, source_column(text, field_start), "duplicate struct field", GINT_ERR_PARSE);
+      }
+    }
   }
   skip_spaces(&cursor);
   if (*cursor != ':') {
@@ -2316,13 +2322,13 @@ static int parse_struct_field_line(const char *text,
   {
     const char *type_start = cursor;
     skip_spaces(&type_start);
-  rc = parse_identifier_token(&cursor, field->type_name, sizeof(field->type_name), line, diagnostic);
-  if (rc != GINT_OK) {
-    return rc;
-  }
-  if (!runtime_struct_type_name_is_supported(field->type_name, scope)) {
-    return fail(diagnostic, line, source_column(text, type_start), "unsupported struct field type", GINT_ERR_PARSE);
-  }
+    rc = parse_identifier_token(&cursor, field->type_name, sizeof(field->type_name), line, diagnostic);
+    if (rc != GINT_OK) {
+      return rc;
+    }
+    if (!runtime_struct_type_name_is_supported(field->type_name, scope)) {
+      return fail(diagnostic, line, source_column(text, type_start), "unsupported struct field type", GINT_ERR_PARSE);
+    }
   }
   skip_spaces(&cursor);
   if (*cursor == '=') {

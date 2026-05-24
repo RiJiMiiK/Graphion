@@ -139,13 +139,13 @@ static int remap_missing_assignment_rhs_error(
     unsigned int column,
     const char *op,
     int remap_prefix_token) {
-  char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
-
   if (rc == GINT_ERR_PARSE && diagnostic != NULL &&
       diagnostic->message != NULL &&
       (strcmp(diagnostic->message, "expected scalar literal") == 0 ||
        (remap_prefix_token &&
         strncmp(diagnostic->message, "expected expression before ", 27U) == 0))) {
+    char message[GRAPHION_RUNTIME_DIAGNOSTIC_MESSAGE_MAX];
+
     snprintf(message, sizeof(message), "expected expression after '%s'", op);
     return fail(diagnostic, line, column, message, GINT_ERR_PARSE);
   }
