@@ -132,6 +132,20 @@ ternary_multiline = (
     else "fallback multiline ternary"
 )
 
+items = [1, 2, [3]]
+list_contains_branch = "unset"
+
+if contains(items, 9):
+    list_contains_branch = "bad"
+elif contains(items, [3]):
+    list_contains_branch = "list nested member found"
+else:
+    list_contains_branch = "missing"
+
+tuple_items = (1, 2, (3, 4))
+tuple_contains_branch = "tuple nested member found" if contains(tuple_items, (3, 4)) else "missing"
+collection_bool_branch = contains(items, 1) and contains(tuple_items, (3, 4))
+
 status = "ready"
 level_bucket = 2
 match_branch = "unset"
@@ -181,5 +195,8 @@ print("multiline grouped condition -> multiline_branch=" + multiline_branch)
 print("ternary condition -> ternary_branch=" + ternary_branch)
 print("nested ternary condition -> ternary_nested=" + ternary_nested)
 print("multiline ternary condition -> ternary_multiline=" + ternary_multiline)
+print("list contains condition -> list_contains_branch=" + list_contains_branch)
+print("tuple contains ternary -> tuple_contains_branch=" + tuple_contains_branch)
+print("collection contains boolean -> collection_bool_branch=" + collection_bool_branch)
 print("match on string value -> match_branch=" + match_branch)
 print("match with grouped cases -> grouped_match=" + grouped_match)
