@@ -16,7 +16,7 @@ jobs:
   dry-run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Simulate source archive generation
         run: |
           git archive --format=tar.gz --output=graphion-dry-run.tar.gz HEAD
